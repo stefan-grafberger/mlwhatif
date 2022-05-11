@@ -506,3 +506,38 @@ def test_series__init__():
                             DagNodeDetails(None, ['A']),
                             OptionalCodeInfo(CodeReference(3, 12, 3, 48), "pd.Series([0, 2, 4, None], name='A')"))
     compare(extracted_node, expected_node)
+
+
+def test_series_isin():
+    """
+    Tests whether the monkey patching of ('pandas.core.series', 'isin') works
+    """
+    test_code = cleandoc("""
+        import pandas as pd
+
+        pd_series = pd.Series([0, 2, 4, None], name='A')
+        filtered = pd_series.isin([2, 4])
+        assert len(pd_series) == 4
+        """)
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    extracted_dag = inspector_result.dag
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 3),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.series', 'Series')),
+                                   DagNodeDetails(None, ['A']),
+                                   OptionalCodeInfo(CodeReference(3, 12, 3, 48),
+                                                    "pd.Series([0, 2, 4, None], name='A')"))
+    expected_isin = DagNode(1,
+                            BasicCodeLocation("<string-source>", 4),
+                            OperatorContext(OperatorType.SUBSCRIPT,
+                                            FunctionInfo('pandas.core.series', 'isin')),
+                            DagNodeDetails('isin: [2, 4]', ['A']),
+                            OptionalCodeInfo(CodeReference(4, 11, 4, 33),
+                                             'pd_series.isin([2, 4])'))
+    expected_dag.add_edge(expected_data_source, expected_isin)
+
+    compare(extracted_dag, expected_dag)

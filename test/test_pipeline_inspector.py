@@ -90,4 +90,4 @@ def assert_healthcare_pipeline_output_complete(inspector_result):
     """ Assert that the healthcare DAG was extracted completely """
     for dag_node, _ in inspector_result.dag_node_to_inspection_results.items():
         assert dag_node.operator_info.operator != OperatorType.MISSING_OP
-    assert len(inspector_result.dag) == 37
+    assert len(inspector_result.dag) == 38

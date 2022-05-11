@@ -117,6 +117,7 @@ class DataFramePatching:
             function_info = FunctionInfo('pandas.core.frame', '__getitem__')
             input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                         optional_source_code)
+            dag_parents = [input_info.dag_node]
             if isinstance(args[0], str):  # Projection to Series
                 columns = [args[0]]
                 operator_context = OperatorContext(OperatorType.PROJECTION, function_info)
@@ -136,6 +137,9 @@ class DataFramePatching:
             elif isinstance(args[0], pandas.Series):  # Selection
                 operator_context = OperatorContext(OperatorType.SELECTION, function_info)
                 columns = list(self.columns)  # pylint: disable=no-member
+                selection_series_input_info = get_input_info(args[0], caller_filename, lineno, function_info,
+                                                             optional_code_reference, optional_source_code)
+                dag_parents.append(selection_series_input_info.dag_node)
                 if optional_source_code:
                     description = "Select by Series: {}".format(optional_source_code)
                 else:
@@ -149,7 +153,7 @@ class DataFramePatching:
                 raise NotImplementedError()
             result = original(input_info.annotated_dfobject.result_data, *args, **kwargs)
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            add_dag_node(dag_node, dag_parents, function_call_result)
             new_result = function_call_result.function_result
 
             return new_result
@@ -435,3 +439,33 @@ class SeriesPatching:
             add_dag_node(dag_node, [], function_call_result)
 
         execute_patched_func(original, execute_inspections, self, *args, **kwargs)
+
+    @gorilla.name('isin')
+    @gorilla.settings(allow_hit=True)
+    def patched_isin(self, *args, **kwargs):
+        """ Patch for ('pandas.core.series', 'isin') """
+        original = gorilla.get_original_attribute(pandas.Series, 'isin')
+
+        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            function_info = FunctionInfo('pandas.core.series', 'isin')
+            input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
+                                        optional_source_code)
+            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
+            description = "isin: {}".format(args[0])
+            columns = [self.name]
+            dag_node = DagNode(op_id,
+                               BasicCodeLocation(caller_filename, lineno),
+                               operator_context,
+                               DagNodeDetails(description, columns),
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+
+            result = original(input_info.annotated_dfobject.result_data, *args, **kwargs)
+            function_call_result = FunctionCallResult(result)
+            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            new_result = function_call_result.function_result
+
+            return new_result
+
+        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
+
