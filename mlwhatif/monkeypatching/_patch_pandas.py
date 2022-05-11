@@ -1,6 +1,7 @@
 """
 Monkey patching for pandas
 """
+# pylint: disable=too-many-lines
 import operator
 import os
 
@@ -484,10 +485,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__eq__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__eq__') """
-        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.eq)
+        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.eq)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', '__eq__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -521,10 +523,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__ne__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__ne__') """
-        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.ne)
+        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.ne)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', '__ne__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -558,10 +561,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__ge__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__ge__') """
-        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.ge)
+        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.ge)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', 'ge')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -595,10 +599,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__gt__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__gt__') """
-        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.gt)
+        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.gt)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', 'gt')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -632,10 +637,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__le__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__le__') """
-        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.le)
+        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.le)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', 'le')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -669,10 +675,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__lt__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__le__') """
-        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.lt)
+        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.lt)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', 'lt')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -710,10 +717,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__and__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__and__') """
-        original = lambda x, y: pandas.Series._logical_method(x, y, operator.and_)
+        original = lambda x, y: pandas.Series._logical_method(x, y, operator.and_)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', '__and__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -743,10 +751,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__or__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__or__') """
-        original = lambda x, y: pandas.Series._logical_method(x, y, operator.and_)
+        original = lambda x, y: pandas.Series._logical_method(x, y, operator.and_)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', '__or__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -780,6 +789,7 @@ class SeriesPatching:
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', '__not__')
             input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                         optional_source_code)
@@ -809,10 +819,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__add__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__add__') """
-        original = lambda x, y: pandas.Series._arith_method(x, y, operator.add)
+        original = lambda x, y: pandas.Series._arith_method(x, y, operator.add)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', '__add__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -846,10 +857,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__radd__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__radd__') """
-        original = lambda x, y: pandas.Series._arith_method(x, y, operator.add)
+        original = lambda x, y: pandas.Series._arith_method(x, y, operator.add)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', '__radd__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -883,10 +895,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__mul__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__mul__') """
-        original = lambda x, y: pandas.Series._arith_method(x, y, operator.mul)
+        original = lambda x, y: pandas.Series._arith_method(x, y, operator.mul)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', '__mul__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -921,10 +934,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__rmul__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__rmul__') """
-        original = lambda x, y: pandas.Series._arith_method(x, y, operator.mul)
+        original = lambda x, y: pandas.Series._arith_method(x, y, operator.mul)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', '__rmul__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -958,10 +972,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__sub__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__sub__') """
-        original = lambda x, y: pandas.Series._arith_method(x, y, operator.sub)
+        original = lambda x, y: pandas.Series._arith_method(x, y, operator.sub)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', '__sub__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -995,10 +1010,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__rsub__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__rsub__') """
-        original = lambda x, y: pandas.Series._arith_method(y, x, operator.sub)
+        original = lambda x, y: pandas.Series._arith_method(y, x, operator.sub)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', '__rsub__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -1032,10 +1048,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__div__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__div__') """
-        original = lambda x, y: pandas.Series._arith_method(x, y, operator.div)
+        original = lambda x, y: pandas.Series._arith_method(x, y, operator.truediv)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', '__div__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
@@ -1069,10 +1086,11 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched__rdiv__(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', '__rdiv__') """
-        original = lambda x, y: pandas.Series._arith_method(y, x, operator.div)
+        original = lambda x, y: pandas.Series._arith_method(y, x, operator.truediv)  # pylint: disable=protected-access
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
             function_info = FunctionInfo('pandas.core.series', '__rdiv__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
