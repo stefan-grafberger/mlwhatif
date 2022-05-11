@@ -223,7 +223,7 @@ def test_frame__setitem__():
                 pd.testing.assert_frame_equal(pandas_df, df_expected)
                 """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[3])
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[4])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -244,7 +244,14 @@ def test_frame__setitem__():
                                DagNodeDetails("to ['baz']", ['baz']),
                                OptionalCodeInfo(CodeReference(7, 19, 7, 35), "pandas_df['baz']"))
     expected_dag.add_edge(expected_data_source, expected_project)
-    expected_project_modify = DagNode(2,
+    expected_subscript = DagNode(2,
+                                 BasicCodeLocation('<string-source>', 7),
+                                 OperatorContext(OperatorType.SUBSCRIPT,
+                                                 FunctionInfo('pandas.core.series', '__add__')),
+                                 DagNodeDetails('+ 1', ['baz']),
+                                 OptionalCodeInfo(CodeReference(7, 19, 7, 35), "pandas_df['baz']"))
+    expected_dag.add_edge(expected_project, expected_subscript)
+    expected_project_modify = DagNode(3,
                                       BasicCodeLocation("<string-source>", 7),
                                       OperatorContext(OperatorType.PROJECTION_MODIFY,
                                                       FunctionInfo('pandas.core.frame', '__setitem__')),
@@ -252,6 +259,7 @@ def test_frame__setitem__():
                                       OptionalCodeInfo(CodeReference(7, 0, 7, 39),
                                                        "pandas_df['baz'] = pandas_df['baz'] + 1"))
     expected_dag.add_edge(expected_data_source, expected_project_modify)
+    expected_dag.add_edge(expected_subscript, expected_project_modify)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 

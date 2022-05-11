@@ -175,9 +175,13 @@ class DataFramePatching:
             function_info = FunctionInfo('pandas.core.frame', '__setitem__')
             operator_context = OperatorContext(OperatorType.PROJECTION_MODIFY, function_info)
 
-            input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                        optional_source_code)
-
+            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
+                                             optional_source_code)
+            dag_node_parents = [input_info_self.dag_node]
+            if isinstance(args[1], pandas.Series):
+                input_info_other = get_input_info(args[1], caller_filename, lineno, function_info, optional_code_reference,
+                                                  optional_source_code)
+                dag_node_parents.append(input_info_other.dag_node)
             if isinstance(args[0], str):
                 result = original(self, *args, **kwargs)
                 columns = list(self.columns)  # pylint: disable=no-member
@@ -191,7 +195,7 @@ class DataFramePatching:
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code))
 
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            add_dag_node(dag_node, dag_node_parents, function_call_result)
             new_result = function_call_result.function_result
             assert hasattr(self, "_mlinspect_dag_node")
             return new_result
@@ -486,7 +490,7 @@ class SeriesPatching:
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('pandas.core.series', '__eq__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                        optional_source_code)
+                                             optional_source_code)
             dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
             if not isinstance(args[0], pandas.Series):
@@ -523,7 +527,7 @@ class SeriesPatching:
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('pandas.core.series', '__ne__')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                        optional_source_code)
+                                             optional_source_code)
             dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
             if not isinstance(args[0], pandas.Series):
@@ -560,7 +564,7 @@ class SeriesPatching:
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('pandas.core.series', 'ge')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                        optional_source_code)
+                                             optional_source_code)
             dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
             if not isinstance(args[0], pandas.Series):
@@ -597,15 +601,16 @@ class SeriesPatching:
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('pandas.core.series', 'gt')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                        optional_source_code)
+                                             optional_source_code)
             dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
             if not isinstance(args[0], pandas.Series):
                 description = "> {}".format(args[0])
             else:
                 description = ">"
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info, optional_code_reference,
-                                            optional_source_code)
+                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
+                                                  optional_code_reference,
+                                                  optional_source_code)
                 dag_node_parents.append(input_info_other.dag_node)
             columns = [self.name]  # pylint: disable=no-member
             dag_node = DagNode(op_id,
@@ -633,7 +638,7 @@ class SeriesPatching:
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('pandas.core.series', 'le')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                        optional_source_code)
+                                             optional_source_code)
             dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
             if not isinstance(args[0], pandas.Series):
@@ -670,7 +675,7 @@ class SeriesPatching:
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('pandas.core.series', 'lt')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                        optional_source_code)
+                                             optional_source_code)
             dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
             if not isinstance(args[0], pandas.Series):

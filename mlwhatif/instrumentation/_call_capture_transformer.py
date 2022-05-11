@@ -25,6 +25,7 @@ class CallCaptureTransformer(ast.NodeTransformer):
         # pylint: disable=invalid-name
         ast.NodeTransformer.generic_visit(self, node)
         if isinstance(node.ctx, ast.Store):
+            # FIXME: Might also want to add special handling for logical, arithmetical and comparison operators
             # Needed to get the parent assign node for subscript assigns.
             #  Without this, "pandas_df['baz'] = baz + 1" would only be "pandas_df['baz']"
             code_reference_from_node = node.parents[0]
