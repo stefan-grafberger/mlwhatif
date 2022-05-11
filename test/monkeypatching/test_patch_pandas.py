@@ -176,7 +176,7 @@ def test_frame__getitem__selection():
                 pd.testing.assert_frame_equal(df_selection.reset_index(drop=True), df_expected.reset_index(drop=True))
                 """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[3])
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[4])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -193,13 +193,20 @@ def test_frame__getitem__selection():
                                   DagNodeDetails("to ['A']", ['A']),
                                   OptionalCodeInfo(CodeReference(4, 18, 4, 25), "df['A']"))
     expected_dag.add_edge(expected_data_source, expected_projection)
-    expected_selection = DagNode(2,
+    expected_subscript = DagNode(2,
+                                 BasicCodeLocation('<string-source>', 4),
+                                 OperatorContext(OperatorType.SUBSCRIPT, FunctionInfo('pandas.core.series', 'gt')),
+                                 DagNodeDetails('> 3', ['A']),
+                                 OptionalCodeInfo(CodeReference(4, 18, 4, 25), "df['A']"))
+    expected_dag.add_edge(expected_projection, expected_subscript)
+    expected_selection = DagNode(3,
                                  BasicCodeLocation("<string-source>", 4),
                                  OperatorContext(OperatorType.SELECTION,
                                                  FunctionInfo('pandas.core.frame', '__getitem__')),
                                  DagNodeDetails("Select by Series: df[df['A'] > 3]", ['A', 'B']),
                                  OptionalCodeInfo(CodeReference(4, 15, 4, 30), "df[df['A'] > 3]"))
     expected_dag.add_edge(expected_data_source, expected_selection)
+    expected_dag.add_edge(expected_subscript, expected_selection)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
