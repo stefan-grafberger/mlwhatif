@@ -485,10 +485,18 @@ class SeriesPatching:
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('pandas.core.series', '__eq__')
-            input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
+            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                         optional_source_code)
+            dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            description = "!= {}".format(args[0])
+            if not isinstance(args[0], pandas.Series):
+                description = "= {}".format(args[0])
+            else:
+                description = "="
+                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
+                                                  optional_code_reference,
+                                                  optional_source_code)
+                dag_node_parents.append(input_info_other.dag_node)
             columns = [self.name]  # pylint: disable=no-member
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
@@ -496,9 +504,9 @@ class SeriesPatching:
                                DagNodeDetails(description, columns),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code))
 
-            result = original(input_info.annotated_dfobject.result_data, *args, **kwargs)
+            result = original(input_info_self.annotated_dfobject.result_data, *args, **kwargs)
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            add_dag_node(dag_node, dag_node_parents, function_call_result)
             new_result = function_call_result.function_result
 
             return new_result
@@ -514,10 +522,18 @@ class SeriesPatching:
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('pandas.core.series', '__ne__')
-            input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
+            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                         optional_source_code)
+            dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            description = "!= {}".format(args[0])
+            if not isinstance(args[0], pandas.Series):
+                description = "!= {}".format(args[0])
+            else:
+                description = "!="
+                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
+                                                  optional_code_reference,
+                                                  optional_source_code)
+                dag_node_parents.append(input_info_other.dag_node)
             columns = [self.name]  # pylint: disable=no-member
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
@@ -525,9 +541,9 @@ class SeriesPatching:
                                DagNodeDetails(description, columns),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code))
 
-            result = original(input_info.annotated_dfobject.result_data, args[0])
+            result = original(input_info_self.annotated_dfobject.result_data, args[0])
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            add_dag_node(dag_node, dag_node_parents, function_call_result)
             new_result = function_call_result.function_result
 
             return new_result
@@ -543,10 +559,18 @@ class SeriesPatching:
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('pandas.core.series', 'ge')
-            input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
+            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                         optional_source_code)
+            dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            description = ">= {}".format(args[0])
+            if not isinstance(args[0], pandas.Series):
+                description = ">= {}".format(args[0])
+            else:
+                description = ">="
+                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
+                                                  optional_code_reference,
+                                                  optional_source_code)
+                dag_node_parents.append(input_info_other.dag_node)
             columns = [self.name]  # pylint: disable=no-member
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
@@ -554,9 +578,9 @@ class SeriesPatching:
                                DagNodeDetails(description, columns),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code))
 
-            result = original(input_info.annotated_dfobject.result_data, args[0])
+            result = original(input_info_self.annotated_dfobject.result_data, args[0])
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            add_dag_node(dag_node, dag_node_parents, function_call_result)
             new_result = function_call_result.function_result
 
             return new_result
@@ -572,10 +596,17 @@ class SeriesPatching:
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('pandas.core.series', 'gt')
-            input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
+            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                         optional_source_code)
+            dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            description = "> {}".format(args[0])
+            if not isinstance(args[0], pandas.Series):
+                description = "> {}".format(args[0])
+            else:
+                description = ">"
+                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info, optional_code_reference,
+                                            optional_source_code)
+                dag_node_parents.append(input_info_other.dag_node)
             columns = [self.name]  # pylint: disable=no-member
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
@@ -583,9 +614,9 @@ class SeriesPatching:
                                DagNodeDetails(description, columns),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code))
 
-            result = original(input_info.annotated_dfobject.result_data, args[0])
+            result = original(input_info_self.annotated_dfobject.result_data, args[0])
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            add_dag_node(dag_node, dag_node_parents, function_call_result)
             new_result = function_call_result.function_result
 
             return new_result
@@ -601,10 +632,18 @@ class SeriesPatching:
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('pandas.core.series', 'le')
-            input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
+            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                         optional_source_code)
+            dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            description = "<= {}".format(args[0])
+            if not isinstance(args[0], pandas.Series):
+                description = "<= {}".format(args[0])
+            else:
+                description = "<="
+                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
+                                                  optional_code_reference,
+                                                  optional_source_code)
+                dag_node_parents.append(input_info_other.dag_node)
             columns = [self.name]  # pylint: disable=no-member
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
@@ -612,9 +651,9 @@ class SeriesPatching:
                                DagNodeDetails(description, columns),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code))
 
-            result = original(input_info.annotated_dfobject.result_data, args[0])
+            result = original(input_info_self.annotated_dfobject.result_data, args[0])
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            add_dag_node(dag_node, dag_node_parents, function_call_result)
             new_result = function_call_result.function_result
 
             return new_result
@@ -630,10 +669,18 @@ class SeriesPatching:
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('pandas.core.series', 'lt')
-            input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
+            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                         optional_source_code)
+            dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            description = "<= {}".format(args[0])
+            if not isinstance(args[0], pandas.Series):
+                description = "< {}".format(args[0])
+            else:
+                description = "<"
+                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
+                                                  optional_code_reference,
+                                                  optional_source_code)
+                dag_node_parents.append(input_info_other.dag_node)
             columns = [self.name]  # pylint: disable=no-member
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
@@ -641,9 +688,9 @@ class SeriesPatching:
                                DagNodeDetails(description, columns),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code))
 
-            result = original(input_info.annotated_dfobject.result_data, args[0])
+            result = original(input_info_self.annotated_dfobject.result_data, args[0])
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            add_dag_node(dag_node, dag_node_parents, function_call_result)
             new_result = function_call_result.function_result
 
             return new_result
