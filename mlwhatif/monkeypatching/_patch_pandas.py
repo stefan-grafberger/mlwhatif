@@ -139,6 +139,7 @@ class DataFramePatching:
                 columns = list(self.columns)  # pylint: disable=no-member
                 selection_series_input_info = get_input_info(args[0], caller_filename, lineno, function_info,
                                                              optional_code_reference, optional_source_code)
+                # FIXME: Add test to make sure that this DAG node is included as a parent correctly
                 dag_parents.append(selection_series_input_info.dag_node)
                 if optional_source_code:
                     description = "Select by Series: {}".format(optional_source_code)
