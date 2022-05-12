@@ -74,6 +74,40 @@ def execute_patched_func(original_func, execute_inspections_func, *args, **kwarg
         result = execute_inspections_func(op_id, caller_filename, caller_lineno, None, None)
     return result
 
+def execute_patched_internal_func_with_depth(original_func, execute_inspections_func, depth, *args, **kwargs):
+    """
+    Detects whether the function call comes directly from user code and decides whether to execute the original
+    function or the patched variant.
+    """
+    # Performance aspects: https://gist.github.com/JettJones/c236494013f22723c1822126df944b12
+    # CPython implementation detail: This function should be used for internal and specialized purposes only.
+    #  It is not guaranteed to exist in all implementations of Python.
+    #  inspect.getcurrentframe() also only does return `sys._getframe(1) if hasattr(sys, "_getframe") else None`
+    #  We can execute one hasattr check right at the beginning of the mlwhatif execution
+
+    caller_filename = sys._getframe(depth).f_code.co_filename  # pylint: disable=protected-access
+
+    if caller_filename != singleton.source_code_path:
+        result = original_func(*args, **kwargs)
+    elif singleton.track_code_references:
+        call_ast_node = ast.Call(lineno=singleton.lineno_next_call_or_subscript,
+                                 col_offset=singleton.col_offset_next_call_or_subscript,
+                                 end_lineno=singleton.end_lineno_next_call_or_subscript,
+                                 end_col_offset=singleton.end_col_offset_next_call_or_subscript)
+        caller_source_code = ast.get_source_segment(singleton.source_code, node=call_ast_node)
+        caller_lineno = singleton.lineno_next_call_or_subscript
+        op_id = singleton.get_next_op_id()
+        caller_code_reference = CodeReference(singleton.lineno_next_call_or_subscript,
+                                              singleton.col_offset_next_call_or_subscript,
+                                              singleton.end_lineno_next_call_or_subscript,
+                                              singleton.end_col_offset_next_call_or_subscript)
+        result = execute_inspections_func(op_id, caller_filename, caller_lineno, caller_code_reference,
+                                          caller_source_code)
+    else:
+        op_id = singleton.get_next_op_id()
+        caller_lineno = sys._getframe(2).f_lineno  # pylint: disable=protected-access
+        result = execute_inspections_func(op_id, caller_filename, caller_lineno, None, None)
+    return result
 
 def execute_patched_func_no_op_id(original_func, execute_inspections_func, *args, **kwargs):
     """

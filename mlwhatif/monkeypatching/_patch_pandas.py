@@ -12,7 +12,8 @@ from mlwhatif import OperatorType, DagNode, BasicCodeLocation, DagNodeDetails
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo
 from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, get_input_info, add_dag_node, \
-    get_dag_node_for_id, execute_patched_func_no_op_id, get_optional_code_info_or_none, FunctionCallResult
+    get_dag_node_for_id, execute_patched_func_no_op_id, get_optional_code_info_or_none, FunctionCallResult, \
+    execute_patched_internal_func_with_depth
 from mlwhatif.monkeypatching._patch_sklearn import call_info_singleton
 
 
@@ -477,219 +478,39 @@ class SeriesPatching:
 
         return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
 
-    ################
-    # COMPARISONS:
-    ################
-
-    @gorilla.name('__eq__')
+    @gorilla.name('_cmp_method')
     @gorilla.settings(allow_hit=True)
-    def patched__eq__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__eq__') """
-        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.eq)  # pylint: disable=protected-access
+    def patched_cmp_method(self, other, cmp_op):
+        """ Patch for ('pandas.core.series', '_cmp_method') """
+        original = gorilla.get_original_attribute(pandas.Series, '_cmp_method')
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', '__eq__')
+
+            function_info = FunctionInfo('pandas.core.series', '_cmp_method')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
             dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = "= {}".format(args[0])
-            else:
+            if cmp_op == operator.eq:  # pylint: disable=comparison-with-callable
                 description = "="
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
-                                                  optional_code_reference,
-                                                  optional_source_code)
-                dag_node_parents.append(input_info_other.dag_node)
-            columns = [self.name]  # pylint: disable=no-member
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
-            result = original(input_info_self.annotated_dfobject.result_data, *args, **kwargs)
-            function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, dag_node_parents, function_call_result)
-            new_result = function_call_result.function_result
-
-            return new_result
-
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
-
-    @gorilla.name('__ne__')
-    @gorilla.settings(allow_hit=True)
-    def patched__ne__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__ne__') """
-        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.ne)  # pylint: disable=protected-access
-
-        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
-            """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', '__ne__')
-            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                             optional_source_code)
-            dag_node_parents = [input_info_self.dag_node]
-            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = "!= {}".format(args[0])
-            else:
+            elif cmp_op == operator.ne:  # pylint: disable=comparison-with-callable
                 description = "!="
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
-                                                  optional_code_reference,
-                                                  optional_source_code)
-                dag_node_parents.append(input_info_other.dag_node)
-            columns = [self.name]  # pylint: disable=no-member
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
-            result = original(input_info_self.annotated_dfobject.result_data, args[0])
-            function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, dag_node_parents, function_call_result)
-            new_result = function_call_result.function_result
-
-            return new_result
-
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
-
-    @gorilla.name('__ge__')
-    @gorilla.settings(allow_hit=True)
-    def patched__ge__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__ge__') """
-        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.ge)  # pylint: disable=protected-access
-
-        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
-            """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', 'ge')
-            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                             optional_source_code)
-            dag_node_parents = [input_info_self.dag_node]
-            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = ">= {}".format(args[0])
-            else:
-                description = ">="
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
-                                                  optional_code_reference,
-                                                  optional_source_code)
-                dag_node_parents.append(input_info_other.dag_node)
-            columns = [self.name]  # pylint: disable=no-member
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
-            result = original(input_info_self.annotated_dfobject.result_data, args[0])
-            function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, dag_node_parents, function_call_result)
-            new_result = function_call_result.function_result
-
-            return new_result
-
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
-
-    @gorilla.name('__gt__')
-    @gorilla.settings(allow_hit=True)
-    def patched__gt__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__gt__') """
-        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.gt)  # pylint: disable=protected-access
-
-        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
-            """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', 'gt')
-            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                             optional_source_code)
-            dag_node_parents = [input_info_self.dag_node]
-            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = "> {}".format(args[0])
-            else:
+            elif cmp_op == operator.gt:  # pylint: disable=comparison-with-callable
                 description = ">"
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
-                                                  optional_code_reference,
-                                                  optional_source_code)
-                dag_node_parents.append(input_info_other.dag_node)
-            columns = [self.name]  # pylint: disable=no-member
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
-            result = original(input_info_self.annotated_dfobject.result_data, args[0])
-            function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, dag_node_parents, function_call_result)
-            new_result = function_call_result.function_result
-
-            return new_result
-
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
-
-    @gorilla.name('__le__')
-    @gorilla.settings(allow_hit=True)
-    def patched__le__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__le__') """
-        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.le)  # pylint: disable=protected-access
-
-        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
-            """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', 'le')
-            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                             optional_source_code)
-            dag_node_parents = [input_info_self.dag_node]
-            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = "<= {}".format(args[0])
-            else:
-                description = "<="
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
-                                                  optional_code_reference,
-                                                  optional_source_code)
-                dag_node_parents.append(input_info_other.dag_node)
-            columns = [self.name]  # pylint: disable=no-member
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
-            result = original(input_info_self.annotated_dfobject.result_data, args[0])
-            function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, dag_node_parents, function_call_result)
-            new_result = function_call_result.function_result
-
-            return new_result
-
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
-
-    @gorilla.name('__lt__')
-    @gorilla.settings(allow_hit=True)
-    def patched__lt__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__le__') """
-        original = lambda x, y: pandas.Series._cmp_method(x, y, operator.lt)  # pylint: disable=protected-access
-
-        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
-            """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', 'lt')
-            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                             optional_source_code)
-            dag_node_parents = [input_info_self.dag_node]
-            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = "< {}".format(args[0])
-            else:
+            elif cmp_op == operator.ge:  # pylint: disable=comparison-with-callable
+                description = ">="
+            elif cmp_op == operator.lt:  # pylint: disable=comparison-with-callable
                 description = "<"
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
+            elif cmp_op == operator.le:  # pylint: disable=comparison-with-callable
+                description = "<="
+            else:
+                assert False
+            if not isinstance(other, pandas.Series):
+                description += " {}".format(other)
+            else:
+                input_info_other = get_input_info(other, caller_filename, lineno, function_info,
                                                   optional_code_reference,
                                                   optional_source_code)
                 dag_node_parents.append(input_info_other.dag_node)
@@ -700,18 +521,18 @@ class SeriesPatching:
                                DagNodeDetails(description, columns),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code))
 
-            result = original(input_info_self.annotated_dfobject.result_data, args[0])
+            result = original(self, other, cmp_op)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, dag_node_parents, function_call_result)
             new_result = function_call_result.function_result
 
             return new_result
 
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
+        return execute_patched_internal_func_with_depth(original, execute_inspections, 4, self, other, cmp_op)
 
-    ################
-    # LOGICAL OPS:
-    ################
+    # ################
+    # # LOGICAL OPS:
+    # ################
 
     @gorilla.name('__and__')
     @gorilla.settings(allow_hit=True)
@@ -811,9 +632,9 @@ class SeriesPatching:
 
         return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
 
-    ################
-    # ARITHMETIC:
-    ################
+    # ################
+    # # ARITHMETIC:
+    # ################
 
     @gorilla.name('__add__')
     @gorilla.settings(allow_hit=True)
@@ -929,7 +750,6 @@ class SeriesPatching:
 
         return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
 
-    # TODO: This breaks everything
     @gorilla.name('__rmul__')
     @gorilla.settings(allow_hit=True)
     def patched__rmul__(self, *args, **kwargs):

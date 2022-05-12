@@ -195,7 +195,8 @@ def test_frame__getitem__selection():
     expected_dag.add_edge(expected_data_source, expected_projection)
     expected_subscript = DagNode(2,
                                  BasicCodeLocation('<string-source>', 4),
-                                 OperatorContext(OperatorType.SUBSCRIPT, FunctionInfo('pandas.core.series', 'gt')),
+                                 OperatorContext(OperatorType.SUBSCRIPT,
+                                                 FunctionInfo('pandas.core.series', '_cmp_method')),
                                  DagNodeDetails('> 3', ['A']),
                                  OptionalCodeInfo(CodeReference(4, 18, 4, 25), "df['A']"))
     expected_dag.add_edge(expected_projection, expected_subscript)
