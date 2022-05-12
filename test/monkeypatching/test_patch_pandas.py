@@ -255,7 +255,7 @@ def test_frame__setitem__():
     expected_subscript = DagNode(2,
                                  BasicCodeLocation('<string-source>', 7),
                                  OperatorContext(OperatorType.SUBSCRIPT,
-                                                 FunctionInfo('pandas.core.series', '__add__')),
+                                                 FunctionInfo('pandas.core.series', '_arith_method')),
                                  DagNodeDetails('+ 1', ['baz']),
                                  OptionalCodeInfo(CodeReference(7, 19, 7, 35), "pandas_df['baz']"))
     expected_dag.add_edge(expected_project, expected_subscript)

@@ -506,6 +506,7 @@ class SeriesPatching:
             elif cmp_op == operator.le:  # pylint: disable=comparison-with-callable
                 description = "<="
             else:
+                print(f"Operation {cmp_op} is not supported yet!")
                 assert False
             if not isinstance(other, pandas.Series):
                 description += " {}".format(other)
@@ -530,26 +531,30 @@ class SeriesPatching:
 
         return execute_patched_internal_func_with_depth(original, execute_inspections, 4, self, other, cmp_op)
 
-    # ################
-    # # LOGICAL OPS:
-    # ################
-
-    @gorilla.name('__and__')
+    @gorilla.name('_logical_method')
     @gorilla.settings(allow_hit=True)
-    def patched__and__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__and__') """
-        original = lambda x, y: pandas.Series._logical_method(x, y, operator.and_)  # pylint: disable=protected-access
+    def patched_logical__method(self, other, logical_op):
+        """ Patch for ('pandas.core.series', '_logical_method') """
+        original = gorilla.get_original_attribute(pandas.Series, '_logical_method')
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', '__and__')
+            function_info = FunctionInfo('pandas.core.series', '_logical_method')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
-            input_info_other = get_input_info(args[0], caller_filename, lineno, function_info, optional_code_reference,
+            input_info_other = get_input_info(other, caller_filename, lineno, function_info, optional_code_reference,
                                               optional_source_code)
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            description = "&"
+            if logical_op == operator.and_:  # pylint: disable=comparison-with-callable
+                description = "&"
+            elif logical_op == operator.or_:  # pylint: disable=comparison-with-callable
+                description = "|"
+            elif logical_op == operator.xor:  # pylint: disable=comparison-with-callable
+                description = "^"
+            else:
+                print(f"Operation {logical_op} is not supported yet!")
+                assert False
             columns = [self.name]  # pylint: disable=no-member
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
@@ -557,50 +562,14 @@ class SeriesPatching:
                                DagNodeDetails(description, columns),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code))
 
-            result = original(input_info_self.annotated_dfobject.result_data,
-                              input_info_other.annotated_dfobject.result_data,
-                              *args[1:], **kwargs)
+            result = original(self, other, logical_op)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [input_info_self.dag_node, input_info_other.dag_node], function_call_result)
             new_result = function_call_result.function_result
 
             return new_result
 
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
-
-    @gorilla.name('__or__')
-    @gorilla.settings(allow_hit=True)
-    def patched__or__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__or__') """
-        original = lambda x, y: pandas.Series._logical_method(x, y, operator.and_)  # pylint: disable=protected-access
-
-        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
-            """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', '__or__')
-            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                             optional_source_code)
-            input_info_other = get_input_info(args[0], caller_filename, lineno, function_info, optional_code_reference,
-                                              optional_source_code)
-            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            description = "|"
-            columns = [self.name]  # pylint: disable=no-member
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
-            result = original(input_info_self.annotated_dfobject.result_data,
-                              input_info_other.annotated_dfobject.result_data,
-                              *args[1:], **kwargs)
-            function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info_self.dag_node, input_info_other.dag_node], function_call_result)
-            new_result = function_call_result.function_result
-
-            return new_result
-
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
+        return execute_patched_internal_func_with_depth(original, execute_inspections, 4, self, other, logical_op)
 
     @gorilla.name('__not__')
     @gorilla.settings(allow_hit=True)
@@ -632,295 +601,37 @@ class SeriesPatching:
 
         return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
 
-    # ################
-    # # ARITHMETIC:
-    # ################
-
-    @gorilla.name('__add__')
+    @gorilla.name('_arith_method')
     @gorilla.settings(allow_hit=True)
-    def patched__add__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__add__') """
-        original = lambda x, y: pandas.Series._arith_method(x, y, operator.add)  # pylint: disable=protected-access
+    def patched__arith_method(self, other, arith_op):
+        """ Patch for ('pandas.core.series', '_arith_method') """
+        original = gorilla.get_original_attribute(pandas.Series, '_arith_method')
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', '__add__')
+            function_info = FunctionInfo('pandas.core.series', '_arith_method')
             input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                              optional_source_code)
             dag_node_parents = [input_info_self.dag_node]
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = "+ {}".format(args[0])
-            else:
+            if arith_op == operator.add or arith_op.__name__ == "radd":  # pylint: disable=comparison-with-callable
                 description = "+"
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
-                                                  optional_code_reference,
-                                                  optional_source_code)
-                dag_node_parents.append(input_info_other.dag_node)
-            columns = [self.name]  # pylint: disable=no-member
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
-            result = original(input_info_self.annotated_dfobject.result_data, *args, **kwargs)
-            function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, dag_node_parents, function_call_result)
-            new_result = function_call_result.function_result
-
-            return new_result
-
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
-
-    @gorilla.name('__radd__')
-    @gorilla.settings(allow_hit=True)
-    def patched__radd__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__radd__') """
-        original = lambda x, y: pandas.Series._arith_method(x, y, operator.add)  # pylint: disable=protected-access
-
-        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
-            """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', '__radd__')
-            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                             optional_source_code)
-            dag_node_parents = [input_info_self.dag_node]
-            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = "+ {}".format(args[0])
-            else:
-                description = "+"
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
-                                                  optional_code_reference,
-                                                  optional_source_code)
-                dag_node_parents.append(input_info_other.dag_node)
-            columns = [self.name]  # pylint: disable=no-member
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
-            result = original(input_info_self.annotated_dfobject.result_data, *args, **kwargs)
-            function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, dag_node_parents, function_call_result)
-            new_result = function_call_result.function_result
-
-            return new_result
-
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
-
-    @gorilla.name('__mul__')
-    @gorilla.settings(allow_hit=True)
-    def patched__mul__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__mul__') """
-        original = lambda x, y: pandas.Series._arith_method(x, y, operator.mul)  # pylint: disable=protected-access
-
-        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
-            """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', '__mul__')
-            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                             optional_source_code)
-            dag_node_parents = [input_info_self.dag_node]
-            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = "+ {}".format(args[0])
-            else:
-                description = "+"
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
-                                                  optional_code_reference,
-                                                  optional_source_code)
-                dag_node_parents.append(input_info_other.dag_node)
-            columns = [self.name]  # pylint: disable=no-member
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
-            result = original(input_info_self.annotated_dfobject.result_data, *args, **kwargs)
-            function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, dag_node_parents, function_call_result)
-            new_result = function_call_result.function_result
-
-            return new_result
-
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
-
-    @gorilla.name('__rmul__')
-    @gorilla.settings(allow_hit=True)
-    def patched__rmul__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__rmul__') """
-        original = lambda x, y: pandas.Series._arith_method(x, y, operator.mul)  # pylint: disable=protected-access
-
-        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
-            """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', '__rmul__')
-            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                             optional_source_code)
-            dag_node_parents = [input_info_self.dag_node]
-            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = "* {}".format(args[0])
-            else:
+            elif arith_op == operator.sub or arith_op.__name__ == "rsub":  # pylint: disable=comparison-with-callable
+                description = "-"
+            elif arith_op == operator.mul or arith_op.__name__ == "rmul":  # pylint: disable=comparison-with-callable
                 description = "*"
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
-                                                  optional_code_reference,
-                                                  optional_source_code)
-                dag_node_parents.append(input_info_other.dag_node)
-            columns = [self.name]  # pylint: disable=no-member
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
-            result = original(input_info_self.annotated_dfobject.result_data, *args, **kwargs)
-            function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, dag_node_parents, function_call_result)
-            new_result = function_call_result.function_result
-
-            return new_result
-
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
-
-    @gorilla.name('__sub__')
-    @gorilla.settings(allow_hit=True)
-    def patched__sub__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__sub__') """
-        original = lambda x, y: pandas.Series._arith_method(x, y, operator.sub)  # pylint: disable=protected-access
-
-        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
-            """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', '__sub__')
-            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                             optional_source_code)
-            dag_node_parents = [input_info_self.dag_node]
-            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = "- {}".format(args[0])
-            else:
-                description = "-"
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
-                                                  optional_code_reference,
-                                                  optional_source_code)
-                dag_node_parents.append(input_info_other.dag_node)
-            columns = [self.name]  # pylint: disable=no-member
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
-            result = original(input_info_self.annotated_dfobject.result_data, *args, **kwargs)
-            function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, dag_node_parents, function_call_result)
-            new_result = function_call_result.function_result
-
-            return new_result
-
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
-
-    @gorilla.name('__rsub__')
-    @gorilla.settings(allow_hit=True)
-    def patched__rsub__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__rsub__') """
-        original = lambda x, y: pandas.Series._arith_method(y, x, operator.sub)  # pylint: disable=protected-access
-
-        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
-            """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', '__rsub__')
-            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                             optional_source_code)
-            dag_node_parents = [input_info_self.dag_node]
-            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = "- {}".format(args[0])
-            else:
-                description = "-"
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
-                                                  optional_code_reference,
-                                                  optional_source_code)
-                dag_node_parents.append(input_info_other.dag_node)
-            columns = [self.name]  # pylint: disable=no-member
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
-            result = original(input_info_self.annotated_dfobject.result_data, *args, **kwargs)
-            function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, dag_node_parents, function_call_result)
-            new_result = function_call_result.function_result
-
-            return new_result
-
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
-
-    @gorilla.name('__div__')
-    @gorilla.settings(allow_hit=True)
-    def patched__div__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__div__') """
-        original = lambda x, y: pandas.Series._arith_method(x, y, operator.truediv)  # pylint: disable=protected-access
-
-        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
-            """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', '__div__')
-            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                             optional_source_code)
-            dag_node_parents = [input_info_self.dag_node]
-            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = "/ {}".format(args[0])
-            else:
+            elif arith_op == operator.truediv:  # pylint: disable=comparison-with-callable
                 description = "/"
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
-                                                  optional_code_reference,
-                                                  optional_source_code)
-                dag_node_parents.append(input_info_other.dag_node)
-            columns = [self.name]  # pylint: disable=no-member
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
-            result = original(input_info_self.annotated_dfobject.result_data, *args, **kwargs)
-            function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, dag_node_parents, function_call_result)
-            new_result = function_call_result.function_result
-
-            return new_result
-
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
-
-    @gorilla.name('__rdiv__')
-    @gorilla.settings(allow_hit=True)
-    def patched__rdiv__(self, *args, **kwargs):
-        """ Patch for ('pandas.core.series', '__rdiv__') """
-        original = lambda x, y: pandas.Series._arith_method(y, x, operator.truediv)  # pylint: disable=protected-access
-
-        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
-            """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
-            function_info = FunctionInfo('pandas.core.series', '__rdiv__')
-            input_info_self = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
-                                             optional_source_code)
-            dag_node_parents = [input_info_self.dag_node]
-            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
-            if not isinstance(args[0], pandas.Series):
-                description = "/ {}".format(args[0])
-            else:
+            elif arith_op.__name__ == "rtruediv":
                 description = "/"
-                input_info_other = get_input_info(args[0], caller_filename, lineno, function_info,
+            else:
+                print(f"Operation {arith_op} is not supported yet!")
+                assert False
+            if not isinstance(other, pandas.Series):
+                description += " {}".format(other)
+            else:
+                input_info_other = get_input_info(other, caller_filename, lineno, function_info,
                                                   optional_code_reference,
                                                   optional_source_code)
                 dag_node_parents.append(input_info_other.dag_node)
@@ -931,11 +642,11 @@ class SeriesPatching:
                                DagNodeDetails(description, columns),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code))
 
-            result = original(input_info_self.annotated_dfobject.result_data, *args, **kwargs)
+            result = original(self, other, arith_op)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, dag_node_parents, function_call_result)
             new_result = function_call_result.function_result
 
             return new_result
 
-        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
+        return execute_patched_internal_func_with_depth(original, execute_inspections, 4, self, other, arith_op)
