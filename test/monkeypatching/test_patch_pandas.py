@@ -635,6 +635,7 @@ def test_series__logical_method():
                 mask3 = mask1 & mask2
                 pd.testing.assert_series_equal(mask3, pd.Series([True, False, False, True], name=None))
                 """)
+
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
     inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[3])
 

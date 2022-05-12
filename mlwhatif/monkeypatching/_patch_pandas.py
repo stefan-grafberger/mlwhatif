@@ -518,6 +518,8 @@ class SeriesPatching:
                                                   optional_code_reference,
                                                   optional_source_code)
                 dag_node_parents.append(input_info_other.dag_node)
+            # TODO: Pandas uses a function 'get_op_result_name' to construct the new name, this can also be
+            #  None sometimes. If these names are actually important for something, revisit this columns code line.
             columns = [self.name]  # pylint: disable=no-member
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
@@ -558,6 +560,9 @@ class SeriesPatching:
             else:
                 print(f"Operation {logical_op} is not supported yet!")
                 assert False
+
+            # TODO: Pandas uses a function 'get_op_result_name' to construct the new name, this can also be
+            #  None sometimes. If these names are actually important for something, revisit this columns code line.
             columns = [self.name]  # pylint: disable=no-member
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
@@ -641,6 +646,8 @@ class SeriesPatching:
                                                   optional_code_reference,
                                                   optional_source_code)
                 dag_node_parents.append(input_info_other.dag_node)
+            # TODO: Pandas uses a function 'get_op_result_name' to construct the new name, this can also be
+            #  None sometimes. If these names are actually important for something, revisit this columns code line.
             columns = [self.name]  # pylint: disable=no-member
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
