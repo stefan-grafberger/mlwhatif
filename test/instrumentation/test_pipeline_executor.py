@@ -188,6 +188,31 @@ def test_instrument_pipeline_with_code_reference_tracking_bin_op():
     compare(cleandoc(instrumented_code), expected_code)
 
 
+def test_instrument_pipeline_with_code_reference_tracking_bool_op():
+    """
+    Tests whether the instrumentation modifies user code as expected with code reference tracking
+    """
+    test_code = cleandoc("""
+            import pandas as pd
+            mask1 = pd.Series([True, False, True, None], name='A')
+            mask2 = pd.Series([True, False, False, None], name='B')
+            mask3 = mask1 and mask2
+            """)
+    parsed_ast = ast.parse(test_code)
+    parsed_modified_ast = singleton.instrument_pipeline(parsed_ast, True)
+    instrumented_code = astunparse.unparse(parsed_modified_ast)
+    expected_code = cleandoc("""
+            from mlwhatif.instrumentation._pipeline_executor import set_code_reference_call, set_code_reference_subscript, monkey_patch, undo_monkey_patch
+            monkey_patch()
+            import pandas as pd
+            mask1 = pd.Series([True, False, True, None], **set_code_reference_call(2, 8, 2, 54, name='A'))
+            mask2 = pd.Series([True, False, False, None], **set_code_reference_call(3, 8, 3, 55, name='B'))
+            mask3 = (mask1 and set_code_reference_subscript(4, 8, 4, 23, mask2))
+            undo_monkey_patch()
+            """)
+    compare(cleandoc(instrumented_code), expected_code)
+
+
 def test_instrument_pipeline_without_code_reference_tracking():
     """
     Tests whether the instrumentation modifies user code as expected without code reference tracking

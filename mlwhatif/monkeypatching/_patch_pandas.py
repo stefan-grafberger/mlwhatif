@@ -509,7 +509,10 @@ class SeriesPatching:
                 print(f"Operation {cmp_op} is not supported yet!")
                 assert False
             if not isinstance(other, pandas.Series):
-                description += " {}".format(other)
+                if isinstance(other, str):
+                    description += f" '{other}'"
+                else:
+                    description += f" {other}"
             else:
                 input_info_other = get_input_info(other, caller_filename, lineno, function_info,
                                                   optional_code_reference,
@@ -629,7 +632,10 @@ class SeriesPatching:
                 print(f"Operation {arith_op} is not supported yet!")
                 assert False
             if not isinstance(other, pandas.Series):
-                description += " {}".format(other)
+                if isinstance(other, str):
+                    description += f" '{other}'"
+                else:
+                    description += f" {other}"
             else:
                 input_info_other = get_input_info(other, caller_filename, lineno, function_info,
                                                   optional_code_reference,

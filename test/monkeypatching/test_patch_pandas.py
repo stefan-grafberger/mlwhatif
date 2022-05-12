@@ -622,3 +622,44 @@ def test_series__arith_method():
     expected_dag.add_edge(expected_data_source, expected_projection)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+
+def test_series__logical_method():
+    """
+    Tests whether the monkey patching of ('pandas.core.series', 'test_series__logical_method') works
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                mask1 = pd.Series([True, False, True, True], name='A')
+                mask2 = pd.Series([True, False, False, True], name='B')
+                mask3 = mask1 & mask2
+                pd.testing.assert_series_equal(mask3, pd.Series([True, False, False, True], name=None))
+                """)
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[3])
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source1 = DagNode(0,
+                                    BasicCodeLocation("<string-source>", 2),
+                                    OperatorContext(OperatorType.DATA_SOURCE,
+                                                    FunctionInfo('pandas.core.series', 'Series')),
+                                    DagNodeDetails(None, ['A']),
+                                    OptionalCodeInfo(CodeReference(2, 8, 2, 54),
+                                                     "pd.Series([True, False, True, True], name='A')"))
+    expected_data_source2 = DagNode(1,
+                                    BasicCodeLocation("<string-source>", 3),
+                                    OperatorContext(OperatorType.DATA_SOURCE,
+                                                    FunctionInfo('pandas.core.series', 'Series')),
+                                    DagNodeDetails(None, ['B']),
+                                    OptionalCodeInfo(CodeReference(3, 8, 3, 55),
+                                                     "pd.Series([True, False, False, True], name='B')"))
+    expected_subscript = DagNode(2,
+                                 BasicCodeLocation("<string-source>", 4),
+                                 OperatorContext(OperatorType.SUBSCRIPT,
+                                                 FunctionInfo('pandas.core.series', '_logical_method')),
+                                 DagNodeDetails('&', ['A']),
+                                 OptionalCodeInfo(CodeReference(4, 8, 4, 21), 'mask1 & mask2'))
+    expected_dag.add_edge(expected_data_source1, expected_subscript)
+    expected_dag.add_edge(expected_data_source2, expected_subscript)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
