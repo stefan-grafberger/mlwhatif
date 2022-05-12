@@ -198,7 +198,7 @@ def test_frame__getitem__selection():
                                  OperatorContext(OperatorType.SUBSCRIPT,
                                                  FunctionInfo('pandas.core.series', '_cmp_method')),
                                  DagNodeDetails('> 3', ['A']),
-                                 OptionalCodeInfo(CodeReference(4, 18, 4, 25), "df['A']"))
+                                 OptionalCodeInfo(CodeReference(4, 18, 4, 29), "df['A'] > 3"))
     expected_dag.add_edge(expected_projection, expected_subscript)
     expected_selection = DagNode(3,
                                  BasicCodeLocation("<string-source>", 4),
@@ -557,3 +557,36 @@ def test_series_isin():
     expected_dag.add_edge(expected_data_source, expected_isin)
 
     compare(extracted_dag, expected_dag)
+
+
+def test_series__arith_method():
+    """
+    Tests whether the monkey patching of ('pandas.core.frame', '__getitem__') works for filtering
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+
+                pd_series = pd.Series([0, 2, 4, None], name='A')
+                mask = pd_series > 3
+                pd.testing.assert_series_equal(mask, pd.Series([False, False, True, False], name='A'))
+                """)
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[2])
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 3),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.series', 'Series')),
+                                   DagNodeDetails(None, ['A']),
+                                   OptionalCodeInfo(CodeReference(3, 12, 3, 48),
+                                                    "pd.Series([0, 2, 4, None], name='A')"))
+    expected_projection = DagNode(1,
+                                  BasicCodeLocation("<string-source>", 4),
+                                  OperatorContext(OperatorType.SUBSCRIPT,
+                                                  FunctionInfo('pandas.core.series', '_cmp_method')),
+                                  DagNodeDetails('> 3', ['A']),
+                                  OptionalCodeInfo(CodeReference(4, 7, 4, 20), 'pd_series > 3'))
+    expected_dag.add_edge(expected_data_source, expected_projection)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))

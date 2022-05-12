@@ -33,13 +33,13 @@ class CallCaptureTransformer(ast.NodeTransformer):
         self.subscript_add_set_code_reference(node, code_reference_from_node)
         return node
 
-    def visit_Compare(self, node: ast.Compare):
+    def visit_Compare(self, node):
         """
         Instrument all function calls
         """
         # pylint: disable=invalid-name
         ast.NodeTransformer.generic_visit(self, node)
-        self.subscript_add_set_code_reference(node, node)
+        self.compare_add_set_code_reference(node)
         return node
 
     # def visit_BinOp(self, node: ast.BinOp):
@@ -48,9 +48,9 @@ class CallCaptureTransformer(ast.NodeTransformer):
     #     """
     #     # pylint: disable=invalid-name
     #     ast.NodeTransformer.generic_visit(self, node)
-    #     self.subscript_add_set_code_reference(node, node)
+    #     self.compare_add_set_code_reference(node)
     #     return node
-    #
+
     # def visit_BoolOp(self, node: ast.BoolOp):
     #     """
     #     Instrument all function calls
@@ -89,21 +89,6 @@ class CallCaptureTransformer(ast.NodeTransformer):
         return call_node
 
     @staticmethod
-    def create_set_code_reference_node_comparison(node):
-        """
-        Create the set_code_reference function call ast node that then gets inserted into the AST
-        """
-        # TODO: We need to mark when it begins only if I remember correctly
-        #  So we need to wrap the left argument with a call
-        call_node = ast.Call(func=ast.Name(id='set_code_reference_call', ctx=ast.Load()),
-                             args=[ast.Constant(n=node.lineno, kind=None),
-                                   ast.Constant(n=node.col_offset, kind=None),
-                                   ast.Constant(n=node.end_lineno, kind=None),
-                                   ast.Constant(n=node.end_col_offset, kind=None)],
-                             keywords=kwargs)
-        return call_node
-
-    @staticmethod
     def create_set_code_reference_node_subscript(node, kwargs):
         """
         Create the set_code_reference function call ast node that then gets inserted into the AST
@@ -126,3 +111,13 @@ class CallCaptureTransformer(ast.NodeTransformer):
         call_node = CallCaptureTransformer.create_set_code_reference_node_subscript(code_reference_from_node,
                                                                                     subscript_arg)
         node.slice = call_node
+
+    @staticmethod
+    def compare_add_set_code_reference(node):
+        """
+        When comparison methods like > or == of some object are called, capture the arguments of the method before
+        executing it
+        """
+        last_previously_processed_row = node.comparators[-1]
+        call_node = CallCaptureTransformer.create_set_code_reference_node_subscript(node, last_previously_processed_row)
+        node.comparators[-1] = call_node
