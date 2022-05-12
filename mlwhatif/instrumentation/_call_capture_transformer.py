@@ -42,14 +42,14 @@ class CallCaptureTransformer(ast.NodeTransformer):
         self.compare_add_set_code_reference(node)
         return node
 
-    # def visit_BinOp(self, node: ast.BinOp):
-    #     """
-    #     Instrument all function calls
-    #     """
-    #     # pylint: disable=invalid-name
-    #     ast.NodeTransformer.generic_visit(self, node)
-    #     self.compare_add_set_code_reference(node)
-    #     return node
+    def visit_BinOp(self, node: ast.BinOp):
+        """
+        Instrument all function calls
+        """
+        # pylint: disable=invalid-name
+        ast.NodeTransformer.generic_visit(self, node)
+        self.bin_op_add_set_code_reference(node)
+        return node
 
     # def visit_BoolOp(self, node: ast.BoolOp):
     #     """
@@ -118,6 +118,16 @@ class CallCaptureTransformer(ast.NodeTransformer):
         When comparison methods like > or == of some object are called, capture the arguments of the method before
         executing it
         """
-        last_previously_processed_row = node.comparators[-1]
-        call_node = CallCaptureTransformer.create_set_code_reference_node_subscript(node, last_previously_processed_row)
+        last_previously_processed_val = node.comparators[-1]
+        call_node = CallCaptureTransformer.create_set_code_reference_node_subscript(node, last_previously_processed_val)
         node.comparators[-1] = call_node
+
+    @staticmethod
+    def bin_op_add_set_code_reference(node):
+        """
+        When comparison methods like > or == of some object are called, capture the arguments of the method before
+        executing it
+        """
+        last_previously_processed_val = node.right
+        call_node = CallCaptureTransformer.create_set_code_reference_node_subscript(node, last_previously_processed_val)
+        node.right = call_node

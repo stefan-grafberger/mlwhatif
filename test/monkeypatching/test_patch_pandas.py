@@ -257,7 +257,7 @@ def test_frame__setitem__():
                                  OperatorContext(OperatorType.SUBSCRIPT,
                                                  FunctionInfo('pandas.core.series', '_arith_method')),
                                  DagNodeDetails('+ 1', ['baz']),
-                                 OptionalCodeInfo(CodeReference(7, 19, 7, 35), "pandas_df['baz']"))
+                                 OptionalCodeInfo(CodeReference(7, 19, 7, 39), "pandas_df['baz'] + 1"))
     expected_dag.add_edge(expected_project, expected_subscript)
     expected_project_modify = DagNode(3,
                                       BasicCodeLocation("<string-source>", 7),
@@ -559,9 +559,9 @@ def test_series_isin():
     compare(extracted_dag, expected_dag)
 
 
-def test_series__arith_method():
+def test_series__cmp_method():
     """
-    Tests whether the monkey patching of ('pandas.core.frame', '__getitem__') works for filtering
+    Tests whether the monkey patching of ('pandas.core.series', '_cmp_method') works
     """
     test_code = cleandoc("""
                 import pandas as pd
@@ -587,6 +587,38 @@ def test_series__arith_method():
                                                   FunctionInfo('pandas.core.series', '_cmp_method')),
                                   DagNodeDetails('> 3', ['A']),
                                   OptionalCodeInfo(CodeReference(4, 7, 4, 20), 'pd_series > 3'))
+    expected_dag.add_edge(expected_data_source, expected_projection)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+
+def test_series__arith_method():
+    """
+    Tests whether the monkey patching of ('pandas.core.series', '_arith_method') works
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                pd_series = pd.Series([0, 2, 4, None], name='A')
+                pd_series = pd_series + 2
+                pd.testing.assert_series_equal(pd_series, pd.Series([2, 4, 6, None], name='A'))
+                """)
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[2])
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 2),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.series', 'Series')),
+                                   DagNodeDetails(None, ['A']),
+                                   OptionalCodeInfo(CodeReference(2, 12, 2, 48),
+                                                    "pd.Series([0, 2, 4, None], name='A')"))
+    expected_projection = DagNode(1,
+                                  BasicCodeLocation("<string-source>", 3),
+                                  OperatorContext(OperatorType.SUBSCRIPT,
+                                                  FunctionInfo('pandas.core.series', '_arith_method')),
+                                  DagNodeDetails('+ 2', ['A']),
+                                  OptionalCodeInfo(CodeReference(3, 12, 3, 25), 'pd_series + 2'))
     expected_dag.add_edge(expected_data_source, expected_projection)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
