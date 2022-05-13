@@ -40,7 +40,7 @@ def test_statsmodels_add_constant():
                                                 FunctionInfo('statsmodel.api', 'add_constant')),
                                 DagNodeDetails('Adds const column', ['array']),
                                 OptionalCodeInfo(CodeReference(5, 7, 5, 28), "sm.add_constant(test)"))
-    expected_dag.add_edge(expected_random, expected_constant)
+    expected_dag.add_edge(expected_random, expected_constant, arg_index=0)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -114,7 +114,7 @@ def test_ols_fit():
                                            FunctionInfo('statsmodel.api.OLS', 'fit')),
                            DagNodeDetails('Decision Tree', []),
                            OptionalCodeInfo(CodeReference(10, 10, 10, 22), 'sm.OLS(y, X)'))
-    expected_dag.add_edge(expected_train_data, expected_ols)
-    expected_dag.add_edge(expected_train_labels, expected_ols)
+    expected_dag.add_edge(expected_train_data, expected_ols, arg_index=0)
+    expected_dag.add_edge(expected_train_labels, expected_ols, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))

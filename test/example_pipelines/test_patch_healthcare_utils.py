@@ -48,7 +48,7 @@ def test_my_word_to_vec_transformer():
                                  DagNodeDetails('Word2Vec: fit_transform', ['array']),
                                  OptionalCodeInfo(CodeReference(6, 14, 6, 62),
                                                   'MyW2VTransformer(min_count=2, size=2, workers=1)'))
-    expected_dag.add_edge(expected_data_source, expected_estimator)
+    expected_dag.add_edge(expected_data_source, expected_estimator, arg_index=0)
     expected_data_source_two = DagNode(2,
                                        BasicCodeLocation("<string-source>", 9),
                                        OperatorContext(OperatorType.DATA_SOURCE,
@@ -64,7 +64,7 @@ def test_my_word_to_vec_transformer():
                                      DagNodeDetails('Word2Vec: transform', ['array']),
                                      OptionalCodeInfo(CodeReference(6, 14, 6, 62),
                                                       'MyW2VTransformer(min_count=2, size=2, workers=1)'))
-    expected_dag.add_edge(expected_data_source_two, expected_estimator_two)
+    expected_dag.add_edge(expected_data_source_two, expected_estimator_two, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 

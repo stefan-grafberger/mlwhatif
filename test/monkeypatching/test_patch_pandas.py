@@ -91,7 +91,7 @@ def test_frame_dropna():
                               OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'dropna')),
                               DagNodeDetails('dropna', ['A']),
                               OptionalCodeInfo(CodeReference(5, 5, 5, 16), 'df.dropna()'))
-    expected_dag.add_edge(expected_data_source, expected_select)
+    expected_dag.add_edge(expected_data_source, expected_select, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -123,7 +123,7 @@ def test_frame__getitem__series():
                                                FunctionInfo('pandas.core.frame', '__getitem__')),
                                DagNodeDetails("to ['A']", ['A']),
                                OptionalCodeInfo(CodeReference(4, 4, 4, 11), "df['A']"))
-    expected_dag.add_edge(expected_data_source, expected_project)
+    expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -159,7 +159,7 @@ def test_frame__getitem__frame():
                                                FunctionInfo('pandas.core.frame', '__getitem__')),
                                DagNodeDetails("to ['A', 'C']", ['A', 'C']),
                                OptionalCodeInfo(CodeReference(5, 16, 5, 30), "df[['A', 'C']]"))
-    expected_dag.add_edge(expected_data_source, expected_project)
+    expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -192,22 +192,22 @@ def test_frame__getitem__selection():
                                                   FunctionInfo('pandas.core.frame', '__getitem__')),
                                   DagNodeDetails("to ['A']", ['A']),
                                   OptionalCodeInfo(CodeReference(4, 18, 4, 25), "df['A']"))
-    expected_dag.add_edge(expected_data_source, expected_projection)
+    expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
     expected_subscript = DagNode(2,
                                  BasicCodeLocation('<string-source>', 4),
                                  OperatorContext(OperatorType.SUBSCRIPT,
                                                  FunctionInfo('pandas.core.series', '_cmp_method')),
                                  DagNodeDetails('> 3', ['A']),
                                  OptionalCodeInfo(CodeReference(4, 18, 4, 29), "df['A'] > 3"))
-    expected_dag.add_edge(expected_projection, expected_subscript)
+    expected_dag.add_edge(expected_projection, expected_subscript, arg_index=0)
     expected_selection = DagNode(3,
                                  BasicCodeLocation("<string-source>", 4),
                                  OperatorContext(OperatorType.SELECTION,
                                                  FunctionInfo('pandas.core.frame', '__getitem__')),
                                  DagNodeDetails("Select by Series: df[df['A'] > 3]", ['A', 'B']),
                                  OptionalCodeInfo(CodeReference(4, 15, 4, 30), "df[df['A'] > 3]"))
-    expected_dag.add_edge(expected_data_source, expected_selection)
-    expected_dag.add_edge(expected_subscript, expected_selection)
+    expected_dag.add_edge(expected_data_source, expected_selection, arg_index=0)
+    expected_dag.add_edge(expected_subscript, expected_selection, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -251,14 +251,14 @@ def test_frame__setitem__():
                                                FunctionInfo('pandas.core.frame', '__getitem__')),
                                DagNodeDetails("to ['baz']", ['baz']),
                                OptionalCodeInfo(CodeReference(7, 19, 7, 35), "pandas_df['baz']"))
-    expected_dag.add_edge(expected_data_source, expected_project)
+    expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
     expected_subscript = DagNode(2,
                                  BasicCodeLocation('<string-source>', 7),
                                  OperatorContext(OperatorType.SUBSCRIPT,
                                                  FunctionInfo('pandas.core.series', '_arith_method')),
                                  DagNodeDetails('+ 1', ['baz']),
                                  OptionalCodeInfo(CodeReference(7, 19, 7, 39), "pandas_df['baz'] + 1"))
-    expected_dag.add_edge(expected_project, expected_subscript)
+    expected_dag.add_edge(expected_project, expected_subscript, arg_index=0)
     expected_project_modify = DagNode(3,
                                       BasicCodeLocation("<string-source>", 7),
                                       OperatorContext(OperatorType.PROJECTION_MODIFY,
@@ -266,8 +266,8 @@ def test_frame__setitem__():
                                       DagNodeDetails("modifies ['baz']", ['foo', 'bar', 'baz', 'zoo']),
                                       OptionalCodeInfo(CodeReference(7, 0, 7, 39),
                                                        "pandas_df['baz'] = pandas_df['baz'] + 1"))
-    expected_dag.add_edge(expected_data_source, expected_project_modify)
-    expected_dag.add_edge(expected_subscript, expected_project_modify)
+    expected_dag.add_edge(expected_data_source, expected_project_modify, arg_index=0)
+    expected_dag.add_edge(expected_subscript, expected_project_modify, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -302,7 +302,7 @@ def test_frame_replace():
                                               FunctionInfo('pandas.core.frame', 'replace')),
                               DagNodeDetails("Replace 'Medium' with 'Low'", ['A']),
                               OptionalCodeInfo(CodeReference(4, 13, 4, 40), "df.replace('Medium', 'Low')"))
-    expected_dag.add_edge(expected_data_source, expected_modify)
+    expected_dag.add_edge(expected_data_source, expected_modify, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -340,8 +340,8 @@ def test_frame_merge_on():
                             OperatorContext(OperatorType.JOIN, FunctionInfo('pandas.core.frame', 'merge')),
                             DagNodeDetails("on 'B'", ['A', 'B', 'C']),
                             OptionalCodeInfo(CodeReference(5, 12, 5, 36), "df_a.merge(df_b, on='B')"))
-    expected_dag.add_edge(expected_a, expected_join)
-    expected_dag.add_edge(expected_b, expected_join)
+    expected_dag.add_edge(expected_a, expected_join, arg_index=0)
+    expected_dag.add_edge(expected_b, expected_join, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -380,8 +380,8 @@ def test_frame_merge_left_right_on():
                             DagNodeDetails("on 'B' == 'C'", ['A', 'B', 'C', 'D']),
                             OptionalCodeInfo(CodeReference(5, 12, 5, 55),
                                              "df_a.merge(df_b, left_on='B', right_on='C')"))
-    expected_dag.add_edge(expected_a, expected_join)
-    expected_dag.add_edge(expected_b, expected_join)
+    expected_dag.add_edge(expected_a, expected_join, arg_index=0)
+    expected_dag.add_edge(expected_b, expected_join, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -422,8 +422,8 @@ def test_frame_merge_index():
                             DagNodeDetails('on left_index == right_index (outer)', ['A', 'B', 'C', 'D']),
                             OptionalCodeInfo(CodeReference(5, 12, 5, 82),
                                              "df_a.merge(right=df_b, left_index=True, right_index=True, how='outer')"))
-    expected_dag.add_edge(expected_a, expected_join)
-    expected_dag.add_edge(expected_b, expected_join)
+    expected_dag.add_edge(expected_a, expected_join, arg_index=0)
+    expected_dag.add_edge(expected_b, expected_join, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -461,8 +461,8 @@ def test_frame_merge_sorted():
                             OperatorContext(OperatorType.JOIN, FunctionInfo('pandas.core.frame', 'merge')),
                             DagNodeDetails("on 'B'", ['A', 'B', 'C']),
                             OptionalCodeInfo(CodeReference(5, 12, 5, 47), "df_a.merge(df_b, on='B', sort=True)"))
-    expected_dag.add_edge(expected_a, expected_join)
-    expected_dag.add_edge(expected_b, expected_join)
+    expected_dag.add_edge(expected_a, expected_join, arg_index=0)
+    expected_dag.add_edge(expected_b, expected_join, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -499,7 +499,7 @@ def test_groupby_agg():
                                                   ['group', 'mean_value']),
                                    OptionalCodeInfo(CodeReference(4, 17, 4, 70),
                                                     "df.groupby('group').agg(mean_value=('value', 'mean'))"))
-    expected_dag.add_edge(expected_data, expected_groupby_agg)
+    expected_dag.add_edge(expected_data, expected_groupby_agg, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -554,7 +554,7 @@ def test_series_isin():
                             DagNodeDetails('isin: [2, 4]', ['A']),
                             OptionalCodeInfo(CodeReference(4, 11, 4, 33),
                                              'pd_series.isin([2, 4])'))
-    expected_dag.add_edge(expected_data_source, expected_isin)
+    expected_dag.add_edge(expected_data_source, expected_isin, arg_index=0)
 
     compare(extracted_dag, expected_dag)
 
@@ -587,7 +587,7 @@ def test_series__cmp_method():
                                                   FunctionInfo('pandas.core.series', '_cmp_method')),
                                   DagNodeDetails('> 3', ['A']),
                                   OptionalCodeInfo(CodeReference(4, 7, 4, 20), 'pd_series > 3'))
-    expected_dag.add_edge(expected_data_source, expected_projection)
+    expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -619,7 +619,7 @@ def test_series__arith_method():
                                                   FunctionInfo('pandas.core.series', '_arith_method')),
                                   DagNodeDetails('+ 2', ['A']),
                                   OptionalCodeInfo(CodeReference(3, 12, 3, 25), 'pd_series + 2'))
-    expected_dag.add_edge(expected_data_source, expected_projection)
+    expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -660,7 +660,7 @@ def test_series__logical_method():
                                                  FunctionInfo('pandas.core.series', '_logical_method')),
                                  DagNodeDetails('&', ['A']),
                                  OptionalCodeInfo(CodeReference(4, 8, 4, 21), 'mask1 & mask2'))
-    expected_dag.add_edge(expected_data_source1, expected_subscript)
-    expected_dag.add_edge(expected_data_source2, expected_subscript)
+    expected_dag.add_edge(expected_data_source1, expected_subscript, arg_index=0)
+    expected_dag.add_edge(expected_data_source2, expected_subscript, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))

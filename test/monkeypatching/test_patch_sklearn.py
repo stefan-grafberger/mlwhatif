@@ -45,7 +45,7 @@ def test_label_binarize():
                                 DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
                                 OptionalCodeInfo(CodeReference(6, 12, 6, 60),
                                                  "label_binarize(pd_series, classes=['no', 'yes'])"))
-    expected_dag.add_edge(expected_data_source, expected_binarize)
+    expected_dag.add_edge(expected_data_source, expected_binarize, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -84,7 +84,7 @@ def test_train_test_split():
                              DagNodeDetails('(Train Data)', ['A']),
                              OptionalCodeInfo(CodeReference(5, 24, 5, 67),
                                               'train_test_split(pandas_df, random_state=0)'))
-    expected_dag.add_edge(expected_source, expected_train)
+    expected_dag.add_edge(expected_source, expected_train, arg_index=0)
     expected_test = DagNode(2,
                             BasicCodeLocation("<string-source>", 5),
                             OperatorContext(OperatorType.TRAIN_TEST_SPLIT,
@@ -92,7 +92,7 @@ def test_train_test_split():
                             DagNodeDetails('(Test Data)', ['A']),
                             OptionalCodeInfo(CodeReference(5, 24, 5, 67),
                                              'train_test_split(pandas_df, random_state=0)'))
-    expected_dag.add_edge(expected_source, expected_test)
+    expected_dag.add_edge(expected_source, expected_test, arg_index=0)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -130,7 +130,7 @@ def test_standard_scaler():
                                                    FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                    DagNodeDetails('Standard Scaler: fit_transform', ['array']),
                                    OptionalCodeInfo(CodeReference(6, 18, 6, 34), 'StandardScaler()'))
-    expected_dag.add_edge(expected_data_source, expected_transformer)
+    expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     expected_data_source_two = DagNode(2,
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.DATA_SOURCE,
@@ -144,7 +144,7 @@ def test_standard_scaler():
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: transform', ['array']),
                                        OptionalCodeInfo(CodeReference(6, 18, 6, 34), 'StandardScaler()'))
-    expected_dag.add_edge(expected_data_source_two, expected_transformer_two)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -186,7 +186,7 @@ def test_function_transformer():
                                    DagNodeDetails('Function Transformer: fit_transform', ['A']),
                                    OptionalCodeInfo(CodeReference(9, 23, 9, 65),
                                                     'FunctionTransformer(lambda x: safe_log(x))'))
-    expected_dag.add_edge(expected_data_source, expected_transformer)
+    expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     expected_data_source_two = DagNode(2,
                                        BasicCodeLocation("<string-source>", 11),
                                        OperatorContext(OperatorType.DATA_SOURCE,
@@ -202,7 +202,7 @@ def test_function_transformer():
                                        DagNodeDetails('Function Transformer: transform', ['A']),
                                        OptionalCodeInfo(CodeReference(9, 23, 9, 65),
                                                         'FunctionTransformer(lambda x: safe_log(x))'))
-    expected_dag.add_edge(expected_data_source_two, expected_transformer_two)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -241,7 +241,7 @@ def test_kbins_discretizer():
                                    DagNodeDetails('K-Bins Discretizer: fit_transform', ['array']),
                                    OptionalCodeInfo(CodeReference(6, 14, 6, 78),
                                                     "KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform')"))
-    expected_dag.add_edge(expected_data_source, expected_transformer)
+    expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     expected_data_source_two = DagNode(2,
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.DATA_SOURCE,
@@ -258,7 +258,7 @@ def test_kbins_discretizer():
                                        OptionalCodeInfo(CodeReference(6, 14, 6, 78),
                                                         "KBinsDiscretizer(n_bins=3, encode='ordinal', "
                                                         "strategy='uniform')"))
-    expected_dag.add_edge(expected_data_source_two, expected_transformer_two)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -297,7 +297,7 @@ def test_simple_imputer():
                                    DagNodeDetails('Simple Imputer: fit_transform', ['A']),
                                    OptionalCodeInfo(CodeReference(6, 10, 6, 72),
                                                     "SimpleImputer(missing_values=np.nan, strategy='most_frequent')"))
-    expected_dag.add_edge(expected_data_source, expected_transformer)
+    expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     expected_data_source_two = DagNode(2,
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.DATA_SOURCE,
@@ -312,7 +312,7 @@ def test_simple_imputer():
                                        DagNodeDetails('Simple Imputer: transform', ['A']),
                                        OptionalCodeInfo(CodeReference(6, 10, 6, 72),
                                                         "SimpleImputer(missing_values=np.nan, strategy='most_frequent')"))
-    expected_dag.add_edge(expected_data_source_two, expected_transformer_two)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -351,7 +351,7 @@ def test_one_hot_encoder_not_sparse():
                                                    FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
                                    OptionalCodeInfo(CodeReference(6, 18, 6, 45), 'OneHotEncoder(sparse=False)'))
-    expected_dag.add_edge(expected_data_source, expected_transformer)
+    expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     expected_data_source_two = DagNode(2,
                                        BasicCodeLocation("<string-source>", 11),
                                        OperatorContext(OperatorType.DATA_SOURCE,
@@ -366,7 +366,7 @@ def test_one_hot_encoder_not_sparse():
                                                                     'OneHotEncoder')),
                                        DagNodeDetails('One-Hot Encoder: transform', ['array']),
                                        OptionalCodeInfo(CodeReference(6, 18, 6, 45), 'OneHotEncoder(sparse=False)'))
-    expected_dag.add_edge(expected_data_source_two, expected_transformer_two)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -403,7 +403,7 @@ def test_one_hot_encoder_sparse():
                                                    FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
                                    OptionalCodeInfo(CodeReference(7, 18, 7, 33), 'OneHotEncoder()'))
-    expected_dag.add_edge(expected_data_source, expected_transformer)
+    expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -445,7 +445,7 @@ def test_hashing_vectorizer():
                                    DagNodeDetails('Hashing Vectorizer: fit_transform', ['array']),
                                    OptionalCodeInfo(CodeReference(7, 13, 7, 67),
                                                     'HashingVectorizer(ngram_range=(1, 3), n_features=2**2)'))
-    expected_dag.add_edge(expected_data_source, expected_transformer)
+    expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     expected_data_source_two = DagNode(4,
                                        BasicCodeLocation("<string-source>", 12),
                                        OperatorContext(OperatorType.PROJECTION,
@@ -460,7 +460,7 @@ def test_hashing_vectorizer():
                                        DagNodeDetails('Hashing Vectorizer: transform', ['array']),
                                        OptionalCodeInfo(CodeReference(7, 13, 7, 67),
                                                         'HashingVectorizer(ngram_range=(1, 3), n_features=2**2)'))
-    expected_dag.add_edge(expected_data_source_two, expected_transformer_two)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -504,14 +504,14 @@ def test_column_transformer_one_transformer():
                                   OptionalCodeInfo(CodeReference(8, 21, 10, 2),
                                                    "ColumnTransformer(transformers=[\n"
                                                    "    ('numeric', StandardScaler(), ['A', 'B'])\n])"))
-    expected_dag.add_edge(expected_data_source, expected_projection)
+    expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
     expected_standard_scaler = DagNode(2,
                                        BasicCodeLocation("<string-source>", 9),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array']),
                                        OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'))
-    expected_dag.add_edge(expected_projection, expected_standard_scaler)
+    expected_dag.add_edge(expected_projection, expected_standard_scaler, arg_index=0)
     expected_concat = DagNode(3,
                               BasicCodeLocation("<string-source>", 8),
                               OperatorContext(OperatorType.CONCATENATION,
@@ -520,7 +520,7 @@ def test_column_transformer_one_transformer():
                               OptionalCodeInfo(CodeReference(8, 21, 10, 2),
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A', 'B'])\n])"))
-    expected_dag.add_edge(expected_standard_scaler, expected_concat)
+    expected_dag.add_edge(expected_standard_scaler, expected_concat, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -568,7 +568,7 @@ def test_column_transformer_one_transformer_single_column_projection():
                                   DagNodeDetails('Hashing Vectorizer: fit_transform', ['array']),
                                   OptionalCodeInfo(CodeReference(9, 16, 9, 70), 'HashingVectorizer(ngram_range=(1, 3), '
                                                                                 'n_features=2**2)'))
-    expected_dag.add_edge(expected_projection, expected_vectorizer)
+    expected_dag.add_edge(expected_projection, expected_vectorizer, arg_index=0)
     expected_concat = DagNode(3,
                               BasicCodeLocation("<string-source>", 8),
                               OperatorContext(OperatorType.CONCATENATION,
@@ -578,7 +578,7 @@ def test_column_transformer_one_transformer_single_column_projection():
                                                "ColumnTransformer(transformers=[\n"
                                                    "    ('hashing', HashingVectorizer(ngram_range=(1, 3), "
                                                    "n_features=2**2), 'A')\n])"))
-    expected_dag.add_edge(expected_vectorizer, expected_concat)
+    expected_dag.add_edge(expected_vectorizer, expected_concat, arg_index=0)
 
     expected_transform = DagNode(6,
                                  BasicCodeLocation("<string-source>", 9),
@@ -637,7 +637,7 @@ def test_column_transformer_multiple_transformers_all_dense():
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
                                                      "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"))
-    expected_dag.add_edge(expected_data_source, expected_projection_1)
+    expected_dag.add_edge(expected_data_source, expected_projection_1, arg_index=0)
     expected_projection_2 = DagNode(3,
                                     BasicCodeLocation("<string-source>", 8),
                                     OperatorContext(OperatorType.PROJECTION,
@@ -648,21 +648,21 @@ def test_column_transformer_multiple_transformers_all_dense():
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
                                                      "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"))
-    expected_dag.add_edge(expected_data_source, expected_projection_2)
+    expected_dag.add_edge(expected_data_source, expected_projection_2, arg_index=0)
     expected_standard_scaler = DagNode(2,
                                        BasicCodeLocation("<string-source>", 9),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array']),
                                        OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'))
-    expected_dag.add_edge(expected_projection_1, expected_standard_scaler)
+    expected_dag.add_edge(expected_projection_1, expected_standard_scaler, arg_index=0)
     expected_one_hot = DagNode(4,
                                BasicCodeLocation("<string-source>", 10),
                                OperatorContext(OperatorType.TRANSFORMER,
                                                FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
                                OptionalCodeInfo(CodeReference(10, 20, 10, 47), 'OneHotEncoder(sparse=False)'))
-    expected_dag.add_edge(expected_projection_2, expected_one_hot)
+    expected_dag.add_edge(expected_projection_2, expected_one_hot, arg_index=0)
     expected_concat = DagNode(5,
                               BasicCodeLocation("<string-source>", 8),
                               OperatorContext(OperatorType.CONCATENATION,
@@ -672,8 +672,8 @@ def test_column_transformer_multiple_transformers_all_dense():
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A']),\n"
                                                "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"))
-    expected_dag.add_edge(expected_standard_scaler, expected_concat)
-    expected_dag.add_edge(expected_one_hot, expected_concat)
+    expected_dag.add_edge(expected_standard_scaler, expected_concat, arg_index=0)
+    expected_dag.add_edge(expected_one_hot, expected_concat, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -721,7 +721,7 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
                                                      "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"))
-    expected_dag.add_edge(expected_data_source, expected_projection_1)
+    expected_dag.add_edge(expected_data_source, expected_projection_1, arg_index=0)
     expected_projection_2 = DagNode(3,
                                     BasicCodeLocation("<string-source>", 8),
                                     OperatorContext(OperatorType.PROJECTION,
@@ -732,21 +732,21 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
                                                      "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"))
-    expected_dag.add_edge(expected_data_source, expected_projection_2)
+    expected_dag.add_edge(expected_data_source, expected_projection_2, arg_index=0)
     expected_standard_scaler = DagNode(2,
                                        BasicCodeLocation("<string-source>", 9),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array']),
                                        OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'))
-    expected_dag.add_edge(expected_projection_1, expected_standard_scaler)
+    expected_dag.add_edge(expected_projection_1, expected_standard_scaler, arg_index=0)
     expected_one_hot = DagNode(4,
                                BasicCodeLocation("<string-source>", 10),
                                OperatorContext(OperatorType.TRANSFORMER,
                                                FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
                                OptionalCodeInfo(CodeReference(10, 20, 10, 46), 'OneHotEncoder(sparse=True)'))
-    expected_dag.add_edge(expected_projection_2, expected_one_hot)
+    expected_dag.add_edge(expected_projection_2, expected_one_hot, arg_index=0)
     expected_concat = DagNode(5,
                               BasicCodeLocation("<string-source>", 8),
                               OperatorContext(OperatorType.CONCATENATION,
@@ -756,8 +756,8 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A']),\n"
                                                "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"))
-    expected_dag.add_edge(expected_standard_scaler, expected_concat)
-    expected_dag.add_edge(expected_one_hot, expected_concat)
+    expected_dag.add_edge(expected_standard_scaler, expected_concat, arg_index=0)
+    expected_dag.add_edge(expected_one_hot, expected_concat, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -808,7 +808,7 @@ def test_column_transformer_transform_after_fit_transform():
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
                                                      "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"))
-    expected_dag.add_edge(expected_data_source, expected_projection_1)
+    expected_dag.add_edge(expected_data_source, expected_projection_1, arg_index=0)
     expected_projection_2 = DagNode(9,
                                     BasicCodeLocation("<string-source>", 8),
                                     OperatorContext(OperatorType.PROJECTION,
@@ -819,21 +819,21 @@ def test_column_transformer_transform_after_fit_transform():
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
                                                      "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"))
-    expected_dag.add_edge(expected_data_source, expected_projection_2)
+    expected_dag.add_edge(expected_data_source, expected_projection_2, arg_index=0)
     expected_standard_scaler = DagNode(8,
                                        BasicCodeLocation("<string-source>", 9),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: transform', ['array']),
                                        OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'))
-    expected_dag.add_edge(expected_projection_1, expected_standard_scaler)
+    expected_dag.add_edge(expected_projection_1, expected_standard_scaler, arg_index=0)
     expected_one_hot = DagNode(10,
                                BasicCodeLocation("<string-source>", 10),
                                OperatorContext(OperatorType.TRANSFORMER,
                                                FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                DagNodeDetails('One-Hot Encoder: transform', ['array']),
                                OptionalCodeInfo(CodeReference(10, 20, 10, 46), 'OneHotEncoder(sparse=True)'))
-    expected_dag.add_edge(expected_projection_2, expected_one_hot)
+    expected_dag.add_edge(expected_projection_2, expected_one_hot, arg_index=0)
     expected_concat = DagNode(11,
                               BasicCodeLocation("<string-source>", 8),
                               OperatorContext(OperatorType.CONCATENATION,
@@ -843,8 +843,8 @@ def test_column_transformer_transform_after_fit_transform():
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A']),\n"
                                                "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"))
-    expected_dag.add_edge(expected_standard_scaler, expected_concat)
-    expected_dag.add_edge(expected_one_hot, expected_concat)
+    expected_dag.add_edge(expected_standard_scaler, expected_concat, arg_index=0)
+    expected_dag.add_edge(expected_one_hot, expected_concat, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -894,15 +894,15 @@ def test_decision_tree():
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array']),
                                        OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'))
-    expected_dag.add_edge(expected_data_source, expected_data_projection)
-    expected_dag.add_edge(expected_data_projection, expected_standard_scaler)
+    expected_dag.add_edge(expected_data_source, expected_data_projection, arg_index=0)
+    expected_dag.add_edge(expected_data_projection, expected_standard_scaler, arg_index=0)
     expected_label_projection = DagNode(3,
                                         BasicCodeLocation("<string-source>", 9),
                                         OperatorContext(OperatorType.PROJECTION,
                                                         FunctionInfo('pandas.core.frame', '__getitem__')),
                                         DagNodeDetails("to ['target']", ['target']),
                                         OptionalCodeInfo(CodeReference(9, 24, 9, 36), "df['target']"))
-    expected_dag.add_edge(expected_data_source, expected_label_projection)
+    expected_dag.add_edge(expected_data_source, expected_label_projection, arg_index=0)
     expected_label_encode = DagNode(4,
                                     BasicCodeLocation("<string-source>", 9),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
@@ -910,29 +910,29 @@ def test_decision_tree():
                                     DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
                                     OptionalCodeInfo(CodeReference(9, 9, 9, 60),
                                                      "label_binarize(df['target'], classes=['no', 'yes'])"))
-    expected_dag.add_edge(expected_label_projection, expected_label_encode)
+    expected_dag.add_edge(expected_label_projection, expected_label_encode, arg_index=0)
     expected_train_data = DagNode(5,
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.TRAIN_DATA,
                                                   FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
                                   DagNodeDetails(None, ['array']),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'))
-    expected_dag.add_edge(expected_standard_scaler, expected_train_data)
+    expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
     expected_train_labels = DagNode(6,
                                     BasicCodeLocation("<string-source>", 11),
                                     OperatorContext(OperatorType.TRAIN_LABELS,
                                                     FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
                                     DagNodeDetails(None, ['array']),
                                     OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'))
-    expected_dag.add_edge(expected_label_encode, expected_train_labels)
+    expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
     expected_decision_tree = DagNode(7,
                                      BasicCodeLocation("<string-source>", 11),
                                      OperatorContext(OperatorType.ESTIMATOR,
                                                      FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
                                      DagNodeDetails('Decision Tree', []),
                                      OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'))
-    expected_dag.add_edge(expected_train_data, expected_decision_tree)
-    expected_dag.add_edge(expected_train_labels, expected_decision_tree)
+    expected_dag.add_edge(expected_train_data, expected_decision_tree, arg_index=0)
+    expected_dag.add_edge(expected_train_labels, expected_decision_tree, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -978,7 +978,7 @@ def test_decision_tree_score():
                                  DagNodeDetails(None, ['A', 'B']),
                                  OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                   "clf.score(test_df[['A', 'B']], test_labels)"))
-    expected_dag.add_edge(expected_data_projection, expected_test_data)
+    expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
     expected_label_encode = DagNode(10,
                                     BasicCodeLocation("<string-source>", 15),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
@@ -994,7 +994,7 @@ def test_decision_tree_score():
                                    DagNodeDetails(None, ['array']),
                                    OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                     "clf.score(test_df[['A', 'B']], test_labels)"))
-    expected_dag.add_edge(expected_label_encode, expected_test_labels)
+    expected_dag.add_edge(expected_label_encode, expected_test_labels, arg_index=0)
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.ESTIMATOR,
@@ -1009,9 +1009,9 @@ def test_decision_tree_score():
                              DagNodeDetails('Decision Tree', []),
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"))
-    expected_dag.add_edge(expected_classifier, expected_score)
-    expected_dag.add_edge(expected_test_data, expected_score)
-    expected_dag.add_edge(expected_test_labels, expected_score)
+    expected_dag.add_edge(expected_classifier, expected_score, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_score, arg_index=1)
+    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=2)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -1057,7 +1057,7 @@ def test_sgd_classifier():
                                   DagNodeDetails(None, ['array']),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
                                                    "SGDClassifier(loss='log', random_state=42)"))
-    expected_dag.add_edge(expected_standard_scaler, expected_train_data)
+    expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
     expected_label_encode = DagNode(4,
                                     BasicCodeLocation("<string-source>", 9),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
@@ -1073,7 +1073,7 @@ def test_sgd_classifier():
                                     DagNodeDetails(None, ['array']),
                                     OptionalCodeInfo(CodeReference(11, 6, 11, 48),
                                                      "SGDClassifier(loss='log', random_state=42)"))
-    expected_dag.add_edge(expected_label_encode, expected_train_labels)
+    expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.ESTIMATOR,
@@ -1082,8 +1082,8 @@ def test_sgd_classifier():
                                   DagNodeDetails('SGD Classifier', []),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
                                                    "SGDClassifier(loss='log', random_state=42)"))
-    expected_dag.add_edge(expected_train_data, expected_classifier)
-    expected_dag.add_edge(expected_train_labels, expected_classifier)
+    expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
+    expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -1141,7 +1141,7 @@ def test_sgd_classifier_score():
                                  DagNodeDetails(None, ['A', 'B']),
                                  OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                   "clf.score(test_df[['A', 'B']], test_labels)"))
-    expected_dag.add_edge(expected_data_projection, expected_test_data)
+    expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
     expected_label_encode = DagNode(10,
                                     BasicCodeLocation("<string-source>", 15),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
@@ -1157,7 +1157,7 @@ def test_sgd_classifier_score():
                                    DagNodeDetails(None, ['array']),
                                    OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                     "clf.score(test_df[['A', 'B']], test_labels)"))
-    expected_dag.add_edge(expected_label_encode, expected_test_labels)
+    expected_dag.add_edge(expected_label_encode, expected_test_labels, arg_index=0)
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.ESTIMATOR,
@@ -1174,9 +1174,9 @@ def test_sgd_classifier_score():
                              DagNodeDetails('SGD Classifier', []),
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"))
-    expected_dag.add_edge(expected_classifier, expected_score)
-    expected_dag.add_edge(expected_test_data, expected_score)
-    expected_dag.add_edge(expected_test_labels, expected_score)
+    expected_dag.add_edge(expected_classifier, expected_score, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_score, arg_index=1)
+    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=2)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -1227,15 +1227,15 @@ def test_logistic_regression():
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
                                        DagNodeDetails("to ['A', 'B']", ['A', 'B']),
                                        OptionalCodeInfo(CodeReference(8, 39, 8, 53), "df[['A', 'B']]"))
-    expected_dag.add_edge(expected_data_source, expected_data_projection)
-    expected_dag.add_edge(expected_data_projection, expected_standard_scaler)
+    expected_dag.add_edge(expected_data_source, expected_data_projection, arg_index=0)
+    expected_dag.add_edge(expected_data_projection, expected_standard_scaler, arg_index=0)
     expected_label_projection = DagNode(3,
                                         BasicCodeLocation("<string-source>", 9),
                                         OperatorContext(OperatorType.PROJECTION,
                                                         FunctionInfo('pandas.core.frame', '__getitem__')),
                                         DagNodeDetails("to ['target']", ['target']),
                                         OptionalCodeInfo(CodeReference(9, 24, 9, 36), "df['target']"))
-    expected_dag.add_edge(expected_data_source, expected_label_projection)
+    expected_dag.add_edge(expected_data_source, expected_label_projection, arg_index=0)
     expected_label_encode = DagNode(4,
                                     BasicCodeLocation("<string-source>", 9),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
@@ -1243,14 +1243,14 @@ def test_logistic_regression():
                                     DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
                                     OptionalCodeInfo(CodeReference(9, 9, 9, 60),
                                                      "label_binarize(df['target'], classes=['no', 'yes'])"))
-    expected_dag.add_edge(expected_label_projection, expected_label_encode)
+    expected_dag.add_edge(expected_label_projection, expected_label_encode, arg_index=0)
     expected_train_data = DagNode(5,
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.TRAIN_DATA,
                                                   FunctionInfo('sklearn.linear_model._logistic', 'LogisticRegression')),
                                   DagNodeDetails(None, ['array']),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'))
-    expected_dag.add_edge(expected_standard_scaler, expected_train_data)
+    expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
     expected_train_labels = DagNode(6,
                                     BasicCodeLocation("<string-source>", 11),
                                     OperatorContext(OperatorType.TRAIN_LABELS,
@@ -1258,7 +1258,7 @@ def test_logistic_regression():
                                                                  'LogisticRegression')),
                                     DagNodeDetails(None, ['array']),
                                     OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'))
-    expected_dag.add_edge(expected_label_encode, expected_train_labels)
+    expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
     expected_estimator = DagNode(7,
                                  BasicCodeLocation("<string-source>", 11),
                                  OperatorContext(OperatorType.ESTIMATOR,
@@ -1266,8 +1266,8 @@ def test_logistic_regression():
                                                               'LogisticRegression')),
                                  DagNodeDetails('Logistic Regression', []),
                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'))
-    expected_dag.add_edge(expected_train_data, expected_estimator)
-    expected_dag.add_edge(expected_train_labels, expected_estimator)
+    expected_dag.add_edge(expected_train_data, expected_estimator, arg_index=0)
+    expected_dag.add_edge(expected_train_labels, expected_estimator, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -1314,7 +1314,7 @@ def test_logistic_regression_score():
                                  DagNodeDetails(None, ['A', 'B']),
                                  OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                   "clf.score(test_df[['A', 'B']], test_labels)"))
-    expected_dag.add_edge(expected_data_projection, expected_test_data)
+    expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
     expected_label_encode = DagNode(10,
                                     BasicCodeLocation("<string-source>", 15),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
@@ -1330,7 +1330,7 @@ def test_logistic_regression_score():
                                    DagNodeDetails(None, ['array']),
                                    OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                     "clf.score(test_df[['A', 'B']], test_labels)"))
-    expected_dag.add_edge(expected_label_encode, expected_test_labels)
+    expected_dag.add_edge(expected_label_encode, expected_test_labels, arg_index=0)
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.ESTIMATOR,
@@ -1346,9 +1346,9 @@ def test_logistic_regression_score():
                              DagNodeDetails('Logistic Regression', []),
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"))
-    expected_dag.add_edge(expected_classifier, expected_score)
-    expected_dag.add_edge(expected_test_data, expected_score)
-    expected_dag.add_edge(expected_test_labels, expected_score)
+    expected_dag.add_edge(expected_classifier, expected_score, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_score, arg_index=1)
+    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=2)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -1409,22 +1409,22 @@ def test_keras_wrapper():
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
                                        DagNodeDetails("to ['A', 'B']", ['A', 'B']),
                                        OptionalCodeInfo(CodeReference(11, 39, 11, 53), "df[['A', 'B']]"))
-    expected_dag.add_edge(expected_data_source, expected_data_projection)
-    expected_dag.add_edge(expected_data_projection, expected_standard_scaler)
+    expected_dag.add_edge(expected_data_source, expected_data_projection, arg_index=0)
+    expected_dag.add_edge(expected_data_projection, expected_standard_scaler, arg_index=0)
     expected_label_projection = DagNode(3,
                                         BasicCodeLocation("<string-source>", 12),
                                         OperatorContext(OperatorType.PROJECTION,
                                                         FunctionInfo('pandas.core.frame', '__getitem__')),
                                         DagNodeDetails("to ['target']", ['target']),
                                         OptionalCodeInfo(CodeReference(12, 51, 12, 65), "df[['target']]"))
-    expected_dag.add_edge(expected_data_source, expected_label_projection)
+    expected_dag.add_edge(expected_data_source, expected_label_projection, arg_index=0)
     expected_label_encode = DagNode(4,
                                     BasicCodeLocation("<string-source>", 12),
                                     OperatorContext(OperatorType.TRANSFORMER,
                                                     FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                     DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
                                     OptionalCodeInfo(CodeReference(12, 9, 12, 36), 'OneHotEncoder(sparse=False)'))
-    expected_dag.add_edge(expected_label_projection, expected_label_encode)
+    expected_dag.add_edge(expected_label_projection, expected_label_encode, arg_index=0)
     expected_train_data = DagNode(5,
                                   BasicCodeLocation("<string-source>", 22),
                                   OperatorContext(OperatorType.TRAIN_DATA,
@@ -1434,7 +1434,7 @@ def test_keras_wrapper():
                                   OptionalCodeInfo(CodeReference(22, 6, 22, 92),
                                                    'KerasClassifier(build_fn=create_model, epochs=2, '
                                                    'batch_size=1, verbose=0, input_dim=2)'))
-    expected_dag.add_edge(expected_standard_scaler, expected_train_data)
+    expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
     expected_train_labels = DagNode(6,
                                     BasicCodeLocation("<string-source>", 22),
                                     OperatorContext(OperatorType.TRAIN_LABELS,
@@ -1444,7 +1444,7 @@ def test_keras_wrapper():
                                     OptionalCodeInfo(CodeReference(22, 6, 22, 92),
                                                      'KerasClassifier(build_fn=create_model, epochs=2, '
                                                      'batch_size=1, verbose=0, input_dim=2)'))
-    expected_dag.add_edge(expected_label_encode, expected_train_labels)
+    expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 22),
                                   OperatorContext(OperatorType.ESTIMATOR,
@@ -1454,8 +1454,8 @@ def test_keras_wrapper():
                                   OptionalCodeInfo(CodeReference(22, 6, 22, 92),
                                                    'KerasClassifier(build_fn=create_model, epochs=2, '
                                                    'batch_size=1, verbose=0, input_dim=2)'))
-    expected_dag.add_edge(expected_train_data, expected_classifier)
-    expected_dag.add_edge(expected_train_labels, expected_classifier)
+    expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
+    expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -1517,7 +1517,7 @@ def test_keras_wrapper_score():
                                  DagNodeDetails(None, ['A', 'B']),
                                  OptionalCodeInfo(CodeReference(30, 13, 30, 56),
                                                   "clf.score(test_df[['A', 'B']], test_labels)"))
-    expected_dag.add_edge(expected_data_projection, expected_test_data)
+    expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
     expected_label_encode = DagNode(10,
                                     BasicCodeLocation("<string-source>", 29),
                                     OperatorContext(OperatorType.TRANSFORMER,
@@ -1532,7 +1532,7 @@ def test_keras_wrapper_score():
                                    DagNodeDetails(None, ['array']),
                                    OptionalCodeInfo(CodeReference(30, 13, 30, 56),
                                                     "clf.score(test_df[['A', 'B']], test_labels)"))
-    expected_dag.add_edge(expected_label_encode, expected_test_labels)
+    expected_dag.add_edge(expected_label_encode, expected_test_labels, arg_index=0)
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 25),
                                   OperatorContext(OperatorType.ESTIMATOR,
@@ -1550,8 +1550,8 @@ def test_keras_wrapper_score():
                              DagNodeDetails('Neural Network', []),
                              OptionalCodeInfo(CodeReference(30, 13, 30, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"))
-    expected_dag.add_edge(expected_classifier, expected_score)
-    expected_dag.add_edge(expected_test_data, expected_score)
-    expected_dag.add_edge(expected_test_labels, expected_score)
+    expected_dag.add_edge(expected_classifier, expected_score, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_score, arg_index=1)
+    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=2)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))

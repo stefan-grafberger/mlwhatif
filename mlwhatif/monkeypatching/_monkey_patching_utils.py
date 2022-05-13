@@ -231,8 +231,8 @@ def add_dag_node(dag_node: DagNode, dag_node_parents: List[DagNode], function_ca
             function_call_result.function_result = MlinspectNdarray(function_call_result.function_result)
         function_call_result.function_result._mlinspect_dag_node = dag_node.node_id
     if dag_node_parents:
-        for parent in dag_node_parents:
-            singleton.inspection_results.dag.add_edge(parent, dag_node)
+        for parent_index, parent in enumerate(dag_node_parents):
+            singleton.inspection_results.dag.add_edge(parent, dag_node, arg_index=parent_index)
     else:
         singleton.inspection_results.dag.add_node(dag_node)
     singleton.op_id_to_dag_node[dag_node.node_id] = dag_node
