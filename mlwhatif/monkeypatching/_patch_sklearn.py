@@ -249,7 +249,7 @@ class SklearnStandardScalerPatching:
     def patched__init__(self, *, copy=True, with_mean=True, with_std=True,
                         mlinspect_caller_filename=None, mlinspect_lineno=None,
                         mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
-                        mlinspect_fit_transform_active=False):
+                        mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
         """ Patch for ('sklearn.preprocessing._data', 'StandardScaler') """
         # pylint: disable=no-method-argument, attribute-defined-outside-init
         original = gorilla.get_original_attribute(preprocessing.StandardScaler, '__init__')
@@ -259,6 +259,7 @@ class SklearnStandardScalerPatching:
         self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
         self.mlinspect_optional_source_code = mlinspect_optional_source_code
         self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+        self.mlinspect_transformer_node_id = mlinspect_transformer_node_id
 
         self.mlinspect_non_data_func_args = {'copy': copy, 'with_mean': with_mean, 'with_std': with_std}
 
@@ -286,7 +287,9 @@ class SklearnStandardScalerPatching:
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
-        dag_node = DagNode(singleton.get_next_op_id(),
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                            operator_context,
                            DagNodeDetails("Standard Scaler: fit_transform", ['array']),
@@ -319,9 +322,10 @@ class SklearnStandardScalerPatching:
                                DagNodeDetails("Standard Scaler: transform", ['array']),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code))
-
+            # TODO: Additional code required here to add new edge
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
+            add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
             new_result = function_call_result.function_result
             assert isinstance(new_result, MlinspectNdarray)
         else:

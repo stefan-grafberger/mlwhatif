@@ -144,7 +144,8 @@ def test_standard_scaler():
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: transform', ['array']),
                                        OptionalCodeInfo(CodeReference(6, 18, 6, 34), 'StandardScaler()'))
-    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -826,7 +827,7 @@ def test_column_transformer_transform_after_fit_transform():
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: transform', ['array']),
                                        OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'))
-    expected_dag.add_edge(expected_projection_1, expected_standard_scaler, arg_index=0)
+    expected_dag.add_edge(expected_projection_1, expected_standard_scaler, arg_index=1)
     expected_one_hot = DagNode(10,
                                BasicCodeLocation("<string-source>", 10),
                                OperatorContext(OperatorType.TRANSFORMER,
