@@ -203,7 +203,8 @@ def test_function_transformer():
                                        DagNodeDetails('Function Transformer: transform', ['A']),
                                        OptionalCodeInfo(CodeReference(9, 23, 9, 65),
                                                         'FunctionTransformer(lambda x: safe_log(x))'))
-    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -259,7 +260,8 @@ def test_kbins_discretizer():
                                        OptionalCodeInfo(CodeReference(6, 14, 6, 78),
                                                         "KBinsDiscretizer(n_bins=3, encode='ordinal', "
                                                         "strategy='uniform')"))
-    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -313,7 +315,8 @@ def test_simple_imputer():
                                        DagNodeDetails('Simple Imputer: transform', ['A']),
                                        OptionalCodeInfo(CodeReference(6, 10, 6, 72),
                                                         "SimpleImputer(missing_values=np.nan, strategy='most_frequent')"))
-    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -367,7 +370,8 @@ def test_one_hot_encoder_not_sparse():
                                                                     'OneHotEncoder')),
                                        DagNodeDetails('One-Hot Encoder: transform', ['array']),
                                        OptionalCodeInfo(CodeReference(6, 18, 6, 45), 'OneHotEncoder(sparse=False)'))
-    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -461,7 +465,8 @@ def test_hashing_vectorizer():
                                        DagNodeDetails('Hashing Vectorizer: transform', ['array']),
                                        OptionalCodeInfo(CodeReference(7, 13, 7, 67),
                                                         'HashingVectorizer(ngram_range=(1, 3), n_features=2**2)'))
-    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
 
@@ -588,7 +593,7 @@ def test_column_transformer_one_transformer_single_column_projection():
                                  DagNodeDetails('Hashing Vectorizer: transform', ['array']),
                                  OptionalCodeInfo(CodeReference(9, 16, 9, 70), 'HashingVectorizer(ngram_range=(1, 3), '
                                                                                 'n_features=2**2)'))
-    expected_dag.add_node(expected_transform)
+    expected_dag.add_edge(expected_vectorizer, expected_transform, arg_index=0)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -834,7 +839,7 @@ def test_column_transformer_transform_after_fit_transform():
                                                FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                DagNodeDetails('One-Hot Encoder: transform', ['array']),
                                OptionalCodeInfo(CodeReference(10, 20, 10, 46), 'OneHotEncoder(sparse=True)'))
-    expected_dag.add_edge(expected_projection_2, expected_one_hot, arg_index=0)
+    expected_dag.add_edge(expected_projection_2, expected_one_hot, arg_index=1)
     expected_concat = DagNode(11,
                               BasicCodeLocation("<string-source>", 8),
                               OperatorContext(OperatorType.CONCATENATION,

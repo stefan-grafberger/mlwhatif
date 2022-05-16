@@ -347,7 +347,7 @@ class SklearnHasingVectorizerPatching:
                         binary=False, norm='l2', alternate_sign=True, dtype=numpy.float64,
                         mlinspect_caller_filename=None, mlinspect_lineno=None,
                         mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
-                        mlinspect_fit_transform_active=False):
+                        mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
         """ Patch for ('sklearn.feature_extraction.text', 'HashingVectorizer') """
         # pylint: disable=no-method-argument, attribute-defined-outside-init
         original = gorilla.get_original_attribute(text.HashingVectorizer, '__init__')
@@ -357,6 +357,7 @@ class SklearnHasingVectorizerPatching:
         self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
         self.mlinspect_optional_source_code = mlinspect_optional_source_code
         self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+        self.mlinspect_transformer_node_id = mlinspect_transformer_node_id
 
         self.mlinspect_non_data_func_args = {'input': input, 'encoding': encoding, 'decode_error': decode_error,
                                              'strip_accents': strip_accents, 'lowercase': lowercase,
@@ -390,7 +391,9 @@ class SklearnHasingVectorizerPatching:
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
-        dag_node = DagNode(singleton.get_next_op_id(),
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                            operator_context,
                            DagNodeDetails("Hashing Vectorizer: fit_transform", ['array']),
@@ -422,7 +425,8 @@ class SklearnHasingVectorizerPatching:
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code))
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
+            add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
             new_result = function_call_result.function_result
         else:
             new_result = original(self, *args, **kwargs)
@@ -440,7 +444,7 @@ class SklearnKBinsDiscretizerPatching:
     def patched__init__(self, n_bins=5, *, encode='onehot', strategy='quantile',
                         mlinspect_caller_filename=None, mlinspect_lineno=None,
                         mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
-                        mlinspect_fit_transform_active=False):
+                        mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
         """ Patch for ('sklearn.preprocessing._discretization', 'KBinsDiscretizer') """
         # pylint: disable=no-method-argument, attribute-defined-outside-init
         original = gorilla.get_original_attribute(preprocessing.KBinsDiscretizer, '__init__')
@@ -450,6 +454,7 @@ class SklearnKBinsDiscretizerPatching:
         self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
         self.mlinspect_optional_source_code = mlinspect_optional_source_code
         self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+        self.mlinspect_transformer_node_id = mlinspect_transformer_node_id
 
         self.mlinspect_non_data_func_args = {'n_bins': n_bins, 'encode': encode, 'strategy': strategy}
 
@@ -477,7 +482,9 @@ class SklearnKBinsDiscretizerPatching:
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
-        dag_node = DagNode(singleton.get_next_op_id(),
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                            operator_context,
                            DagNodeDetails("K-Bins Discretizer: fit_transform", ['array']),
@@ -510,7 +517,8 @@ class SklearnKBinsDiscretizerPatching:
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code))
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
+            add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
             new_result = function_call_result.function_result
             assert isinstance(new_result, MlinspectNdarray)
         else:
@@ -530,7 +538,7 @@ class SklearnOneHotEncoderPatching:
                         dtype=numpy.float64, handle_unknown='error',
                         mlinspect_caller_filename=None, mlinspect_lineno=None,
                         mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
-                        mlinspect_fit_transform_active=False):
+                        mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
         """ Patch for ('sklearn.preprocessing._encoders', 'OneHotEncoder') """
         # pylint: disable=no-method-argument, attribute-defined-outside-init
         original = gorilla.get_original_attribute(preprocessing.OneHotEncoder, '__init__')
@@ -540,6 +548,7 @@ class SklearnOneHotEncoderPatching:
         self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
         self.mlinspect_optional_source_code = mlinspect_optional_source_code
         self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+        self.mlinspect_transformer_node_id = mlinspect_transformer_node_id
 
         self.mlinspect_non_data_func_args = {'categories': categories, 'drop': drop, 'sparse': sparse, 'dtype': dtype,
                                              'handle_unknown': handle_unknown}
@@ -568,7 +577,9 @@ class SklearnOneHotEncoderPatching:
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
-        dag_node = DagNode(singleton.get_next_op_id(),
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                            operator_context,
                            DagNodeDetails("One-Hot Encoder: fit_transform", ['array']),
@@ -600,7 +611,8 @@ class SklearnOneHotEncoderPatching:
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code))
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
+            add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
             new_result = function_call_result.function_result
         else:
             new_result = original(self, *args, **kwargs)
@@ -619,7 +631,7 @@ class SklearnSimpleImputerPatching:
                         fill_value=None, verbose=0, copy=True, add_indicator=False,
                         mlinspect_caller_filename=None, mlinspect_lineno=None,
                         mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
-                        mlinspect_fit_transform_active=False):
+                        mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
         """ Patch for ('sklearn.impute._base', 'SimpleImputer') """
         # pylint: disable=no-method-argument, attribute-defined-outside-init
         original = gorilla.get_original_attribute(impute.SimpleImputer, '__init__')
@@ -629,6 +641,7 @@ class SklearnSimpleImputerPatching:
         self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
         self.mlinspect_optional_source_code = mlinspect_optional_source_code
         self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+        self.mlinspect_transformer_node_id = mlinspect_transformer_node_id
 
         self.mlinspect_non_data_func_args = {'missing_values': missing_values, 'strategy': strategy,
                                              'fill_value': fill_value, 'verbose': verbose, 'copy': copy,
@@ -663,7 +676,9 @@ class SklearnSimpleImputerPatching:
         else:
             columns = ['array']
 
-        dag_node = DagNode(singleton.get_next_op_id(),
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                            operator_context,
                            DagNodeDetails("Simple Imputer: fit_transform", columns),
@@ -700,7 +715,8 @@ class SklearnSimpleImputerPatching:
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code))
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
+            add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
             new_result = function_call_result.function_result
         else:
             new_result = original(self, *args, **kwargs)
@@ -718,9 +734,9 @@ class SklearnFunctionTransformerPatching:
     def patched__init__(self, func=None, inverse_func=None, *, validate=False, accept_sparse=False, check_inverse=True,
                         kw_args=None, inv_kw_args=None, mlinspect_caller_filename=None, mlinspect_lineno=None,
                         mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
-                        mlinspect_fit_transform_active=False):
+                        mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
         """ Patch for ('sklearn.preprocessing_function_transformer', 'FunctionTransformer') """
-        # pylint: disable=no-method-argument, attribute-defined-outside-init
+        # pylint: disable=no-method-argument, attribute-defined-outside-init, too-many-locals
         original = gorilla.get_original_attribute(preprocessing.FunctionTransformer, '__init__')
 
         self.mlinspect_caller_filename = mlinspect_caller_filename
@@ -728,6 +744,7 @@ class SklearnFunctionTransformerPatching:
         self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
         self.mlinspect_optional_source_code = mlinspect_optional_source_code
         self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+        self.mlinspect_transformer_node_id = mlinspect_transformer_node_id
 
         self.mlinspect_non_data_func_args = {'validate': validate, 'accept_sparse': accept_sparse,
                                              'check_inverse': check_inverse, 'kw_args': kw_args,
@@ -763,7 +780,9 @@ class SklearnFunctionTransformerPatching:
         else:
             columns = ['array']
 
-        dag_node = DagNode(singleton.get_next_op_id(),
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                            operator_context,
                            DagNodeDetails("Function Transformer: fit_transform", columns),
@@ -800,7 +819,8 @@ class SklearnFunctionTransformerPatching:
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code))
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
+            add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
             new_result = function_call_result.function_result
         else:
             new_result = original(self, *args, **kwargs)
