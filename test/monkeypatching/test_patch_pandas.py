@@ -1,10 +1,12 @@
 """
 Tests whether the monkey patching works for all patched pandas methods
 """
+from functools import partial
 from inspect import cleandoc
+from types import FunctionType
 
 import networkx
-from testfixtures import compare, StringComparison
+from testfixtures import compare, StringComparison, Comparison
 
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif.instrumentation import _pipeline_executor
@@ -38,7 +40,8 @@ def test_read_csv():
                                             'occupation', 'relationship', 'race', 'sex', 'capital-gain', 'capital-loss',
                                             'hours-per-week', 'native-country', 'income-per-year']),
                             OptionalCodeInfo(CodeReference(6, 11, 6, 62),
-                                             "pd.read_csv(train_file, na_values='?', index_col=0)"))
+                                             "pd.read_csv(train_file, na_values='?', index_col=0)"),
+                            Comparison(partial))
     compare(extracted_node, expected_node)
 
 
@@ -90,7 +93,8 @@ def test_frame_dropna():
                               BasicCodeLocation("<string-source>", 5),
                               OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'dropna')),
                               DagNodeDetails('dropna', ['A']),
-                              OptionalCodeInfo(CodeReference(5, 5, 5, 16), 'df.dropna()'))
+                              OptionalCodeInfo(CodeReference(5, 5, 5, 16), 'df.dropna()'),
+                              Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_select, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 

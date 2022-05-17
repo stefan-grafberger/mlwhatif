@@ -2,10 +2,13 @@
 Some util functions used in other tests
 """
 import os
+from functools import partial
 from inspect import cleandoc
+from types import FunctionType
 
 import networkx
 from pandas import DataFrame
+from testfixtures import Comparison
 
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif._pipeline_inspector import PipelineInspector
@@ -34,7 +37,8 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                                    'native-country',
                                                    'income-per-year']),
                                    OptionalCodeInfo(CodeReference(12 + line_offset, 11, 12 + line_offset, 62),
-                                                    "pd.read_csv(train_file, na_values='?', index_col=0)"))
+                                                    "pd.read_csv(train_file, na_values='?', index_col=0)"),
+                                   Comparison(partial))
     expected_graph.add_node(expected_data_source)
 
     expected_select = DagNode(1,
@@ -47,7 +51,8 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                               'capital-loss',
                                               'hours-per-week', 'native-country', 'income-per-year']),
                               OptionalCodeInfo(CodeReference(14 + line_offset, 7, 14 + line_offset, 24),
-                                               'raw_data.dropna()'))
+                                               'raw_data.dropna()'),
+                              Comparison(FunctionType))
     expected_graph.add_edge(expected_data_source, expected_select, arg_index=0)
 
     pipeline_str = "compose.ColumnTransformer(transformers=[\n" \

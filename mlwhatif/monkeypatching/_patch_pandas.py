@@ -4,6 +4,7 @@ Monkey patching for pandas
 # pylint: disable=too-many-lines
 import operator
 import os
+from functools import partial
 
 import gorilla
 import pandas
@@ -36,13 +37,15 @@ class PandasPatching:
 
             operator_context = OperatorContext(OperatorType.DATA_SOURCE, function_info)
             result = original(*args, **kwargs)
+            processing_func = partial(original, *args, **kwargs)
 
             description = "{}".format(args[0].split(os.path.sep)[-1])
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(description, list(result.columns)),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [], function_call_result)
             new_result = function_call_result.function_result
@@ -93,6 +96,7 @@ class DataFramePatching:
                                         optional_source_code)
             operator_context = OperatorContext(OperatorType.SELECTION, function_info)
             # No input_infos copy needed because it's only a selection and the rows not being removed don't change
+            processing_func = lambda df: original(df, *args[1:], **kwargs)
             result = original(input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
             if result is None:
                 raise NotImplementedError("TODO: Support inplace dropna")
@@ -100,7 +104,8 @@ class DataFramePatching:
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails("dropna", list(result.columns)),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [input_info.dag_node], function_call_result)
             new_result = function_call_result.function_result
