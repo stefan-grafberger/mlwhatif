@@ -6,6 +6,7 @@ from inspect import cleandoc
 from types import FunctionType
 
 import networkx
+import pandas
 from testfixtures import compare, StringComparison, Comparison
 
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
@@ -513,9 +514,16 @@ def test_groupby_agg():
                                    DagNodeDetails("Groupby 'group', Aggregate: '{'mean_value': ('value', 'mean')}'",
                                                   ['group', 'mean_value']),
                                    OptionalCodeInfo(CodeReference(4, 17, 4, 70),
-                                                    "df.groupby('group').agg(mean_value=('value', 'mean'))"))
+                                                    "df.groupby('group').agg(mean_value=('value', 'mean'))"),
+                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data, expected_groupby_agg, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    pandas_df = pandas.DataFrame({'group': ['A', 'B', 'A', 'B'], 'value': [1, 2, 7, 4]})
+    extracted_node_groupby_agg = list(inspector_result.dag.nodes)[1]
+    df_groupby_agg = extracted_node_groupby_agg.processing_func(pandas_df)
+    df_expected = pandas.DataFrame({'group': ['A', 'B'], 'mean_value': [4, 3]})
+    pandas.testing.assert_frame_equal(df_groupby_agg.reset_index(drop=False), df_expected.reset_index(drop=True))
 
 
 def test_series__init__():

@@ -334,6 +334,8 @@ class DataFramePatching:
                                         optional_source_code)
             result = original(self, *args, **kwargs)
             result._mlinspect_dag_node = input_info.dag_node.node_id  # pylint: disable=protected-access
+            process_funct = lambda df: original(df, *args, **kwargs)
+            result._mlinspect_groupby_func = process_funct  # pylint: disable=protected-access
 
             return result
 
@@ -350,6 +352,7 @@ class DataFrameGroupByPatching:
     @gorilla.settings(allow_hit=True)
     def patched_agg(self, *args, **kwargs):
         """ Patch for ('pandas.core.groupby.generic', 'agg') """
+        # pylint: disable=too-many-locals
         original = gorilla.get_original_attribute(pandas.core.groupby.generic.DataFrameGroupBy, 'agg')
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
@@ -360,6 +363,11 @@ class DataFrameGroupByPatching:
             input_dag_node = get_dag_node_for_id(self._mlinspect_dag_node)  # pylint: disable=no-member
 
             operator_context = OperatorContext(OperatorType.GROUP_BY_AGG, function_info)
+            groupby_func = self._mlinspect_groupby_func  # pylint: disable=no-member
+
+            def process_func(pandas_df):
+                groupby_df = groupby_func(pandas_df)
+                return original(groupby_df, *args, **kwargs)
 
             result = original(self, *args, **kwargs)
 
@@ -372,7 +380,8 @@ class DataFrameGroupByPatching:
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               process_func)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [input_dag_node], function_call_result)
             new_result = function_call_result.function_result
