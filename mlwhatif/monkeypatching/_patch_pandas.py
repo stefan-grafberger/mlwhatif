@@ -127,6 +127,7 @@ class DataFramePatching:
             input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                         optional_source_code)
             dag_parents = [input_info.dag_node]
+            processing_func = lambda df: original(df, *args, **kwargs)
             if isinstance(args[0], str):  # Projection to Series
                 columns = [args[0]]
                 operator_context = OperatorContext(OperatorType.PROJECTION, function_info)
@@ -134,7 +135,8 @@ class DataFramePatching:
                                    BasicCodeLocation(caller_filename, lineno),
                                    operator_context,
                                    DagNodeDetails("to {}".format(columns), columns),
-                                   get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                                   get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                   processing_func)
             elif isinstance(args[0], list) and isinstance(args[0][0], str):  # Projection to DF
                 columns = args[0]
                 operator_context = OperatorContext(OperatorType.PROJECTION, function_info)
@@ -142,7 +144,8 @@ class DataFramePatching:
                                    BasicCodeLocation(caller_filename, lineno),
                                    operator_context,
                                    DagNodeDetails("to {}".format(columns), columns),
-                                   get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                                   get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                   processing_func)
             elif isinstance(args[0], pandas.Series):  # Selection
                 operator_context = OperatorContext(OperatorType.SELECTION, function_info)
                 columns = list(self.columns)  # pylint: disable=no-member
@@ -158,7 +161,8 @@ class DataFramePatching:
                                    BasicCodeLocation(caller_filename, lineno),
                                    operator_context,
                                    DagNodeDetails(description, columns),
-                                   get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                                   get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                   processing_func)
             else:
                 raise NotImplementedError()
             result = original(input_info.annotated_dfobject.result_data, *args, **kwargs)
@@ -189,6 +193,9 @@ class DataFramePatching:
                 input_info_other = get_input_info(args[1], caller_filename, lineno, function_info, optional_code_reference,
                                                   optional_source_code)
                 dag_node_parents.append(input_info_other.dag_node)
+                processing_func = lambda df, new_val: original(df, args[0], new_val, *args[2:], **kwargs)
+            else:
+                processing_func = lambda df: original(df, *args, **kwargs)
             if isinstance(args[0], str):
                 result = original(self, *args, **kwargs)
                 columns = list(self.columns)  # pylint: disable=no-member
@@ -199,7 +206,8 @@ class DataFramePatching:
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
 
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, dag_node_parents, function_call_result)
@@ -228,11 +236,13 @@ class DataFramePatching:
             if isinstance(args[0], dict):
                 raise NotImplementedError("TODO: Add support for replace with dicts")
             description = "Replace '{}' with '{}'".format(args[0], args[1])
+            processing_func = lambda df: original(df, *args, **kwargs)
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(description, list(result.columns)),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
 
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [input_info.dag_node], function_call_result)
@@ -270,11 +280,13 @@ class DataFramePatching:
                               *args[args_start_index:],
                               **kwargs)
             description = self.get_merge_description(**kwargs)
+            processing_func = lambda df_a, df_b: original(df_a, df_b, *args[args_start_index:], **kwargs)
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(description, list(result.columns)),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [input_info_a.dag_node, input_info_b.dag_node], function_call_result)
             new_result = function_call_result.function_result

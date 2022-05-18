@@ -3,9 +3,10 @@ Tests whether the monkey patching works for all patched sklearn methods
 """
 # pylint: disable=too-many-lines
 from inspect import cleandoc
+from types import FunctionType
 
 import networkx
-from testfixtures import compare
+from testfixtures import compare, Comparison
 
 from mlwhatif import OperatorType, OperatorContext, FunctionInfo
 from mlwhatif.instrumentation import _pipeline_executor
@@ -441,7 +442,8 @@ def test_hashing_vectorizer():
                                    OperatorContext(OperatorType.PROJECTION,
                                                    FunctionInfo('pandas.core.frame', '__getitem__')),
                                    DagNodeDetails("to ['A']", ['A']),
-                                   OptionalCodeInfo(CodeReference(8, 40, 8, 47), "df['A']"))
+                                   OptionalCodeInfo(CodeReference(8, 40, 8, 47), "df['A']"),
+                                   Comparison(FunctionType))
     expected_transformer = DagNode(2,
                                    BasicCodeLocation("<string-source>", 7),
                                    OperatorContext(OperatorType.TRANSFORMER,
@@ -456,7 +458,8 @@ def test_hashing_vectorizer():
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
                                        DagNodeDetails("to ['A']", ['A']),
-                                       OptionalCodeInfo(CodeReference(12, 36, 12, 48), "test_df['A']"))
+                                       OptionalCodeInfo(CodeReference(12, 36, 12, 48), "test_df['A']"),
+                                       Comparison(FunctionType))
     expected_transformer_two = DagNode(5,
                                        BasicCodeLocation("<string-source>", 7),
                                        OperatorContext(OperatorType.TRANSFORMER,
@@ -893,7 +896,8 @@ def test_decision_tree():
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
                                        DagNodeDetails("to ['A', 'B']", ['A', 'B']),
-                                       OptionalCodeInfo(CodeReference(8, 39, 8, 53), "df[['A', 'B']]"))
+                                       OptionalCodeInfo(CodeReference(8, 39, 8, 53), "df[['A', 'B']]"),
+                                       Comparison(FunctionType))
     expected_standard_scaler = DagNode(2,
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.TRANSFORMER,
@@ -907,7 +911,8 @@ def test_decision_tree():
                                         OperatorContext(OperatorType.PROJECTION,
                                                         FunctionInfo('pandas.core.frame', '__getitem__')),
                                         DagNodeDetails("to ['target']", ['target']),
-                                        OptionalCodeInfo(CodeReference(9, 24, 9, 36), "df['target']"))
+                                        OptionalCodeInfo(CodeReference(9, 24, 9, 36), "df['target']"),
+                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_label_projection, arg_index=0)
     expected_label_encode = DagNode(4,
                                     BasicCodeLocation("<string-source>", 9),
@@ -976,7 +981,8 @@ def test_decision_tree_score():
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
                                        DagNodeDetails("to ['A', 'B']", ['A', 'B']),
-                                       OptionalCodeInfo(CodeReference(16, 23, 16, 42), "test_df[['A', 'B']]"))
+                                       OptionalCodeInfo(CodeReference(16, 23, 16, 42), "test_df[['A', 'B']]"),
+                                       Comparison(FunctionType))
     expected_test_data = DagNode(12,
                                  BasicCodeLocation("<string-source>", 16),
                                  OperatorContext(OperatorType.TEST_DATA,
@@ -1138,7 +1144,8 @@ def test_sgd_classifier_score():
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
                                        DagNodeDetails("to ['A', 'B']", ['A', 'B']),
-                                       OptionalCodeInfo(CodeReference(16, 23, 16, 42), "test_df[['A', 'B']]"))
+                                       OptionalCodeInfo(CodeReference(16, 23, 16, 42), "test_df[['A', 'B']]"),
+                                       Comparison(FunctionType))
     expected_test_data = DagNode(12,
                                  BasicCodeLocation("<string-source>", 16),
                                  OperatorContext(OperatorType.TEST_DATA,
@@ -1232,7 +1239,8 @@ def test_logistic_regression():
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
                                        DagNodeDetails("to ['A', 'B']", ['A', 'B']),
-                                       OptionalCodeInfo(CodeReference(8, 39, 8, 53), "df[['A', 'B']]"))
+                                       OptionalCodeInfo(CodeReference(8, 39, 8, 53), "df[['A', 'B']]"),
+                                       Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_data_projection, arg_index=0)
     expected_dag.add_edge(expected_data_projection, expected_standard_scaler, arg_index=0)
     expected_label_projection = DagNode(3,
@@ -1240,7 +1248,8 @@ def test_logistic_regression():
                                         OperatorContext(OperatorType.PROJECTION,
                                                         FunctionInfo('pandas.core.frame', '__getitem__')),
                                         DagNodeDetails("to ['target']", ['target']),
-                                        OptionalCodeInfo(CodeReference(9, 24, 9, 36), "df['target']"))
+                                        OptionalCodeInfo(CodeReference(9, 24, 9, 36), "df['target']"),
+                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_label_projection, arg_index=0)
     expected_label_encode = DagNode(4,
                                     BasicCodeLocation("<string-source>", 9),
@@ -1311,7 +1320,8 @@ def test_logistic_regression_score():
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
                                        DagNodeDetails("to ['A', 'B']", ['A', 'B']),
-                                       OptionalCodeInfo(CodeReference(16, 23, 16, 42), "test_df[['A', 'B']]"))
+                                       OptionalCodeInfo(CodeReference(16, 23, 16, 42), "test_df[['A', 'B']]"),
+                                       Comparison(FunctionType))
     expected_test_data = DagNode(12,
                                  BasicCodeLocation("<string-source>", 16),
                                  OperatorContext(OperatorType.TEST_DATA,
@@ -1414,7 +1424,8 @@ def test_keras_wrapper():
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
                                        DagNodeDetails("to ['A', 'B']", ['A', 'B']),
-                                       OptionalCodeInfo(CodeReference(11, 39, 11, 53), "df[['A', 'B']]"))
+                                       OptionalCodeInfo(CodeReference(11, 39, 11, 53), "df[['A', 'B']]"),
+                                       Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_data_projection, arg_index=0)
     expected_dag.add_edge(expected_data_projection, expected_standard_scaler, arg_index=0)
     expected_label_projection = DagNode(3,
@@ -1422,7 +1433,8 @@ def test_keras_wrapper():
                                         OperatorContext(OperatorType.PROJECTION,
                                                         FunctionInfo('pandas.core.frame', '__getitem__')),
                                         DagNodeDetails("to ['target']", ['target']),
-                                        OptionalCodeInfo(CodeReference(12, 51, 12, 65), "df[['target']]"))
+                                        OptionalCodeInfo(CodeReference(12, 51, 12, 65), "df[['target']]"),
+                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_label_projection, arg_index=0)
     expected_label_encode = DagNode(4,
                                     BasicCodeLocation("<string-source>", 12),
@@ -1514,7 +1526,8 @@ def test_keras_wrapper_score():
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
                                        DagNodeDetails("to ['A', 'B']", ['A', 'B']),
-                                       OptionalCodeInfo(CodeReference(30, 23, 30, 42), "test_df[['A', 'B']]"))
+                                       OptionalCodeInfo(CodeReference(30, 23, 30, 42), "test_df[['A', 'B']]"),
+                                       Comparison(FunctionType))
     expected_test_data = DagNode(12,
                                  BasicCodeLocation("<string-source>", 30),
                                  OperatorContext(OperatorType.TEST_DATA,

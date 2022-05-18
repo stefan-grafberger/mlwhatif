@@ -127,7 +127,8 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                                FunctionInfo('pandas.core.frame', '__getitem__')),
                                DagNodeDetails("to ['income-per-year']", ['income-per-year']),
                                OptionalCodeInfo(CodeReference(16 + line_offset, 38, 16 + line_offset, 61),
-                                                "data['income-per-year']"))
+                                                "data['income-per-year']"),
+                               Comparison(FunctionType))
     expected_graph.add_edge(expected_select, expected_project, arg_index=0)
 
     expected_project_modify = DagNode(3,
