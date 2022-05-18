@@ -2,6 +2,7 @@
 Tests whether the monkey patching works for all patched sklearn methods
 """
 # pylint: disable=too-many-lines
+from functools import partial
 from inspect import cleandoc
 from types import FunctionType
 
@@ -77,7 +78,8 @@ def test_train_test_split():
                               BasicCodeLocation("<string-source>", 4),
                               OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
                               DagNodeDetails(None, ['A']),
-                              OptionalCodeInfo(CodeReference(4, 12, 4, 46), "pd.DataFrame({'A': [1, 2, 10, 5]})"))
+                              OptionalCodeInfo(CodeReference(4, 12, 4, 46), "pd.DataFrame({'A': [1, 2, 10, 5]})"),
+                              Comparison(partial))
     expected_train = DagNode(1,
                              BasicCodeLocation("<string-source>", 5),
                              OperatorContext(OperatorType.TRAIN_TEST_SPLIT,
@@ -124,7 +126,8 @@ def test_standard_scaler():
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
                                    DagNodeDetails(None, ['A']),
-                                   OptionalCodeInfo(CodeReference(5, 5, 5, 39), "pd.DataFrame({'A': [1, 2, 10, 5]})"))
+                                   OptionalCodeInfo(CodeReference(5, 5, 5, 39), "pd.DataFrame({'A': [1, 2, 10, 5]})"),
+                                   Comparison(partial))
     expected_transformer = DagNode(1,
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.TRANSFORMER,
@@ -138,7 +141,8 @@ def test_standard_scaler():
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
                                        DagNodeDetails(None, ['A']),
                                        OptionalCodeInfo(CodeReference(8, 10, 8, 44),
-                                                        "pd.DataFrame({'A': [1, 2, 10, 5]})"))
+                                                        "pd.DataFrame({'A': [1, 2, 10, 5]})"),
+                                       Comparison(partial))
     expected_transformer_two = DagNode(3,
                                        BasicCodeLocation("<string-source>", 6),
                                        OperatorContext(OperatorType.TRANSFORMER,
@@ -179,7 +183,8 @@ def test_function_transformer():
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
                                    DagNodeDetails(None, ['A']),
-                                   OptionalCodeInfo(CodeReference(8, 5, 8, 39), "pd.DataFrame({'A': [1, 2, 10, 5]})"))
+                                   OptionalCodeInfo(CodeReference(8, 5, 8, 39), "pd.DataFrame({'A': [1, 2, 10, 5]})"),
+                                   Comparison(partial))
     expected_transformer = DagNode(1,
                                    BasicCodeLocation("<string-source>", 9),
                                    OperatorContext(OperatorType.TRANSFORMER,
@@ -195,7 +200,8 @@ def test_function_transformer():
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
                                        DagNodeDetails(None, ['A']),
                                        OptionalCodeInfo(CodeReference(11, 10, 11, 44),
-                                                        "pd.DataFrame({'A': [1, 2, 10, 5]})"))
+                                                        "pd.DataFrame({'A': [1, 2, 10, 5]})"),
+                                       Comparison(partial))
     expected_transformer_two = DagNode(3,
                                        BasicCodeLocation("<string-source>", 9),
                                        OperatorContext(OperatorType.TRANSFORMER,
@@ -235,7 +241,8 @@ def test_kbins_discretizer():
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
                                    DagNodeDetails(None, ['A']),
-                                   OptionalCodeInfo(CodeReference(5, 5, 5, 39), "pd.DataFrame({'A': [1, 2, 10, 5]})"))
+                                   OptionalCodeInfo(CodeReference(5, 5, 5, 39), "pd.DataFrame({'A': [1, 2, 10, 5]})"),
+                                   Comparison(partial))
     expected_transformer = DagNode(1,
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.TRANSFORMER,
@@ -251,7 +258,8 @@ def test_kbins_discretizer():
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
                                        DagNodeDetails(None, ['A']),
                                        OptionalCodeInfo(CodeReference(8, 10, 8, 44),
-                                                        "pd.DataFrame({'A': [1, 2, 10, 5]})"))
+                                                        "pd.DataFrame({'A': [1, 2, 10, 5]})"),
+                                       Comparison(partial))
     expected_transformer_two = DagNode(3,
                                        BasicCodeLocation("<string-source>", 6),
                                        OperatorContext(OperatorType.TRANSFORMER,
@@ -293,7 +301,8 @@ def test_simple_imputer():
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
                                    DagNodeDetails(None, ['A']),
                                    OptionalCodeInfo(CodeReference(5, 5, 5, 61),
-                                                    "pd.DataFrame({'A': ['cat_a', np.nan, 'cat_a', 'cat_c']})"))
+                                                    "pd.DataFrame({'A': ['cat_a', np.nan, 'cat_a', 'cat_c']})"),
+                                   Comparison(partial))
     expected_transformer = DagNode(1,
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.TRANSFORMER,
@@ -308,7 +317,8 @@ def test_simple_imputer():
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
                                        DagNodeDetails(None, ['A']),
                                        OptionalCodeInfo(CodeReference(8, 10, 8, 66),
-                                                        "pd.DataFrame({'A': ['cat_a', np.nan, 'cat_a', 'cat_c']})"))
+                                                        "pd.DataFrame({'A': ['cat_a', np.nan, 'cat_a', 'cat_c']})"),
+                                       Comparison(partial))
     expected_transformer_two = DagNode(3,
                                        BasicCodeLocation("<string-source>", 6),
                                        OperatorContext(OperatorType.TRANSFORMER,
@@ -349,7 +359,8 @@ def test_one_hot_encoder_not_sparse():
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
                                    DagNodeDetails(None, ['A']),
                                    OptionalCodeInfo(CodeReference(5, 5, 5, 62),
-                                                    "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"))
+                                                    "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
+                                   Comparison(partial))
     expected_transformer = DagNode(1,
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.TRANSFORMER,
@@ -363,7 +374,8 @@ def test_one_hot_encoder_not_sparse():
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
                                        DagNodeDetails(None, ['A']),
                                        OptionalCodeInfo(CodeReference(11, 10, 11, 67),
-                                                        "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"))
+                                                        "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
+                                       Comparison(partial))
     expected_transformer_two = DagNode(3,
                                        BasicCodeLocation("<string-source>", 6),
                                        OperatorContext(OperatorType.TRANSFORMER,
@@ -402,7 +414,8 @@ def test_one_hot_encoder_sparse():
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
                                    DagNodeDetails(None, ['A']),
                                    OptionalCodeInfo(CodeReference(6, 5, 6, 62),
-                                                    "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"))
+                                                    "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
+                                   Comparison(partial))
     expected_transformer = DagNode(1,
                                    BasicCodeLocation("<string-source>", 7),
                                    OperatorContext(OperatorType.TRANSFORMER,
@@ -503,7 +516,8 @@ def test_column_transformer_one_transformer():
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
                                    DagNodeDetails(None, columns=['A', 'B']),
                                    OptionalCodeInfo(CodeReference(7, 5, 7, 59),
-                                                    "pd.DataFrame({'A': [1, 2, 10, 5], 'B': [1, 2, 10, 5]})"))
+                                                    "pd.DataFrame({'A': [1, 2, 10, 5], 'B': [1, 2, 10, 5]})"),
+                                   Comparison(partial))
     expected_projection = DagNode(1,
                                   BasicCodeLocation("<string-source>", 8),
                                   OperatorContext(OperatorType.PROJECTION,
@@ -635,7 +649,8 @@ def test_column_transformer_multiple_transformers_all_dense():
                                    DagNodeDetails(None, ['A', 'B']),
                                    OptionalCodeInfo(CodeReference(7, 5, 7, 82),
                                                     "pd.DataFrame({'A': [1, 2, 10, 5], "
-                                                    "'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"))
+                                                    "'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
+                                   Comparison(partial))
     expected_projection_1 = DagNode(1,
                                     BasicCodeLocation("<string-source>", 8),
                                     OperatorContext(OperatorType.PROJECTION,
@@ -719,7 +734,8 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                    DagNodeDetails(None, ['A', 'B']),
                                    OptionalCodeInfo(CodeReference(7, 5, 7, 82),
                                                     "pd.DataFrame({'A': [1, 2, 10, 5], "
-                                                    "'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"))
+                                                    "'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
+                                   Comparison(partial))
     expected_projection_1 = DagNode(1,
                                     BasicCodeLocation("<string-source>", 8),
                                     OperatorContext(OperatorType.PROJECTION,
@@ -806,7 +822,8 @@ def test_column_transformer_transform_after_fit_transform():
                                    DagNodeDetails(None, ['A', 'B']),
                                    OptionalCodeInfo(CodeReference(13, 10, 13, 87),
                                                     "pd.DataFrame({'A': [1, 2, 10, 5], "
-                                                    "'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"))
+                                                    "'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
+                                   Comparison(partial))
     expected_projection_1 = DagNode(7,
                                     BasicCodeLocation("<string-source>", 8),
                                     OperatorContext(OperatorType.PROJECTION,
@@ -890,7 +907,8 @@ def test_decision_tree():
                                    DagNodeDetails(None, ['A', 'B', 'target']),
                                    OptionalCodeInfo(CodeReference(6, 5, 6, 95),
                                                     "pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], "
-                                                    "'target': ['no', 'no', 'yes', 'yes']})"))
+                                                    "'target': ['no', 'no', 'yes', 'yes']})"),
+                                   Comparison(partial))
     expected_data_projection = DagNode(1,
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.PROJECTION,
@@ -1227,7 +1245,8 @@ def test_logistic_regression():
                                    DagNodeDetails(None, ['A', 'B', 'target']),
                                    OptionalCodeInfo(CodeReference(6, 5, 6, 95),
                                                     "pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], "
-                                                    "'target': ['no', 'no', 'yes', 'yes']})"))
+                                                    "'target': ['no', 'no', 'yes', 'yes']})"),
+                                   Comparison(partial))
     expected_standard_scaler = DagNode(2,
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.TRANSFORMER,
@@ -1412,7 +1431,8 @@ def test_keras_wrapper():
                                    DagNodeDetails(None, ['A', 'B', 'target']),
                                    OptionalCodeInfo(CodeReference(9, 5, 9, 95),
                                                     "pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], "
-                                                    "'target': ['no', 'no', 'yes', 'yes']})"))
+                                                    "'target': ['no', 'no', 'yes', 'yes']})"),
+                                   Comparison(partial))
     expected_standard_scaler = DagNode(2,
                                        BasicCodeLocation("<string-source>", 11),
                                        OperatorContext(OperatorType.TRANSFORMER,

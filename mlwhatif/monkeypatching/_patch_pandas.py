@@ -71,12 +71,14 @@ class DataFramePatching:
             original(self, *args, **kwargs)
             result = self
 
+            process_func = partial(pandas.DataFrame, *args, **kwargs)
             columns = list(self.columns)  # pylint: disable=no-member
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(None, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               process_func)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [], function_call_result)
 

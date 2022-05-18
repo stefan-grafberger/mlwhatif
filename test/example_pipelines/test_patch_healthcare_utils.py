@@ -1,10 +1,11 @@
 """
 Tests whether the monkey patching works for all patched sklearn methods
 """
+from functools import partial
 from inspect import cleandoc
 
 import networkx
-from testfixtures import compare
+from testfixtures import compare, Comparison
 
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
@@ -39,7 +40,8 @@ def test_my_word_to_vec_transformer():
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
                                    DagNodeDetails(None, ['A']),
                                    OptionalCodeInfo(CodeReference(5, 5, 5, 62),
-                                                    "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"))
+                                                    "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
+                                   Comparison(partial))
     expected_estimator = DagNode(1,
                                  BasicCodeLocation("<string-source>", 6),
                                  OperatorContext(OperatorType.TRANSFORMER,
@@ -55,7 +57,8 @@ def test_my_word_to_vec_transformer():
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
                                        DagNodeDetails(None, ['A']),
                                        OptionalCodeInfo(CodeReference(9, 10, 9, 67),
-                                                        "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"))
+                                                        "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
+                                       Comparison(partial))
     expected_estimator_two = DagNode(3,
                                      BasicCodeLocation("<string-source>", 6),
                                      OperatorContext(OperatorType.TRANSFORMER,

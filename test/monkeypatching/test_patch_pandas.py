@@ -64,8 +64,13 @@ def test_frame__init__():
                             BasicCodeLocation("<string-source>", 3),
                             OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
                             DagNodeDetails(None, ['A']),
-                            OptionalCodeInfo(CodeReference(3, 5, 3, 43), "pd.DataFrame([0, 1, 2], columns=['A'])"))
+                            OptionalCodeInfo(CodeReference(3, 5, 3, 43), "pd.DataFrame([0, 1, 2], columns=['A'])"),
+                            Comparison(partial))
     compare(extracted_node, expected_node)
+
+    df_created_with_extracted_func = extracted_node.processing_func()
+    df_expected = pandas.DataFrame([0, 1, 2], columns=['A'])
+    pandas.testing.assert_frame_equal(df_created_with_extracted_func, df_expected)
 
 
 def test_frame_dropna():
@@ -89,7 +94,8 @@ def test_frame_dropna():
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
                                    DagNodeDetails(None, ['A']),
                                    OptionalCodeInfo(CodeReference(3, 5, 3, 52),
-                                                    "pd.DataFrame([0, 2, 4, 5, None], columns=['A'])"))
+                                                    "pd.DataFrame([0, 2, 4, 5, None], columns=['A'])"),
+                                   Comparison(partial))
     expected_select = DagNode(1,
                               BasicCodeLocation("<string-source>", 5),
                               OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'dropna')),
@@ -121,7 +127,8 @@ def test_frame__getitem__series():
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
                                    DagNodeDetails(None, ['A']),
                                    OptionalCodeInfo(CodeReference(3, 5, 3, 52),
-                                                    "pd.DataFrame([0, 2, 4, 8, None], columns=['A'])"))
+                                                    "pd.DataFrame([0, 2, 4, 8, None], columns=['A'])"),
+                                   Comparison(partial))
     expected_project = DagNode(1,
                                BasicCodeLocation("<string-source>", 4),
                                OperatorContext(OperatorType.PROJECTION,
@@ -158,7 +165,8 @@ def test_frame__getitem__frame():
                                    OptionalCodeInfo(CodeReference(3, 5, 4, 28),
                                                     "pd.DataFrame([[0, None, 2], [1, 2, 3], [4, None, 2], "
                                                     "[9, 2, 3], [6, 1, 2], [1, 2, 3]], \n"
-                                                    "    columns=['A', 'B', 'C'])"))
+                                                    "    columns=['A', 'B', 'C'])"),
+                                   Comparison(partial))
     expected_project = DagNode(1,
                                BasicCodeLocation("<string-source>", 5),
                                OperatorContext(OperatorType.PROJECTION,
@@ -192,7 +200,8 @@ def test_frame__getitem__selection():
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
                                    DagNodeDetails(None, ['A', 'B']),
                                    OptionalCodeInfo(CodeReference(3, 5, 3, 67),
-                                                    "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 5, 4, 11, None]})"))
+                                                    "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 5, 4, 11, None]})"),
+                                   Comparison(partial))
     expected_projection = DagNode(1,
                                   BasicCodeLocation("<string-source>", 4),
                                   OperatorContext(OperatorType.PROJECTION,
@@ -253,7 +262,8 @@ def test_frame__setitem__():
                                                     "'two', 'two'],\n"
                                                     "              'bar': ['A', 'B', 'C', 'A', 'B', 'C'],\n"
                                                     "              'baz': [1, 2, 3, 4, 5, 6],\n"
-                                                    "              'zoo': ['x', 'y', 'z', 'q', 'w', 't']})"))
+                                                    "              'zoo': ['x', 'y', 'z', 'q', 'w', 't']})"),
+                                   Comparison(partial))
     expected_project = DagNode(1,
                                BasicCodeLocation("<string-source>", 7),
                                OperatorContext(OperatorType.PROJECTION,
@@ -306,7 +316,8 @@ def test_frame_replace():
                                    DagNodeDetails(None, ['A']),
                                    OptionalCodeInfo(CodeReference(3, 5, 3, 72),
                                                     "pd.DataFrame(['Low', 'Medium', 'Low', 'High', None], "
-                                                    "columns=['A'])"))
+                                                    "columns=['A'])"),
+                                   Comparison(partial))
     expected_modify = DagNode(1,
                               BasicCodeLocation("<string-source>", 4),
                               OperatorContext(OperatorType.PROJECTION_MODIFY,
@@ -340,13 +351,15 @@ def test_frame_merge_on():
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
                          DagNodeDetails(None, ['A', 'B']),
                          OptionalCodeInfo(CodeReference(3, 7, 3, 65),
-                                          "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})"))
+                                          "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})"),
+                         Comparison(partial))
     expected_b = DagNode(1,
                          BasicCodeLocation("<string-source>", 4),
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
                          DagNodeDetails(None, ['B', 'C']),
                          OptionalCodeInfo(CodeReference(4, 7, 4, 69),
-                                          "pd.DataFrame({'B': [1, 2, 3, 4, 5], 'C': [1, 5, 4, 11, None]})"))
+                                          "pd.DataFrame({'B': [1, 2, 3, 4, 5], 'C': [1, 5, 4, 11, None]})"),
+                         Comparison(partial))
     expected_join = DagNode(2,
                             BasicCodeLocation("<string-source>", 5),
                             OperatorContext(OperatorType.JOIN, FunctionInfo('pandas.core.frame', 'merge')),
@@ -380,13 +393,15 @@ def test_frame_merge_left_right_on():
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
                          DagNodeDetails(None, ['A', 'B']),
                          OptionalCodeInfo(CodeReference(3, 7, 3, 65),
-                                          "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})"))
+                                          "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})"),
+                         Comparison(partial))
     expected_b = DagNode(1,
                          BasicCodeLocation("<string-source>", 4),
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
                          DagNodeDetails(None, ['C', 'D']),
                          OptionalCodeInfo(CodeReference(4, 7, 4, 69),
-                                          "pd.DataFrame({'C': [1, 2, 3, 4, 5], 'D': [1, 5, 4, 11, None]})"))
+                                          "pd.DataFrame({'C': [1, 2, 3, 4, 5], 'D': [1, 5, 4, 11, None]})"),
+                         Comparison(partial))
     expected_join = DagNode(2,
                             BasicCodeLocation("<string-source>", 5),
                             OperatorContext(OperatorType.JOIN, FunctionInfo('pandas.core.frame', 'merge')),
@@ -423,13 +438,15 @@ def test_frame_merge_index():
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
                          DagNodeDetails(None, ['A', 'B']),
                          OptionalCodeInfo(CodeReference(3, 7, 3, 65),
-                                          "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})"))
+                                          "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})"),
+                         Comparison(partial))
     expected_b = DagNode(1,
                          BasicCodeLocation("<string-source>", 4),
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
                          DagNodeDetails(None, ['C', 'D']),
                          OptionalCodeInfo(CodeReference(4, 7, 4, 60),
-                                          "pd.DataFrame({'C': [1, 2, 3, 4], 'D': [1, 5, 4, 11]})"))
+                                          "pd.DataFrame({'C': [1, 2, 3, 4], 'D': [1, 5, 4, 11]})"),
+                         Comparison(partial))
     expected_join = DagNode(2,
                             BasicCodeLocation("<string-source>", 5),
                             OperatorContext(OperatorType.JOIN, FunctionInfo('pandas.core.frame', 'merge')),
@@ -464,13 +481,15 @@ def test_frame_merge_sorted():
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
                          DagNodeDetails(None, ['A', 'B']),
                          OptionalCodeInfo(CodeReference(3, 7, 3, 65),
-                                          "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [7, 5, 4, 2, 1]})"))
+                                          "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [7, 5, 4, 2, 1]})"),
+                         Comparison(partial))
     expected_b = DagNode(1,
                          BasicCodeLocation("<string-source>", 4),
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
                          DagNodeDetails(None, ['B', 'C']),
                          OptionalCodeInfo(CodeReference(4, 7, 4, 69),
-                                          "pd.DataFrame({'B': [1, 4, 3, 2, 5], 'C': [1, 5, 4, 11, None]})"))
+                                          "pd.DataFrame({'B': [1, 4, 3, 2, 5], 'C': [1, 5, 4, 11, None]})"),
+                         Comparison(partial))
     expected_join = DagNode(2,
                             BasicCodeLocation("<string-source>", 5),
                             OperatorContext(OperatorType.JOIN, FunctionInfo('pandas.core.frame', 'merge')),
@@ -506,7 +525,8 @@ def test_groupby_agg():
                             DagNodeDetails(None, ['group', 'value']),
                             OptionalCodeInfo(CodeReference(3, 5, 3, 81),
                                              "pd.DataFrame({'group': ['A', 'B', 'A', 'C', 'B'], "
-                                             "'value': [1, 2, 1, 3, 4]})"))
+                                             "'value': [1, 2, 1, 3, 4]})"),
+                            Comparison(partial))
     expected_groupby_agg = DagNode(1,
                                    BasicCodeLocation("<string-source>", 4),
                                    OperatorContext(OperatorType.GROUP_BY_AGG,

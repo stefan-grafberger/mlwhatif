@@ -2,6 +2,7 @@
 Tests whether the PipelineExecutor works
 """
 import ast
+from functools import partial
 from inspect import cleandoc
 from types import FunctionType
 
@@ -31,7 +32,8 @@ def test_func_defs_and_loops():
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
                                    DagNodeDetails(None, ['A']),
-                                   OptionalCodeInfo(CodeReference(4, 9, 4, 44), "pd.DataFrame([0, 1], columns=['A'])"))
+                                   OptionalCodeInfo(CodeReference(4, 9, 4, 44), "pd.DataFrame([0, 1], columns=['A'])"),
+                                   Comparison(partial))
     expected_select_1 = DagNode(1,
                                 BasicCodeLocation("<string-source>", 8),
                                 OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'dropna')),
@@ -62,7 +64,8 @@ def test_func_defs_and_loops_without_code_reference_tracking():
                                    BasicCodeLocation("<string-source>", 4),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']))
+                                   DagNodeDetails(None, ['A']),
+                                   processing_func=Comparison(partial))
     expected_select_1 = DagNode(1,
                                 BasicCodeLocation("<string-source>", 8),
                                 OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'dropna')),
