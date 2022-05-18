@@ -45,6 +45,8 @@ def test_read_csv():
                             Comparison(partial))
     compare(extracted_node, expected_node)
 
+    assert len(extracted_node.processing_func()) == 22792
+
 
 def test_frame__init__():
     """
@@ -105,6 +107,11 @@ def test_frame_dropna():
     expected_dag.add_edge(expected_data_source, expected_select, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
+    extracted_dropna = list(inspector_result.dag.nodes)[1]
+    pandas_df = pandas.DataFrame([0, 2, None, None, 4, None], columns=['A'])
+    filtered_df = extracted_dropna.processing_func(pandas_df)
+    assert len(filtered_df) == 3
+
 
 def test_frame__getitem__series():
     """
@@ -138,6 +145,11 @@ def test_frame__getitem__series():
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_getitem = list(inspector_result.dag.nodes)[1]
+    pandas_df = pandas.DataFrame({'A': [0, 2, 5], 'B': [1, 3, 5]})
+    projected_df = extracted_getitem.processing_func(pandas_df)
+    pandas.testing.assert_series_equal(projected_df, pandas.Series([0, 2, 5], name='A'))
 
 
 def test_frame__getitem__frame():
@@ -176,6 +188,12 @@ def test_frame__getitem__frame():
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_getitem = list(inspector_result.dag.nodes)[1]
+    pandas_df = pandas.DataFrame({'A': [0, 2, 5, 7, 1], 'B': [0, 2, 5, 1, 1], 'C': [1, 3, 5, None, None]})
+    projected_df = extracted_getitem.processing_func(pandas_df)
+    df_expected = pandas.DataFrame({'A': [0, 2, 5, 7, 1], 'C': [1, 3, 5, None, None]})
+    pandas.testing.assert_frame_equal(projected_df, df_expected)
 
 
 def test_frame__getitem__selection():
@@ -228,6 +246,13 @@ def test_frame__getitem__selection():
     expected_dag.add_edge(expected_subscript, expected_selection, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_getitem = list(inspector_result.dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'col_a': [0, 2, 4, 8, 5], 'col_b': [1, 5, 4, 11, None]})
+    df_selection = pandas_df['col_b'] > 1
+    filtered_df = extracted_getitem.processing_func(pandas_df, df_selection)
+    df_expected = pandas.DataFrame({'col_a': [2, 4, 8], 'col_b': [5, 4, 11.]})
+    pandas.testing.assert_frame_equal(filtered_df.reset_index(drop=True), df_expected.reset_index(drop=True))
 
 
 def test_frame__setitem__():
@@ -292,6 +317,19 @@ def test_frame__setitem__():
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
+    extracted_setitem = list(inspector_result.dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'foo': ['one', 'two', 'two', 'two', 'two', 'two'],
+                                  'bar': ['A', 'B', 'C', 'A', 'B', 'C'],
+                                  'baz': [1, 2, 3, 4, 5, 6],
+                                  'zoo': ['x', 'y', 'z', 'q', 'w', 't']})
+    new_values = pandas_df['baz'] * 2
+    extracted_setitem.processing_func(pandas_df, new_values)
+    df_expected = pandas.DataFrame({'foo': ['one', 'two', 'two', 'two', 'two', 'two'],
+                                    'bar': ['A', 'B', 'C', 'A', 'B', 'C'],
+                                    'baz': [2, 4, 6, 8, 10, 12],
+                                    'zoo': ['x', 'y', 'z', 'q', 'w', 't']})
+    pandas.testing.assert_frame_equal(pandas_df, df_expected)
+
 
 def test_frame_replace():
     """
@@ -327,6 +365,12 @@ def test_frame_replace():
                               Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_modify, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_replace = list(inspector_result.dag.nodes)[1]
+    pandas_df = pandas.DataFrame(['Medium', 'High', 'Medium', 'Low', None], columns=['C'])
+    df_replace = extracted_replace.processing_func(pandas_df)
+    df_expected = pandas.DataFrame(['Low', 'High', 'Low', 'Low', None], columns=['C'])
+    pandas.testing.assert_frame_equal(df_replace.reset_index(drop=True), df_expected.reset_index(drop=True))
 
 
 def test_frame_merge_on():
@@ -369,6 +413,13 @@ def test_frame_merge_on():
     expected_dag.add_edge(expected_a, expected_join, arg_index=0)
     expected_dag.add_edge(expected_b, expected_join, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_merge = list(inspector_result.dag.nodes)[2]
+    df_a = pandas.DataFrame({'col_a': [0, 20, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})
+    df_b = pandas.DataFrame({'B': [10, 2, 30, 4, 5], 'col_c': [10, 5, 4, 11, None]})
+    df_merged = extracted_merge.processing_func(df_a, df_b)
+    df_expected = pandas.DataFrame({'col_a': [20, 4, 8], 'B': [2, 4, 5], 'col_c': [5, 11, None]})
+    pandas.testing.assert_frame_equal(df_merged.reset_index(drop=True), df_expected.reset_index(drop=True))
 
 
 def test_frame_merge_left_right_on():
@@ -413,6 +464,13 @@ def test_frame_merge_left_right_on():
     expected_dag.add_edge(expected_b, expected_join, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
+    extracted_merge = list(inspector_result.dag.nodes)[2]
+    df_a = pandas.DataFrame({'col_a': [0, 20, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})
+    df_b = pandas.DataFrame({'C': [10, 2, 30, 4, 5], 'col_d': [10, 5, 4, 11, None]})
+    df_merged = extracted_merge.processing_func(df_a, df_b)
+    df_expected = pandas.DataFrame({'col_a': [20, 4, 8], 'B': [2, 4, 5], 'C': [2, 4, 5], 'col_d': [5, 11, None]})
+    pandas.testing.assert_frame_equal(df_merged.reset_index(drop=True), df_expected.reset_index(drop=True))
+
 
 def test_frame_merge_index():
     """
@@ -426,7 +484,6 @@ def test_frame_merge_index():
         df_merged = df_a.merge(right=df_b, left_index=True, right_index=True, how='outer')
         df_expected = pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 2, 4, 5, 7],  'C': [1., 2., 3., 4., None], 
             'D': [1., 5., 4., 11., None]})
-        print(df_merged)
         pd.testing.assert_frame_equal(df_merged.reset_index(drop=True), df_expected.reset_index(drop=True))
         """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
@@ -457,6 +514,15 @@ def test_frame_merge_index():
     expected_dag.add_edge(expected_a, expected_join, arg_index=0)
     expected_dag.add_edge(expected_b, expected_join, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_merge = list(inspector_result.dag.nodes)[2]
+    df_a = pandas.DataFrame({'col_a': [10, 2, 4, 8, 5], 'col_b': [1, 2, 4, 5, 7]})
+    df_b = pandas.DataFrame({'col_c': [1, 2, 3, 4], 'col_d': [1, 5, 4, 11]})
+    df_merged = extracted_merge.processing_func(df_a, df_b)
+    df_expected = pandas.DataFrame(
+        {'col_a': [10, 2, 4, 8, 5], 'col_b': [1, 2, 4, 5, 7], 'col_c': [1., 2., 3., 4., None],
+         'col_d': [1., 5., 4., 11., None]})
+    pandas.testing.assert_frame_equal(df_merged.reset_index(drop=True), df_expected.reset_index(drop=True))
 
 
 def test_frame_merge_sorted():
@@ -499,6 +565,13 @@ def test_frame_merge_sorted():
     expected_dag.add_edge(expected_a, expected_join, arg_index=0)
     expected_dag.add_edge(expected_b, expected_join, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_merge = list(inspector_result.dag.nodes)[2]
+    df_a = pandas.DataFrame({'col_a': [0, 20, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})
+    df_b = pandas.DataFrame({'B': [10, 2, 30, 5, 4], 'col_c': [10, 5, 4, 11, None]})
+    df_merged = extracted_merge.processing_func(df_a, df_b)
+    df_expected = pandas.DataFrame({'col_a': [20, 4, 8], 'B': [2, 4, 5], 'col_c': [5, None, 11]})
+    pandas.testing.assert_frame_equal(df_merged.reset_index(drop=True), df_expected.reset_index(drop=True))
 
 
 def test_groupby_agg():

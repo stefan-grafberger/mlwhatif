@@ -129,10 +129,10 @@ class DataFramePatching:
             input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                         optional_source_code)
             dag_parents = [input_info.dag_node]
-            processing_func = lambda df: original(df, *args, **kwargs)
             if isinstance(args[0], str):  # Projection to Series
                 columns = [args[0]]
                 operator_context = OperatorContext(OperatorType.PROJECTION, function_info)
+                processing_func = lambda df: original(df, *args, **kwargs)
                 dag_node = DagNode(op_id,
                                    BasicCodeLocation(caller_filename, lineno),
                                    operator_context,
@@ -142,6 +142,7 @@ class DataFramePatching:
             elif isinstance(args[0], list) and isinstance(args[0][0], str):  # Projection to DF
                 columns = args[0]
                 operator_context = OperatorContext(OperatorType.PROJECTION, function_info)
+                processing_func = lambda df: original(df, *args, **kwargs)
                 dag_node = DagNode(op_id,
                                    BasicCodeLocation(caller_filename, lineno),
                                    operator_context,
@@ -159,6 +160,7 @@ class DataFramePatching:
                     description = "Select by Series: {}".format(optional_source_code)
                 else:
                     description = "Select by Series"
+                processing_func = lambda df, filter_series: original(df, filter_series, *args[1:], **kwargs)
                 dag_node = DagNode(op_id,
                                    BasicCodeLocation(caller_filename, lineno),
                                    operator_context,
