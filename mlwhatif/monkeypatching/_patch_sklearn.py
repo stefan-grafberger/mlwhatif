@@ -999,6 +999,11 @@ class SklearnDecisionTreePatching:
         _, train_labels_node, train_labels_result = add_train_label_node(self, args[1],
                                                                          function_info)
 
+        def processing_func(train_data, train_labels):
+            estimator = tree.DecisionTreeClassifier(**self.mlinspect_non_data_func_args)
+            fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+            return fitted_estimator
+
         # Estimator
         operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
         # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
@@ -1010,7 +1015,8 @@ class SklearnDecisionTreePatching:
                            operator_context,
                            DagNodeDetails("Decision Tree", []),
                            get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
-                                                          self.mlinspect_optional_source_code))
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
         function_call_result = FunctionCallResult(None)
         add_dag_node(dag_node, [train_data_node, train_labels_node], function_call_result)
         return self
@@ -1038,6 +1044,10 @@ class SklearnDecisionTreePatching:
                                                                           optional_code_reference,
                                                                           optional_source_code)
 
+            def processing_func(estimator, test_data, test_labels):
+                score = estimator.score(test_data, test_labels, **kwargs)
+                return score
+
             operator_context = OperatorContext(OperatorType.SCORE, function_info)
             # Same as original, but captures the test set predictions
             predictions = self.predict(test_data_result)  # pylint: disable=no-member
@@ -1047,7 +1057,8 @@ class SklearnDecisionTreePatching:
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails("Decision Tree", []),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
             estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
             function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
             add_dag_node(dag_node, [estimator_dag_node, test_data_node, test_labels_node],

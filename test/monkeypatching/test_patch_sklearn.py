@@ -10,6 +10,8 @@ import networkx
 import numpy
 import pandas
 from scipy.sparse import csr_matrix
+from sklearn.preprocessing import label_binarize
+from sklearn.tree import DecisionTreeClassifier
 from testfixtures import compare, Comparison
 
 from mlwhatif import OperatorType, OperatorContext, FunctionInfo
@@ -1008,6 +1010,7 @@ def test_decision_tree():
     """
     Tests whether the monkey patching of ('sklearn.tree._classes', 'DecisionTreeClassifier') works
     """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import label_binarize, StandardScaler
@@ -1076,31 +1079,50 @@ def test_decision_tree():
                                   OperatorContext(OperatorType.TRAIN_DATA,
                                                   FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
                                   DagNodeDetails(None, ['array']),
-                                  OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'))
+                                  OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'),
+                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
     expected_train_labels = DagNode(6,
                                     BasicCodeLocation("<string-source>", 11),
                                     OperatorContext(OperatorType.TRAIN_LABELS,
                                                     FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
                                     DagNodeDetails(None, ['array']),
-                                    OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'))
+                                    OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'),
+                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
     expected_decision_tree = DagNode(7,
                                      BasicCodeLocation("<string-source>", 11),
                                      OperatorContext(OperatorType.ESTIMATOR,
                                                      FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
                                      DagNodeDetails('Decision Tree', []),
-                                     OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'))
+                                     OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'),
+                                     Comparison(FunctionType))
     expected_dag.add_edge(expected_train_data, expected_decision_tree, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_decision_tree, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[7]
+    train_data_node = list(inspector_result.dag.nodes)[5]
+    train_label_node = list(inspector_result.dag.nodes)[6]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_data = train_data_node.processing_func(train_df[['C', 'D']])
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    train_labels = train_label_node.processing_func(train_labels)
+    fitted_estimator = fit_node.processing_func(train_data, train_labels)
+    assert isinstance(fitted_estimator, DecisionTreeClassifier)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
+    test_score = fitted_estimator.score(test_df[['C', 'D']], test_labels)
+    assert test_score == 0.5
 
 
 def test_decision_tree_score():
     """
     Tests whether the monkey patching of ('sklearn.tree._classes.DecisionTreeClassifier', 'score') works
     """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import label_binarize, StandardScaler
@@ -1138,7 +1160,8 @@ def test_decision_tree_score():
                                                  FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier', 'score')),
                                  DagNodeDetails(None, ['A', 'B']),
                                  OptionalCodeInfo(CodeReference(16, 13, 16, 56),
-                                                  "clf.score(test_df[['A', 'B']], test_labels)"))
+                                                  "clf.score(test_df[['A', 'B']], test_labels)"),
+                                 Comparison(FunctionType))
     expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
     expected_label_encode = DagNode(10,
                                     BasicCodeLocation("<string-source>", 15),
@@ -1154,7 +1177,8 @@ def test_decision_tree_score():
                                                                 'score')),
                                    DagNodeDetails(None, ['array']),
                                    OptionalCodeInfo(CodeReference(16, 13, 16, 56),
-                                                    "clf.score(test_df[['A', 'B']], test_labels)"))
+                                                    "clf.score(test_df[['A', 'B']], test_labels)"),
+                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_label_encode, expected_test_labels, arg_index=0)
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 11),
@@ -1162,19 +1186,37 @@ def test_decision_tree_score():
                                                   FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
                                   DagNodeDetails('Decision Tree', []),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 30),
-                                                   'DecisionTreeClassifier()'))
+                                                   'DecisionTreeClassifier()'),
+                                  Comparison(FunctionType))
     expected_score = DagNode(14,
                              BasicCodeLocation("<string-source>", 16),
                              OperatorContext(OperatorType.SCORE,
                                              FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier', 'score')),
                              DagNodeDetails('Decision Tree', []),
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
-                                              "clf.score(test_df[['A', 'B']], test_labels)"))
+                                              "clf.score(test_df[['A', 'B']], test_labels)"),
+                             Comparison(FunctionType))
     expected_dag.add_edge(expected_classifier, expected_score, arg_index=0)
     expected_dag.add_edge(expected_test_data, expected_score, arg_index=1)
     expected_dag.add_edge(expected_test_labels, expected_score, arg_index=2)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[0]
+    score_node = list(inspector_result.dag.nodes)[5]
+    test_data_node = list(inspector_result.dag.nodes)[3]
+    test_label_node = list(inspector_result.dag.nodes)[4]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
+    assert isinstance(fitted_estimator, DecisionTreeClassifier)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_data = test_data_node.processing_func(test_df[['C', 'D']])
+    test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
+    test_labels = test_label_node.processing_func(test_labels)
+    test_score = score_node.processing_func(fitted_estimator, test_data, test_labels)
+    assert test_score == 0.5
 
 
 def test_sgd_classifier():
@@ -1218,7 +1260,8 @@ def test_sgd_classifier():
                                                                'SGDClassifier')),
                                   DagNodeDetails(None, ['array']),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
-                                                   "SGDClassifier(loss='log', random_state=42)"))
+                                                   "SGDClassifier(loss='log', random_state=42)"),
+                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
     expected_label_encode = DagNode(4,
                                     BasicCodeLocation("<string-source>", 9),
@@ -1234,7 +1277,8 @@ def test_sgd_classifier():
                                                                  'SGDClassifier')),
                                     DagNodeDetails(None, ['array']),
                                     OptionalCodeInfo(CodeReference(11, 6, 11, 48),
-                                                     "SGDClassifier(loss='log', random_state=42)"))
+                                                     "SGDClassifier(loss='log', random_state=42)"),
+                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 11),
@@ -1303,7 +1347,8 @@ def test_sgd_classifier_score():
                                                               'SGDClassifier', 'score')),
                                  DagNodeDetails(None, ['A', 'B']),
                                  OptionalCodeInfo(CodeReference(16, 13, 16, 56),
-                                                  "clf.score(test_df[['A', 'B']], test_labels)"))
+                                                  "clf.score(test_df[['A', 'B']], test_labels)"),
+                                 Comparison(FunctionType))
     expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
     expected_label_encode = DagNode(10,
                                     BasicCodeLocation("<string-source>", 15),
@@ -1319,7 +1364,8 @@ def test_sgd_classifier_score():
                                                                 'SGDClassifier', 'score')),
                                    DagNodeDetails(None, ['array']),
                                    OptionalCodeInfo(CodeReference(16, 13, 16, 56),
-                                                    "clf.score(test_df[['A', 'B']], test_labels)"))
+                                                    "clf.score(test_df[['A', 'B']], test_labels)"),
+                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_label_encode, expected_test_labels, arg_index=0)
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 11),
@@ -1416,7 +1462,8 @@ def test_logistic_regression():
                                   OperatorContext(OperatorType.TRAIN_DATA,
                                                   FunctionInfo('sklearn.linear_model._logistic', 'LogisticRegression')),
                                   DagNodeDetails(None, ['array']),
-                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'))
+                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'),
+                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
     expected_train_labels = DagNode(6,
                                     BasicCodeLocation("<string-source>", 11),
@@ -1424,7 +1471,8 @@ def test_logistic_regression():
                                                     FunctionInfo('sklearn.linear_model._logistic',
                                                                  'LogisticRegression')),
                                     DagNodeDetails(None, ['array']),
-                                    OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'))
+                                    OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'),
+                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
     expected_estimator = DagNode(7,
                                  BasicCodeLocation("<string-source>", 11),
@@ -1481,7 +1529,8 @@ def test_logistic_regression_score():
                                                               'score')),
                                  DagNodeDetails(None, ['A', 'B']),
                                  OptionalCodeInfo(CodeReference(16, 13, 16, 56),
-                                                  "clf.score(test_df[['A', 'B']], test_labels)"))
+                                                  "clf.score(test_df[['A', 'B']], test_labels)"),
+                                 Comparison(FunctionType))
     expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
     expected_label_encode = DagNode(10,
                                     BasicCodeLocation("<string-source>", 15),
@@ -1497,7 +1546,8 @@ def test_logistic_regression_score():
                                                                 'score')),
                                    DagNodeDetails(None, ['array']),
                                    OptionalCodeInfo(CodeReference(16, 13, 16, 56),
-                                                    "clf.score(test_df[['A', 'B']], test_labels)"))
+                                                    "clf.score(test_df[['A', 'B']], test_labels)"),
+                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_label_encode, expected_test_labels, arg_index=0)
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 11),
@@ -1606,7 +1656,8 @@ def test_keras_wrapper():
                                   DagNodeDetails(None, ['array']),
                                   OptionalCodeInfo(CodeReference(22, 6, 22, 92),
                                                    'KerasClassifier(build_fn=create_model, epochs=2, '
-                                                   'batch_size=1, verbose=0, input_dim=2)'))
+                                                   'batch_size=1, verbose=0, input_dim=2)'),
+                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
     expected_train_labels = DagNode(6,
                                     BasicCodeLocation("<string-source>", 22),
@@ -1616,7 +1667,8 @@ def test_keras_wrapper():
                                     DagNodeDetails(None, ['array']),
                                     OptionalCodeInfo(CodeReference(22, 6, 22, 92),
                                                      'KerasClassifier(build_fn=create_model, epochs=2, '
-                                                     'batch_size=1, verbose=0, input_dim=2)'))
+                                                     'batch_size=1, verbose=0, input_dim=2)'),
+                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 22),
@@ -1690,7 +1742,8 @@ def test_keras_wrapper_score():
                                                               'KerasClassifier', 'score')),
                                  DagNodeDetails(None, ['A', 'B']),
                                  OptionalCodeInfo(CodeReference(30, 13, 30, 56),
-                                                  "clf.score(test_df[['A', 'B']], test_labels)"))
+                                                  "clf.score(test_df[['A', 'B']], test_labels)"),
+                                 Comparison(FunctionType))
     expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
     expected_label_encode = DagNode(10,
                                     BasicCodeLocation("<string-source>", 29),
@@ -1706,7 +1759,8 @@ def test_keras_wrapper_score():
                                                                 'KerasClassifier', 'score')),
                                    DagNodeDetails(None, ['array']),
                                    OptionalCodeInfo(CodeReference(30, 13, 30, 56),
-                                                    "clf.score(test_df[['A', 'B']], test_labels)"))
+                                                    "clf.score(test_df[['A', 'B']], test_labels)"),
+                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_label_encode, expected_test_labels, arg_index=0)
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 25),

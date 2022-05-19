@@ -119,7 +119,8 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                                   FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
                                   DagNodeDetails(None, ['array']),
                                   OptionalCodeInfo(CodeReference(26 + line_offset, 19, 26 + line_offset, 48),
-                                                   'tree.DecisionTreeClassifier()'))
+                                                   'tree.DecisionTreeClassifier()'),
+                                  Comparison(FunctionType))
     expected_graph.add_edge(expected_pipeline_concatenation, expected_train_data, arg_index=0)
 
     expected_project = DagNode(2,
@@ -148,7 +149,8 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                                     FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
                                     DagNodeDetails(None, ['array']),
                                     OptionalCodeInfo(CodeReference(26 + line_offset, 19, 26 + line_offset, 48),
-                                                     'tree.DecisionTreeClassifier()'))
+                                                     'tree.DecisionTreeClassifier()'),
+                                    Comparison(FunctionType))
     expected_graph.add_edge(expected_project_modify, expected_train_labels, arg_index=0)
 
     expected_estimator = DagNode(11,
@@ -157,7 +159,8 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                                  FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
                                  DagNodeDetails('Decision Tree', []),
                                  OptionalCodeInfo(CodeReference(26 + line_offset, 19, 26 + line_offset, 48),
-                                                  'tree.DecisionTreeClassifier()'))
+                                                  'tree.DecisionTreeClassifier()'),
+                                 Comparison(FunctionType))
     expected_graph.add_edge(expected_train_data, expected_estimator, arg_index=0)
     expected_graph.add_edge(expected_train_labels, expected_estimator, arg_index=1)
 

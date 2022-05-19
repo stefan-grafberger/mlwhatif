@@ -282,12 +282,14 @@ def add_train_label_node(estimator, train_label_arg, function_info):
                                              estimator.mlinspect_optional_code_reference,
                                              estimator.mlinspect_optional_source_code)
     train_label_op_id = _pipeline_executor.singleton.get_next_op_id()
+    process_func = lambda df_object: df_object
     train_labels_dag_node = DagNode(train_label_op_id,
                                     BasicCodeLocation(estimator.mlinspect_caller_filename, estimator.mlinspect_lineno),
                                     operator_context,
                                     DagNodeDetails(None, ["array"]),
                                     get_optional_code_info_or_none(estimator.mlinspect_optional_code_reference,
-                                                                   estimator.mlinspect_optional_source_code))
+                                                                   estimator.mlinspect_optional_source_code),
+                                    process_func)
     function_call_result = FunctionCallResult(train_label_arg)
     add_dag_node(train_labels_dag_node, [input_info_train_labels.dag_node], function_call_result)
     train_labels_result = function_call_result.function_result
@@ -302,12 +304,14 @@ def add_train_data_node(estimator, train_data_arg, function_info):
                                            estimator.mlinspect_optional_source_code)
     train_data_op_id = _pipeline_executor.singleton.get_next_op_id()
     operator_context = OperatorContext(OperatorType.TRAIN_DATA, function_info)
+    process_func = lambda df_object: df_object
     train_data_dag_node = DagNode(train_data_op_id,
                                   BasicCodeLocation(estimator.mlinspect_caller_filename, estimator.mlinspect_lineno),
                                   operator_context,
                                   DagNodeDetails(None, ["array"]),
                                   get_optional_code_info_or_none(estimator.mlinspect_optional_code_reference,
-                                                                 estimator.mlinspect_optional_source_code))
+                                                                 estimator.mlinspect_optional_source_code),
+                                  process_func)
     function_call_result = FunctionCallResult(train_data_arg)
     add_dag_node(train_data_dag_node, [input_info_train_data.dag_node], function_call_result)
     train_data_result = function_call_result.function_result
@@ -322,11 +326,13 @@ def add_test_data_dag_node(test_data_arg, function_info, lineno, optional_code_r
                                           optional_code_reference, optional_source_code)
     operator_context = OperatorContext(OperatorType.TEST_DATA, function_info)
     test_data_op_id = _pipeline_executor.singleton.get_next_op_id()
+    process_func = lambda df_object: df_object
     test_data_dag_node = DagNode(test_data_op_id,
                                  BasicCodeLocation(caller_filename, lineno),
                                  operator_context,
                                  DagNodeDetails(None, get_column_names(test_data_arg)),
-                                 get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                                 get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                 process_func)
     function_call_result = FunctionCallResult(test_data_arg)
     add_dag_node(test_data_dag_node, [input_info_test_data.dag_node], function_call_result)
     test_data_result = function_call_result.function_result
@@ -341,12 +347,14 @@ def add_test_label_node(test_label_arg, caller_filename, function_info, lineno, 
     input_info_test_labels = get_input_info(test_label_arg, caller_filename, lineno, function_info,
                                             optional_code_reference, optional_source_code)
     test_label_op_id = _pipeline_executor.singleton.get_next_op_id()
+    process_func = lambda df_object: df_object
     test_labels_dag_node = DagNode(test_label_op_id,
                                    BasicCodeLocation(caller_filename, lineno),
                                    operator_context,
                                    DagNodeDetails(None, get_column_names(test_label_arg)),
                                    get_optional_code_info_or_none(optional_code_reference,
-                                                                  optional_source_code))
+                                                                  optional_source_code),
+                                   process_func)
     function_call_result = FunctionCallResult(test_label_arg)
     add_dag_node(test_labels_dag_node, [input_info_test_labels.dag_node], function_call_result)
     test_labels_result = function_call_result.function_result
