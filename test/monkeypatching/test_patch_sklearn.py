@@ -7,6 +7,7 @@ from inspect import cleandoc
 from types import FunctionType
 
 import networkx
+import numpy
 import pandas
 from testfixtures import compare, Comparison
 
@@ -161,7 +162,8 @@ def test_standard_scaler():
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                    DagNodeDetails('Standard Scaler: fit_transform', ['array']),
-                                   OptionalCodeInfo(CodeReference(6, 18, 6, 34), 'StandardScaler()'))
+                                   OptionalCodeInfo(CodeReference(6, 18, 6, 34), 'StandardScaler()'),
+                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     expected_data_source_two = DagNode(2,
                                        BasicCodeLocation("<string-source>", 8),
@@ -176,10 +178,23 @@ def test_standard_scaler():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: transform', ['array']),
-                                       OptionalCodeInfo(CodeReference(6, 18, 6, 34), 'StandardScaler()'))
+                                       OptionalCodeInfo(CodeReference(6, 18, 6, 34), 'StandardScaler()'),
+                                       Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
     expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.dag.nodes)[1]
+    transform_node = list(inspector_result.dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2]})
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df)
+    expected_fit_transform_data = numpy.array([[-0.52166986], [-0.61651893], [1.73099545], [-0.59280666]])
+    assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
+
+    test_df = pandas.DataFrame({'A': [50, 2, 10, 1]})
+    encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
+    expected = numpy.array([[0.54538213], [-0.59280666], [-0.40310853], [-0.61651893]])
+    assert numpy.allclose(encoded_data, expected)
 
 
 def test_function_transformer():
@@ -561,7 +576,8 @@ def test_column_transformer_one_transformer():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array']),
-                                       OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'))
+                                       OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'),
+                                       Comparison(FunctionType))
     expected_dag.add_edge(expected_projection, expected_standard_scaler, arg_index=0)
     expected_concat = DagNode(3,
                               BasicCodeLocation("<string-source>", 8),
@@ -706,7 +722,8 @@ def test_column_transformer_multiple_transformers_all_dense():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array']),
-                                       OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'))
+                                       OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'),
+                                       Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_1, expected_standard_scaler, arg_index=0)
     expected_one_hot = DagNode(4,
                                BasicCodeLocation("<string-source>", 10),
@@ -791,7 +808,8 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array']),
-                                       OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'))
+                                       OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'),
+                                       Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_1, expected_standard_scaler, arg_index=0)
     expected_one_hot = DagNode(4,
                                BasicCodeLocation("<string-source>", 10),
@@ -879,7 +897,8 @@ def test_column_transformer_transform_after_fit_transform():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: transform', ['array']),
-                                       OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'))
+                                       OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'),
+                                       Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_1, expected_standard_scaler, arg_index=1)
     expected_one_hot = DagNode(10,
                                BasicCodeLocation("<string-source>", 10),
@@ -949,7 +968,8 @@ def test_decision_tree():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array']),
-                                       OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'))
+                                       OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'),
+                                       Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_data_projection, arg_index=0)
     expected_dag.add_edge(expected_data_projection, expected_standard_scaler, arg_index=0)
     expected_label_projection = DagNode(3,
@@ -1106,7 +1126,8 @@ def test_sgd_classifier():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array']),
-                                       OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'))
+                                       OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'),
+                                       Comparison(FunctionType))
     expected_train_data = DagNode(5,
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.TRAIN_DATA,
@@ -1280,7 +1301,8 @@ def test_logistic_regression():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array']),
-                                       OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'))
+                                       OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'),
+                                       Comparison(FunctionType))
     expected_data_projection = DagNode(1,
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.PROJECTION,
@@ -1466,7 +1488,8 @@ def test_keras_wrapper():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array']),
-                                       OptionalCodeInfo(CodeReference(11, 8, 11, 24), 'StandardScaler()'))
+                                       OptionalCodeInfo(CodeReference(11, 8, 11, 24), 'StandardScaler()'),
+                                       Comparison(FunctionType))
     expected_data_projection = DagNode(1,
                                        BasicCodeLocation("<string-source>", 11),
                                        OperatorContext(OperatorType.PROJECTION,

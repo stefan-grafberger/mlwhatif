@@ -97,7 +97,8 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                                 DagNodeDetails('Standard Scaler: fit_transform', ['array']),
                                                 OptionalCodeInfo(CodeReference(20 + line_offset, 16, 20 + line_offset,
                                                                                46),
-                                                                 'preprocessing.StandardScaler()'))
+                                                                 'preprocessing.StandardScaler()'),
+                                                Comparison(FunctionType))
     expected_graph.add_edge(expected_pipeline_project_one, expected_pipeline_transformer_one, arg_index=0)
     expected_graph.add_edge(expected_pipeline_project_two, expected_pipeline_transformer_two, arg_index=0)
 
