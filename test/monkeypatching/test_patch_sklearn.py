@@ -10,6 +10,7 @@ import networkx
 import numpy
 import pandas
 from scipy.sparse import csr_matrix
+from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import label_binarize
 from sklearn.tree import DecisionTreeClassifier
 from testfixtures import compare, Comparison
@@ -1223,6 +1224,7 @@ def test_sgd_classifier():
     """
     Tests whether the monkey patching of ('sklearn.linear_model._stochastic_gradient', 'SGDClassifier') works
     """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import label_binarize, StandardScaler
@@ -1287,11 +1289,27 @@ def test_sgd_classifier():
                                                                'SGDClassifier')),
                                   DagNodeDetails('SGD Classifier', []),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
-                                                   "SGDClassifier(loss='log', random_state=42)"))
+                                                   "SGDClassifier(loss='log', random_state=42)"),
+                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[4]
+    train_data_node = list(inspector_result.dag.nodes)[2]
+    train_label_node = list(inspector_result.dag.nodes)[3]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_data = train_data_node.processing_func(train_df[['C', 'D']])
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    train_labels = train_label_node.processing_func(train_labels)
+    fitted_estimator = fit_node.processing_func(train_data, train_labels)
+    assert isinstance(fitted_estimator, SGDClassifier)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
+    test_score = fitted_estimator.score(test_df[['C', 'D']], test_labels)
+    assert test_score == 0.5
 
 
 def filter_dag_for_nodes_with_ids(inspector_result, node_ids, total_expected_node_num):
@@ -1309,6 +1327,7 @@ def test_sgd_classifier_score():
     """
     Tests whether the monkey patching of ('sklearn.linear_model._stochastic_gradient.SGDClassifier', 'score') works
     """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import label_binarize, StandardScaler
@@ -1374,7 +1393,8 @@ def test_sgd_classifier_score():
                                                                'SGDClassifier')),
                                   DagNodeDetails('SGD Classifier', []),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
-                                                   "SGDClassifier(loss='log', random_state=42)"))
+                                                   "SGDClassifier(loss='log', random_state=42)"),
+                                  Comparison(FunctionType))
     expected_score = DagNode(14,
                              BasicCodeLocation("<string-source>", 16),
                              OperatorContext(OperatorType.SCORE,
@@ -1382,12 +1402,29 @@ def test_sgd_classifier_score():
                                                           'score')),
                              DagNodeDetails('SGD Classifier', []),
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
-                                              "clf.score(test_df[['A', 'B']], test_labels)"))
+                                              "clf.score(test_df[['A', 'B']], test_labels)"),
+                             Comparison(FunctionType))
     expected_dag.add_edge(expected_classifier, expected_score, arg_index=0)
     expected_dag.add_edge(expected_test_data, expected_score, arg_index=1)
     expected_dag.add_edge(expected_test_labels, expected_score, arg_index=2)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[0]
+    score_node = list(inspector_result.dag.nodes)[5]
+    test_data_node = list(inspector_result.dag.nodes)[3]
+    test_label_node = list(inspector_result.dag.nodes)[4]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
+    assert isinstance(fitted_estimator, SGDClassifier)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_data = test_data_node.processing_func(test_df[['C', 'D']])
+    test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
+    test_labels = test_label_node.processing_func(test_labels)
+    test_score = score_node.processing_func(fitted_estimator, test_data, test_labels)
+    assert test_score == 0.5
 
 
 def test_logistic_regression():
