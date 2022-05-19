@@ -9,6 +9,7 @@ from types import FunctionType
 import networkx
 import numpy
 import pandas
+from scipy.sparse import csr_matrix
 from testfixtures import compare, Comparison
 
 from mlwhatif import OperatorType, OperatorContext, FunctionInfo
@@ -507,7 +508,8 @@ def test_hashing_vectorizer():
                                                                 'HashingVectorizer')),
                                    DagNodeDetails('Hashing Vectorizer: fit_transform', ['array']),
                                    OptionalCodeInfo(CodeReference(7, 13, 7, 67),
-                                                    'HashingVectorizer(ngram_range=(1, 3), n_features=2**2)'))
+                                                    'HashingVectorizer(ngram_range=(1, 3), n_features=2**2)'),
+                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     expected_data_source_two = DagNode(4,
                                        BasicCodeLocation("<string-source>", 12),
@@ -523,10 +525,23 @@ def test_hashing_vectorizer():
                                                                     'HashingVectorizer')),
                                        DagNodeDetails('Hashing Vectorizer: transform', ['array']),
                                        OptionalCodeInfo(CodeReference(7, 13, 7, 67),
-                                                        'HashingVectorizer(ngram_range=(1, 3), n_features=2**2)'))
+                                                        'HashingVectorizer(ngram_range=(1, 3), n_features=2**2)'),
+                                       Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
     expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.dag.nodes)[1]
+    transform_node = list(inspector_result.dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'A': ['aaa', 'bbb', 'bbb', 'aaa']})
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df['A'])
+    expected = csr_matrix([[0., -1., 0., 0.], [0., 0., 0., -1.], [0., 0., 0., -1.], [0., -1., 0., 0.]])
+    assert numpy.allclose(fit_transformed_result.A, expected.A)
+
+    test_df = pandas.DataFrame({'A': ['bbb', 'ccc', 'bbb', 'bbb']})
+    encoded_data = transform_node.processing_func(fit_transformed_result, test_df['A'])
+    expected = csr_matrix([[0., 0., 0., -1.], [1., 0., 0., 0.], [0., 0., 0., -1.], [0., 0., 0., -1.]])
+    assert numpy.allclose(encoded_data.A, expected.A)
 
 
 def test_column_transformer_one_transformer():
@@ -634,7 +649,8 @@ def test_column_transformer_one_transformer_single_column_projection():
                                                   FunctionInfo('sklearn.feature_extraction.text', 'HashingVectorizer')),
                                   DagNodeDetails('Hashing Vectorizer: fit_transform', ['array']),
                                   OptionalCodeInfo(CodeReference(9, 16, 9, 70), 'HashingVectorizer(ngram_range=(1, 3), '
-                                                                                'n_features=2**2)'))
+                                                                                'n_features=2**2)'),
+                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_projection, expected_vectorizer, arg_index=0)
     expected_concat = DagNode(3,
                               BasicCodeLocation("<string-source>", 8),
@@ -643,8 +659,8 @@ def test_column_transformer_one_transformer_single_column_projection():
                               DagNodeDetails(None, ['array']),
                               OptionalCodeInfo(CodeReference(8, 21, 10, 2),
                                                "ColumnTransformer(transformers=[\n"
-                                                   "    ('hashing', HashingVectorizer(ngram_range=(1, 3), "
-                                                   "n_features=2**2), 'A')\n])"))
+                                               "    ('hashing', HashingVectorizer(ngram_range=(1, 3), "
+                                               "n_features=2**2), 'A')\n])"))
     expected_dag.add_edge(expected_vectorizer, expected_concat, arg_index=0)
 
     expected_transform = DagNode(6,
@@ -653,7 +669,8 @@ def test_column_transformer_one_transformer_single_column_projection():
                                                  FunctionInfo('sklearn.feature_extraction.text', 'HashingVectorizer')),
                                  DagNodeDetails('Hashing Vectorizer: transform', ['array']),
                                  OptionalCodeInfo(CodeReference(9, 16, 9, 70), 'HashingVectorizer(ngram_range=(1, 3), '
-                                                                                'n_features=2**2)'))
+                                                                               'n_features=2**2)'),
+                                 Comparison(FunctionType))
     expected_dag.add_edge(expected_vectorizer, expected_transform, arg_index=0)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))

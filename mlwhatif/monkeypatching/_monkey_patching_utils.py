@@ -217,6 +217,15 @@ def get_column_names(df_object):
     return columns
 
 
+def wrap_in_mlinspect_array_if_necessary(df_object):
+    """
+    Makes sure annotations can be stored in a df_object. For example, numpy arrays need a wrapper for this.
+    """
+    if isinstance(df_object, numpy.ndarray):
+        df_object = MlinspectNdarray(df_object)
+    return df_object
+
+
 def add_dag_node(dag_node: DagNode, dag_node_parents: List[DagNode], function_call_result: FunctionCallResult):
     """
     Inserts a new node into the DAG
@@ -227,8 +236,8 @@ def add_dag_node(dag_node: DagNode, dag_node_parents: List[DagNode], function_ca
 
     # print("source code: {}".format(dag_node.optional_source_code))
     if function_call_result.function_result is not None:
-        if isinstance(function_call_result.function_result, numpy.ndarray):
-            function_call_result.function_result = MlinspectNdarray(function_call_result.function_result)
+        function_call_result.function_result = wrap_in_mlinspect_array_if_necessary(
+            function_call_result.function_result)
         function_call_result.function_result._mlinspect_dag_node = dag_node.node_id
     if dag_node_parents:
         for parent_index, parent in enumerate(dag_node_parents):

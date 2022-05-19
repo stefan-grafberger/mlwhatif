@@ -21,7 +21,8 @@ from mlwhatif.monkeypatching._mlinspect_ndarray import MlinspectNdarray
 from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, add_dag_node, \
     execute_patched_func_indirect_allowed, get_input_info, execute_patched_func_no_op_id, \
     get_optional_code_info_or_none, get_dag_node_for_id, add_train_data_node, \
-    add_train_label_node, add_test_label_node, add_test_data_dag_node, FunctionCallResult
+    add_train_label_node, add_test_label_node, add_test_data_dag_node, FunctionCallResult, \
+    wrap_in_mlinspect_array_if_necessary
 
 
 @gorilla.patches(preprocessing)
@@ -315,9 +316,9 @@ class SklearnStandardScalerPatching:
                                     self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
 
         def processing_func(input_df):
-            transformer = preprocessing.StandardScaler(*self.mlinspect_non_data_func_args)
+            transformer = preprocessing.StandardScaler(**self.mlinspect_non_data_func_args)
             transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
-            transformed_data = MlinspectNdarray(transformed_data)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
             transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
             return transformed_data
 
@@ -432,6 +433,13 @@ class SklearnHasingVectorizerPatching:
         input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
                                     self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
 
+        def processing_func(input_df):
+            transformer = text.HashingVectorizer(**self.mlinspect_non_data_func_args)
+            transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+            transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+            return transformed_data
+
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
         dag_node_id = singleton.get_next_op_id()
@@ -441,7 +449,8 @@ class SklearnHasingVectorizerPatching:
                            operator_context,
                            DagNodeDetails("Hashing Vectorizer: fit_transform", ['array']),
                            get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
-                                                          self.mlinspect_optional_source_code))
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
         function_call_result = FunctionCallResult(result)
         add_dag_node(dag_node, [input_info.dag_node], function_call_result)
         new_result = function_call_result.function_result
@@ -459,6 +468,11 @@ class SklearnHasingVectorizerPatching:
             input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
                                         self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
 
+            def processing_func(fit_data, input_df):
+                transformer = fit_data._mlinspect_annotation  # pylint: disable=protected-access
+                transformed_data = transformer.transform(input_df, *args[1:], **kwargs)
+                return transformed_data
+
             operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
             result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
             dag_node = DagNode(singleton.get_next_op_id(),
@@ -466,7 +480,8 @@ class SklearnHasingVectorizerPatching:
                                operator_context,
                                DagNodeDetails("Hashing Vectorizer: transform", ['array']),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
-                                                              self.mlinspect_optional_source_code))
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
             function_call_result = FunctionCallResult(result)
             transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
             add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
