@@ -2,6 +2,7 @@
 Monkey patching for sklearn
 """
 # pylint: disable=too-many-lines
+import dataclasses
 
 import gorilla
 import numpy
@@ -62,6 +63,15 @@ class SklearnPreprocessingPatching:
         return execute_patched_func(original, execute_inspections, *args, **kwargs)
 
 
+@dataclasses.dataclass
+class TrainTestSplitResult:
+    """
+    Additional info about the DAG node
+    """
+    train: any or None = None
+    test: any or None = None
+
+
 @gorilla.patches(model_selection)
 class SklearnModelSelectionPatching:
     """ Patches for sklearn """
@@ -85,28 +95,47 @@ class SklearnModelSelectionPatching:
             operator_context = OperatorContext(OperatorType.TRAIN_TEST_SPLIT, function_info)
             result = original(input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
 
-            description = "(Train Data)"
+            def train_test_split_and_wrapping(df_object):
+                split_result = original(df_object, *args[1:], **kwargs)
+                return TrainTestSplitResult(*split_result)
+
+            def train_test_split_train(split_result):
+                return split_result.train
+
+            def train_test_split_test(split_result):
+                return split_result.test
+
             columns = list(result[0].columns)
-            dag_node = DagNode(op_id,
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+            main_dag_node = DagNode(op_id,
+                                    BasicCodeLocation(caller_filename, lineno),
+                                    operator_context,
+                                    DagNodeDetails(None, columns),
+                                    get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                    train_test_split_and_wrapping)
+            add_dag_node(main_dag_node, [input_info.dag_node], FunctionCallResult(None))
 
-            train_function_call_result = FunctionCallResult(result[0])
-            add_dag_node(dag_node, [input_info.dag_node], train_function_call_result)
-            new_train_result = train_function_call_result.function_result
-
-            description = "(Test Data)"
-            columns = list(result[1].columns)
+            description = "(Train Data)"
             dag_node = DagNode(singleton.get_next_op_id(),
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               train_test_split_train)
+
+            train_function_call_result = FunctionCallResult(result[0])
+            add_dag_node(dag_node, [main_dag_node], train_function_call_result)
+            new_train_result = train_function_call_result.function_result
+
+            description = "(Test Data)"
+            dag_node = DagNode(singleton.get_next_op_id(),
+                               BasicCodeLocation(caller_filename, lineno),
+                               operator_context,
+                               DagNodeDetails(description, columns),
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               train_test_split_test)
 
             test_function_call_result = FunctionCallResult(result[1])
-            add_dag_node(dag_node, [input_info.dag_node], test_function_call_result)
+            add_dag_node(dag_node, [main_dag_node], test_function_call_result)
             new_test_result = test_function_call_result.function_result
 
             new_result = (new_train_result, new_test_result)

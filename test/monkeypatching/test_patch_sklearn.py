@@ -7,12 +7,14 @@ from inspect import cleandoc
 from types import FunctionType
 
 import networkx
+import pandas
 from testfixtures import compare, Comparison
 
 from mlwhatif import OperatorType, OperatorContext, FunctionInfo
 from mlwhatif.instrumentation import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo
+from mlwhatif.monkeypatching._patch_sklearn import TrainTestSplitResult
 
 
 def test_label_binarize():
@@ -70,8 +72,8 @@ def test_train_test_split():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[5])
     inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[4])
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[3])
 
     expected_dag = networkx.DiGraph()
     expected_source = DagNode(0,
@@ -80,24 +82,50 @@ def test_train_test_split():
                               DagNodeDetails(None, ['A']),
                               OptionalCodeInfo(CodeReference(4, 12, 4, 46), "pd.DataFrame({'A': [1, 2, 10, 5]})"),
                               Comparison(partial))
-    expected_train = DagNode(1,
+    expected_split = DagNode(1,
+                             BasicCodeLocation("<string-source>", 5),
+                             OperatorContext(OperatorType.TRAIN_TEST_SPLIT,
+                                             FunctionInfo('sklearn.model_selection._split', 'train_test_split')),
+                             DagNodeDetails(None, ['A']),
+                             OptionalCodeInfo(CodeReference(5, 24, 5, 67),
+                                              'train_test_split(pandas_df, random_state=0)'),
+                             Comparison(FunctionType))
+    expected_dag.add_edge(expected_source, expected_split, arg_index=0)
+    expected_train = DagNode(2,
                              BasicCodeLocation("<string-source>", 5),
                              OperatorContext(OperatorType.TRAIN_TEST_SPLIT,
                                              FunctionInfo('sklearn.model_selection._split', 'train_test_split')),
                              DagNodeDetails('(Train Data)', ['A']),
                              OptionalCodeInfo(CodeReference(5, 24, 5, 67),
-                                              'train_test_split(pandas_df, random_state=0)'))
-    expected_dag.add_edge(expected_source, expected_train, arg_index=0)
-    expected_test = DagNode(2,
+                                              'train_test_split(pandas_df, random_state=0)'),
+                             Comparison(FunctionType))
+    expected_dag.add_edge(expected_split, expected_train, arg_index=0)
+    expected_test = DagNode(3,
                             BasicCodeLocation("<string-source>", 5),
                             OperatorContext(OperatorType.TRAIN_TEST_SPLIT,
                                             FunctionInfo('sklearn.model_selection._split', 'train_test_split')),
                             DagNodeDetails('(Test Data)', ['A']),
                             OptionalCodeInfo(CodeReference(5, 24, 5, 67),
-                                             'train_test_split(pandas_df, random_state=0)'))
-    expected_dag.add_edge(expected_source, expected_test, arg_index=0)
+                                             'train_test_split(pandas_df, random_state=0)'),
+                            Comparison(FunctionType))
+    expected_dag.add_edge(expected_split, expected_test, arg_index=0)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    split_node = list(inspector_result.dag.nodes)[1]
+    train_node = list(inspector_result.dag.nodes)[2]
+    test_node = list(inspector_result.dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'A': ['a', 'c', 'e', 'f']})
+    split_result = split_node.processing_func(pandas_df)
+    assert isinstance(split_result, TrainTestSplitResult)
+    train_data = train_node.processing_func(split_result)
+    test_data = test_node.processing_func(split_result)
+
+    expected_train = pandas.DataFrame({'A': ['f', 'c', 'a']})
+    expected_test = pandas.DataFrame({'A': ['e']})
+
+    pandas.testing.assert_frame_equal(train_data.reset_index(drop=True), expected_train.reset_index(drop=True))
+    pandas.testing.assert_frame_equal(test_data.reset_index(drop=True), expected_test.reset_index(drop=True))
 
 
 def test_standard_scaler():
