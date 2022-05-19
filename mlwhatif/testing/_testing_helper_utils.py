@@ -87,8 +87,8 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                                 DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
                                                 OptionalCodeInfo(CodeReference(19 + line_offset, 20, 19 + line_offset,
                                                                                72),
-                                                                 "preprocessing.OneHotEncoder(handle_unknown='ignore')")
-                                                )
+                                                                 "preprocessing.OneHotEncoder(handle_unknown='ignore')"),
+                                                Comparison(FunctionType))
     expected_pipeline_transformer_two = DagNode(7,
                                                 BasicCodeLocation(caller_filename, 20 + line_offset),
                                                 OperatorContext(OperatorType.TRANSFORMER,

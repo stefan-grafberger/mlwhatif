@@ -424,7 +424,8 @@ def test_one_hot_encoder_not_sparse():
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
-                                   OptionalCodeInfo(CodeReference(6, 18, 6, 45), 'OneHotEncoder(sparse=False)'))
+                                   OptionalCodeInfo(CodeReference(6, 18, 6, 45), 'OneHotEncoder(sparse=False)'),
+                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     expected_data_source_two = DagNode(2,
                                        BasicCodeLocation("<string-source>", 11),
@@ -440,10 +441,23 @@ def test_one_hot_encoder_not_sparse():
                                                        FunctionInfo('sklearn.preprocessing._encoders',
                                                                     'OneHotEncoder')),
                                        DagNodeDetails('One-Hot Encoder: transform', ['array']),
-                                       OptionalCodeInfo(CodeReference(6, 18, 6, 45), 'OneHotEncoder(sparse=False)'))
+                                       OptionalCodeInfo(CodeReference(6, 18, 6, 45), 'OneHotEncoder(sparse=False)'),
+                                       Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
     expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.dag.nodes)[1]
+    transform_node = list(inspector_result.dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'A': ['cat_d', 'cat_h', 'cat_d', 'cat_c']})
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df)
+    expected_fit_transform_data = numpy.array([[0., 1., 0.], [0., 0., 1.], [0., 1., 0.], [1., 0., 0.]])
+    assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
+
+    test_df = pandas.DataFrame({'A': ['cat_h', 'cat_c']})
+    encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
+    expected = numpy.array([[0., 0., 1.], [1., 0., 0.]])
+    assert numpy.allclose(encoded_data, expected)
 
 
 def test_one_hot_encoder_sparse():
@@ -479,9 +493,16 @@ def test_one_hot_encoder_sparse():
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
-                                   OptionalCodeInfo(CodeReference(7, 18, 7, 33), 'OneHotEncoder()'))
+                                   OptionalCodeInfo(CodeReference(7, 18, 7, 33), 'OneHotEncoder()'),
+                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.dag.nodes)[1]
+    pandas_df = pandas.DataFrame({'A': ['cat_d', 'cat_h', 'cat_d', 'cat_c']})
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df)
+    expected_fit_transform_data = csr_matrix([[0., 1., 0.], [0., 0., 1.], [0., 1., 0.], [1., 0., 0.]])
+    assert numpy.allclose(fit_transformed_result.A, expected_fit_transform_data.A)
 
 
 def test_hashing_vectorizer():
@@ -761,7 +782,8 @@ def test_column_transformer_multiple_transformers_all_dense():
                                OperatorContext(OperatorType.TRANSFORMER,
                                                FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
-                               OptionalCodeInfo(CodeReference(10, 20, 10, 47), 'OneHotEncoder(sparse=False)'))
+                               OptionalCodeInfo(CodeReference(10, 20, 10, 47), 'OneHotEncoder(sparse=False)'),
+                               Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_2, expected_one_hot, arg_index=0)
     expected_concat = DagNode(5,
                               BasicCodeLocation("<string-source>", 8),
@@ -847,7 +869,8 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                OperatorContext(OperatorType.TRANSFORMER,
                                                FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
-                               OptionalCodeInfo(CodeReference(10, 20, 10, 46), 'OneHotEncoder(sparse=True)'))
+                               OptionalCodeInfo(CodeReference(10, 20, 10, 46), 'OneHotEncoder(sparse=True)'),
+                               Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_2, expected_one_hot, arg_index=0)
     expected_concat = DagNode(5,
                               BasicCodeLocation("<string-source>", 8),
@@ -936,7 +959,8 @@ def test_column_transformer_transform_after_fit_transform():
                                OperatorContext(OperatorType.TRANSFORMER,
                                                FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                DagNodeDetails('One-Hot Encoder: transform', ['array']),
-                               OptionalCodeInfo(CodeReference(10, 20, 10, 46), 'OneHotEncoder(sparse=True)'))
+                               OptionalCodeInfo(CodeReference(10, 20, 10, 46), 'OneHotEncoder(sparse=True)'),
+                               Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_2, expected_one_hot, arg_index=1)
     expected_concat = DagNode(11,
                               BasicCodeLocation("<string-source>", 8),
@@ -1543,7 +1567,8 @@ def test_keras_wrapper():
                                     OperatorContext(OperatorType.TRANSFORMER,
                                                     FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                     DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
-                                    OptionalCodeInfo(CodeReference(12, 9, 12, 36), 'OneHotEncoder(sparse=False)'))
+                                    OptionalCodeInfo(CodeReference(12, 9, 12, 36), 'OneHotEncoder(sparse=False)'),
+                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_label_projection, expected_label_encode, arg_index=0)
     expected_train_data = DagNode(5,
                                   BasicCodeLocation("<string-source>", 22),
@@ -1644,7 +1669,8 @@ def test_keras_wrapper_score():
                                     OperatorContext(OperatorType.TRANSFORMER,
                                                     FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                     DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
-                                    OptionalCodeInfo(CodeReference(29, 14, 29, 41), 'OneHotEncoder(sparse=False)'))
+                                    OptionalCodeInfo(CodeReference(29, 14, 29, 41), 'OneHotEncoder(sparse=False)'),
+                                    Comparison(FunctionType))
     expected_test_labels = DagNode(13,
                                    BasicCodeLocation("<string-source>", 30),
                                    OperatorContext(OperatorType.TEST_LABELS,

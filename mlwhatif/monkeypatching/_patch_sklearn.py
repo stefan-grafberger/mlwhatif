@@ -647,6 +647,13 @@ class SklearnOneHotEncoderPatching:
         input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
                                     self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
 
+        def processing_func(input_df):
+            transformer = preprocessing.OneHotEncoder(**self.mlinspect_non_data_func_args)
+            transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+            transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+            return transformed_data
+
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
         dag_node_id = singleton.get_next_op_id()
@@ -656,7 +663,8 @@ class SklearnOneHotEncoderPatching:
                            operator_context,
                            DagNodeDetails("One-Hot Encoder: fit_transform", ['array']),
                            get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
-                                                          self.mlinspect_optional_source_code))
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
         function_call_result = FunctionCallResult(result)
         add_dag_node(dag_node, [input_info.dag_node], function_call_result)
         new_result = function_call_result.function_result
@@ -674,6 +682,11 @@ class SklearnOneHotEncoderPatching:
             input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
                                         self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
 
+            def processing_func(fit_data, input_df):
+                transformer = fit_data._mlinspect_annotation  # pylint: disable=protected-access
+                transformed_data = transformer.transform(input_df, *args[1:], **kwargs)
+                return transformed_data
+
             operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
             result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
             dag_node = DagNode(singleton.get_next_op_id(),
@@ -681,7 +694,8 @@ class SklearnOneHotEncoderPatching:
                                operator_context,
                                DagNodeDetails("One-Hot Encoder: transform", ['array']),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
-                                                              self.mlinspect_optional_source_code))
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
             function_call_result = FunctionCallResult(result)
             transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
             add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
