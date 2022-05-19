@@ -846,21 +846,20 @@ class SklearnFunctionTransformerPatching:
         self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
         self.mlinspect_transformer_node_id = mlinspect_transformer_node_id
 
-        self.mlinspect_non_data_func_args = {'validate': validate, 'accept_sparse': accept_sparse,
-                                             'check_inverse': check_inverse, 'kw_args': kw_args,
-                                             'inv_kw_args': inv_kw_args}
+        self.mlinspect_non_data_func_args = {'func': func, 'inverse_func': inverse_func, 'validate': validate,
+                                             'accept_sparse': accept_sparse, 'check_inverse': check_inverse,
+                                             'kw_args': kw_args, 'inv_kw_args': inv_kw_args}
 
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
-            original(self, func=func, inverse_func=inverse_func, **self.mlinspect_non_data_func_args)
+            original(self, **self.mlinspect_non_data_func_args)
 
             self.mlinspect_caller_filename = caller_filename
             self.mlinspect_lineno = lineno
             self.mlinspect_optional_code_reference = optional_code_reference
             self.mlinspect_optional_source_code = optional_source_code
 
-        return execute_patched_func_no_op_id(original, execute_inspections, self, func=func, inverse_func=inverse_func,
-                                             **self.mlinspect_non_data_func_args)
+        return execute_patched_func_no_op_id(original, execute_inspections, self, **self.mlinspect_non_data_func_args)
 
     @gorilla.name('fit_transform')
     @gorilla.settings(allow_hit=True)
@@ -872,6 +871,13 @@ class SklearnFunctionTransformerPatching:
         function_info = FunctionInfo('sklearn.preprocessing_function_transformer', 'FunctionTransformer')
         input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
                                     self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
+
+        def processing_func(input_df):
+            transformer = preprocessing.FunctionTransformer(**self.mlinspect_non_data_func_args)
+            transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+            transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+            return transformed_data
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
@@ -887,7 +893,8 @@ class SklearnFunctionTransformerPatching:
                            operator_context,
                            DagNodeDetails("Function Transformer: fit_transform", columns),
                            get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
-                                                          self.mlinspect_optional_source_code))
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
         function_call_result = FunctionCallResult(result)
         add_dag_node(dag_node, [input_info.dag_node], function_call_result)
         new_result = function_call_result.function_result
@@ -905,6 +912,11 @@ class SklearnFunctionTransformerPatching:
             input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
                                         self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
 
+            def processing_func(fit_data, input_df):
+                transformer = fit_data._mlinspect_annotation  # pylint: disable=protected-access
+                transformed_data = transformer.transform(input_df, *args[1:], **kwargs)
+                return transformed_data
+
             operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
             result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
             if isinstance(input_info.annotated_dfobject.result_data, pandas.DataFrame):
@@ -917,7 +929,8 @@ class SklearnFunctionTransformerPatching:
                                operator_context,
                                DagNodeDetails("Function Transformer: transform", columns),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
-                                                              self.mlinspect_optional_source_code))
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
             function_call_result = FunctionCallResult(result)
             transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
             add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)

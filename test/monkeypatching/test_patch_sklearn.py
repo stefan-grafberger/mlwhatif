@@ -236,7 +236,8 @@ def test_function_transformer():
                                                                 'FunctionTransformer')),
                                    DagNodeDetails('Function Transformer: fit_transform', ['A']),
                                    OptionalCodeInfo(CodeReference(9, 23, 9, 65),
-                                                    'FunctionTransformer(lambda x: safe_log(x))'))
+                                                    'FunctionTransformer(lambda x: safe_log(x))'),
+                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     expected_data_source_two = DagNode(2,
                                        BasicCodeLocation("<string-source>", 11),
@@ -253,10 +254,23 @@ def test_function_transformer():
                                                                     'FunctionTransformer')),
                                        DagNodeDetails('Function Transformer: transform', ['A']),
                                        OptionalCodeInfo(CodeReference(9, 23, 9, 65),
-                                                        'FunctionTransformer(lambda x: safe_log(x))'))
+                                                        'FunctionTransformer(lambda x: safe_log(x))'),
+                                       Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
     expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.dag.nodes)[1]
+    transform_node = list(inspector_result.dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2]})
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df)
+    expected_fit_transform_data = numpy.array([[1.609438], [0.000000], [4.605170], [0.693147]])
+    assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
+
+    test_df = pandas.DataFrame({'A': [5, 1,]})
+    encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
+    expected = numpy.array([[1.609438], [0.000000]])
+    assert numpy.allclose(encoded_data, expected)
 
 
 def test_kbins_discretizer():
