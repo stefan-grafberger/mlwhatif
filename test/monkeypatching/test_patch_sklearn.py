@@ -367,7 +367,8 @@ def test_simple_imputer():
                                                    FunctionInfo('sklearn.impute._base', 'SimpleImputer')),
                                    DagNodeDetails('Simple Imputer: fit_transform', ['A']),
                                    OptionalCodeInfo(CodeReference(6, 10, 6, 72),
-                                                    "SimpleImputer(missing_values=np.nan, strategy='most_frequent')"))
+                                                    "SimpleImputer(missing_values=np.nan, strategy='most_frequent')"),
+                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     expected_data_source_two = DagNode(2,
                                        BasicCodeLocation("<string-source>", 8),
@@ -383,10 +384,23 @@ def test_simple_imputer():
                                                        FunctionInfo('sklearn.impute._base', 'SimpleImputer')),
                                        DagNodeDetails('Simple Imputer: transform', ['A']),
                                        OptionalCodeInfo(CodeReference(6, 10, 6, 72),
-                                                        "SimpleImputer(missing_values=np.nan, strategy='most_frequent')"))
+                                                        "SimpleImputer(missing_values=np.nan, strategy='most_frequent')"),
+                                       Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
     expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.dag.nodes)[1]
+    transform_node = list(inspector_result.dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'A': ['cat_d', 'cat_h', 'cat_d', numpy.nan]})
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df)
+    expected_fit_transform_data = numpy.array([['cat_d'], ['cat_h'], ['cat_d'], ['cat_d']])
+    assert numpy.array_equal(fit_transformed_result, expected_fit_transform_data)
+
+    test_df = pandas.DataFrame({'A': [numpy.nan, 'cat_c']})
+    encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
+    expected = numpy.array([['cat_d'], ['cat_c']])
+    assert numpy.array_equal(encoded_data, expected)
 
 
 def test_one_hot_encoder_not_sparse():
