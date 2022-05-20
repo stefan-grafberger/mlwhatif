@@ -233,7 +233,8 @@ def test_frame__getitem__selection():
                                  OperatorContext(OperatorType.SUBSCRIPT,
                                                  FunctionInfo('pandas.core.series', '_cmp_method')),
                                  DagNodeDetails('> 3', ['A']),
-                                 OptionalCodeInfo(CodeReference(4, 18, 4, 29), "df['A'] > 3"))
+                                 OptionalCodeInfo(CodeReference(4, 18, 4, 29), "df['A'] > 3"),
+                                 Comparison(FunctionType))
     expected_dag.add_edge(expected_projection, expected_subscript, arg_index=0)
     expected_selection = DagNode(3,
                                  BasicCodeLocation("<string-source>", 4),
@@ -302,7 +303,8 @@ def test_frame__setitem__():
                                  OperatorContext(OperatorType.SUBSCRIPT,
                                                  FunctionInfo('pandas.core.series', '_arith_method')),
                                  DagNodeDetails('+ 1', ['baz']),
-                                 OptionalCodeInfo(CodeReference(7, 19, 7, 39), "pandas_df['baz'] + 1"))
+                                 OptionalCodeInfo(CodeReference(7, 19, 7, 39), "pandas_df['baz'] + 1"),
+                                 Comparison(FunctionType))
     expected_dag.add_edge(expected_project, expected_subscript, arg_index=0)
     expected_project_modify = DagNode(3,
                                       BasicCodeLocation("<string-source>", 7),
@@ -718,10 +720,17 @@ def test_series__cmp_method():
                                   OperatorContext(OperatorType.SUBSCRIPT,
                                                   FunctionInfo('pandas.core.series', '_cmp_method')),
                                   DagNodeDetails('> 3', ['A']),
-                                  OptionalCodeInfo(CodeReference(4, 7, 4, 20), 'pd_series > 3'))
+                                  OptionalCodeInfo(CodeReference(4, 7, 4, 20), 'pd_series > 3'),
+                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_node = list(inspector_result.dag.nodes)[1]
+    pd_series = pandas.Series([4, 2, 4, None], name='B')
+    extracted_func_result = extracted_node.processing_func(pd_series)
+    expected = pandas.Series([True, False, True, False], name='B')
+    pandas.testing.assert_series_equal(extracted_func_result.reset_index(drop=True), expected.reset_index(drop=True))
 
 
 def test_series__arith_method():
@@ -751,10 +760,17 @@ def test_series__arith_method():
                                   OperatorContext(OperatorType.SUBSCRIPT,
                                                   FunctionInfo('pandas.core.series', '_arith_method')),
                                   DagNodeDetails('+ 2', ['A']),
-                                  OptionalCodeInfo(CodeReference(3, 12, 3, 25), 'pd_series + 2'))
+                                  OptionalCodeInfo(CodeReference(3, 12, 3, 25), 'pd_series + 2'),
+                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_node = list(inspector_result.dag.nodes)[1]
+    pd_series = pandas.Series([0, 2, 8, None], name='B')
+    extracted_func_result = extracted_node.processing_func(pd_series)
+    expected = pandas.Series([2, 4, 10, None], name='B')
+    pandas.testing.assert_series_equal(extracted_func_result.reset_index(drop=True), expected.reset_index(drop=True))
 
 
 def test_series__logical_method():
@@ -794,8 +810,16 @@ def test_series__logical_method():
                                  OperatorContext(OperatorType.SUBSCRIPT,
                                                  FunctionInfo('pandas.core.series', '_logical_method')),
                                  DagNodeDetails('&', ['A']),
-                                 OptionalCodeInfo(CodeReference(4, 8, 4, 21), 'mask1 & mask2'))
+                                 OptionalCodeInfo(CodeReference(4, 8, 4, 21), 'mask1 & mask2'),
+                                 Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source1, expected_subscript, arg_index=0)
     expected_dag.add_edge(expected_data_source2, expected_subscript, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_node = list(inspector_result.dag.nodes)[2]
+    pd_series1 = pandas.Series([True, False, True, True], name='C')
+    pd_series2 = pandas.Series([False, False, False, True], name='D')
+    extracted_func_result = extracted_node.processing_func(pd_series1, pd_series2)
+    expected = pandas.Series([False, False, False, True], name=None)
+    pandas.testing.assert_series_equal(extracted_func_result.reset_index(drop=True), expected.reset_index(drop=True))

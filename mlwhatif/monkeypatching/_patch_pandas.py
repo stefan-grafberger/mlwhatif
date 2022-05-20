@@ -554,11 +554,13 @@ class SeriesPatching:
                     description += f" '{other}'"
                 else:
                     description += f" {other}"
+                processing_func = lambda df_one: original(df_one, other, cmp_op)
             else:
                 input_info_other = get_input_info(other, caller_filename, lineno, function_info,
                                                   optional_code_reference,
                                                   optional_source_code)
                 dag_node_parents.append(input_info_other.dag_node)
+                processing_func = lambda df_one, df_two: original(df_one, df_two, cmp_op)
             # TODO: Pandas uses a function 'get_op_result_name' to construct the new name, this can also be
             #  None sometimes. If these names are actually important for something, revisit this columns code line.
             columns = [self.name]  # pylint: disable=no-member
@@ -566,8 +568,8 @@ class SeriesPatching:
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
             result = original(self, other, cmp_op)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, dag_node_parents, function_call_result)
@@ -605,11 +607,13 @@ class SeriesPatching:
             # TODO: Pandas uses a function 'get_op_result_name' to construct the new name, this can also be
             #  None sometimes. If these names are actually important for something, revisit this columns code line.
             columns = [self.name]  # pylint: disable=no-member
+            processing_func = lambda df_one, df_two: original(df_one, df_two, logical_op)
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
 
             result = original(self, other, logical_op)
             function_call_result = FunctionCallResult(result)
@@ -635,11 +639,13 @@ class SeriesPatching:
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
             description = "!= {}".format(args[0])
             columns = [self.name]  # pylint: disable=no-member
+            processing_func = lambda series: original(series, *args, **kwargs)
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
 
             result = original(input_info.annotated_dfobject.result_data, *args, **kwargs)
             function_call_result = FunctionCallResult(result)
@@ -682,11 +688,13 @@ class SeriesPatching:
                     description += f" '{other}'"
                 else:
                     description += f" {other}"
+                processing_func = lambda df_one: original(df_one, other, arith_op)
             else:
                 input_info_other = get_input_info(other, caller_filename, lineno, function_info,
                                                   optional_code_reference,
                                                   optional_source_code)
                 dag_node_parents.append(input_info_other.dag_node)
+                processing_func = lambda df_one, df_two: original(df_one, df_two, arith_op)
             # TODO: Pandas uses a function 'get_op_result_name' to construct the new name, this can also be
             #  None sometimes. If these names are actually important for something, revisit this columns code line.
             columns = [self.name]  # pylint: disable=no-member
@@ -694,7 +702,8 @@ class SeriesPatching:
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
 
             result = original(self, other, arith_op)
             function_call_result = FunctionCallResult(result)
