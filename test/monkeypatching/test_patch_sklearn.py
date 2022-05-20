@@ -1102,8 +1102,6 @@ def test_column_transformer_transform_after_fit_transform():
                             [0.14285714, 0., 0., 1.]])
     assert numpy.allclose(concatenated_data, expected)
 
-    # FIXME: Transform
-
 
 def test_decision_tree():
     """
