@@ -472,6 +472,8 @@ class SeriesPatching:
             original(self, *args, **kwargs)
             result = self
 
+            process_func = partial(pandas.Series, *args, **kwargs)
+
             if self.name:  # pylint: disable=no-member
                 columns = list(self.name)  # pylint: disable=no-member
             else:
@@ -480,7 +482,8 @@ class SeriesPatching:
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(None, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               process_func)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [], function_call_result)
 

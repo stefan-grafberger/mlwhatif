@@ -636,8 +636,13 @@ def test_series__init__():
                             BasicCodeLocation("<string-source>", 3),
                             OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.series', 'Series')),
                             DagNodeDetails(None, ['A']),
-                            OptionalCodeInfo(CodeReference(3, 12, 3, 48), "pd.Series([0, 2, 4, None], name='A')"))
+                            OptionalCodeInfo(CodeReference(3, 12, 3, 48), "pd.Series([0, 2, 4, None], name='A')"),
+                            Comparison(partial))
     compare(extracted_node, expected_node)
+
+    extracted_func_result = extracted_node.processing_func()
+    expected = pandas.Series([0, 2, 4, None], name='A')
+    pandas.testing.assert_series_equal(extracted_func_result, expected)
 
 
 def test_series_isin():
@@ -662,7 +667,8 @@ def test_series_isin():
                                                    FunctionInfo('pandas.core.series', 'Series')),
                                    DagNodeDetails(None, ['A']),
                                    OptionalCodeInfo(CodeReference(3, 12, 3, 48),
-                                                    "pd.Series([0, 2, 4, None], name='A')"))
+                                                    "pd.Series([0, 2, 4, None], name='A')"),
+                                   Comparison(partial))
     expected_isin = DagNode(1,
                             BasicCodeLocation("<string-source>", 4),
                             OperatorContext(OperatorType.SUBSCRIPT,
@@ -696,7 +702,8 @@ def test_series__cmp_method():
                                                    FunctionInfo('pandas.core.series', 'Series')),
                                    DagNodeDetails(None, ['A']),
                                    OptionalCodeInfo(CodeReference(3, 12, 3, 48),
-                                                    "pd.Series([0, 2, 4, None], name='A')"))
+                                                    "pd.Series([0, 2, 4, None], name='A')"),
+                                   Comparison(partial))
     expected_projection = DagNode(1,
                                   BasicCodeLocation("<string-source>", 4),
                                   OperatorContext(OperatorType.SUBSCRIPT,
@@ -728,7 +735,8 @@ def test_series__arith_method():
                                                    FunctionInfo('pandas.core.series', 'Series')),
                                    DagNodeDetails(None, ['A']),
                                    OptionalCodeInfo(CodeReference(2, 12, 2, 48),
-                                                    "pd.Series([0, 2, 4, None], name='A')"))
+                                                    "pd.Series([0, 2, 4, None], name='A')"),
+                                   Comparison(partial))
     expected_projection = DagNode(1,
                                   BasicCodeLocation("<string-source>", 3),
                                   OperatorContext(OperatorType.SUBSCRIPT,
@@ -762,14 +770,16 @@ def test_series__logical_method():
                                                     FunctionInfo('pandas.core.series', 'Series')),
                                     DagNodeDetails(None, ['A']),
                                     OptionalCodeInfo(CodeReference(2, 8, 2, 54),
-                                                     "pd.Series([True, False, True, True], name='A')"))
+                                                     "pd.Series([True, False, True, True], name='A')"),
+                                    Comparison(partial))
     expected_data_source2 = DagNode(1,
                                     BasicCodeLocation("<string-source>", 3),
                                     OperatorContext(OperatorType.DATA_SOURCE,
                                                     FunctionInfo('pandas.core.series', 'Series')),
                                     DagNodeDetails(None, ['B']),
                                     OptionalCodeInfo(CodeReference(3, 8, 3, 55),
-                                                     "pd.Series([True, False, False, True], name='B')"))
+                                                     "pd.Series([True, False, False, True], name='B')"),
+                                    Comparison(partial))
     expected_subscript = DagNode(2,
                                  BasicCodeLocation("<string-source>", 4),
                                  OperatorContext(OperatorType.SUBSCRIPT,

@@ -47,7 +47,8 @@ def test_label_binarize():
                                                    FunctionInfo('pandas.core.series', 'Series')),
                                    DagNodeDetails(None, ['A']),
                                    OptionalCodeInfo(CodeReference(5, 12, 5, 59),
-                                                    "pd.Series(['yes', 'no', 'no', 'yes'], name='A')"))
+                                                    "pd.Series(['yes', 'no', 'no', 'yes'], name='A')"),
+                                   Comparison(partial))
     expected_binarize = DagNode(1,
                                 BasicCodeLocation("<string-source>", 6),
                                 OperatorContext(OperatorType.PROJECTION_MODIFY,
