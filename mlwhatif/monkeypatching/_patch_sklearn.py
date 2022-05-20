@@ -7,6 +7,7 @@ import dataclasses
 import gorilla
 import numpy
 import pandas
+import tensorflow
 from sklearn import preprocessing, compose, tree, impute, linear_model, model_selection
 from sklearn.feature_extraction import text
 from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
@@ -1334,7 +1335,7 @@ class SklearnKerasClassifierPatching:
 
     # pylint: disable=too-few-public-methods
     @gorilla.patch(keras_sklearn_internal.BaseWrapper, name='__init__', settings=gorilla.Settings(allow_hit=True))
-    def patched__init__(self, build_fn=None, mlinspect_caller_filename=None, mlinspect_lineno=None,
+    def patched__init__(self, mlinspect_caller_filename=None, mlinspect_lineno=None,
                         mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
                         mlinspect_estimator_node_id=None, **sk_params):
         """ Patch for ('tensorflow.python.keras.wrappers.scikit_learn', 'KerasClassifier') """
@@ -1351,14 +1352,14 @@ class SklearnKerasClassifierPatching:
 
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
-            original(self, build_fn=build_fn, **sk_params)
+            original(self, **sk_params)
 
             self.mlinspect_caller_filename = caller_filename
             self.mlinspect_lineno = lineno
             self.mlinspect_optional_code_reference = optional_code_reference
             self.mlinspect_optional_source_code = optional_source_code
 
-        return execute_patched_func_no_op_id(original, execute_inspections, self, build_fn=build_fn, **sk_params)
+        return execute_patched_func_no_op_id(original, execute_inspections, self, **sk_params)
 
     @gorilla.patch(keras_sklearn_external.KerasClassifier, name='fit', settings=gorilla.Settings(allow_hit=True))
     def patched_fit(self, *args, **kwargs):
@@ -1370,6 +1371,11 @@ class SklearnKerasClassifierPatching:
         _, train_data_dag_node, train_data_result = add_train_data_node(self, args[0], function_info)
         _, train_labels_dag_node, train_labels_result = add_train_label_node(self, args[1], function_info)
 
+        def processing_func(train_data, train_labels):
+            estimator = tensorflow.keras.wrappers.scikit_learn.KerasClassifier(**self.mlinspect_non_data_func_args)
+            estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+            return estimator
+
         # Estimator
         operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
         # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
@@ -1380,7 +1386,8 @@ class SklearnKerasClassifierPatching:
                            operator_context,
                            DagNodeDetails("Neural Network", []),
                            get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
-                                                          self.mlinspect_optional_source_code))
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
         function_call_result = FunctionCallResult(None)
         add_dag_node(dag_node, [train_data_dag_node, train_labels_dag_node], function_call_result)
         return self
@@ -1411,6 +1418,10 @@ class SklearnKerasClassifierPatching:
                                                                           optional_code_reference,
                                                                           optional_source_code)
 
+            def processing_func(estimator, test_data, test_labels):
+                score = estimator.score(test_data, test_labels, **kwargs)
+                return score
+
             # Score
             operator_context = OperatorContext(OperatorType.SCORE, function_info)
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
@@ -1423,7 +1434,8 @@ class SklearnKerasClassifierPatching:
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails("Neural Network", []),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
             estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
             function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
             add_dag_node(dag_node, [estimator_dag_node, test_data_node, test_labels_node],

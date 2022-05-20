@@ -11,8 +11,9 @@ import numpy
 import pandas
 from scipy.sparse import csr_matrix
 from sklearn.linear_model import SGDClassifier, LogisticRegression
-from sklearn.preprocessing import label_binarize
+from sklearn.preprocessing import label_binarize, OneHotEncoder
 from sklearn.tree import DecisionTreeClassifier
+from tensorflow.python.keras.wrappers.scikit_learn import KerasClassifier  # pylint: disable=no-name-in-module
 from testfixtures import compare, Comparison
 
 from mlwhatif import OperatorType, OperatorContext, FunctionInfo
@@ -1648,6 +1649,7 @@ def test_keras_wrapper():
     """
     Tests whether the monkey patching of ('tensorflow.python.keras.wrappers.scikit_learn', 'KerasClassifier') works
     """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -1751,11 +1753,27 @@ def test_keras_wrapper():
                                   DagNodeDetails('Neural Network', []),
                                   OptionalCodeInfo(CodeReference(22, 6, 22, 92),
                                                    'KerasClassifier(build_fn=create_model, epochs=2, '
-                                                   'batch_size=1, verbose=0, input_dim=2)'))
+                                                   'batch_size=1, verbose=0, input_dim=2)'),
+                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[7]
+    train_data_node = list(inspector_result.dag.nodes)[5]
+    train_label_node = list(inspector_result.dag.nodes)[6]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_data = train_data_node.processing_func(train_df[['C', 'D']])
+    train_labels = OneHotEncoder(sparse=False).fit_transform(train_df[['target']])
+    train_labels = train_label_node.processing_func(train_labels)
+    fitted_estimator = fit_node.processing_func(train_data, train_labels)
+    assert isinstance(fitted_estimator, KerasClassifier)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_labels = OneHotEncoder(sparse=False).fit_transform(test_df[['target']])
+    test_score = fitted_estimator.score(test_df[['C', 'D']], test_labels)
+    assert test_score >= 0.5
 
 
 def test_keras_wrapper_score():
@@ -1763,6 +1781,7 @@ def test_keras_wrapper_score():
     Tests whether the monkey patching of ('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'score')
      works
     """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -1843,7 +1862,8 @@ def test_keras_wrapper_score():
                                   DagNodeDetails('Neural Network', []),
                                   OptionalCodeInfo(CodeReference(25, 6, 25, 93),
                                                    'KerasClassifier(build_fn=create_model, epochs=15, batch_size=1, '
-                                                   'verbose=0, input_dim=2)'))
+                                                   'verbose=0, input_dim=2)'),
+                                  Comparison(FunctionType))
     expected_score = DagNode(14,
                              BasicCodeLocation("<string-source>", 30),
                              OperatorContext(OperatorType.SCORE,
@@ -1851,9 +1871,26 @@ def test_keras_wrapper_score():
                                                           'KerasClassifier', 'score')),
                              DagNodeDetails('Neural Network', []),
                              OptionalCodeInfo(CodeReference(30, 13, 30, 56),
-                                              "clf.score(test_df[['A', 'B']], test_labels)"))
+                                              "clf.score(test_df[['A', 'B']], test_labels)"),
+                             Comparison(FunctionType))
     expected_dag.add_edge(expected_classifier, expected_score, arg_index=0)
     expected_dag.add_edge(expected_test_data, expected_score, arg_index=1)
     expected_dag.add_edge(expected_test_labels, expected_score, arg_index=2)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[0]
+    score_node = list(inspector_result.dag.nodes)[5]
+    test_data_node = list(inspector_result.dag.nodes)[3]
+    test_label_node = list(inspector_result.dag.nodes)[4]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_labels = OneHotEncoder(sparse=False).fit_transform(train_df[['target']])
+    fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
+    assert isinstance(fitted_estimator, KerasClassifier)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_data = test_data_node.processing_func(test_df[['C', 'D']])
+    test_labels = OneHotEncoder(sparse=False).fit_transform(test_df[['target']])
+    test_labels = test_label_node.processing_func(test_labels)
+    test_score = score_node.processing_func(fitted_estimator, test_data, test_labels)
+    assert test_score >= 0.5
