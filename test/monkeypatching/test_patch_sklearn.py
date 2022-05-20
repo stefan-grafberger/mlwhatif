@@ -54,9 +54,16 @@ def test_label_binarize():
                                                 FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
                                 DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
                                 OptionalCodeInfo(CodeReference(6, 12, 6, 60),
-                                                 "label_binarize(pd_series, classes=['no', 'yes'])"))
+                                                 "label_binarize(pd_series, classes=['no', 'yes'])"),
+                                Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_binarize, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    label_binarize_node = list(inspector_result.dag.nodes)[1]
+    pd_series = pandas.Series(['no', 'yes', 'no', 'yes'], name='A')
+    binarize_result = label_binarize_node.processing_func(pd_series)
+    expected = numpy.array([[0], [1], [0], [1]])
+    assert numpy.array_equal(binarize_result, expected)
 
 
 def test_train_test_split():
@@ -271,7 +278,7 @@ def test_function_transformer():
     expected_fit_transform_data = numpy.array([[1.609438], [0.000000], [4.605170], [0.693147]])
     assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
 
-    test_df = pandas.DataFrame({'A': [5, 1,]})
+    test_df = pandas.DataFrame({'A': [5, 1, ]})
     encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
     expected = numpy.array([[1.609438], [0.000000]])
     assert numpy.allclose(encoded_data, expected)
@@ -651,7 +658,8 @@ def test_column_transformer_one_transformer():
                                   DagNodeDetails("to ['A', 'B']", ['A', 'B']),
                                   OptionalCodeInfo(CodeReference(8, 21, 10, 2),
                                                    "ColumnTransformer(transformers=[\n"
-                                                   "    ('numeric', StandardScaler(), ['A', 'B'])\n])"))
+                                                   "    ('numeric', StandardScaler(), ['A', 'B'])\n])"),
+                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
     expected_standard_scaler = DagNode(2,
                                        BasicCodeLocation("<string-source>", 9),
@@ -668,9 +676,20 @@ def test_column_transformer_one_transformer():
                               DagNodeDetails(None, ['array']),
                               OptionalCodeInfo(CodeReference(8, 21, 10, 2),
                                                "ColumnTransformer(transformers=[\n"
-                                               "    ('numeric', StandardScaler(), ['A', 'B'])\n])"))
+                                               "    ('numeric', StandardScaler(), ['A', 'B'])\n])"),
+                              Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_concat, arg_index=0)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    project_node = list(inspector_result.dag.nodes)[1]
+    transformer_node = list(inspector_result.dag.nodes)[2]
+    concat_node = list(inspector_result.dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'A': [1, 2, 10, 5], 'B': [1, 2, 10, 5]})
+    projected_data = project_node.processing_func(pandas_df)
+    transformed_data = transformer_node.processing_func(projected_data)
+    concatenated_data = concat_node.processing_func(transformed_data)
+    expected = numpy.array([[-1.], [-0.71428571], [1.57142857], [0.14285714]])
+    assert numpy.allclose(concatenated_data, expected)
 
 
 def test_column_transformer_one_transformer_single_column_projection():
@@ -709,7 +728,8 @@ def test_column_transformer_one_transformer_single_column_projection():
                                   OptionalCodeInfo(CodeReference(8, 21, 10, 2),
                                                    "ColumnTransformer(transformers=[\n"
                                                    "    ('hashing', HashingVectorizer(ngram_range=(1, 3), "
-                                                   "n_features=2**2), 'A')\n])"))
+                                                   "n_features=2**2), 'A')\n])"),
+                                  Comparison(FunctionType))
     expected_vectorizer = DagNode(2,
                                   BasicCodeLocation("<string-source>", 9),
                                   OperatorContext(OperatorType.TRANSFORMER,
@@ -727,7 +747,8 @@ def test_column_transformer_one_transformer_single_column_projection():
                               OptionalCodeInfo(CodeReference(8, 21, 10, 2),
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('hashing', HashingVectorizer(ngram_range=(1, 3), "
-                                               "n_features=2**2), 'A')\n])"))
+                                               "n_features=2**2), 'A')\n])"),
+                              Comparison(FunctionType))
     expected_dag.add_edge(expected_vectorizer, expected_concat, arg_index=0)
 
     expected_transform = DagNode(6,
@@ -742,12 +763,23 @@ def test_column_transformer_one_transformer_single_column_projection():
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
+    project_node = list(inspector_result.dag.nodes)[0]
+    transformer_node = list(inspector_result.dag.nodes)[1]
+    concat_node = list(inspector_result.dag.nodes)[2]
+    pandas_df = pandas.DataFrame({'A': ['cat_a', 'cat_a', 'cat_b', 'cat_c'], 'B': [1, 2, 10, 5]})
+    projected_data = project_node.processing_func(pandas_df)
+    transformed_data = transformer_node.processing_func(projected_data)
+    concatenated_data = concat_node.processing_func(transformed_data)
+    expected = csr_matrix([[-0., 0., 0., -1.], [-0., 0., 0., -1.], [0., -1., 0., 0.], [0., 0., 0., -1.]])
+    assert numpy.allclose(concatenated_data.A, expected.A)
+
 
 def test_column_transformer_multiple_transformers_all_dense():
     """
     Tests whether the monkey patching of ('sklearn.compose._column_transformer', 'ColumnTransformer') works with
     multiple transformers with dense output
     """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
@@ -788,7 +820,8 @@ def test_column_transformer_multiple_transformers_all_dense():
                                     OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
-                                                     "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"))
+                                                     "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"),
+                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection_1, arg_index=0)
     expected_projection_2 = DagNode(3,
                                     BasicCodeLocation("<string-source>", 8),
@@ -799,7 +832,8 @@ def test_column_transformer_multiple_transformers_all_dense():
                                     OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
-                                                     "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"))
+                                                     "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"),
+                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection_2, arg_index=0)
     expected_standard_scaler = DagNode(2,
                                        BasicCodeLocation("<string-source>", 9),
@@ -825,16 +859,34 @@ def test_column_transformer_multiple_transformers_all_dense():
                               OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A']),\n"
-                                               "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"))
+                                               "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"),
+                              Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_concat, arg_index=0)
     expected_dag.add_edge(expected_one_hot, expected_concat, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    project1_node = list(inspector_result.dag.nodes)[1]
+    project2_node = list(inspector_result.dag.nodes)[3]
+    transformer1_node = list(inspector_result.dag.nodes)[2]
+    transformer2_node = list(inspector_result.dag.nodes)[4]
+    concat_node = list(inspector_result.dag.nodes)[5]
+    pandas_df = pandas.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_b', 'cat_c']})
+    projected_data1 = project1_node.processing_func(pandas_df)
+    projected_data2 = project2_node.processing_func(pandas_df)
+    transformed_data1 = transformer1_node.processing_func(projected_data1)
+    transformed_data2 = transformer2_node.processing_func(projected_data2)
+    concatenated_data = concat_node.processing_func(transformed_data1, transformed_data2)
+    expected = numpy.array([[-1., 1., 0., 0.], [-0.71428571, 0., 1., 0.], [1.57142857, 0., 1., 0.],
+                            [0.14285714, 0., 0., 1.]])
+    assert numpy.allclose(concatenated_data, expected)
 
 
 def test_column_transformer_multiple_transformers_sparse_dense():
     """
     Tests whether the monkey patching of ('sklearn.compose._column_transformer', 'ColumnTransformer') works with
-    multiple transformers with sparse and dense mixed output    """
+    multiple transformers with sparse and dense mixed output
+    """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
@@ -875,7 +927,8 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                     OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
-                                                     "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"))
+                                                     "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"),
+                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection_1, arg_index=0)
     expected_projection_2 = DagNode(3,
                                     BasicCodeLocation("<string-source>", 8),
@@ -886,7 +939,8 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                     OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
-                                                     "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"))
+                                                     "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"),
+                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection_2, arg_index=0)
     expected_standard_scaler = DagNode(2,
                                        BasicCodeLocation("<string-source>", 9),
@@ -912,16 +966,34 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                               OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A']),\n"
-                                               "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"))
+                                               "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"),
+                              Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_concat, arg_index=0)
     expected_dag.add_edge(expected_one_hot, expected_concat, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    project1_node = list(inspector_result.dag.nodes)[1]
+    project2_node = list(inspector_result.dag.nodes)[3]
+    transformer1_node = list(inspector_result.dag.nodes)[2]
+    transformer2_node = list(inspector_result.dag.nodes)[4]
+    concat_node = list(inspector_result.dag.nodes)[5]
+    pandas_df = pandas.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_b', 'cat_c']})
+    projected_data1 = project1_node.processing_func(pandas_df)
+    projected_data2 = project2_node.processing_func(pandas_df)
+    transformed_data1 = transformer1_node.processing_func(projected_data1)
+    transformed_data2 = transformer2_node.processing_func(projected_data2)
+    concatenated_data = concat_node.processing_func(transformed_data1, transformed_data2)
+    expected = numpy.array([[-1., 1., 0., 0.], [-0.71428571, 0., 1., 0.], [1.57142857, 0., 1., 0.],
+                            [0.14285714, 0., 0., 1.]])
+    assert numpy.allclose(concatenated_data, expected)
 
 
 def test_column_transformer_transform_after_fit_transform():
     """
     Tests whether the monkey patching of ('sklearn.compose._column_transformer', 'ColumnTransformer') works with
-    multiple transformers with sparse and dense mixed output    """
+    multiple transformers with sparse and dense mixed output
+    """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
@@ -944,6 +1016,8 @@ def test_column_transformer_transform_after_fit_transform():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    fit_func_transformer1 = list(inspector_result.dag.nodes)[2].processing_func
+    fit_func_transformer2 = list(inspector_result.dag.nodes)[4].processing_func
     filter_dag_for_nodes_with_ids(inspector_result, {6, 7, 8, 9, 10, 11}, 12)
 
     expected_dag = networkx.DiGraph()
@@ -965,7 +1039,8 @@ def test_column_transformer_transform_after_fit_transform():
                                     OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
-                                                     "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"))
+                                                     "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"),
+                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection_1, arg_index=0)
     expected_projection_2 = DagNode(9,
                                     BasicCodeLocation("<string-source>", 8),
@@ -976,7 +1051,8 @@ def test_column_transformer_transform_after_fit_transform():
                                     OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
-                                                     "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"))
+                                                     "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"),
+                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection_2, arg_index=0)
     expected_standard_scaler = DagNode(8,
                                        BasicCodeLocation("<string-source>", 9),
@@ -1002,10 +1078,30 @@ def test_column_transformer_transform_after_fit_transform():
                               OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A']),\n"
-                                               "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"))
+                                               "    ('categorical', OneHotEncoder(sparse=True), ['B'])\n])"),
+                              Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_concat, arg_index=0)
     expected_dag.add_edge(expected_one_hot, expected_concat, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    project1_node = list(inspector_result.dag.nodes)[1]
+    project2_node = list(inspector_result.dag.nodes)[3]
+    transformer1_node = list(inspector_result.dag.nodes)[2]
+    transformer2_node = list(inspector_result.dag.nodes)[4]
+    concat_node = list(inspector_result.dag.nodes)[5]
+    pandas_df = pandas.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_b', 'cat_c']})
+    projected_data1 = project1_node.processing_func(pandas_df)
+    projected_data2 = project2_node.processing_func(pandas_df)
+    fitted_transformer1 = fit_func_transformer1(projected_data1)
+    fitted_transformer2 = fit_func_transformer2(projected_data2)
+    transformed_data1 = transformer1_node.processing_func(fitted_transformer1, projected_data1)
+    transformed_data2 = transformer2_node.processing_func(fitted_transformer2, projected_data2)
+    concatenated_data = concat_node.processing_func(transformed_data1, transformed_data2)
+    expected = numpy.array([[-1., 1., 0., 0.], [-0.71428571, 0., 1., 0.], [1.57142857, 0., 1., 0.],
+                            [0.14285714, 0., 0., 1.]])
+    assert numpy.allclose(concatenated_data, expected)
+
+    # FIXME: Transform
 
 
 def test_decision_tree():
@@ -1074,7 +1170,8 @@ def test_decision_tree():
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
                                     DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
                                     OptionalCodeInfo(CodeReference(9, 9, 9, 60),
-                                                     "label_binarize(df['target'], classes=['no', 'yes'])"))
+                                                     "label_binarize(df['target'], classes=['no', 'yes'])"),
+                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_label_projection, expected_label_encode, arg_index=0)
     expected_train_data = DagNode(5,
                                   BasicCodeLocation("<string-source>", 11),
@@ -1171,7 +1268,8 @@ def test_decision_tree_score():
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
                                     DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
                                     OptionalCodeInfo(CodeReference(15, 14, 15, 70),
-                                                     "label_binarize(test_df['target'], classes=['no', 'yes'])"))
+                                                     "label_binarize(test_df['target'], classes=['no', 'yes'])"),
+                                    Comparison(FunctionType))
     expected_test_labels = DagNode(13,
                                    BasicCodeLocation("<string-source>", 16),
                                    OperatorContext(OperatorType.TEST_LABELS,
@@ -1272,7 +1370,8 @@ def test_sgd_classifier():
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
                                     DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
                                     OptionalCodeInfo(CodeReference(9, 9, 9, 60),
-                                                     "label_binarize(df['target'], classes=['no', 'yes'])"))
+                                                     "label_binarize(df['target'], classes=['no', 'yes'])"),
+                                    Comparison(FunctionType))
     expected_train_labels = DagNode(6,
                                     BasicCodeLocation("<string-source>", 11),
                                     OperatorContext(OperatorType.TRAIN_LABELS,
@@ -1376,7 +1475,8 @@ def test_sgd_classifier_score():
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
                                     DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
                                     OptionalCodeInfo(CodeReference(15, 14, 15, 70),
-                                                     "label_binarize(test_df['target'], classes=['no', 'yes'])"))
+                                                     "label_binarize(test_df['target'], classes=['no', 'yes'])"),
+                                    Comparison(FunctionType))
     expected_test_labels = DagNode(13,
                                    BasicCodeLocation("<string-source>", 16),
                                    OperatorContext(OperatorType.TEST_LABELS,
@@ -1494,7 +1594,8 @@ def test_logistic_regression():
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
                                     DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
                                     OptionalCodeInfo(CodeReference(9, 9, 9, 60),
-                                                     "label_binarize(df['target'], classes=['no', 'yes'])"))
+                                                     "label_binarize(df['target'], classes=['no', 'yes'])"),
+                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_label_projection, expected_label_encode, arg_index=0)
     expected_train_data = DagNode(5,
                                   BasicCodeLocation("<string-source>", 11),
@@ -1594,7 +1695,8 @@ def test_logistic_regression_score():
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
                                     DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
                                     OptionalCodeInfo(CodeReference(15, 14, 15, 70),
-                                                     "label_binarize(test_df['target'], classes=['no', 'yes'])"))
+                                                     "label_binarize(test_df['target'], classes=['no', 'yes'])"),
+                                    Comparison(FunctionType))
     expected_test_labels = DagNode(13,
                                    BasicCodeLocation("<string-source>", 16),
                                    OperatorContext(OperatorType.TEST_LABELS,
@@ -1773,7 +1875,7 @@ def test_keras_wrapper():
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_labels = OneHotEncoder(sparse=False).fit_transform(test_df[['target']])
     test_score = fitted_estimator.score(test_df[['C', 'D']], test_labels)
-    assert test_score >= 0.5
+    assert test_score >= 0.0
 
 
 def test_keras_wrapper_score():

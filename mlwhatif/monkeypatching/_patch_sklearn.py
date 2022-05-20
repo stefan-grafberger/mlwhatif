@@ -7,6 +7,7 @@ import dataclasses
 import gorilla
 import numpy
 import pandas
+import scipy
 import tensorflow
 from sklearn import preprocessing, compose, tree, impute, linear_model, model_selection
 from sklearn.feature_extraction import text
@@ -48,6 +49,7 @@ class SklearnPreprocessingPatching:
 
             operator_context = OperatorContext(OperatorType.PROJECTION_MODIFY, function_info)
             result = original(input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            processing_func = lambda df: original(df, *args[1:], **kwargs)
 
             classes = kwargs['classes']
             description = "label_binarize, classes: {}".format(classes)
@@ -55,7 +57,8 @@ class SklearnPreprocessingPatching:
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(description, ["array"]),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [input_info.dag_node], function_call_result)
             new_result = function_call_result.function_result
@@ -192,6 +195,11 @@ class SklearnComposePatching:
             self.mlinspect_optional_code_reference = optional_code_reference
             self.mlinspect_optional_source_code = optional_source_code
 
+            self.mlinspect_non_data_func_args = {'transformers': transformers, 'remainder': remainder,
+                                                 'sparse_threshold': sparse_threshold, 'n_jobs': n_jobs,
+                                                 'transformer_weights': transformer_weights, 'verbose': verbose
+                                                 }
+
         return execute_patched_func_indirect_allowed(execute_inspections)
 
     @gorilla.name('fit_transform')
@@ -255,12 +263,30 @@ class SklearnComposePatching:
         # No input_infos copy needed because it's only a selection and the rows not being removed don't change
         result = original(self, *args, **kwargs)
 
+        def processing_func(*input_dfs):
+            transformer = compose.ColumnTransformer(**self.mlinspect_non_data_func_args)
+            # This is code out of the ColumnTransformer, maybe we can find a cleaner concat solution in the future
+            if any(scipy.sparse.issparse(df) for df in input_dfs):
+                nnz = sum(df.nnz if scipy.sparse.issparse(df) else df.size for df in input_dfs)
+                total = sum(df.shape[0] * df.shape[1] if scipy.sparse.issparse(df)
+                            else df.size for df in input_dfs)
+                density = nnz / total
+                transformer.sparse_output_ = density < self.sparse_threshold  # pylint: disable=no-member
+            else:
+                transformer.sparse_output_ = False
+            transformed_data = transformer._hstack(input_dfs)  # pylint: disable=protected-access
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+            # Not sure if this might be necessary at some point
+            # transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+            return transformed_data
+
         dag_node = DagNode(singleton.get_next_op_id(),
                            BasicCodeLocation(self.mlinspect_filename, self.mlinspect_lineno),
                            operator_context,
                            DagNodeDetails(None, ['array']),
                            get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
-                                                          self.mlinspect_optional_source_code))
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
         input_dag_nodes = [input_info.dag_node for input_info in input_infos]
         function_call_result = FunctionCallResult(result)
         add_dag_node(dag_node, input_dag_nodes, function_call_result)

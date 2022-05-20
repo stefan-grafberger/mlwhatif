@@ -420,10 +420,12 @@ class LocIndexerPatching:
                     and isinstance(args[0][1], list) and isinstance(args[0][1][0], str):
                 # Projection to one or multiple columns, return value is df
                 columns = args[0][1]
+                projection_key = columns
             elif isinstance(args[0], tuple) and not args[0][0].start and not args[0][0].stop \
                     and isinstance(args[0][1], str):
                 # Projection to one column with str syntax, e.g., for HashingVectorizer
                 columns = [args[0][1]]
+                projection_key = args[0][1]
             else:
                 raise NotImplementedError()
 
@@ -432,11 +434,15 @@ class LocIndexerPatching:
                                         lineno, function_info, optional_code_reference, optional_source_code)
             result = original(self, *args, **kwargs)
 
+            # TODO: This behaves correctly in the default cases but loc getitem supports many strange use cases
+            processing_func = lambda df: pandas.DataFrame.__getitem__(df, projection_key)
+
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails("to {}".format(columns), columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [input_info.dag_node], function_call_result)
             new_result = function_call_result.function_result

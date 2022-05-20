@@ -67,7 +67,8 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                                                          'ColumnTransformer')),
                                             DagNodeDetails("to ['education', 'workclass']", ['education', 'workclass']),
                                             OptionalCodeInfo(CodeReference(18 + line_offset, 25, 21 + line_offset, 2),
-                                                             pipeline_str))
+                                                             pipeline_str),
+                                            Comparison(FunctionType))
     expected_graph.add_edge(expected_select, expected_pipeline_project_one, arg_index=0)
     expected_pipeline_project_two = DagNode(6,
                                             BasicCodeLocation(caller_filename, 18 + line_offset),
@@ -76,7 +77,8 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                                                          'ColumnTransformer')),
                                             DagNodeDetails("to ['age', 'hours-per-week']", ['age', 'hours-per-week']),
                                             OptionalCodeInfo(CodeReference(18 + line_offset, 25, 21 + line_offset, 2),
-                                                             pipeline_str))
+                                                             pipeline_str),
+                                            Comparison(FunctionType))
     expected_graph.add_edge(expected_select, expected_pipeline_project_two, arg_index=0)
 
     expected_pipeline_transformer_one = DagNode(5,
@@ -109,7 +111,8 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                                                            'ColumnTransformer')),
                                               DagNodeDetails(None, ['array']),
                                               OptionalCodeInfo(CodeReference(18 + line_offset, 25, 21 + line_offset, 2),
-                                                               pipeline_str))
+                                                               pipeline_str),
+                                              Comparison(FunctionType))
     expected_graph.add_edge(expected_pipeline_transformer_one, expected_pipeline_concatenation, arg_index=0)
     expected_graph.add_edge(expected_pipeline_transformer_two, expected_pipeline_concatenation, arg_index=1)
 
@@ -140,7 +143,8 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                       DagNodeDetails("label_binarize, classes: ['>50K', '<=50K']", ['array']),
                                       OptionalCodeInfo(CodeReference(16 + line_offset, 9, 16 + line_offset, 89),
                                                        "preprocessing.label_binarize(data['income-per-year'], "
-                                                       "classes=['>50K', '<=50K'])"))
+                                                       "classes=['>50K', '<=50K'])"),
+                                      Comparison(FunctionType))
     expected_graph.add_edge(expected_project, expected_project_modify, arg_index=0)
 
     expected_train_labels = DagNode(10,
