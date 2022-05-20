@@ -654,11 +654,13 @@ def test_series_isin():
 
         pd_series = pd.Series([0, 2, 4, None], name='A')
         filtered = pd_series.isin([2, 4])
-        assert len(pd_series) == 4
+        expected = pd.Series([False, True, True, False], name='A')
+        pd.testing.assert_series_equal(filtered.reset_index(drop=True), expected.reset_index(drop=True))
         """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
 
     extracted_dag = inspector_result.dag
+    extracted_dag.remove_node(list(extracted_dag.nodes)[2])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -675,10 +677,17 @@ def test_series_isin():
                                             FunctionInfo('pandas.core.series', 'isin')),
                             DagNodeDetails('isin: [2, 4]', ['A']),
                             OptionalCodeInfo(CodeReference(4, 11, 4, 33),
-                                             'pd_series.isin([2, 4])'))
+                                             'pd_series.isin([2, 4])'),
+                            Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_isin, arg_index=0)
 
     compare(extracted_dag, expected_dag)
+
+    extracted_node = list(extracted_dag.nodes)[1]
+    pd_series = pandas.Series([2, 2, 4, 0], name='A')
+    extracted_func_result = extracted_node.processing_func(pd_series)
+    expected = pandas.Series([True, True, True, False], name='A')
+    pandas.testing.assert_series_equal(extracted_func_result.reset_index(drop=True), expected.reset_index(drop=True))
 
 
 def test_series__cmp_method():

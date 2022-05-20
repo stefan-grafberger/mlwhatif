@@ -503,12 +503,13 @@ class SeriesPatching:
             operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
             description = "isin: {}".format(args[0])
             columns = [self.name]  # pylint: disable=no-member
+            processing_func = lambda df: original(df, *args, **kwargs)
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails(description, columns),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
-
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
             result = original(input_info.annotated_dfobject.result_data, *args, **kwargs)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [input_info.dag_node], function_call_result)
