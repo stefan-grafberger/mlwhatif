@@ -30,7 +30,7 @@ class DagExecutor:
         def execute_node(current_node: DagNode):
             if current_node.operator_info.operator == OperatorType.MISSING_OP:
                 raise Exception("Missing Ops not supported currently!")
-            elif current_node.operator_info.operator == OperatorType.DATA_SOURCE:
+            if current_node.operator_info.operator == OperatorType.DATA_SOURCE:
                 result_df = current_node.processing_func()
                 result = self.replace_node_with_result(dag, current_node, result_df)
             elif current_node.operator_info.operator in {OperatorType.SELECTION}:

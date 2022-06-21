@@ -1,3 +1,6 @@
+"""
+Tests whether the DAG execution works for extracted DAGs
+"""
 from inspect import cleandoc
 
 import pandas as pd
@@ -7,7 +10,7 @@ from mlwhatif.instrumentation import _pipeline_executor
 
 def test_simple_dag_execution():
     """
-    Tests whether the monkey patching of ('pandas.core.frame', 'dropna') works
+    Tests whether the execution works for a very simple example
     """
     test_code = cleandoc("""
         import pandas as pd
