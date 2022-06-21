@@ -1396,6 +1396,7 @@ class SklearnKerasClassifierPatching:
 
         _, train_data_dag_node, train_data_result = add_train_data_node(self, args[0], function_info)
         _, train_labels_dag_node, train_labels_result = add_train_label_node(self, args[1], function_info)
+        self.mlinspect_non_data_func_args.update(self.sk_params)  # pylint: disable=no-member
 
         def processing_func(train_data, train_labels):
             estimator = tensorflow.keras.wrappers.scikit_learn.KerasClassifier(**self.mlinspect_non_data_func_args)

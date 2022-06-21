@@ -36,7 +36,6 @@ def test_healthcare_dag_execution():
     """
     extracted_dag = _pipeline_executor.singleton.run(python_path=HEALTHCARE_PY, track_code_references=True,
                                                      custom_monkey_patching=[healthcare_patching]).dag
-    final_pipeline_result = DagExecutor().execute(extracted_dag)
+    final_pipeline_result_score = DagExecutor().execute(extracted_dag)
 
-    df_expected = pd.DataFrame([0, 2, 4, 5.], columns=['A'])
-    pd.testing.assert_frame_equal(final_pipeline_result, df_expected)
+    assert isinstance(final_pipeline_result_score, float) and 0. <= final_pipeline_result_score <= 1.

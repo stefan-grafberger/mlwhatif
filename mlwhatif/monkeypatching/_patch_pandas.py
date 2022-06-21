@@ -198,9 +198,9 @@ class DataFramePatching:
                                                   optional_source_code)
                 dag_node_parents.append(input_info_other.dag_node)
 
-                def processing_func(df, new_val):
-                    original(df, args[0], new_val, *args[2:], **kwargs)
-                    return df
+                def processing_func(pandas_df, new_val):
+                    original(pandas_df, args[0], new_val, *args[2:], **kwargs)
+                    return pandas_df
             else:
                 processing_func = lambda df: original(df, *args, **kwargs)
             if isinstance(args[0], str):
