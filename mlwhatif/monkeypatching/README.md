@@ -92,14 +92,3 @@ compare(networkx.to_dict_of_dicts(extracted_dag), networkx.to_dict_of_dicts(expe
 | Function Call        | Operator        
 | ------------- |:-------------:|
 | `('numpy.random', 'random')`      | Data Source | 
-
-## Statsmodels
-* The implementation can be found mainly [here](./_patch_statsmodels.py)
-* The [tests](../../test/monkeypatching/test_patch_statsmodels.py) are probably more useful to look at 
-* Currently supported functions: 
-
-| Function Call        | Operator        
-| ------------- |:-------------:|
-| `('statsmodels.datasets', 'get_rdataset')`      | Data Source | 
-| `('statsmodels.api', 'add_constant')`      | Projection (Mod) | 
-| `('statsmodel.api', 'OLS')`, numpy syntax      | Estimator | 

@@ -2,7 +2,7 @@
 The Nodes used in the DAG as nodes for the networkx.DiGraph
 """
 import dataclasses
-from typing import List, Dict
+from typing import List, Dict, Callable
 
 import networkx
 
@@ -58,6 +58,7 @@ class DagNode:
     operator_info: OperatorContext
     details: DagNodeDetails
     optional_code_info: OptionalCodeInfo or None = None
+    processing_func: Callable or None = None
 
     def __hash__(self):
         return hash(self.node_id)

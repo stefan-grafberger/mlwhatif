@@ -1,10 +1,13 @@
 """
 Tests whether the monkey patching works for all patched sklearn methods
 """
+from functools import partial
 from inspect import cleandoc
+from types import FunctionType
 
 import networkx
-from testfixtures import compare
+import pandas
+from testfixtures import compare, Comparison
 
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
@@ -39,33 +42,48 @@ def test_my_word_to_vec_transformer():
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
                                    DagNodeDetails(None, ['A']),
                                    OptionalCodeInfo(CodeReference(5, 5, 5, 62),
-                                                    "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"))
-    expected_estimator = DagNode(1,
-                                 BasicCodeLocation("<string-source>", 6),
-                                 OperatorContext(OperatorType.TRANSFORMER,
-                                                 FunctionInfo('example_pipelines.healthcare.healthcare_utils',
-                                                              'MyW2VTransformer')),
-                                 DagNodeDetails('Word2Vec: fit_transform', ['array']),
-                                 OptionalCodeInfo(CodeReference(6, 14, 6, 62),
-                                                  'MyW2VTransformer(min_count=2, size=2, workers=1)'))
-    expected_dag.add_edge(expected_data_source, expected_estimator)
+                                                    "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
+                                   Comparison(partial))
+    expected_transformer = DagNode(1,
+                                   BasicCodeLocation("<string-source>", 6),
+                                   OperatorContext(OperatorType.TRANSFORMER,
+                                                   FunctionInfo('example_pipelines.healthcare.healthcare_utils',
+                                                                'MyW2VTransformer')),
+                                   DagNodeDetails('Word2Vec: fit_transform', ['array']),
+                                   OptionalCodeInfo(CodeReference(6, 14, 6, 62),
+                                                    'MyW2VTransformer(min_count=2, size=2, workers=1)'),
+                                   Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
     expected_data_source_two = DagNode(2,
                                        BasicCodeLocation("<string-source>", 9),
                                        OperatorContext(OperatorType.DATA_SOURCE,
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
                                        DagNodeDetails(None, ['A']),
                                        OptionalCodeInfo(CodeReference(9, 10, 9, 67),
-                                                        "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"))
-    expected_estimator_two = DagNode(3,
-                                     BasicCodeLocation("<string-source>", 6),
-                                     OperatorContext(OperatorType.TRANSFORMER,
-                                                     FunctionInfo('example_pipelines.healthcare.healthcare_utils',
-                                                                  'MyW2VTransformer')),
-                                     DagNodeDetails('Word2Vec: transform', ['array']),
-                                     OptionalCodeInfo(CodeReference(6, 14, 6, 62),
-                                                      'MyW2VTransformer(min_count=2, size=2, workers=1)'))
-    expected_dag.add_edge(expected_data_source_two, expected_estimator_two)
+                                                        "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
+                                       Comparison(partial))
+    expected_transformer_two = DagNode(3,
+                                       BasicCodeLocation("<string-source>", 6),
+                                       OperatorContext(OperatorType.TRANSFORMER,
+                                                       FunctionInfo('example_pipelines.healthcare.healthcare_utils',
+                                                                    'MyW2VTransformer')),
+                                       DagNodeDetails('Word2Vec: transform', ['array']),
+                                       OptionalCodeInfo(CodeReference(6, 14, 6, 62),
+                                                        'MyW2VTransformer(min_count=2, size=2, workers=1)'),
+                                       Comparison(FunctionType))
+    expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.dag.nodes)[1]
+    transform_node = list(inspector_result.dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'A': ['cat_a', 'cat_b', 'cat_b', 'cat_c']})
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df)
+    assert fit_transformed_result.shape == (4, 2)
+
+    test_df = pandas.DataFrame({'A': ['cat_a', 'cat_b', 'cat_c', 'cat_c']})
+    encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
+    assert encoded_data.shape == (4, 2)
 
 
 def test_arg_capturing_my_word_to_vec_transformer():
@@ -97,7 +115,8 @@ def test_arg_capturing_my_word_to_vec_transformer():
                                                                   'MyW2VTransformer')),
                                      DagNodeDetails('Word2Vec: fit_transform', ['array']),
                                      OptionalCodeInfo(CodeReference(6, 14, 6, 62),
-                                                      'MyW2VTransformer(min_count=2, size=2, workers=1)'))
+                                                      'MyW2VTransformer(min_count=2, size=2, workers=1)'),
+                                     Comparison(FunctionType))
     expected_transform = DagNode(3,
                                  BasicCodeLocation("<string-source>", 6),
                                  OperatorContext(OperatorType.TRANSFORMER,
@@ -105,7 +124,8 @@ def test_arg_capturing_my_word_to_vec_transformer():
                                                               'MyW2VTransformer')),
                                  DagNodeDetails('Word2Vec: transform', ['array']),
                                  OptionalCodeInfo(CodeReference(6, 14, 6, 62),
-                                                  'MyW2VTransformer(min_count=2, size=2, workers=1)'))
+                                                  'MyW2VTransformer(min_count=2, size=2, workers=1)'),
+                                 Comparison(FunctionType))
 
     compare(fit_transform_node, expected_fit_transform)
     compare(transform_node, expected_transform)

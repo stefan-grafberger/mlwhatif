@@ -1,6 +1,8 @@
 """
 Monkey patching for numpy
 """
+from functools import partial
+
 import gorilla
 from numpy import random
 
@@ -28,12 +30,13 @@ class NumpyRandomPatching:
             function_info = FunctionInfo('numpy.random', 'random')
             operator_context = OperatorContext(OperatorType.DATA_SOURCE, function_info)
             result = original(*args, **kwargs)
-
+            processing_func = partial(original, *args, **kwargs)
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
                                DagNodeDetails("random", ['array']),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [], function_call_result)
             new_return_value = function_call_result.function_result

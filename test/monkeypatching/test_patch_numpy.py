@@ -1,9 +1,10 @@
 """
 Tests whether the monkey patching works for all patched numpy methods
 """
+from functools import partial
 from inspect import cleandoc
 
-from testfixtures import compare
+from testfixtures import compare, Comparison
 
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif.instrumentation import _pipeline_executor
@@ -29,5 +30,8 @@ def test_numpy_random():
                             BasicCodeLocation("<string-source>", 3),
                             OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('numpy.random', 'random')),
                             DagNodeDetails('random', ['array']),
-                            OptionalCodeInfo(CodeReference(3, 7, 3, 28), "np.random.random(100)"))
+                            OptionalCodeInfo(CodeReference(3, 7, 3, 28), "np.random.random(100)"),
+                            Comparison(partial))
     compare(extracted_node, expected_node)
+
+    assert len(extracted_node.processing_func()) == 100

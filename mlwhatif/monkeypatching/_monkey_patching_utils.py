@@ -74,6 +74,40 @@ def execute_patched_func(original_func, execute_inspections_func, *args, **kwarg
         result = execute_inspections_func(op_id, caller_filename, caller_lineno, None, None)
     return result
 
+def execute_patched_internal_func_with_depth(original_func, execute_inspections_func, depth, *args, **kwargs):
+    """
+    Detects whether the function call comes directly from user code and decides whether to execute the original
+    function or the patched variant.
+    """
+    # Performance aspects: https://gist.github.com/JettJones/c236494013f22723c1822126df944b12
+    # CPython implementation detail: This function should be used for internal and specialized purposes only.
+    #  It is not guaranteed to exist in all implementations of Python.
+    #  inspect.getcurrentframe() also only does return `sys._getframe(1) if hasattr(sys, "_getframe") else None`
+    #  We can execute one hasattr check right at the beginning of the mlwhatif execution
+
+    caller_filename = sys._getframe(depth).f_code.co_filename  # pylint: disable=protected-access
+
+    if caller_filename != singleton.source_code_path:
+        result = original_func(*args, **kwargs)
+    elif singleton.track_code_references:
+        call_ast_node = ast.Call(lineno=singleton.lineno_next_call_or_subscript,
+                                 col_offset=singleton.col_offset_next_call_or_subscript,
+                                 end_lineno=singleton.end_lineno_next_call_or_subscript,
+                                 end_col_offset=singleton.end_col_offset_next_call_or_subscript)
+        caller_source_code = ast.get_source_segment(singleton.source_code, node=call_ast_node)
+        caller_lineno = singleton.lineno_next_call_or_subscript
+        op_id = singleton.get_next_op_id()
+        caller_code_reference = CodeReference(singleton.lineno_next_call_or_subscript,
+                                              singleton.col_offset_next_call_or_subscript,
+                                              singleton.end_lineno_next_call_or_subscript,
+                                              singleton.end_col_offset_next_call_or_subscript)
+        result = execute_inspections_func(op_id, caller_filename, caller_lineno, caller_code_reference,
+                                          caller_source_code)
+    else:
+        op_id = singleton.get_next_op_id()
+        caller_lineno = sys._getframe(2).f_lineno  # pylint: disable=protected-access
+        result = execute_inspections_func(op_id, caller_filename, caller_lineno, None, None)
+    return result
 
 def execute_patched_func_no_op_id(original_func, execute_inspections_func, *args, **kwargs):
     """
@@ -183,6 +217,15 @@ def get_column_names(df_object):
     return columns
 
 
+def wrap_in_mlinspect_array_if_necessary(df_object):
+    """
+    Makes sure annotations can be stored in a df_object. For example, numpy arrays need a wrapper for this.
+    """
+    if isinstance(df_object, numpy.ndarray):
+        df_object = MlinspectNdarray(df_object)
+    return df_object
+
+
 def add_dag_node(dag_node: DagNode, dag_node_parents: List[DagNode], function_call_result: FunctionCallResult):
     """
     Inserts a new node into the DAG
@@ -193,12 +236,12 @@ def add_dag_node(dag_node: DagNode, dag_node_parents: List[DagNode], function_ca
 
     # print("source code: {}".format(dag_node.optional_source_code))
     if function_call_result.function_result is not None:
-        if isinstance(function_call_result.function_result, numpy.ndarray):
-            function_call_result.function_result = MlinspectNdarray(function_call_result.function_result)
+        function_call_result.function_result = wrap_in_mlinspect_array_if_necessary(
+            function_call_result.function_result)
         function_call_result.function_result._mlinspect_dag_node = dag_node.node_id
     if dag_node_parents:
-        for parent in dag_node_parents:
-            singleton.inspection_results.dag.add_edge(parent, dag_node)
+        for parent_index, parent in enumerate(dag_node_parents):
+            singleton.inspection_results.dag.add_edge(parent, dag_node, arg_index=parent_index)
     else:
         singleton.inspection_results.dag.add_node(dag_node)
     singleton.op_id_to_dag_node[dag_node.node_id] = dag_node
@@ -239,12 +282,14 @@ def add_train_label_node(estimator, train_label_arg, function_info):
                                              estimator.mlinspect_optional_code_reference,
                                              estimator.mlinspect_optional_source_code)
     train_label_op_id = _pipeline_executor.singleton.get_next_op_id()
+    process_func = lambda df_object: df_object
     train_labels_dag_node = DagNode(train_label_op_id,
                                     BasicCodeLocation(estimator.mlinspect_caller_filename, estimator.mlinspect_lineno),
                                     operator_context,
                                     DagNodeDetails(None, ["array"]),
                                     get_optional_code_info_or_none(estimator.mlinspect_optional_code_reference,
-                                                                   estimator.mlinspect_optional_source_code))
+                                                                   estimator.mlinspect_optional_source_code),
+                                    process_func)
     function_call_result = FunctionCallResult(train_label_arg)
     add_dag_node(train_labels_dag_node, [input_info_train_labels.dag_node], function_call_result)
     train_labels_result = function_call_result.function_result
@@ -259,12 +304,14 @@ def add_train_data_node(estimator, train_data_arg, function_info):
                                            estimator.mlinspect_optional_source_code)
     train_data_op_id = _pipeline_executor.singleton.get_next_op_id()
     operator_context = OperatorContext(OperatorType.TRAIN_DATA, function_info)
+    process_func = lambda df_object: df_object
     train_data_dag_node = DagNode(train_data_op_id,
                                   BasicCodeLocation(estimator.mlinspect_caller_filename, estimator.mlinspect_lineno),
                                   operator_context,
                                   DagNodeDetails(None, ["array"]),
                                   get_optional_code_info_or_none(estimator.mlinspect_optional_code_reference,
-                                                                 estimator.mlinspect_optional_source_code))
+                                                                 estimator.mlinspect_optional_source_code),
+                                  process_func)
     function_call_result = FunctionCallResult(train_data_arg)
     add_dag_node(train_data_dag_node, [input_info_train_data.dag_node], function_call_result)
     train_data_result = function_call_result.function_result
@@ -279,11 +326,13 @@ def add_test_data_dag_node(test_data_arg, function_info, lineno, optional_code_r
                                           optional_code_reference, optional_source_code)
     operator_context = OperatorContext(OperatorType.TEST_DATA, function_info)
     test_data_op_id = _pipeline_executor.singleton.get_next_op_id()
+    process_func = lambda df_object: df_object
     test_data_dag_node = DagNode(test_data_op_id,
                                  BasicCodeLocation(caller_filename, lineno),
                                  operator_context,
                                  DagNodeDetails(None, get_column_names(test_data_arg)),
-                                 get_optional_code_info_or_none(optional_code_reference, optional_source_code))
+                                 get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                 process_func)
     function_call_result = FunctionCallResult(test_data_arg)
     add_dag_node(test_data_dag_node, [input_info_test_data.dag_node], function_call_result)
     test_data_result = function_call_result.function_result
@@ -298,12 +347,14 @@ def add_test_label_node(test_label_arg, caller_filename, function_info, lineno, 
     input_info_test_labels = get_input_info(test_label_arg, caller_filename, lineno, function_info,
                                             optional_code_reference, optional_source_code)
     test_label_op_id = _pipeline_executor.singleton.get_next_op_id()
+    process_func = lambda df_object: df_object
     test_labels_dag_node = DagNode(test_label_op_id,
                                    BasicCodeLocation(caller_filename, lineno),
                                    operator_context,
                                    DagNodeDetails(None, get_column_names(test_label_arg)),
                                    get_optional_code_info_or_none(optional_code_reference,
-                                                                  optional_source_code))
+                                                                  optional_source_code),
+                                   process_func)
     function_call_result = FunctionCallResult(test_label_arg)
     add_dag_node(test_labels_dag_node, [input_info_test_labels.dag_node], function_call_result)
     test_labels_result = function_call_result.function_result

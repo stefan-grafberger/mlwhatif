@@ -33,6 +33,33 @@ class CallCaptureTransformer(ast.NodeTransformer):
         self.subscript_add_set_code_reference(node, code_reference_from_node)
         return node
 
+    def visit_Compare(self, node):
+        """
+        Instrument all function calls
+        """
+        # pylint: disable=invalid-name
+        ast.NodeTransformer.generic_visit(self, node)
+        self.compare_add_set_code_reference(node)
+        return node
+
+    def visit_BinOp(self, node: ast.BinOp):
+        """
+        Instrument all function calls
+        """
+        # pylint: disable=invalid-name
+        ast.NodeTransformer.generic_visit(self, node)
+        self.bin_op_add_set_code_reference(node)
+        return node
+
+    def visit_BoolOp(self, node: ast.BoolOp):
+        """
+        Instrument all function calls
+        """
+        # pylint: disable=invalid-name
+        ast.NodeTransformer.generic_visit(self, node)
+        self.bool_op_add_set_code_reference(node)
+        return node
+
     @staticmethod
     def call_add_set_code_reference(node):
         """
@@ -84,3 +111,33 @@ class CallCaptureTransformer(ast.NodeTransformer):
         call_node = CallCaptureTransformer.create_set_code_reference_node_subscript(code_reference_from_node,
                                                                                     subscript_arg)
         node.slice = call_node
+
+    @staticmethod
+    def compare_add_set_code_reference(node):
+        """
+        When comparison methods like > or == of some object are called, capture the arguments of the method before
+        executing it
+        """
+        last_previously_processed_val = node.comparators[-1]
+        call_node = CallCaptureTransformer.create_set_code_reference_node_subscript(node, last_previously_processed_val)
+        node.comparators[-1] = call_node
+
+    @staticmethod
+    def bin_op_add_set_code_reference(node):
+        """
+        When comparison methods like > or == of some object are called, capture the arguments of the method before
+        executing it
+        """
+        last_previously_processed_val = node.right
+        call_node = CallCaptureTransformer.create_set_code_reference_node_subscript(node, last_previously_processed_val)
+        node.right = call_node
+
+    @staticmethod
+    def bool_op_add_set_code_reference(node):
+        """
+        When comparison methods like > or == of some object are called, capture the arguments of the method before
+        executing it
+        """
+        last_previously_processed_val = node.values[-1]
+        call_node = CallCaptureTransformer.create_set_code_reference_node_subscript(node, last_previously_processed_val)
+        node.values[-1] = call_node

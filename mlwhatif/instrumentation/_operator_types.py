@@ -55,6 +55,7 @@ class OperatorType(Enum):
     JOIN = "Join"
     GROUP_BY_AGG = "Groupby and Aggregate"
     TRAIN_TEST_SPLIT = "Train Test Split"
+    SUBSCRIPT = "Subscript"
 
 
 @dataclasses.dataclass(frozen=True)
