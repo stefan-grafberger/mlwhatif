@@ -9,22 +9,20 @@ from mlwhatif import DagNode, OperatorType
 
 
 @dataclasses.dataclass(frozen=True)
-class DfResult:
-    """ WIP experiments """
+class DagNodeResult:
+    """ Holds the result from a processing_func after a DagNode has been executed """
     node_id: int = dataclasses.field(default=None)
     dag_node: DagNode = dataclasses.field(default=None)
     result_df: any = dataclasses.field(hash=False, default=None)
 
 
 class DagExecutor:
-    """ WIP experiments """
-
-    def __init__(self):
-        """ WIP experiments """
+    """ Executes given DAGs using the processing_funcs started with each DagNode """
 
     def execute(self, dag: networkx.DiGraph):
-        """ WIP experiments """
-        # pylint: disable=too-many-branches, too-many-statements
+        """ Execute a given input DAG """
+        # TODO: Currently, this returns the final result from some DagNode without children but in the future,
+        #  we want to have a mechanism to store the results from selected DagNodes with a label in some result map
         dag = dag.copy()
 
         def execute_node(current_node: DagNode):
@@ -37,7 +35,7 @@ class DagExecutor:
 
         self.traverse_graph_and_process_nodes(dag, execute_node)
 
-        # TODO: Build mechanism isntead to select what to extract
+        # TODO: Build mechanism instead to select what to extract
         final_result_value = [node for node, out_degree in dag.out_degree() if out_degree == 0][0]
         return final_result_value.result_df
 
@@ -65,8 +63,8 @@ class DagExecutor:
 
     @staticmethod
     def replace_node_with_result(sub_dag, dag_node: DagNode, result_df):
-        """ WIP experiments """
-        new_value_node = DfResult(dag_node.node_id, dag_node, result_df)
+        """ This replaces a DAG node with the result from its processing_func """
+        new_value_node = DagNodeResult(dag_node.node_id, dag_node, result_df)
         sub_dag.add_node(new_value_node)
         for parent_node in sub_dag.predecessors(dag_node):
             edge_data = sub_dag.get_edge_data(parent_node, dag_node)
@@ -79,7 +77,10 @@ class DagExecutor:
 
     @staticmethod
     def get_required_values(sub_dag: networkx.DiGraph, current_node: DagNode):
-        """ WIP experiments """
+        """
+        This gets all required input values for the processing_func of a dag_node from its DagNode parents.
+        Deletes results from parents that are no longer required.
+        """
         required_df_values = []
         parent_nodes = list(sub_dag.predecessors(current_node))
         if len(parent_nodes) > 1:
@@ -89,7 +90,7 @@ class DagExecutor:
             parent_nodes = [node_parent[0] for node_parent in sorted_parent_nodes_with_arg_index]
 
         for parent_node in parent_nodes:
-            assert isinstance(parent_node, DfResult)
+            assert isinstance(parent_node, DagNodeResult)
             df_value = parent_node.result_df
             sub_dag.remove_edge(parent_node, current_node)
             # We want to enable garbage collection of value_node if we no longer need to keep the value around
