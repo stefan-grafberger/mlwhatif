@@ -38,7 +38,7 @@ class DagExecutor:
                 result_df = current_node.processing_func(*inputs)
                 result = self.replace_node_with_result(dag, current_node, result_df)
             else:
-                raise NotImplementedError("Unknown op_type: {}".format(type(current_node)))
+                raise NotImplementedError(f"Unknown op_type: {current_node.operator_info.operator}")
             return result
 
         self.traverse_graph_and_process_nodes(dag, execute_node)
