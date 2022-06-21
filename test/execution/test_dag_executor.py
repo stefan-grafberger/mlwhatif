@@ -4,8 +4,9 @@ Tests whether the DAG execution works for extracted DAGs
 from inspect import cleandoc
 
 import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
 
-from example_pipelines import HEALTHCARE_PY
+from example_pipelines import HEALTHCARE_PY, COMPAS_PY, ADULT_SIMPLE_PY, ADULT_COMPLEX_PY
 from example_pipelines.healthcare import custom_monkeypatching as healthcare_patching
 from mlwhatif.execution._dag_executor import DagExecutor
 from mlwhatif.instrumentation import _pipeline_executor
@@ -32,10 +33,36 @@ def test_simple_dag_execution():
 
 def test_healthcare_dag_execution():
     """
-    Tests whether the execution works for a very simple example
+    Tests whether the execution works for the healthcare pipeline
     """
     extracted_dag = _pipeline_executor.singleton.run(python_path=HEALTHCARE_PY, track_code_references=True,
                                                      custom_monkey_patching=[healthcare_patching]).dag
     final_pipeline_result_score = DagExecutor().execute(extracted_dag)
+    assert isinstance(final_pipeline_result_score, float) and 0. <= final_pipeline_result_score <= 1.
 
+
+def test_compas_dag_execution():
+    """
+    Tests whether the execution works for the compas pipeline
+    """
+    extracted_dag = _pipeline_executor.singleton.run(python_path=COMPAS_PY, track_code_references=True).dag
+    final_pipeline_result_score = DagExecutor().execute(extracted_dag)
+    assert isinstance(final_pipeline_result_score, float) and 0. <= final_pipeline_result_score <= 1.
+
+
+def test_adult_simple_dag_execution():
+    """
+    Tests whether the execution works for the adult_simple pipeline
+    """
+    extracted_dag = _pipeline_executor.singleton.run(python_path=ADULT_SIMPLE_PY, track_code_references=True).dag
+    final_pipeline_result_estimator = DagExecutor().execute(extracted_dag)
+    assert isinstance(final_pipeline_result_estimator, DecisionTreeClassifier)
+
+
+def test_adult_complex_dag_execution():
+    """
+    Tests whether the execution works for the adult_complex pipeline
+    """
+    extracted_dag = _pipeline_executor.singleton.run(python_path=ADULT_COMPLEX_PY, track_code_references=True).dag
+    final_pipeline_result_score = DagExecutor().execute(extracted_dag)
     assert isinstance(final_pipeline_result_score, float) and 0. <= final_pipeline_result_score <= 1.
