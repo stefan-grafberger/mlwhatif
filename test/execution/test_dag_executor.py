@@ -11,7 +11,6 @@ from mlwhatif.execution._dag_executor import DagExecutor
 from mlwhatif.instrumentation import _pipeline_executor
 
 
-
 def test_simple_dag_execution():
     """
     Tests whether the execution works for a very simple example

@@ -10,7 +10,7 @@ from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNo
 from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import add_dag_node, \
     get_input_info, execute_patched_func_no_op_id, get_optional_code_info_or_none, FunctionCallResult, \
-    wrap_in_mlinspect_array_if_necessary
+    wrap_in_mlinspect_array_if_necessary, get_dag_node_for_id
 from mlwhatif.monkeypatching._mlinspect_ndarray import MlinspectNdarray
 
 
@@ -74,7 +74,9 @@ class SklearnMyW2VTransformerPatching:
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
-        dag_node = DagNode(singleton.get_next_op_id(),
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                            operator_context,
                            DagNodeDetails("Word2Vec: fit_transform", ['array']),
@@ -113,7 +115,8 @@ class SklearnMyW2VTransformerPatching:
                                                               self.mlinspect_optional_source_code),
                                processing_func)
             function_call_result = FunctionCallResult(result)
-            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
+            add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
             new_result = function_call_result.function_result
             assert isinstance(new_result, MlinspectNdarray)
         else:

@@ -30,15 +30,9 @@ class DagExecutor:
         def execute_node(current_node: DagNode):
             if current_node.operator_info.operator == OperatorType.MISSING_OP:
                 raise Exception("Missing Ops not supported currently!")
-            if current_node.operator_info.operator == OperatorType.DATA_SOURCE:
-                result_df = current_node.processing_func()
-                result = self.replace_node_with_result(dag, current_node, result_df)
-            elif current_node.operator_info.operator in {OperatorType.SELECTION}:
-                inputs = self.get_required_values(dag, current_node)
-                result_df = current_node.processing_func(*inputs)
-                result = self.replace_node_with_result(dag, current_node, result_df)
-            else:
-                raise NotImplementedError(f"Unknown op_type: {current_node.operator_info.operator}")
+            inputs = self.get_required_values(dag, current_node)
+            result_df = current_node.processing_func(*inputs)
+            result = self.replace_node_with_result(dag, current_node, result_df)
             return result
 
         self.traverse_graph_and_process_nodes(dag, execute_node)

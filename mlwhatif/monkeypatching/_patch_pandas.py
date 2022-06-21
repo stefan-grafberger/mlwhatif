@@ -197,7 +197,10 @@ class DataFramePatching:
                 input_info_other = get_input_info(args[1], caller_filename, lineno, function_info, optional_code_reference,
                                                   optional_source_code)
                 dag_node_parents.append(input_info_other.dag_node)
-                processing_func = lambda df, new_val: original(df, args[0], new_val, *args[2:], **kwargs)
+
+                def processing_func(df, new_val):
+                    original(df, args[0], new_val, *args[2:], **kwargs)
+                    return df
             else:
                 processing_func = lambda df: original(df, *args, **kwargs)
             if isinstance(args[0], str):
