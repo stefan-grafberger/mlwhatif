@@ -1,10 +1,8 @@
 """
-The engine to execute the inspections
+The place where the DAG execution happens
 """
 import dataclasses
-
 import networkx
-
 from mlwhatif import DagNode, OperatorType
 
 
