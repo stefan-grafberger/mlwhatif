@@ -14,6 +14,7 @@ from ._call_capture_transformer import CallCaptureTransformer
 from ._dag_node import InspectionResult
 from .. import monkeypatching
 from .._inspector_result import InspectorResult
+from ..analysis._what_if_analysis import WhatIfAnalysis
 
 
 class PipelineExecutor:
@@ -33,7 +34,7 @@ class PipelineExecutor:
     next_missing_op_id = -1
     track_code_references = True
     op_id_to_dag_node = dict()
-    inspections = []
+    analyses = []
     custom_monkey_patching = []
     inspection_results = InspectionResult(networkx.DiGraph(), dict())
 
@@ -41,6 +42,7 @@ class PipelineExecutor:
             notebook_path: str or None = None,
             python_path: str or None = None,
             python_code: str or None = None,
+            analyses: List[WhatIfAnalysis] or None = None,  # pylint: disable=unused-argument
             reset_state: bool = True,
             track_code_references: bool = True,
             custom_monkey_patching: List[any] = None
@@ -60,10 +62,10 @@ class PipelineExecutor:
         self.track_code_references = track_code_references
         self.custom_monkey_patching = custom_monkey_patching
 
-        self.run_inspections(notebook_path, python_code, python_path)
+        self.run_instrumented_pipeline(notebook_path, python_code, python_path)
         return InspectorResult(self.inspection_results.dag, self.inspection_results.dag_node_to_inspection_results)
 
-    def run_inspections(self, notebook_path, python_code, python_path):
+    def run_instrumented_pipeline(self, notebook_path, python_code, python_path):
         """
         Instrument and execute the pipeline
         """
@@ -105,7 +107,7 @@ class PipelineExecutor:
         self.track_code_references = True
         self.op_id_to_dag_node = dict()
         self.inspection_results = InspectionResult(networkx.DiGraph(), dict())
-        self.inspections = []
+        self.analyses = []
         self.custom_monkey_patching = []
 
     @staticmethod

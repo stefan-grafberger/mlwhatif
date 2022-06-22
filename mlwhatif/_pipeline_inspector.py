@@ -4,6 +4,7 @@ User-facing API for inspecting the pipeline
 from typing import Iterable, List
 
 from ._inspector_result import InspectorResult
+from .analysis._what_if_analysis import WhatIfAnalysis
 from .instrumentation._pipeline_executor import singleton
 
 
@@ -24,14 +25,14 @@ class PipelineInspectorBuilder:
         self.analyses = []
         self.checks = []
 
-    def add_analysis(self, analysis: any):
+    def add_what_if_analysis(self, analysis: WhatIfAnalysis):
         """
         Add an analysis. TODO
         """
         self.analyses.append(analysis)
         return self
 
-    def add_analyses(self, analyses: Iterable[any]):
+    def add_what_if_analyses(self, analyses: Iterable[WhatIfAnalysis]):
         """
         Add a list of analyses
         """
@@ -65,7 +66,8 @@ class PipelineInspectorBuilder:
         """
         return singleton.run(notebook_path=self.notebook_path,
                              python_path=self.python_path,
-                             python_code=self.python_code,  # TODO: Add analyses
+                             python_code=self.python_code,
+                             analyses=self.analyses,
                              custom_monkey_patching=self.monkey_patching_modules)
 
 
