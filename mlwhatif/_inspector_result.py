@@ -6,12 +6,13 @@ from typing import Dict
 
 import networkx
 
+from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+
 
 @dataclasses.dataclass
-class InspectorResult:
+class AnalysisResults:
     """
     The class the PipelineExecutor returns
     """
     dag: networkx.DiGraph
-    dag_node_to_inspection_results: Dict[any, Dict[any, any]]  # First any is DagNode
-    #check_to_check_results: Dict[Check, CheckResult]
+    analysis_to_result_reports: Dict[WhatIfAnalysis, any]

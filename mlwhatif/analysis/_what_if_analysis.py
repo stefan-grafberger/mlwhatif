@@ -2,7 +2,7 @@
 The Interface for the What-If Analyses
 """
 import abc
-from typing import Iterable
+from typing import Iterable, Dict
 
 import networkx
 
@@ -24,7 +24,7 @@ class WhatIfAnalysis(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def generate_final_report(self) -> any:
+    def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:
         """Get the final report after trying out the different pipeline variants"""
         raise NotImplementedError
 

@@ -3,7 +3,7 @@ User-facing API for inspecting the pipeline
 """
 from typing import Iterable, List
 
-from ._inspector_result import InspectorResult
+from ._inspector_result import AnalysisResults
 from .analysis._what_if_analysis import WhatIfAnalysis
 from .instrumentation._pipeline_executor import singleton
 
@@ -60,7 +60,7 @@ class PipelineInspectorBuilder:
         self.monkey_patching_modules.append(module)
         return self
 
-    def execute(self) -> InspectorResult:
+    def execute(self) -> AnalysisResults:
         """
         Instrument and execute the pipeline
         """

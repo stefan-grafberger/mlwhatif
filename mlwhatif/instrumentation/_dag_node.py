@@ -65,9 +65,9 @@ class DagNode:
 
 
 @dataclasses.dataclass
-class InspectionResult:
+class AnalysisResult:
     """
     The class the PipelineExecutor returns
     """
     dag: networkx.DiGraph
-    dag_node_to_inspection_results: Dict[DagNode, Dict[any, any]]
+    analysis_to_result_reports: Dict[any, any]

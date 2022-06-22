@@ -3,7 +3,9 @@ The place where the DAG execution happens
 """
 import dataclasses
 import networkx
-from mlwhatif import DagNode, OperatorType
+
+from mlwhatif.instrumentation._operator_types import OperatorType
+from mlwhatif.instrumentation._dag_node import DagNode
 
 
 @dataclasses.dataclass(frozen=True)

@@ -11,10 +11,11 @@ from astmonkey.transformers import ParentChildNodeTransformer
 from nbconvert import PythonExporter
 
 from ._call_capture_transformer import CallCaptureTransformer
-from ._dag_node import InspectionResult
+from ._dag_node import AnalysisResult
 from .. import monkeypatching
-from .._inspector_result import InspectorResult
+from .._inspector_result import AnalysisResults
 from ..analysis._what_if_analysis import WhatIfAnalysis
+from ..execution._dag_executor import DagExecutor
 
 
 class PipelineExecutor:
@@ -36,7 +37,8 @@ class PipelineExecutor:
     op_id_to_dag_node = dict()
     analyses = []
     custom_monkey_patching = []
-    inspection_results = InspectionResult(networkx.DiGraph(), dict())
+    labels_to_extracted_plan_results = dict()
+    analysis_results = AnalysisResult(networkx.DiGraph(), dict())
 
     def run(self, *,
             notebook_path: str or None = None,
@@ -46,7 +48,7 @@ class PipelineExecutor:
             reset_state: bool = True,
             track_code_references: bool = True,
             custom_monkey_patching: List[any] = None
-            ) -> InspectorResult:
+            ) -> AnalysisResults:
         """
         Instrument and execute the pipeline and evaluate all checks
         """
@@ -58,12 +60,29 @@ class PipelineExecutor:
 
         if custom_monkey_patching is None:
             custom_monkey_patching = []
+        if analyses is None:
+            analyses = []
 
         self.track_code_references = track_code_references
         self.custom_monkey_patching = custom_monkey_patching
+        self.analyses = analyses
 
         self.run_instrumented_pipeline(notebook_path, python_code, python_path)
-        return InspectorResult(self.inspection_results.dag, self.inspection_results.dag_node_to_inspection_results)
+        self.run_what_if_analyses()
+
+        return AnalysisResults(self.analysis_results.dag, self.analysis_results.analysis_to_result_reports)
+
+    def run_what_if_analyses(self):
+        """
+        Execute the specified what-if analyses
+        """
+        for analysis in self.analyses:
+            dags_to_execute = analysis.generate_plans_to_try(self.analysis_results.dag)
+            # TODO: Multi-Query Optimization
+            for dag in dags_to_execute:
+                DagExecutor().execute(dag)
+            report = analysis.generate_final_report(self.labels_to_extracted_plan_results)
+            self.analysis_results.analysis_to_result_reports[analysis] = report
 
     def run_instrumented_pipeline(self, notebook_path, python_code, python_path):
         """
@@ -106,8 +125,9 @@ class PipelineExecutor:
         self.next_missing_op_id = -1
         self.track_code_references = True
         self.op_id_to_dag_node = dict()
-        self.inspection_results = InspectionResult(networkx.DiGraph(), dict())
+        self.analysis_results = AnalysisResult(networkx.DiGraph(), dict())
         self.analyses = []
+        self.labels_to_extracted_plan_results = dict()
         self.custom_monkey_patching = []
 
     @staticmethod
