@@ -35,10 +35,6 @@ class DagExecutor:
 
         self.traverse_graph_and_process_nodes(dag, execute_node)
 
-        # TODO: Build mechanism instead to select what to extract
-        final_result_value = [node for node, out_degree in dag.out_degree() if out_degree == 0][0]
-        return final_result_value.result_df
-
     @staticmethod
     def traverse_graph_and_process_nodes(graph: networkx.DiGraph, func):
         """
