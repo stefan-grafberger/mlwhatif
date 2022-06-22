@@ -37,6 +37,7 @@ class PipelineExecutor:
     op_id_to_dag_node = dict()
     analyses = []
     custom_monkey_patching = []
+    # TODO: Do we want to add the analysis to the key next to label to isolate analyses and avoid name clashes?
     labels_to_extracted_plan_results = dict()
     analysis_results = AnalysisResult(networkx.DiGraph(), dict())
 
