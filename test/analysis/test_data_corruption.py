@@ -37,4 +37,6 @@ def test_data_corruption_score():
         .add_what_if_analysis(data_corruption) \
         .execute()
     report = analysis_result.analysis_to_result_reports[data_corruption]
+    # TODO: Visualize input and output plans by calling what-if analysis manually or add a flag to PipelineAnalyzer
+    #  Then start with actually adding corruptions, maybe start by using Jenga
     assert report == "TODO"
