@@ -11,7 +11,7 @@ from pandas import DataFrame
 from testfixtures import Comparison
 
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
-from mlwhatif._pipeline_inspector import PipelineInspector
+from mlwhatif._pipeline_inspector import PipelineAnalyzer
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo
 from mlwhatif.visualisation._visualisation import save_fig_to_path
@@ -200,7 +200,7 @@ def run_and_assert_all_op_outputs_inspected(py_file_path, _, dag_png_path, custo
     if custom_monkey_patching is None:
         custom_monkey_patching = []
 
-    inspector_result = PipelineInspector \
+    inspector_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(py_file_path) \
         .add_custom_monkey_patching_modules(custom_monkey_patching) \
         .execute()

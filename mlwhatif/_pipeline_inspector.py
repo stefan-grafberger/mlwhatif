@@ -71,7 +71,7 @@ class PipelineInspectorBuilder:
                              custom_monkey_patching=self.monkey_patching_modules)
 
 
-class PipelineInspector:
+class PipelineAnalyzer:
     """
     The entry point to the fluent API to build an inspection run
     """

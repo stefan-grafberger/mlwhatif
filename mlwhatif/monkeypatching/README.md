@@ -10,9 +10,9 @@
 import networkx
 from inspect import cleandoc
 from testfixtures import compare
-from mlwhatif import OperatorType, OperatorContext, FunctionInfo, PipelineInspector, CodeReference, DagNode, BasicCodeLocation, DagNodeDetails, \
+from mlwhatif import OperatorType, OperatorContext, FunctionInfo, PipelineAnalyzer, CodeReference, DagNode,
+    BasicCodeLocation, DagNodeDetails,
     OptionalCodeInfo
-
 
 test_code = cleandoc("""
         from inspect import cleandoc
@@ -23,7 +23,7 @@ test_code = cleandoc("""
         df = df.dropna()
         """)
 
-extracted_dag = PipelineInspector.on_pipeline_from_string(test_code).execute().dag
+extracted_dag = PipelineAnalyzer.on_pipeline_from_string(test_code).execute().dag
 
 expected_dag = networkx.DiGraph()
 expected_missing_op = DagNode(-1,

@@ -44,7 +44,7 @@ class PipelineExecutor:
             notebook_path: str or None = None,
             python_path: str or None = None,
             python_code: str or None = None,
-            analyses: List[WhatIfAnalysis] or None = None,  # pylint: disable=unused-argument
+            analyses: List[WhatIfAnalysis] or None = None,
             reset_state: bool = True,
             track_code_references: bool = True,
             custom_monkey_patching: List[any] = None

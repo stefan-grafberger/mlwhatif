@@ -1,7 +1,7 @@
 """
 Packages and classes we want to expose to users
 """
-from ._pipeline_inspector import PipelineInspector
+from ._pipeline_inspector import PipelineAnalyzer
 from ._inspector_result import AnalysisResults
 from .instrumentation._operator_types import OperatorContext, OperatorType, FunctionInfo
 from .instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails, OptionalCodeInfo, CodeReference
@@ -9,7 +9,7 @@ from .instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetail
 __all__ = [
     'utils',
     'visualisation',
-    'PipelineInspector', 'AnalysisResults',
+    'PipelineAnalyzer', 'AnalysisResults',
     'DagNode', 'OperatorType',
     'BasicCodeLocation', 'OperatorContext', 'DagNodeDetails', 'OptionalCodeInfo', 'FunctionInfo', 'CodeReference'
 ]
