@@ -9,7 +9,7 @@ import networkx
 
 class WhatIfAnalysis(metaclass=abc.ABCMeta):
     """
-    The Interface for the Inspections
+    The Interface for the What-If Analyses
     """
 
     @property
