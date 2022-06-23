@@ -12,6 +12,7 @@ class PipelineInspectorBuilder:
     """
     The fluent API builder to build an inspection run
     """
+    # pylint: disable=too-many-instance-attributes
 
     def __init__(self, notebook_path: str or None = None,
                  python_path: str or None = None,
@@ -24,8 +25,8 @@ class PipelineInspectorBuilder:
         self.python_code = python_code
         self.analyses = []
         self.checks = []
-        self.prefix_original_dag = None,
-        self.prefix_analysis_dags = None,
+        self.prefix_original_dag = None
+        self.prefix_analysis_dags = None
         self.prefix_optimised_analysis_dag = None
 
     def add_what_if_analysis(self, analysis: WhatIfAnalysis):
