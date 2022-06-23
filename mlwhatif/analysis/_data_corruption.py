@@ -9,7 +9,7 @@ import numpy
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import add_intermediate_extraction_after_node, find_nodes_by_type, \
-    find_first_op_modifying_a_column, add_new_node_after_node
+    find_first_op_modifying_a_column, add_new_node_after_node, mark_nodes_to_recompute_after_changed_node
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
@@ -68,7 +68,7 @@ class DataCorruption(WhatIfAnalysis):
                                               None,
                                               corrupt_df)
                 add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
-                # TODO: Regenerate all node_ids that are children of the corruption node
+                mark_nodes_to_recompute_after_changed_node(corruption_dag, new_corruption_node)
                 corruption_dags.append(corruption_dag)
         return corruption_dags  # TODO
 
