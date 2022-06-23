@@ -26,13 +26,18 @@ def add_intermediate_extraction_after_node(dag: networkx.DiGraph, dag_node: DagN
                                   DagNodeDetails(None, dag_node.details.columns),
                                   None,
                                   extract_intermediate)
-    dag.add_node(new_extraction_node)
+    add_new_node_after_node(dag, new_extraction_node, dag_node)
+
+
+def add_new_node_after_node(dag: networkx.DiGraph, new_node: DagNode, dag_node: DagNode):
+    """Add a new node behind some given node to extract the intermediate result of that given node"""
+    dag.add_node(new_node)
     children_before_modifications = list(dag.successors(dag_node))
     for child_node in children_before_modifications:
         edge_data = dag.get_edge_data(dag_node, child_node)
-        dag.add_edge(new_extraction_node, child_node, **edge_data)
+        dag.add_edge(new_node, child_node, **edge_data)
         dag.remove_edge(dag_node, child_node)
-    dag.add_edge(dag_node, new_extraction_node)
+    dag.add_edge(dag_node, new_node)
 
 
 def find_first_op_modifying_a_column(dag: networkx.DiGraph, column_name: str, test_or_train: bool):

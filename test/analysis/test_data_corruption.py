@@ -4,6 +4,9 @@ Tests whether the Data Corruption analysis works
 import os
 from inspect import cleandoc
 
+import jenga as jenga
+from jenga.corruptions.numerical import Scaling
+
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._data_corruption import DataCorruption
 from mlwhatif.utils import get_project_root
@@ -42,16 +45,20 @@ def test_data_corruption_score():
         assert test_score == 1.0
         """)
 
-    # TODO: Update pipeline to have test set preprocessing
-    data_corruption = DataCorruption({'A': lambda pandas_df: pandas_df.dropna()})  # TODO
+    def corruption(pandas_df):
+        pandas_df['B'] = 0
+        return pandas_df
+    data_corruption = DataCorruption({'A': lambda pandas_df: Scaling(column='B', fraction=1.).transform(pandas_df),
+                                      'B': corruption})
+
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .add_what_if_analysis(data_corruption) \
-        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)\
-        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)\
+        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
+        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
         .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    # TODO: Visualize input and output plans by calling what-if analysis manually or add a flag to PipelineAnalyzer
-    #  Then start with actually adding corruptions, maybe start by using Jenga
-    assert report == "TODO"
+
+    # TODO: Improve result verification etc
+    print(report)

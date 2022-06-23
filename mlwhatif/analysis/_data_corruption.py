@@ -5,11 +5,13 @@ from types import FunctionType
 from typing import Iterable, Dict
 
 import networkx
+import numpy
 
-from mlwhatif import OperatorType
+from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import add_intermediate_extraction_after_node, find_nodes_by_type, \
-    find_first_op_modifying_a_column
+    find_first_op_modifying_a_column, add_new_node_after_node
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.instrumentation._pipeline_executor import singleton
 
 
 class DataCorruption(WhatIfAnalysis):
@@ -33,21 +35,46 @@ class DataCorruption(WhatIfAnalysis):
 
     def generate_plans_to_try(self, dag: networkx.DiGraph)\
             -> Iterable[networkx.DiGraph]:
-        # pylint: disable=unused-variable
-        new_dag = dag.copy()
         operator_type = OperatorType.SCORE
-        score_operators = find_nodes_by_type(new_dag, operator_type)
+        score_operators = find_nodes_by_type(dag, operator_type)
+        final_result_value = score_operators[0]
         # TODO: Deduplication for transformers that process multiple columns at once, if necessary for corruption
         if len(score_operators) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one score call!")
-        final_result_value = score_operators[0]
-        add_intermediate_extraction_after_node(new_dag, final_result_value, "data-corruption-test")
+
         corruption_dags = []
-        for (column, corruption_function) in self.column_to_corruption:
-            corruption_dag = new_dag.copy()
-            first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, True)
-            corruption_dags.append(corruption_dag)
+        for corruption_percentage in self.corruption_percentages:
+            for (column, corruption_function) in self.column_to_corruption:
+                corruption_dag = dag.copy()
+                add_intermediate_extraction_after_node(corruption_dag, final_result_value,
+                                                       f"data-corruption-test-{column}-{corruption_percentage}")
+                first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, True)
+                operator_to_apply_corruption_after = list(dag.predecessors(first_op_requiring_corruption))[-1]
+
+                def corrupt_df(pandas_df):
+                    completely_corrupted_df = corruption_function(pandas_df)
+                    indexes_to_corrupt = numpy.random.permutation(pandas_df.index)[
+                                         :int(len(pandas_df) * corruption_percentage)]
+                    pandas_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[indexes_to_corrupt, column]
+                    return pandas_df
+
+                new_corruption_node = DagNode(singleton.get_next_op_id(),
+                                              first_op_requiring_corruption.code_location,
+                                              OperatorContext(OperatorType.PROJECTION_MODIFY, None),
+                                              DagNodeDetails(f"Corrupt {corruption_percentage*100}% of '{column}'",
+                                                             operator_to_apply_corruption_after.details.columns),
+                                              None,
+                                              corrupt_df)
+                add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
+                # TODO: Regenerate all node_ids that are children of the corruption node
+                corruption_dags.append(corruption_dag)
         return corruption_dags  # TODO
 
     def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:
-        return "TODO"  # TODO
+        # TODO: Make this pretty
+        results = dict()
+        for (column, _) in self.column_to_corruption:
+            for corruption_percentage in self.corruption_percentages:
+                label = f"data-corruption-test-{column}-{corruption_percentage}"
+                results[label] = singleton.labels_to_extracted_plan_results[label]
+        return results
