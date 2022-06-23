@@ -53,6 +53,7 @@ class DataCorruption(WhatIfAnalysis):
                 operator_to_apply_corruption_after = list(dag.predecessors(first_op_requiring_corruption))[-1]
 
                 def corrupt_df(pandas_df):
+                    # TODO: If we model this as 3 operations instead of one, optimization should be easy
                     completely_corrupted_df = corruption_function(pandas_df)
                     indexes_to_corrupt = numpy.random.permutation(pandas_df.index)[
                                          :int(len(pandas_df) * corruption_percentage)]
