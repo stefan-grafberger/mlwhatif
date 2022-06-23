@@ -37,6 +37,7 @@ class PandasPatching:
 
             operator_context = OperatorContext(OperatorType.DATA_SOURCE, function_info)
             result = original(*args, **kwargs)
+            # TODO: We should also capture the execution time, the output shape, and the memory size of each operator
             processing_func = partial(original, *args, **kwargs)
 
             description = "{}".format(args[0].split(os.path.sep)[-1])

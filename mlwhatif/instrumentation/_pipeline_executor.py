@@ -16,6 +16,7 @@ from .. import monkeypatching
 from .._inspector_result import AnalysisResults
 from ..analysis._what_if_analysis import WhatIfAnalysis
 from ..execution._dag_executor import DagExecutor
+from ..execution._multi_query_optimizer import MultiQueryOptimizer
 from ..visualisation import save_fig_to_path
 
 
@@ -90,16 +91,13 @@ class PipelineExecutor:
         if self.prefix_original_dag is not None:
             save_fig_to_path(self.analysis_results.dag, f"{self.prefix_original_dag}.png")
         for analysis in self.analyses:
-            dags_to_execute = analysis.generate_plans_to_try(self.analysis_results.dag)
-            # TODO: Multi-Query Optimization, visualise optimised DAG if specified
-            for dag_index, what_if_dag in enumerate(dags_to_execute):
+            what_if_dags = analysis.generate_plans_to_try(self.analysis_results.dag)
+            for dag_index, what_if_dag in enumerate(what_if_dags):
                 if self.prefix_analysis_dags is not None:
                     save_fig_to_path(what_if_dag,
                                      f"{self.prefix_analysis_dags}-{type(analysis).__name__}-{dag_index}.png")
-
-            # TODO: Move this into a new MultiQueryOptimizer class
-            big_execution_dag = networkx.compose_all(dags_to_execute)
-            print(len(list(big_execution_dag.nodes)))
+            # TODO: Potentially, we might want to also combine multiple analyses to one joint execution plan
+            big_execution_dag = MultiQueryOptimizer().create_optimized_plan(what_if_dags)
             if self.prefix_optimised_analysis_dag is not None:
                 save_fig_to_path(big_execution_dag, f"{self.prefix_optimised_analysis_dag}.png")
             DagExecutor().execute(big_execution_dag)
