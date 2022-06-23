@@ -24,6 +24,9 @@ class PipelineInspectorBuilder:
         self.python_code = python_code
         self.analyses = []
         self.checks = []
+        self.prefix_original_dag = None,
+        self.prefix_analysis_dags = None,
+        self.prefix_optimised_analysis_dag = None
 
     def add_what_if_analysis(self, analysis: WhatIfAnalysis):
         """
@@ -37,6 +40,27 @@ class PipelineInspectorBuilder:
         Add a list of analyses
         """
         self.analyses.extend(analyses)
+        return self
+
+    def save_original_dag_to_path(self, path: str):
+        """
+        Save the extracted original DAG to a file
+        """
+        self.prefix_original_dag = path
+        return self
+
+    def save_what_if_dags_to_path(self, prefix_analysis_dags: str):
+        """
+        Save the generated What-If DAGs to a file
+        """
+        self.prefix_analysis_dags = prefix_analysis_dags
+        return self
+
+    def save_optimised_what_if_dags_to_path(self, prefix_optimised_analysis_dag: str):
+        """
+        Save the extracted original DAG to a file
+        """
+        self.prefix_optimised_analysis_dag = prefix_optimised_analysis_dag
         return self
 
     def set_code_reference_tracking(self, track_code_references: bool):
@@ -68,7 +92,10 @@ class PipelineInspectorBuilder:
                              python_path=self.python_path,
                              python_code=self.python_code,
                              analyses=self.analyses,
-                             custom_monkey_patching=self.monkey_patching_modules)
+                             custom_monkey_patching=self.monkey_patching_modules,
+                             prefix_original_dag=self.prefix_original_dag,
+                             prefix_analysis_dags=self.prefix_analysis_dags,
+                             prefix_optimised_analysis_dag=self.prefix_optimised_analysis_dag)
 
 
 class PipelineAnalyzer:

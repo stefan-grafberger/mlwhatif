@@ -16,6 +16,7 @@ from .. import monkeypatching
 from .._inspector_result import AnalysisResults
 from ..analysis._what_if_analysis import WhatIfAnalysis
 from ..execution._dag_executor import DagExecutor
+from ..visualisation import save_fig_to_path
 
 
 class PipelineExecutor:
@@ -86,11 +87,16 @@ class PipelineExecutor:
         """
         Execute the specified what-if analyses
         """
+        if self.prefix_original_dag is not None:
+            save_fig_to_path(self.analysis_results.dag, f"{self.prefix_original_dag}.png")
         for analysis in self.analyses:
             dags_to_execute = analysis.generate_plans_to_try(self.analysis_results.dag)
-            # TODO: Multi-Query Optimization
-            for dag in dags_to_execute:
-                DagExecutor().execute(dag)
+            # TODO: Multi-Query Optimization, visualise optimised DAG if specified
+            for dag_index, what_if_dag in enumerate(dags_to_execute):
+                if self.prefix_analysis_dags is not None:
+                    save_fig_to_path(what_if_dag,
+                                     f"{self.prefix_analysis_dags}-{type(analysis).__name__}-{dag_index}.png")
+                DagExecutor().execute(what_if_dag)
             report = analysis.generate_final_report(self.labels_to_extracted_plan_results)
             self.analysis_results.analysis_to_result_reports[analysis] = report
 

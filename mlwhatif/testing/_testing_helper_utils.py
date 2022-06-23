@@ -11,7 +11,7 @@ from pandas import DataFrame
 from testfixtures import Comparison
 
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
-from mlwhatif._pipeline_inspector import PipelineAnalyzer
+from mlwhatif._pipeline_analyzer import PipelineAnalyzer
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo
 from mlwhatif.visualisation._visualisation import save_fig_to_path

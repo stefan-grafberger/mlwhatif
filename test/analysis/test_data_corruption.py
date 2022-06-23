@@ -1,10 +1,19 @@
 """
 Tests whether the Data Corruption analysis works
 """
+import os
 from inspect import cleandoc
 
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._data_corruption import DataCorruption
+from mlwhatif.utils import get_project_root
+
+INTERMEDIATE_EXTRACTION_ORIG_PATH = os.path.join(str(get_project_root()), "test", "analysis",
+                                                 "data_corruption-orig")
+INTERMEDIATE_EXTRACTION_GENERATED_PATH = os.path.join(str(get_project_root()), "test", "analysis",
+                                                      "data_corruption-what-if")
+INTERMEDIATE_EXTRACTION_OPTIMISED_PATH = os.path.join(str(get_project_root()), "test", "analysis",
+                                                      "data_corruption-what-if-optimised")
 
 
 def test_data_corruption_score():
@@ -35,6 +44,9 @@ def test_data_corruption_score():
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .add_what_if_analysis(data_corruption) \
+        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)\
+        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)\
+        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
     report = analysis_result.analysis_to_result_reports[data_corruption]
     # TODO: Visualize input and output plans by calling what-if analysis manually or add a flag to PipelineAnalyzer
