@@ -45,15 +45,15 @@ def find_first_op_modifying_a_column(dag: networkx.DiGraph, column_name: str, te
     if len(project_modify_matches) != 0:
         sorted_matches = sorted(project_modify_matches, key=lambda dag_node: dag_node.node_id)
         return sorted_matches[0]  # Test this, is it 0 or -1?
+    if test_or_train is True:
+        transformer_matches = [node for node in dag.nodes
+                               if node.operator_info.operator == OperatorType.TRANSFORMER
+                               and ": transform" in node.details.description
+                               and column_name in list(dag.predecessors(node))[1].details.columns]
     else:
         transformer_matches = [node for node in dag.nodes
                                if node.operator_info.operator == OperatorType.TRANSFORMER
+                               and ": fit_transform" in node.details.description
                                and column_name in list(dag.predecessors(node))[0].details.columns]
-        if test_or_train is True:
-            transformer_matches = [node for node in transformer_matches
-                                   if ": transform" in node.details.description]
-        else:
-            transformer_matches = [node for node in transformer_matches
-                                   if ": fit_transform" in node.details.description]
-        assert len(transformer_matches) == 1
-        return transformer_matches[0]
+    assert len(transformer_matches) == 1
+    return transformer_matches[0]

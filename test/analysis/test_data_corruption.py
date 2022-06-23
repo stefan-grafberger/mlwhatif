@@ -28,15 +28,17 @@ def test_data_corruption_score():
 
         df = pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
 
-        train = StandardScaler().fit_transform(df[['A', 'B']])
+        standard_scaler = StandardScaler()
+        train = standard_scaler.fit_transform(df[['A', 'B']])
         target = label_binarize(df['target'], classes=['no', 'yes'])
 
         clf = DecisionTreeClassifier()
         clf = clf.fit(train, target)
 
-        test_df = pd.DataFrame({'A': [0., 0.6], 'B':  [0., 0.6], 'target': ['no', 'yes']})
+        test_df = pd.DataFrame({'A': [0, 2], 'B':  [0, 2], 'target': ['no', 'yes']})
+        test_data = standard_scaler.transform(test_df[['A', 'B']])
         test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
-        test_score = clf.score(test_df[['A', 'B']], test_labels)
+        test_score = clf.score(test_data, test_labels)
         assert test_score == 1.0
         """)
 

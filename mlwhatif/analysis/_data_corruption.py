@@ -33,6 +33,7 @@ class DataCorruption(WhatIfAnalysis):
 
     def generate_plans_to_try(self, dag: networkx.DiGraph)\
             -> Iterable[networkx.DiGraph]:
+        # pylint: disable=unused-variable
         new_dag = dag.copy()
         operator_type = OperatorType.SCORE
         score_operators = find_nodes_by_type(new_dag, operator_type)
@@ -42,10 +43,10 @@ class DataCorruption(WhatIfAnalysis):
         final_result_value = score_operators[0]
         add_intermediate_extraction_after_node(new_dag, final_result_value, "data-corruption-test")
         corruption_dags = []
-        for (column, corruption) in self.column_to_corruption:
+        for (column, corruption_function) in self.column_to_corruption:
             corruption_dag = new_dag.copy()
             first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, True)
-            corruption_dags.append(corruption)
+            corruption_dags.append(corruption_dag)
         return corruption_dags  # TODO
 
     def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:
