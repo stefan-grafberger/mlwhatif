@@ -18,11 +18,13 @@ class DataCorruption(WhatIfAnalysis):
 
     def __init__(self,
                  column_to_corruption: Dict[str, Callable[[pandas.DataFrame], pandas.DataFrame]],
-                 corruption_percentages: Iterable[float] or None = None):
+                 corruption_percentages: Iterable[float] or None = None,
+                 also_corrupt_train: bool = False):
         self.column_to_corruption = list(column_to_corruption.values())
+        self.also_corrupt_train = also_corrupt_train
         if corruption_percentages is None:
             self.corruption_percentages = [0.2, 0.5, 0.9]
-        self._analysis_id = (*self.column_to_corruption, *self.corruption_percentages)
+        self._analysis_id = (*self.column_to_corruption, *self.corruption_percentages, self.also_corrupt_train)
 
     @property
     def analysis_id(self):

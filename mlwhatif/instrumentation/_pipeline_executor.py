@@ -40,6 +40,9 @@ class PipelineExecutor:
     # TODO: Do we want to add the analysis to the key next to label to isolate analyses and avoid name clashes?
     labels_to_extracted_plan_results = dict()
     analysis_results = AnalysisResult(networkx.DiGraph(), dict())
+    prefix_original_dag = None
+    prefix_analysis_dags = None
+    prefix_optimised_analysis_dag = None
 
     def run(self, *,
             notebook_path: str or None = None,
@@ -48,7 +51,10 @@ class PipelineExecutor:
             analyses: List[WhatIfAnalysis] or None = None,
             reset_state: bool = True,
             track_code_references: bool = True,
-            custom_monkey_patching: List[any] = None
+            custom_monkey_patching: List[any] = None,
+            prefix_original_dag: str or None = None,
+            prefix_analysis_dags: str or None = None,
+            prefix_optimised_analysis_dag: str or None = None
             ) -> AnalysisResults:
         """
         Instrument and execute the pipeline and evaluate all checks
@@ -67,6 +73,9 @@ class PipelineExecutor:
         self.track_code_references = track_code_references
         self.custom_monkey_patching = custom_monkey_patching
         self.analyses = analyses
+        self.prefix_original_dag = prefix_original_dag
+        self.prefix_analysis_dags = prefix_analysis_dags
+        self.prefix_optimised_analysis_dag = prefix_optimised_analysis_dag
 
         self.run_instrumented_pipeline(notebook_path, python_code, python_path)
         self.run_what_if_analyses()
@@ -130,6 +139,9 @@ class PipelineExecutor:
         self.analyses = []
         self.labels_to_extracted_plan_results = dict()
         self.custom_monkey_patching = []
+        self.prefix_original_dag = None
+        self.prefix_analysis_dags = None
+        self.prefix_optimised_analysis_dag = None
 
     @staticmethod
     def instrument_pipeline(parsed_ast, track_code_references):
