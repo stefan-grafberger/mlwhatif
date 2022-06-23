@@ -69,6 +69,8 @@ class DataCorruption(WhatIfAnalysis):
         def corrupt_df(pandas_df, corruption_percentage, corruption_function, column):
             # TODO: If we model this as 3 operations instead of one, optimization should be easy
             # TODO: Think about when we actually want to be defensive and call copy and when not
+            # TODO: Think about datatypes. corruption_function currently assumes pandas DataFrames.
+            #  We may want to automatically convert data formats as needed, here and in other places.
             completely_corrupted_df = pandas_df.copy()
             completely_corrupted_df = corruption_function(completely_corrupted_df)
             corrupt_count = int(len(pandas_df) * corruption_percentage)
