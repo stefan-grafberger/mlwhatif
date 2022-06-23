@@ -96,7 +96,14 @@ class PipelineExecutor:
                 if self.prefix_analysis_dags is not None:
                     save_fig_to_path(what_if_dag,
                                      f"{self.prefix_analysis_dags}-{type(analysis).__name__}-{dag_index}.png")
-                DagExecutor().execute(what_if_dag)
+
+            # TODO: Move this into a new MultiQueryOptimizer class
+            big_execution_dag = networkx.compose_all(dags_to_execute)
+            print(len(list(big_execution_dag.nodes)))
+            if self.prefix_optimised_analysis_dag is not None:
+                save_fig_to_path(big_execution_dag, f"{self.prefix_optimised_analysis_dag}.png")
+            DagExecutor().execute(big_execution_dag)
+
             report = analysis.generate_final_report(self.labels_to_extracted_plan_results)
             self.analysis_results.analysis_to_result_reports[analysis] = report
 

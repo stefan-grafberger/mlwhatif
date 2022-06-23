@@ -1,11 +1,13 @@
 """
 The Interface for the What-If Analyses
 """
+import functools
 from types import FunctionType
 from typing import Iterable, Dict
 
 import networkx
 import numpy
+import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import add_intermediate_extraction_after_node, find_nodes_by_type, \
@@ -52,13 +54,22 @@ class DataCorruption(WhatIfAnalysis):
                 first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, True)
                 operator_to_apply_corruption_after = list(dag.predecessors(first_op_requiring_corruption))[-1]
 
-                def corrupt_df(pandas_df):
+                def corrupt_df(pandas_df, corruption_percentage, corruption_function, column):
                     # TODO: If we model this as 3 operations instead of one, optimization should be easy
-                    completely_corrupted_df = corruption_function(pandas_df)
-                    indexes_to_corrupt = numpy.random.permutation(pandas_df.index)[
-                                         :int(len(pandas_df) * corruption_percentage)]
-                    pandas_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[indexes_to_corrupt, column]
-                    return pandas_df
+                    completely_corrupted_df = pandas_df.copy()
+                    completely_corrupted_df = corruption_function(completely_corrupted_df)
+                    corrupt_count = int(len(pandas_df) * corruption_percentage)
+                    indexes_to_corrupt = numpy.random.permutation(pandas_df.index)[:corrupt_count]
+                    return_df = pandas_df.copy()
+                    return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[indexes_to_corrupt, column]
+                    return return_df
+
+                # We need to use partial here to avoid problems with late bindings, see
+                #  https://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
+                corrupt_df_with_proper_bindings = functools.partial(corrupt_df,
+                                                                    corruption_percentage=corruption_percentage,
+                                                                    corruption_function=corruption_function,
+                                                                    column=column)
 
                 new_corruption_node = DagNode(singleton.get_next_op_id(),
                                               first_op_requiring_corruption.code_location,
@@ -66,7 +77,7 @@ class DataCorruption(WhatIfAnalysis):
                                               DagNodeDetails(f"Corrupt {corruption_percentage*100}% of '{column}'",
                                                              operator_to_apply_corruption_after.details.columns),
                                               None,
-                                              corrupt_df)
+                                              corrupt_df_with_proper_bindings)
                 add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
                 mark_nodes_to_recompute_after_changed_node(corruption_dag, new_corruption_node)
                 corruption_dags.append(corruption_dag)

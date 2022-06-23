@@ -28,7 +28,7 @@ def test_data_corruption_score():
         from sklearn.tree import DecisionTreeClassifier
         import numpy as np
 
-        df = pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+        df = pd.DataFrame({'A': [0, 0, 0, 0], 'B': [0, 1, 3, 4], 'target': ['no', 'no', 'yes', 'yes']})
 
         standard_scaler = StandardScaler()
         train = standard_scaler.fit_transform(df[['A', 'B']])
@@ -37,7 +37,7 @@ def test_data_corruption_score():
         clf = DecisionTreeClassifier()
         clf = clf.fit(train, target)
 
-        test_df = pd.DataFrame({'A': [0, 2], 'B':  [0, 2], 'target': ['no', 'yes']})
+        test_df = pd.DataFrame({'A': [0, 0, 0, 0], 'B':  [4, 3, 4, 3], 'target': ['yes', 'yes', 'yes', 'yes']})
         test_data = standard_scaler.transform(test_df[['A', 'B']])
         test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
         test_score = clf.score(test_data, test_labels)
@@ -47,7 +47,7 @@ def test_data_corruption_score():
     def corruption(pandas_df):
         pandas_df['B'] = 0
         return pandas_df
-    data_corruption = DataCorruption({'A': lambda pandas_df: Scaling(column='B', fraction=1.).transform(pandas_df),
+    data_corruption = DataCorruption({'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df),
                                       'B': corruption})
 
     analysis_result = PipelineAnalyzer \
