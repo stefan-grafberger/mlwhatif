@@ -35,6 +35,7 @@ class DataCorruption(WhatIfAnalysis):
 
     def generate_plans_to_try(self, dag: networkx.DiGraph)\
             -> Iterable[networkx.DiGraph]:
+        # pylint: disable=cell-var-from-loop
         operator_type = OperatorType.SCORE
         score_operators = find_nodes_by_type(dag, operator_type)
         final_result_value = score_operators[0]

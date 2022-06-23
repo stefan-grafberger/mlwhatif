@@ -4,7 +4,6 @@ Tests whether the Data Corruption analysis works
 import os
 from inspect import cleandoc
 
-import jenga as jenga
 from jenga.corruptions.numerical import Scaling
 
 from mlwhatif import PipelineAnalyzer
