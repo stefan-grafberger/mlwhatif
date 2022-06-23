@@ -7,7 +7,6 @@ from typing import Iterable, Dict
 
 import networkx
 import numpy
-import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import add_intermediate_extraction_after_node, find_nodes_by_type, \
