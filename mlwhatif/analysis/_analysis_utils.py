@@ -48,12 +48,12 @@ def find_first_op_modifying_a_column(dag: networkx.DiGraph, column_name: str, te
     else:
         transformer_matches = [node for node in dag.nodes
                                if node.operator_info.operator == OperatorType.TRANSFORMER
-                               and column_name in list(dag.successors(node))[0].details.columns]
+                               and column_name in list(dag.predecessors(node))[0].details.columns]
         if test_or_train is True:
             transformer_matches = [node for node in transformer_matches
-                                   if node.details.description.contains(": transform")]
+                                   if ": transform" in node.details.description]
         else:
             transformer_matches = [node for node in transformer_matches
-                                   if node.details.description.contains(": fit_transform")]
+                                   if ": fit_transform" in node.details.description]
         assert len(transformer_matches) == 1
         return transformer_matches[0]

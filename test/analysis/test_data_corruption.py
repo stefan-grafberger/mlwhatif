@@ -40,6 +40,7 @@ def test_data_corruption_score():
         assert test_score == 1.0
         """)
 
+    # TODO: Update pipeline to have test set preprocessing
     data_corruption = DataCorruption({'A': lambda pandas_df: pandas_df.dropna()})  # TODO
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
