@@ -61,3 +61,5 @@ def test_data_corruption_score():
 
     # TODO: Improve result verification etc
     print(report)
+
+# TODO: Test this with more pipelines
