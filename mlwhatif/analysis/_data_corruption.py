@@ -50,37 +50,46 @@ class DataCorruption(WhatIfAnalysis):
                 corruption_dag = dag.copy()
                 add_intermediate_extraction_after_node(corruption_dag, final_result_value,
                                                        f"data-corruption-test-{column}-{corruption_percentage}")
+                # TODO: Also add corruption to train side if specified
                 first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, True)
                 operator_to_apply_corruption_after = list(dag.predecessors(first_op_requiring_corruption))[-1]
 
-                def corrupt_df(pandas_df, corruption_percentage, corruption_function, column):
-                    # TODO: If we model this as 3 operations instead of one, optimization should be easy
-                    completely_corrupted_df = pandas_df.copy()
-                    completely_corrupted_df = corruption_function(completely_corrupted_df)
-                    corrupt_count = int(len(pandas_df) * corruption_percentage)
-                    indexes_to_corrupt = numpy.random.permutation(pandas_df.index)[:corrupt_count]
-                    return_df = pandas_df.copy()
-                    return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[indexes_to_corrupt, column]
-                    return return_df
-
-                # We need to use partial here to avoid problems with late bindings, see
-                #  https://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
-                corrupt_df_with_proper_bindings = functools.partial(corrupt_df,
-                                                                    corruption_percentage=corruption_percentage,
-                                                                    corruption_function=corruption_function,
-                                                                    column=column)
-
-                new_corruption_node = DagNode(singleton.get_next_op_id(),
-                                              first_op_requiring_corruption.code_location,
-                                              OperatorContext(OperatorType.PROJECTION_MODIFY, None),
-                                              DagNodeDetails(f"Corrupt {corruption_percentage*100}% of '{column}'",
-                                                             operator_to_apply_corruption_after.details.columns),
-                                              None,
-                                              corrupt_df_with_proper_bindings)
+                new_corruption_node = self.create_corruption_node(column, corruption_function, corruption_percentage,
+                                                                  first_op_requiring_corruption,
+                                                                  operator_to_apply_corruption_after)
                 add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
                 mark_nodes_to_recompute_after_changed_node(corruption_dag, new_corruption_node)
                 corruption_dags.append(corruption_dag)
-        return corruption_dags  # TODO
+        return corruption_dags
+
+    @staticmethod
+    def create_corruption_node(column, corruption_function, corruption_percentage, first_op_requiring_corruption,
+                               operator_to_apply_corruption_after):
+        """Create the node that applies the specified corruption"""
+        def corrupt_df(pandas_df, corruption_percentage, corruption_function, column):
+            # TODO: If we model this as 3 operations instead of one, optimization should be easy
+            completely_corrupted_df = pandas_df.copy()
+            completely_corrupted_df = corruption_function(completely_corrupted_df)
+            corrupt_count = int(len(pandas_df) * corruption_percentage)
+            indexes_to_corrupt = numpy.random.permutation(pandas_df.index)[:corrupt_count]
+            return_df = pandas_df.copy()
+            return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[indexes_to_corrupt, column]
+            return return_df
+
+        # We need to use partial here to avoid problems with late bindings, see
+        #  https://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
+        corrupt_df_with_proper_bindings = functools.partial(corrupt_df,
+                                                            corruption_percentage=corruption_percentage,
+                                                            corruption_function=corruption_function,
+                                                            column=column)
+        new_corruption_node = DagNode(singleton.get_next_op_id(),
+                                      first_op_requiring_corruption.code_location,
+                                      OperatorContext(OperatorType.PROJECTION_MODIFY, None),
+                                      DagNodeDetails(f"Corrupt {corruption_percentage * 100}% of '{column}'",
+                                                     operator_to_apply_corruption_after.details.columns),
+                                      None,
+                                      corrupt_df_with_proper_bindings)
+        return new_corruption_node
 
     def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:
         # TODO: Make this pretty
