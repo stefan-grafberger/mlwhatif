@@ -60,8 +60,10 @@ def find_first_op_modifying_a_column(dag: networkx.DiGraph, column_name: str, te
                                if node.operator_info.operator == OperatorType.TRANSFORMER
                                and ": fit_transform" in node.details.description
                                and column_name in list(dag.predecessors(node))[0].details.columns]
-    assert len(transformer_matches) == 1
-    return transformer_matches[0]
+    assert len(transformer_matches) >= 1
+    # Can be two for example in the COMPAS pipeline when there is a SimpleImputer first
+    sorted_transformer_matches = sorted(transformer_matches, key=lambda dag_node: dag_node.node_id)
+    return sorted_transformer_matches[0]
 
 
 def mark_nodes_to_recompute_after_changed_node(dag: networkx.DiGraph, changed_dag_node: DagNode):
