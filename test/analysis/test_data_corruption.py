@@ -6,6 +6,8 @@ from inspect import cleandoc
 
 from jenga.corruptions.numerical import Scaling
 
+from example_pipelines import HEALTHCARE_PY
+from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._data_corruption import DataCorruption
 from mlwhatif.utils import get_project_root
@@ -47,6 +49,7 @@ def test_data_corruption_score():
     def corruption(pandas_df):
         pandas_df['B'] = 0
         return pandas_df
+
     data_corruption = DataCorruption({'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df),
                                       'B': corruption})
 
@@ -57,6 +60,34 @@ def test_data_corruption_score():
         .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
         .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
+    report = analysis_result.analysis_to_result_reports[data_corruption]
+
+    # TODO: Improve result verification etc
+    print(report)
+
+
+def test_data_corruption_healthcare():
+    """
+    Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
+    """
+
+    def corruption(pandas_df):
+        pandas_df['num_children'] = 0
+        return pandas_df
+
+    data_corruption = DataCorruption({'income':
+                                      lambda pandas_df: Scaling(column='income', fraction=1.).transform(pandas_df),
+                                      'num_children': corruption})
+
+    analysis_result = PipelineAnalyzer \
+        .on_pipeline_from_py_file(HEALTHCARE_PY) \
+        .add_custom_monkey_patching_module(custom_monkeypatching) \
+        .add_what_if_analysis(data_corruption) \
+        .execute()
+        # .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
+        # .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
+        # .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
+
     report = analysis_result.analysis_to_result_reports[data_corruption]
 
     # TODO: Improve result verification etc

@@ -101,6 +101,8 @@ class PipelineExecutor:
             if self.prefix_optimised_analysis_dag is not None:
                 save_fig_to_path(big_execution_dag, f"{self.prefix_optimised_analysis_dag}.png")
             DagExecutor().execute(big_execution_dag)
+            # for what_if_dag in what_if_dags:
+            #     DagExecutor().execute(what_if_dag)
 
             report = analysis.generate_final_report(self.labels_to_extracted_plan_results)
             self.analysis_results.analysis_to_result_reports[analysis] = report
