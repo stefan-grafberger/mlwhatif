@@ -3,7 +3,10 @@ Instrument and executes the pipeline
 """
 import ast
 import logging
+import sys
 import time
+from contextlib import redirect_stdout
+from io import StringIO
 from typing import List
 
 import gorilla
@@ -89,7 +92,15 @@ class PipelineExecutor:
 
         logger.info(f'Running instrumented original pipeline...')
         orig_instrumented_exec_start = time.time()
-        self.run_instrumented_pipeline(notebook_path, python_code, python_path)
+        sys.stdout.flush()
+        output_file = StringIO()
+        with redirect_stdout(output_file):
+            self.run_instrumented_pipeline(notebook_path, python_code, python_path)
+            print("Test")
+        captured_output = output_file.getvalue()
+        print(captured_output)
+        # TODO: Do we ever need the captured output from the original pipeline version?
+        #  Maybe this gets relevant once we add the DAG as input to mlwhat in case there are multiple executions
         orig_instrumented_exec_duration = time.time() - orig_instrumented_exec_start
         logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms '
                     f'(including monkey-patching)')
