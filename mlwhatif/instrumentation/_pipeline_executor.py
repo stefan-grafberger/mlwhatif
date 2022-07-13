@@ -91,9 +91,10 @@ class PipelineExecutor:
         orig_instrumented_exec_start = time.time()
         self.run_instrumented_pipeline(notebook_path, python_code, python_path)
         orig_instrumented_exec_duration = time.time() - orig_instrumented_exec_start
-        logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms')
+        logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms '
+                    f'(including monkey-patching)')
 
-        logger.info(f'Start {len(self.analyses)} what-if analyses...')
+        logger.info(f'Starting execution of {len(self.analyses)} what-if analyses...')
         self.run_what_if_analyses()
 
         logger.info(f'Done!')
@@ -106,7 +107,7 @@ class PipelineExecutor:
         if self.prefix_original_dag is not None:
             save_fig_to_path(self.analysis_results.dag, f"{self.prefix_original_dag}.png")
         for analysis in self.analyses:
-            logger.info(f'Start plan generation for analysis {analysis}...')
+            logger.info(f'Start plan generation for analysis {type(analysis).__name__}...')
             plan_generation_start = time.time()
             what_if_dags = analysis.generate_plans_to_try(self.analysis_results.dag)
             plan_generation_duration = time.time() - plan_generation_start

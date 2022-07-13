@@ -64,9 +64,7 @@ def test_data_corruption_score():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-
-    # TODO: Improve result verification etc
-    print(report)
+    assert report.shape == (6, 4)
 
 
 def test_data_corruption_healthcare():
@@ -80,6 +78,7 @@ def test_data_corruption_healthcare():
     data_corruption = DataCorruption({'income':
                                       lambda pandas_df: Scaling(column='income', fraction=1.).transform(pandas_df),
                                       'num_children': corruption},
+                                     corruption_percentages=[0.3, 0.6],
                                      also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
@@ -92,9 +91,7 @@ def test_data_corruption_healthcare():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-
-    # TODO: Improve result verification etc
-    print(report)
+    assert report.shape == (4, 4)
 
 
 def test_data_corruption_compas():
@@ -109,7 +106,7 @@ def test_data_corruption_compas():
     data_corruption = DataCorruption({'age':
                                       lambda pandas_df: Scaling(column='age', fraction=1.).transform(pandas_df),
                                       'is_recid': corruption},
-                                     also_corrupt_train=True)
+                                     also_corrupt_train=False)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(COMPAS_PY) \
@@ -120,9 +117,7 @@ def test_data_corruption_compas():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-
-    # TODO: Improve result verification etc
-    print(report)
+    assert report.shape == (6, 3)
 
 
 def test_data_corruption_adult_complex():
@@ -139,6 +134,7 @@ def test_data_corruption_adult_complex():
                                       'workclass':
                                       lambda pandas_df: CategoricalShift('workclass', 1.).transform(pandas_df),
                                       'hours-per-week': corruption},
+                                     corruption_percentages=[0.25, 0.5, 0.75, 1.0],
                                      also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
@@ -150,6 +146,4 @@ def test_data_corruption_adult_complex():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-
-    # TODO: Improve result verification etc
-    print(report)
+    assert report.shape == (12, 4)

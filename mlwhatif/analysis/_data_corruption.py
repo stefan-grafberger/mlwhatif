@@ -7,6 +7,7 @@ from typing import Iterable, Dict
 
 import networkx
 import numpy
+import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import add_intermediate_extraction_after_node, find_nodes_by_type, \
@@ -28,6 +29,8 @@ class DataCorruption(WhatIfAnalysis):
         self.also_corrupt_train = also_corrupt_train
         if corruption_percentages is None:
             self.corruption_percentages = [0.2, 0.5, 0.9]
+        else:
+            self.corruption_percentages = corruption_percentages
         self._analysis_id = (*self.column_to_corruption, *self.corruption_percentages, self.also_corrupt_train)
 
     @property
@@ -124,14 +127,28 @@ class DataCorruption(WhatIfAnalysis):
         return new_corruption_node
 
     def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:
-        # TODO: Make this pretty
-        results = dict()
+        result_df_columns = []
+        result_df_percentages = []
+        result_df_metrics_corrupt_test_only = []
+        result_df_metrics_corrupt_train_and_test = []
         for (column, _) in self.column_to_corruption:
             for corruption_percentage in self.corruption_percentages:
                 test_label = f"data-corruption-test-{column}-{corruption_percentage}"
-                results[test_label] = singleton.labels_to_extracted_plan_results[test_label]
+                result_df_columns.append(column)
+                result_df_percentages.append(corruption_percentage)
+                result_df_metrics_corrupt_test_only.append(singleton.labels_to_extracted_plan_results[test_label])
 
                 train_label = f"data-corruption-train-{column}-{corruption_percentage}"
                 if train_label in singleton.labels_to_extracted_plan_results:
-                    results[train_label] = singleton.labels_to_extracted_plan_results[train_label]
-        return results
+                    train_and_test_metric = singleton.labels_to_extracted_plan_results[train_label]
+                    result_df_metrics_corrupt_train_and_test.append(train_and_test_metric)
+        if self.also_corrupt_train is True:
+            result_df = pandas.DataFrame({'column': result_df_columns,
+                                          'corruption_percentage': result_df_percentages,
+                                          'metric_corrupt_test_only': result_df_metrics_corrupt_test_only,
+                                          'metric_corrupt_train_and_test:': result_df_metrics_corrupt_train_and_test})
+        else:
+            result_df = pandas.DataFrame({'column': result_df_columns,
+                                          'corruption_percentage': result_df_percentages,
+                                          'metric_corrupt_test_only': result_df_metrics_corrupt_test_only})
+        return result_df
