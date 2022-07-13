@@ -52,7 +52,8 @@ def test_data_corruption_score():
         return pandas_df
 
     data_corruption = DataCorruption({'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df),
-                                      'B': corruption})
+                                      'B': corruption},
+                                     also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -61,6 +62,7 @@ def test_data_corruption_score():
         .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
         .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
+
     report = analysis_result.analysis_to_result_reports[data_corruption]
 
     # TODO: Improve result verification etc
@@ -71,14 +73,14 @@ def test_data_corruption_healthcare():
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
-
     def corruption(pandas_df):
         pandas_df['num_children'] = 0
         return pandas_df
 
     data_corruption = DataCorruption({'income':
                                       lambda pandas_df: Scaling(column='income', fraction=1.).transform(pandas_df),
-                                      'num_children': corruption})
+                                      'num_children': corruption},
+                                     also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(HEALTHCARE_PY) \
@@ -106,7 +108,8 @@ def test_data_corruption_compas():
 
     data_corruption = DataCorruption({'age':
                                       lambda pandas_df: Scaling(column='age', fraction=1.).transform(pandas_df),
-                                      'is_recid': corruption})
+                                      'is_recid': corruption},
+                                     also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(COMPAS_PY) \
@@ -135,7 +138,8 @@ def test_data_corruption_adult_complex():
                                       lambda pandas_df: CategoricalShift('education', 1.).transform(pandas_df),
                                       'workclass':
                                       lambda pandas_df: CategoricalShift('workclass', 1.).transform(pandas_df),
-                                      'hours-per-week': corruption})
+                                      'hours-per-week': corruption},
+                                     also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(ADULT_COMPLEX_PY) \

@@ -2,6 +2,8 @@
 Instrument and executes the pipeline
 """
 import ast
+import logging
+import time
 from typing import List
 
 import gorilla
@@ -18,6 +20,12 @@ from ..analysis._what_if_analysis import WhatIfAnalysis
 from ..execution._dag_executor import DagExecutor
 from ..execution._multi_query_optimizer import MultiQueryOptimizer
 from ..visualisation import save_fig_to_path
+
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+for _ in ("gensim", "tensorflow", "h5py"):
+    logging.getLogger(_).setLevel(logging.CRITICAL)
+
+logger = logging.getLogger(__name__)
 
 
 class PipelineExecutor:
@@ -79,9 +87,16 @@ class PipelineExecutor:
         self.prefix_analysis_dags = prefix_analysis_dags
         self.prefix_optimised_analysis_dag = prefix_optimised_analysis_dag
 
+        logger.info(f'Running instrumented original pipeline...')
+        orig_instrumented_exec_start = time.time()
         self.run_instrumented_pipeline(notebook_path, python_code, python_path)
+        orig_instrumented_exec_duration = time.time() - orig_instrumented_exec_start
+        logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms')
+
+        logger.info(f'Start {len(self.analyses)} what-if analyses...')
         self.run_what_if_analyses()
 
+        logger.info(f'Done!')
         return AnalysisResults(self.analysis_results.dag, self.analysis_results.analysis_to_result_reports)
 
     def run_what_if_analyses(self):
@@ -91,18 +106,33 @@ class PipelineExecutor:
         if self.prefix_original_dag is not None:
             save_fig_to_path(self.analysis_results.dag, f"{self.prefix_original_dag}.png")
         for analysis in self.analyses:
+            logger.info(f'Start plan generation for analysis {analysis}...')
+            plan_generation_start = time.time()
             what_if_dags = analysis.generate_plans_to_try(self.analysis_results.dag)
+            plan_generation_duration = time.time() - plan_generation_start
+            logger.info(f'---RUNTIME: Plan generation took {plan_generation_duration * 1000} ms')
             for dag_index, what_if_dag in enumerate(what_if_dags):
                 if self.prefix_analysis_dags is not None:
                     save_fig_to_path(what_if_dag,
                                      f"{self.prefix_analysis_dags}-{type(analysis).__name__}-{dag_index}.png")
+
             # TODO: Potentially, we might want to also combine multiple analyses to one joint execution plan
+
+            logger.info(f"Performing Multi-Query Optimization")
+            multi_query_optimization_start = time.time()
             big_execution_dag = MultiQueryOptimizer().create_optimized_plan(what_if_dags)
+            multi_query_optimization_duration = time.time() - multi_query_optimization_start
+            logger.info(f'---RUNTIME: Multi-Query Optimization took {multi_query_optimization_duration * 1000} ms')
+            logger.info(f"Executing generated plan")
             if self.prefix_optimised_analysis_dag is not None:
                 save_fig_to_path(big_execution_dag, f"{self.prefix_optimised_analysis_dag}.png")
+
+            execution_start = time.time()
             DagExecutor().execute(big_execution_dag)
             # for what_if_dag in what_if_dags:
             #     DagExecutor().execute(what_if_dag)
+            execution_duration = time.time() - execution_start
+            logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
 
             report = analysis.generate_final_report(self.labels_to_extracted_plan_results)
             self.analysis_results.analysis_to_result_reports[analysis] = report
@@ -253,10 +283,16 @@ def monkey_patch():
     """
     Function that does the actual monkey patching
     """
+    logger.info(f"Applying Monkey-Patches")
+    logger.info(f"(The first time this is called, this can take a bit because all of the libraries need to be "
+                f"loaded by Python, but this cost is present anyway if those libraries are used.)")
+    monkey_patch_start = time.time()
     patch_sources = get_monkey_patching_patch_sources()
     patches = gorilla.find_patches(patch_sources)
     for patch in patches:
         gorilla.apply(patch)
+    monkey_patch_duration = time.time() - monkey_patch_start
+    logger.info(f'---RUNTIME: Monkey-Patching took {monkey_patch_duration * 1000} ms')
 
 
 def undo_monkey_patch():

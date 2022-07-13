@@ -40,7 +40,7 @@ def add_new_node_after_node(dag: networkx.DiGraph, new_node: DagNode, dag_node: 
     dag.add_edge(dag_node, new_node)
 
 
-def find_first_op_modifying_a_column(dag: networkx.DiGraph, column_name: str, test_or_train: bool):
+def find_first_op_modifying_a_column(dag: networkx.DiGraph, column_name: str, test_not_train: bool):
     """Find DagNodes in the DAG by OperatorType"""
     # TODO: Performance optimizations if necessary, testing
     project_modify_matches = [node for node in dag.nodes
@@ -50,7 +50,7 @@ def find_first_op_modifying_a_column(dag: networkx.DiGraph, column_name: str, te
     if len(project_modify_matches) != 0:
         sorted_matches = sorted(project_modify_matches, key=lambda dag_node: dag_node.node_id)
         return sorted_matches[0]  # Test this, is it 0 or -1?
-    if test_or_train is True:
+    if test_not_train is True:
         transformer_matches = [node for node in dag.nodes
                                if node.operator_info.operator == OperatorType.TRANSFORMER
                                and ": transform" in node.details.description

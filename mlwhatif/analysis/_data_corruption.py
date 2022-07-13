@@ -58,8 +58,37 @@ class DataCorruption(WhatIfAnalysis):
                                                                   first_op_requiring_corruption,
                                                                   operator_to_apply_corruption_after)
                 add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
+                # TODO: Move this
                 mark_nodes_to_recompute_after_changed_node(corruption_dag, new_corruption_node)
                 corruption_dags.append(corruption_dag)
+
+                if self.also_corrupt_train is True:
+                    corruption_dag = dag.copy()
+                    add_intermediate_extraction_after_node(corruption_dag, final_result_value,
+                                                           f"data-corruption-train-{column}-{corruption_percentage}")
+
+                    first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, True)
+                    operator_to_apply_corruption_after = list(dag.predecessors(first_op_requiring_corruption))[-1]
+
+                    new_corruption_node = self.create_corruption_node(column, corruption_function,
+                                                                      corruption_percentage,
+                                                                      first_op_requiring_corruption,
+                                                                      operator_to_apply_corruption_after)
+                    add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
+                    mark_nodes_to_recompute_after_changed_node(corruption_dag, new_corruption_node)
+
+                    first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, False)
+                    operator_to_apply_corruption_after = list(dag.predecessors(first_op_requiring_corruption))[-1]
+
+                    new_corruption_node = self.create_corruption_node(column, corruption_function,
+                                                                      corruption_percentage,
+                                                                      first_op_requiring_corruption,
+                                                                      operator_to_apply_corruption_after)
+                    add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
+                    mark_nodes_to_recompute_after_changed_node(corruption_dag, new_corruption_node)
+
+                    corruption_dags.append(corruption_dag)
+
         return corruption_dags
 
     @staticmethod
@@ -99,6 +128,10 @@ class DataCorruption(WhatIfAnalysis):
         results = dict()
         for (column, _) in self.column_to_corruption:
             for corruption_percentage in self.corruption_percentages:
-                label = f"data-corruption-test-{column}-{corruption_percentage}"
-                results[label] = singleton.labels_to_extracted_plan_results[label]
+                test_label = f"data-corruption-test-{column}-{corruption_percentage}"
+                results[test_label] = singleton.labels_to_extracted_plan_results[test_label]
+
+                train_label = f"data-corruption-train-{column}-{corruption_percentage}"
+                if train_label in singleton.labels_to_extracted_plan_results:
+                    results[train_label] = singleton.labels_to_extracted_plan_results[train_label]
         return results
