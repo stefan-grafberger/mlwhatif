@@ -135,7 +135,8 @@ class PipelineExecutor:
             if self.skip_optimizer is False:
                 logger.info(f"Performing Multi-Query Optimization")
                 multi_query_optimization_start = time.time()
-                big_execution_dag = MultiQueryOptimizer().create_optimized_plan(what_if_dags)
+                big_execution_dag = MultiQueryOptimizer(self)\
+                    .create_optimized_plan(self.analysis_results.dag, what_if_dags)
                 multi_query_optimization_duration = time.time() - multi_query_optimization_start
                 logger.info(f'---RUNTIME: Multi-Query Optimization took {multi_query_optimization_duration * 1000} ms')
                 logger.info(f"Executing generated plan")

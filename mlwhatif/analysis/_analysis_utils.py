@@ -64,23 +64,3 @@ def find_first_op_modifying_a_column(dag: networkx.DiGraph, column_name: str, te
     # Can be two for example in the COMPAS pipeline when there is a SimpleImputer first
     sorted_transformer_matches = sorted(transformer_matches, key=lambda dag_node: dag_node.node_id)
     return sorted_transformer_matches[0]
-
-
-def mark_nodes_to_recompute_after_changed_node(dag: networkx.DiGraph, changed_dag_node: DagNode):
-    """ This gives new node_ids to all reachable nodes given some input node """
-    nodes_needing_recomputation = list(networkx.descendants(dag, changed_dag_node))
-    for node_to_recompute in nodes_needing_recomputation:
-        replacement_node = DagNode(singleton.get_next_op_id(),
-                                   node_to_recompute.code_location,
-                                   node_to_recompute.operator_info,
-                                   node_to_recompute.details,
-                                   node_to_recompute.optional_code_info,
-                                   node_to_recompute.processing_func)
-        dag.add_node(replacement_node)
-        for parent_node in dag.predecessors(node_to_recompute):
-            edge_data = dag.get_edge_data(parent_node, node_to_recompute)
-            dag.add_edge(parent_node, replacement_node, **edge_data)
-        for child_node in dag.successors(node_to_recompute):
-            edge_data = dag.get_edge_data(node_to_recompute, child_node)
-            dag.add_edge(replacement_node, child_node, **edge_data)
-        dag.remove_node(node_to_recompute)

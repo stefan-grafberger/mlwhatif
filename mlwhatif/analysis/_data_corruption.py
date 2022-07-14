@@ -11,7 +11,7 @@ import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import add_intermediate_extraction_after_node, find_nodes_by_type, \
-    find_first_op_modifying_a_column, add_new_node_after_node, mark_nodes_to_recompute_after_changed_node
+    find_first_op_modifying_a_column, add_new_node_after_node
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
@@ -61,8 +61,6 @@ class DataCorruption(WhatIfAnalysis):
                                                                   first_op_requiring_corruption,
                                                                   operator_to_apply_corruption_after)
                 add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
-                # TODO: Move this
-                mark_nodes_to_recompute_after_changed_node(corruption_dag, new_corruption_node)
                 corruption_dags.append(corruption_dag)
 
                 if self.also_corrupt_train is True:
@@ -78,7 +76,6 @@ class DataCorruption(WhatIfAnalysis):
                                                                       first_op_requiring_corruption,
                                                                       operator_to_apply_corruption_after)
                     add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
-                    mark_nodes_to_recompute_after_changed_node(corruption_dag, new_corruption_node)
 
                     first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, False)
                     operator_to_apply_corruption_after = list(dag.predecessors(first_op_requiring_corruption))[-1]
@@ -88,7 +85,6 @@ class DataCorruption(WhatIfAnalysis):
                                                                       first_op_requiring_corruption,
                                                                       operator_to_apply_corruption_after)
                     add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
-                    mark_nodes_to_recompute_after_changed_node(corruption_dag, new_corruption_node)
 
                     corruption_dags.append(corruption_dag)
 
