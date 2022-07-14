@@ -120,6 +120,7 @@ def test_data_corruption_mini_example_only_train_test_split():
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
+    # TODO: WIP update code to train test split etc
     test_code = cleandoc("""
         import pandas as pd
         from sklearn.preprocessing import label_binarize, StandardScaler
