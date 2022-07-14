@@ -105,7 +105,7 @@ class PipelineExecutor:
         # captured_output = stdout_output.getvalue()
         orig_instrumented_exec_duration = time.time() - orig_instrumented_exec_start - singleton.monkey_patch_duration
         logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms '
-                    f'(excluding initial library loading and monkey-patching)')
+                    f'(excluding imports and monkey-patching)')
 
         logger.info(f'Starting execution of {len(self.analyses)} what-if analyses...')
         self.run_what_if_analyses()
@@ -308,7 +308,7 @@ def monkey_patch():
     # The first time this is called, this can take a bit because all of the libraries need to be
     #  loaded by Python, but this cost is present anyway if those libraries are used.
     #  Because of this, we need to be careful how we fair benchmarking.
-    logger.info(f"Importing libraries and monkey-patching them... (First time loading is expensive!)")
+    logger.info(f"Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)")
     monkey_patch_start = time.time()
     patch_sources = get_monkey_patching_patch_sources()
     patches = gorilla.find_patches(patch_sources)
