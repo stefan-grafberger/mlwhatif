@@ -40,12 +40,11 @@ class DataCorruption(WhatIfAnalysis):
     def generate_plans_to_try(self, dag: networkx.DiGraph)\
             -> Iterable[networkx.DiGraph]:
         # pylint: disable=cell-var-from-loop
-        operator_type = OperatorType.SCORE
-        score_operators = find_nodes_by_type(dag, operator_type)
-        final_result_value = score_operators[0]
-        # TODO: Performance optimisation: deduplication for transformers that process multiple columns at once
+        score_operators = find_nodes_by_type(dag, OperatorType.SCORE)
         if len(score_operators) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one score call!")
+        final_result_value = score_operators[0]
+        # TODO: Performance optimisation: deduplication for transformers that process multiple columns at once
 
         corruption_dags = []
         for corruption_percentage in self.corruption_percentages:
