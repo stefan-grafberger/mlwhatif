@@ -46,10 +46,10 @@ def find_first_op_modifying_a_column(dag: networkx.DiGraph, column_name: str, te
     project_modify_matches = [node for node in dag.nodes
                               if node.operator_info.operator == OperatorType.PROJECTION_MODIFY
                               and node.details.description == f"modifies ['{column_name}']"]
-    # TODO: This is not very robust and clean, also needs testing
+    # TODO: Using the description string is not very clean
     if len(project_modify_matches) != 0:
         sorted_matches = sorted(project_modify_matches, key=lambda dag_node: dag_node.node_id)
-        return sorted_matches[0]  # Test this, is it 0 or -1?
+        return sorted_matches[0]
     if test_not_train is True:
         transformer_matches = [node for node in dag.nodes
                                if node.operator_info.operator == OperatorType.TRANSFORMER

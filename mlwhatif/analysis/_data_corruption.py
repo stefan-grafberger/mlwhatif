@@ -74,7 +74,14 @@ class DataCorruption(WhatIfAnalysis):
     def find_corruption_location_and_add_corruption_node(self, column, corruption_dag, corruption_function,
                                                          corruption_percentage, dag, test_not_train):
         first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, test_not_train)
-        operator_to_apply_corruption_after = list(dag.predecessors(first_op_requiring_corruption))[-1]
+        operator_parent_nodes = list(dag.predecessors(first_op_requiring_corruption))
+        if first_op_requiring_corruption.operator_info.operator == OperatorType.TRANSFORMER:
+            operator_to_apply_corruption_after = operator_parent_nodes[-1]
+        elif first_op_requiring_corruption.operator_info.operator == OperatorType.PROJECTION_MODIFY:
+            operator_to_apply_corruption_after = operator_parent_nodes[0]
+        else:
+            raise Exception("When this was written, only transform and project_modify nodes could"
+                            " change column values!")
         new_corruption_node = self.create_corruption_node(column, corruption_function, corruption_percentage,
                                                           first_op_requiring_corruption,
                                                           operator_to_apply_corruption_after)
