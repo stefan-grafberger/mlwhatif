@@ -32,6 +32,9 @@ Prerequisite: Python 3.9
 
     `python setup.py test` <br>
 
+## Detailed Example
+We prepared a [demo notebook](demo/feature_overview/feature_overview.ipynb) to showcase mlwhatif and its features.
+
 ## Notes
 * For debugging in PyCharm, set the pytest flag `--no-cov` ([Link](https://stackoverflow.com/questions/34870962/how-to-debug-py-test-in-pycharm-when-coverage-is-enabled))
 * If you want to see log output in PyCharm, you can also set the pytest flags `--log-cli-level=10 -s`. The `-s` is needed because otherwise pytest breaks the stdout capturing.
