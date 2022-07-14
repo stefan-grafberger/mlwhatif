@@ -56,6 +56,8 @@ class PipelineExecutor:
     prefix_original_dag = None
     prefix_analysis_dags = None
     prefix_optimised_analysis_dag = None
+    monkey_patch_duration = 0
+    skip_optimizer = False
 
     def run(self, *,
             notebook_path: str or None = None,
@@ -67,7 +69,8 @@ class PipelineExecutor:
             custom_monkey_patching: List[any] = None,
             prefix_original_dag: str or None = None,
             prefix_analysis_dags: str or None = None,
-            prefix_optimised_analysis_dag: str or None = None
+            prefix_optimised_analysis_dag: str or None = None,
+            skip_optimizer=False
             ) -> AnalysisResults:
         """
         Instrument and execute the pipeline and evaluate all checks
@@ -89,6 +92,7 @@ class PipelineExecutor:
         self.prefix_original_dag = prefix_original_dag
         self.prefix_analysis_dags = prefix_analysis_dags
         self.prefix_optimised_analysis_dag = prefix_optimised_analysis_dag
+        self.skip_optimizer = skip_optimizer
 
         logger.info(f'Running instrumented original pipeline...')
         orig_instrumented_exec_start = time.time()
@@ -99,9 +103,9 @@ class PipelineExecutor:
         # TODO: Do we ever need the captured output from the original pipeline version?
         #  Maybe this gets relevant once we add the DAG as input to mlwhat in case there are multiple executions
         # captured_output = stdout_output.getvalue()
-        orig_instrumented_exec_duration = time.time() - orig_instrumented_exec_start
+        orig_instrumented_exec_duration = time.time() - orig_instrumented_exec_start - singleton.monkey_patch_duration
         logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms '
-                    f'(including monkey-patching)')
+                    f'(excluding initial library loading and monkey-patching)')
 
         logger.info(f'Starting execution of {len(self.analyses)} what-if analyses...')
         self.run_what_if_analyses()
@@ -128,19 +132,24 @@ class PipelineExecutor:
 
             # TODO: Potentially, we might want to also combine multiple analyses to one joint execution plan
 
-            logger.info(f"Performing Multi-Query Optimization")
-            multi_query_optimization_start = time.time()
-            big_execution_dag = MultiQueryOptimizer().create_optimized_plan(what_if_dags)
-            multi_query_optimization_duration = time.time() - multi_query_optimization_start
-            logger.info(f'---RUNTIME: Multi-Query Optimization took {multi_query_optimization_duration * 1000} ms')
-            logger.info(f"Executing generated plan")
-            if self.prefix_optimised_analysis_dag is not None:
-                save_fig_to_path(big_execution_dag, f"{self.prefix_optimised_analysis_dag}.png")
+            if self.skip_optimizer is False:
+                logger.info(f"Performing Multi-Query Optimization")
+                multi_query_optimization_start = time.time()
+                big_execution_dag = MultiQueryOptimizer().create_optimized_plan(what_if_dags)
+                multi_query_optimization_duration = time.time() - multi_query_optimization_start
+                logger.info(f'---RUNTIME: Multi-Query Optimization took {multi_query_optimization_duration * 1000} ms')
+                logger.info(f"Executing generated plan")
+                if self.prefix_optimised_analysis_dag is not None:
+                    save_fig_to_path(big_execution_dag, f"{self.prefix_optimised_analysis_dag}.png")
 
-            execution_start = time.time()
-            DagExecutor().execute(big_execution_dag)
-            # for what_if_dag in what_if_dags:
-            #     DagExecutor().execute(what_if_dag)
+                execution_start = time.time()
+                DagExecutor().execute(big_execution_dag)
+            else:
+                logger.info(f"Executing generated plans")
+                execution_start = time.time()
+                for what_if_dag in what_if_dags:
+                    DagExecutor().execute(what_if_dag)
+
             execution_duration = time.time() - execution_start
             logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
 
@@ -195,6 +204,8 @@ class PipelineExecutor:
         self.prefix_original_dag = None
         self.prefix_analysis_dags = None
         self.prefix_optimised_analysis_dag = None
+        self.monkey_patch_duration = 0
+        self.skip_optimizer = False
 
     @staticmethod
     def instrument_pipeline(parsed_ast, track_code_references):
@@ -293,16 +304,17 @@ def monkey_patch():
     """
     Function that does the actual monkey patching
     """
-    logger.info(f"Applying Monkey-Patches")
-    logger.info(f"(The first time this is called, this can take a bit because all of the libraries need to be "
-                f"loaded by Python, but this cost is present anyway if those libraries are used.)")
+    # The first time this is called, this can take a bit because all of the libraries need to be
+    #  loaded by Python, but this cost is present anyway if those libraries are used.
+    #  Because of this, we need to be careful how we fair benchmarking.
+    logger.info(f"Importing libraries and monkey-patching them... (First time loading is expensive!)")
     monkey_patch_start = time.time()
     patch_sources = get_monkey_patching_patch_sources()
     patches = gorilla.find_patches(patch_sources)
     for patch in patches:
         gorilla.apply(patch)
-    monkey_patch_duration = time.time() - monkey_patch_start
-    logger.info(f'---RUNTIME: Monkey-Patching took {monkey_patch_duration * 1000} ms')
+    singleton.monkey_patch_duration = time.time() - monkey_patch_start
+    logger.info(f'---RUNTIME: Importing and monkey-patching took {singleton.monkey_patch_duration * 1000} ms')
 
 
 def undo_monkey_patch():

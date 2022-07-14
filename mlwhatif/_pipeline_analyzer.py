@@ -5,7 +5,7 @@ from typing import Iterable, List
 
 from ._inspector_result import AnalysisResults
 from .analysis._what_if_analysis import WhatIfAnalysis
-from .instrumentation._pipeline_executor import singleton
+from .instrumentation._pipeline_executor import singleton, logger
 
 
 class PipelineInspectorBuilder:
@@ -18,85 +18,96 @@ class PipelineInspectorBuilder:
                  python_path: str or None = None,
                  python_code: str or None = None
                  ) -> None:
-        self.track_code_references = True
-        self.monkey_patching_modules = []
-        self.notebook_path = notebook_path
-        self.python_path = python_path
-        self.python_code = python_code
-        self.analyses = []
-        self.checks = []
-        self.prefix_original_dag = None
-        self.prefix_analysis_dags = None
-        self.prefix_optimised_analysis_dag = None
+        self._track_code_references = True
+        self._monkey_patching_modules = []
+        self._notebook_path = notebook_path
+        self._python_path = python_path
+        self._python_code = python_code
+        self._analyses = []
+        self._checks = []
+        self._prefix_original_dag = None
+        self._prefix_analysis_dags = None
+        self._prefix_optimised_analysis_dag = None
+        self._skip_optimizer = False
 
     def add_what_if_analysis(self, analysis: WhatIfAnalysis):
         """
         Add an analysis. TODO
         """
-        self.analyses.append(analysis)
+        self._analyses.append(analysis)
         return self
 
     def add_what_if_analyses(self, analyses: Iterable[WhatIfAnalysis]):
         """
         Add a list of analyses
         """
-        self.analyses.extend(analyses)
+        self._analyses.extend(analyses)
         return self
 
     def save_original_dag_to_path(self, path: str):
         """
         Save the extracted original DAG to a file
         """
-        self.prefix_original_dag = path
+        self._prefix_original_dag = path
         return self
 
     def save_what_if_dags_to_path(self, prefix_analysis_dags: str):
         """
         Save the generated What-If DAGs to a file
         """
-        self.prefix_analysis_dags = prefix_analysis_dags
+        self._prefix_analysis_dags = prefix_analysis_dags
         return self
 
     def save_optimised_what_if_dags_to_path(self, prefix_optimised_analysis_dag: str):
         """
         Save the extracted original DAG to a file
         """
-        self.prefix_optimised_analysis_dag = prefix_optimised_analysis_dag
+        self._prefix_optimised_analysis_dag = prefix_optimised_analysis_dag
         return self
 
     def set_code_reference_tracking(self, track_code_references: bool):
         """
         Set whether to track code references. The default is tracking them.
         """
-        self.track_code_references = track_code_references
+        self._track_code_references = track_code_references
         return self
 
     def add_custom_monkey_patching_modules(self, module_list: List):
         """
         Add additional monkey patching modules.
         """
-        self.monkey_patching_modules.extend(module_list)
+        self._monkey_patching_modules.extend(module_list)
         return self
 
     def add_custom_monkey_patching_module(self, module: any):
         """
         Add an additional monkey patching module.
         """
-        self.monkey_patching_modules.append(module)
+        self._monkey_patching_modules.append(module)
+        return self
+
+    def skip_multi_query_optimization(self, skip_optimizer: False):
+        """
+        Add an additional monkey patching module.
+        """
+        logger.warn("Skipping the optimizer!")
+        logger.warn("This function is only for benchmarking convenience and will be removed eventually!")
+        self._skip_optimizer = skip_optimizer
         return self
 
     def execute(self) -> AnalysisResults:
         """
         Instrument and execute the pipeline
         """
-        return singleton.run(notebook_path=self.notebook_path,
-                             python_path=self.python_path,
-                             python_code=self.python_code,
-                             analyses=self.analyses,
-                             custom_monkey_patching=self.monkey_patching_modules,
-                             prefix_original_dag=self.prefix_original_dag,
-                             prefix_analysis_dags=self.prefix_analysis_dags,
-                             prefix_optimised_analysis_dag=self.prefix_optimised_analysis_dag)
+        return singleton.run(notebook_path=self._notebook_path,
+                             python_path=self._python_path,
+                             python_code=self._python_code,
+                             analyses=self._analyses,
+                             custom_monkey_patching=self._monkey_patching_modules,
+                             prefix_original_dag=self._prefix_original_dag,
+                             prefix_analysis_dags=self._prefix_analysis_dags,
+                             prefix_optimised_analysis_dag=self._prefix_optimised_analysis_dag,
+                             skip_optimizer=self._skip_optimizer)
 
 
 class PipelineAnalyzer:

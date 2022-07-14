@@ -11,6 +11,7 @@ from example_pipelines import HEALTHCARE_PY, COMPAS_PY, ADULT_COMPLEX_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._data_corruption import DataCorruption
+from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.utils import get_project_root
 
 INTERMEDIATE_EXTRACTION_ORIG_PATH = os.path.join(str(get_project_root()), "test", "analysis",
@@ -21,7 +22,7 @@ INTERMEDIATE_EXTRACTION_OPTIMISED_PATH = os.path.join(str(get_project_root()), "
                                                       "data_corruption-what-if-optimised")
 
 
-def test_data_corruption_score():
+def test_data_corruption_mini_example():
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -83,6 +84,7 @@ def test_data_corruption_healthcare():
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(HEALTHCARE_PY) \
+        .skip_multi_query_optimization(False) \
         .add_custom_monkey_patching_module(custom_monkeypatching) \
         .add_what_if_analysis(data_corruption) \
         .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
