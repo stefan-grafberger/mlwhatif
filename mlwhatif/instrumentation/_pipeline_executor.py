@@ -145,6 +145,7 @@ class PipelineExecutor:
                 execution_start = time.time()
                 DagExecutor().execute(big_execution_dag)
             else:
+                logger.warning("Skipping Multi-Query Optimization")
                 logger.info(f"Executing generated plans")
                 execution_start = time.time()
                 for what_if_dag in what_if_dags:

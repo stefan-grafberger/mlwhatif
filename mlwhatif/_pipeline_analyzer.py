@@ -88,10 +88,9 @@ class PipelineInspectorBuilder:
 
     def skip_multi_query_optimization(self, skip_optimizer: False):
         """
-        Add an additional monkey patching module.
+        A convenience function to
         """
-        logger.warn("Skipping the optimizer!")
-        logger.warn("This function is only for benchmarking convenience and will be removed eventually!")
+        logger.warning("The skip optimizer function is only for benchmarking and will be removed eventually!")
         self._skip_optimizer = skip_optimizer
         return self
 
