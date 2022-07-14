@@ -93,14 +93,12 @@ class PipelineExecutor:
         logger.info(f'Running instrumented original pipeline...')
         orig_instrumented_exec_start = time.time()
         sys.stdout.flush()
-        output_file = StringIO()
-        with redirect_stdout(output_file):
+        stdout_output = StringIO()
+        with redirect_stdout(stdout_output):
             self.run_instrumented_pipeline(notebook_path, python_code, python_path)
-            print("Test")
-        captured_output = output_file.getvalue()
-        print(captured_output)
         # TODO: Do we ever need the captured output from the original pipeline version?
         #  Maybe this gets relevant once we add the DAG as input to mlwhat in case there are multiple executions
+        # captured_output = stdout_output.getvalue()
         orig_instrumented_exec_duration = time.time() - orig_instrumented_exec_start
         logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms '
                     f'(including monkey-patching)')
@@ -157,7 +155,7 @@ class PipelineExecutor:
         self.source_code, self.source_code_path = self.load_source_code(notebook_path, python_path, python_code)
         parsed_ast = ast.parse(self.source_code)
         parsed_modified_ast = self.instrument_pipeline(parsed_ast, self.track_code_references)
-        exec(compile(parsed_modified_ast, filename=self.source_code_path, mode="exec"), PipelineExecutor.script_scope)
+        exec(compile(parsed_modified_ast, filename=self.source_code_path, mode="exec"), self.script_scope)
 
     def get_next_op_id(self):
         """
