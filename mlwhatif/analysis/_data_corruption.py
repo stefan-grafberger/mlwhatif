@@ -43,52 +43,43 @@ class DataCorruption(WhatIfAnalysis):
         operator_type = OperatorType.SCORE
         score_operators = find_nodes_by_type(dag, operator_type)
         final_result_value = score_operators[0]
-        # TODO: Deduplication for transformers that process multiple columns at once, if necessary for corruption
+        # TODO: Performance optimisation: deduplication for transformers that process multiple columns at once
         if len(score_operators) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one score call!")
 
         corruption_dags = []
         for corruption_percentage in self.corruption_percentages:
             for (column, corruption_function) in self.column_to_corruption:
+                test_corruption_result_label = f"data-corruption-test-{column}-{corruption_percentage}"
                 corruption_dag = dag.copy()
-                add_intermediate_extraction_after_node(corruption_dag, final_result_value,
-                                                       f"data-corruption-test-{column}-{corruption_percentage}")
-                # TODO: Also add corruption to train side if specified
-                first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, True)
-                operator_to_apply_corruption_after = list(dag.predecessors(first_op_requiring_corruption))[-1]
-
-                new_corruption_node = self.create_corruption_node(column, corruption_function, corruption_percentage,
-                                                                  first_op_requiring_corruption,
-                                                                  operator_to_apply_corruption_after)
-                add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
+                add_intermediate_extraction_after_node(corruption_dag, final_result_value, test_corruption_result_label)
+                self.find_corruption_location_and_add_corruption_node(column, corruption_dag, corruption_function,
+                                                                      corruption_percentage, dag, True)
                 corruption_dags.append(corruption_dag)
 
                 if self.also_corrupt_train is True:
+                    test_corruption_result_label = f"data-corruption-train-{column}-{corruption_percentage}"
                     corruption_dag = dag.copy()
                     add_intermediate_extraction_after_node(corruption_dag, final_result_value,
-                                                           f"data-corruption-train-{column}-{corruption_percentage}")
+                                                           test_corruption_result_label)
 
-                    first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, True)
-                    operator_to_apply_corruption_after = list(dag.predecessors(first_op_requiring_corruption))[-1]
-
-                    new_corruption_node = self.create_corruption_node(column, corruption_function,
-                                                                      corruption_percentage,
-                                                                      first_op_requiring_corruption,
-                                                                      operator_to_apply_corruption_after)
-                    add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
-
-                    first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, False)
-                    operator_to_apply_corruption_after = list(dag.predecessors(first_op_requiring_corruption))[-1]
-
-                    new_corruption_node = self.create_corruption_node(column, corruption_function,
-                                                                      corruption_percentage,
-                                                                      first_op_requiring_corruption,
-                                                                      operator_to_apply_corruption_after)
-                    add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
+                    self.find_corruption_location_and_add_corruption_node(column, corruption_dag, corruption_function,
+                                                                          corruption_percentage, dag, True)
+                    self.find_corruption_location_and_add_corruption_node(column, corruption_dag, corruption_function,
+                                                                          corruption_percentage, dag, False)
 
                     corruption_dags.append(corruption_dag)
 
         return corruption_dags
+
+    def find_corruption_location_and_add_corruption_node(self, column, corruption_dag, corruption_function,
+                                                         corruption_percentage, dag, test_not_train):
+        first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, test_not_train)
+        operator_to_apply_corruption_after = list(dag.predecessors(first_op_requiring_corruption))[-1]
+        new_corruption_node = self.create_corruption_node(column, corruption_function, corruption_percentage,
+                                                          first_op_requiring_corruption,
+                                                          operator_to_apply_corruption_after)
+        add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
 
     @staticmethod
     def create_corruption_node(column, corruption_function, corruption_percentage, first_op_requiring_corruption,

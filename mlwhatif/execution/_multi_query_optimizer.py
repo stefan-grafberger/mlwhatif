@@ -31,9 +31,9 @@ class MultiQueryOptimizer:
             for added_node in added_nodes:
                 local_nodes_needing_recomputation = set(networkx.descendants(dag, added_node))
                 all_nodes_needing_recomputation.update(local_nodes_needing_recomputation)
-            self.mark_nodes_to_recompute_after_changed_node(dag, all_nodes_needing_recomputation)
+            self.generate_unique_ids_for_selected_nodes(dag, all_nodes_needing_recomputation)
 
-    def mark_nodes_to_recompute_after_changed_node(self, dag: networkx.DiGraph, nodes_to_recompute: Iterable[DagNode]):
+    def generate_unique_ids_for_selected_nodes(self, dag: networkx.DiGraph, nodes_to_recompute: Iterable[DagNode]):
         """ This gives new node_ids to all reachable nodes given some input node """
         for node_to_recompute in nodes_to_recompute:
             replacement_node = DagNode(self.pipeline_executor.get_next_op_id(),
