@@ -11,8 +11,7 @@ import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import add_intermediate_extraction_after_node, find_nodes_by_type, \
-    find_first_op_modifying_a_column, add_new_node_after_node, add_new_node_between_nodes, \
-    filter_estimator_transformer_edges
+    find_first_op_modifying_a_column, add_new_node_between_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
@@ -40,12 +39,13 @@ class DataCorruption(WhatIfAnalysis):
 
     def generate_plans_to_try(self, dag: networkx.DiGraph) \
             -> Iterable[networkx.DiGraph]:
-        # pylint: disable=cell-var-from-loop
         score_operators = find_nodes_by_type(dag, OperatorType.SCORE)
         if len(score_operators) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one score call!")
         final_result_value = score_operators[0]
         # TODO: Performance optimisation: deduplication for transformers that process multiple columns at once
+        #  For project_modify, we can think about a similar deduplication: splitting operations on multiple columns and
+        #  then using a concat in the end.
 
         corruption_dags = []
         for corruption_percentage in self.corruption_percentages:
@@ -78,6 +78,7 @@ class DataCorruption(WhatIfAnalysis):
 
     def add_corruption_in_location(self, column, corruption_dag, corruption_function, corruption_location,
                                    corruption_percentage):
+        """We now know where to apply the corruption, and use this function to actually apply it."""
         new_corruption_node = self.create_corruption_node(column, corruption_function,
                                                           corruption_percentage,
                                                           corruption_location)
@@ -85,6 +86,16 @@ class DataCorruption(WhatIfAnalysis):
 
     @staticmethod
     def find_dag_location_for_corruption(column, dag, test_not_train):
+        search_start_node = DataCorruption.find_train_or_test_pipeline_part_end(dag, test_not_train)
+        first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, test_not_train)
+        operator_parent_nodes = DataCorruption.get_sorted_parent_nodes(dag, first_op_requiring_corruption)
+        first_op_requiring_corruption, operator_to_apply_corruption_after = DataCorruption\
+            .find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, operator_parent_nodes)
+        return operator_to_apply_corruption_after, first_op_requiring_corruption
+
+    @staticmethod
+    def find_train_or_test_pipeline_part_end(dag, test_not_train):
+        """We want to start at the end of the pipeline to find the relevant train or test operations"""
         if test_not_train is True:
             search_start_nodes = find_nodes_by_type(dag, OperatorType.SCORE)
             if len(search_start_nodes) != 1:
@@ -95,12 +106,24 @@ class DataCorruption(WhatIfAnalysis):
             if len(search_start_nodes) != 1:
                 raise Exception("Currently, DataCorruption only supports pipelines with exactly one estimator!")
             search_start_node = search_start_nodes[0]
-        first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, test_not_train)
+        return search_start_node
+
+    @staticmethod
+    def get_sorted_parent_nodes(dag, first_op_requiring_corruption):
+        """Get the parent nodes of a node sorted by arg_index"""
         operator_parent_nodes = list(dag.predecessors(first_op_requiring_corruption))
         parent_nodes_with_arg_index = [(parent_node, dag.get_edge_data(parent_node, first_op_requiring_corruption))
                                        for parent_node in operator_parent_nodes]
         parent_nodes_with_arg_index = sorted(parent_nodes_with_arg_index, key=lambda x: x[1]['arg_index'])
         operator_parent_nodes = [node for (node, _) in parent_nodes_with_arg_index]
+        return operator_parent_nodes
+
+    @staticmethod
+    def find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, operator_parent_nodes):
+        """
+        We know which operator requires the corruption to be present already; now we need to decide between which
+        parent node and the current node we need to insert the corruption node.
+        """
         if first_op_requiring_corruption.operator_info.operator == OperatorType.TRANSFORMER:
             operator_to_apply_corruption_after = operator_parent_nodes[-1]
         elif first_op_requiring_corruption.operator_info.operator == OperatorType.SCORE:
@@ -117,7 +140,7 @@ class DataCorruption(WhatIfAnalysis):
         else:
             raise Exception("Either a column was changed by a transformer or project_modify or we can apply"
                             "the corruption right before the estimator operation!")
-        return operator_to_apply_corruption_after, first_op_requiring_corruption
+        return first_op_requiring_corruption, operator_to_apply_corruption_after
 
     @staticmethod
     def create_corruption_node(column, corruption_function, corruption_percentage, corruption_location):
