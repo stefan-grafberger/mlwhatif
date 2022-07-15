@@ -91,7 +91,7 @@ class PipelineInspectorBuilder:
         A convenience function to
         """
         logger.info("The skip_multi_query_optimization function is only intended for benchmarking!")
-        self._skip_optimizer = skip_optimizer
+        self._skip_optimizer = skip_optimizer#test
         return self
 
     def execute(self) -> AnalysisResults:
