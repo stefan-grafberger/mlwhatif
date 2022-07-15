@@ -56,6 +56,7 @@ class OperatorType(Enum):
     GROUP_BY_AGG = "Groupby and Aggregate"
     TRAIN_TEST_SPLIT = "Train Test Split"
     SUBSCRIPT = "Subscript"
+    EXTRACT_RESULT = "Extract intermediate result"
 
 
 @dataclasses.dataclass(frozen=True)

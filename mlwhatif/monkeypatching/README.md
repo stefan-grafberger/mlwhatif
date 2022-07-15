@@ -4,18 +4,20 @@
 * Extending mlinspect to support more and more API functions and libraries will be an ongoing effort. External contributions are very welcome! 
 * However, mlinspect doesn't just crash when it encounters unknown functions.
 * mlinspect just ignores functions it doesn't recognize. If a function it does recognize encounters the input from a relevant unknown function, it will create a `MISSING_OP` node for a single or multiple unknown function calls. The inspections also get to see this unknown input, from their perspective it's just a new data source.
+* mlwhatif currently has no fallbacks for unrecognized functions yet
 * Example:
 
 ```python
 import networkx
 from inspect import cleandoc
-from testfixtures import compare
-from mlwhatif import OperatorType, OperatorContext, FunctionInfo, PipelineInspector, CodeReference, DagNode, BasicCodeLocation, DagNodeDetails, \
+from testfixtures import compare, Comparison
+from mlwhatif import OperatorType, OperatorContext, FunctionInfo, PipelineAnalyzer, CodeReference, DagNode,
+    BasicCodeLocation, DagNodeDetails,
     OptionalCodeInfo
-
 
 test_code = cleandoc("""
         from inspect import cleandoc
+        from types import FunctionType
         import pandas
         from mlwhatif.testing._testing_helper_utils import black_box_df_op
         
@@ -23,7 +25,7 @@ test_code = cleandoc("""
         df = df.dropna()
         """)
 
-extracted_dag = PipelineInspector.on_pipeline_from_string(test_code).execute().dag
+extracted_dag = PipelineAnalyzer.on_pipeline_from_string(test_code).execute().dag
 
 expected_dag = networkx.DiGraph()
 expected_missing_op = DagNode(-1,
@@ -37,7 +39,8 @@ expected_select = DagNode(0,
                           BasicCodeLocation("<string-source>", 5),
                           OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'dropna')),
                           DagNodeDetails('dropna', ['A']),
-                          OptionalCodeInfo(CodeReference(5, 5, 5, 16), 'df.dropna()'))
+                          OptionalCodeInfo(CodeReference(5, 5, 5, 16), 'df.dropna()'),
+                          Comparison(FunctionType))
 expected_dag.add_edge(expected_missing_op, expected_select)
 compare(networkx.to_dict_of_dicts(extracted_dag), networkx.to_dict_of_dicts(expected_dag))
 ```

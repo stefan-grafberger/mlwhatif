@@ -2,6 +2,11 @@
 Instrument and executes the pipeline
 """
 import ast
+import logging
+import sys
+import time
+from contextlib import redirect_stdout
+from io import StringIO
 from typing import List
 
 import gorilla
@@ -11,9 +16,19 @@ from astmonkey.transformers import ParentChildNodeTransformer
 from nbconvert import PythonExporter
 
 from ._call_capture_transformer import CallCaptureTransformer
-from ._dag_node import InspectionResult
+from ._dag_node import AnalysisResult
 from .. import monkeypatching
-from .._inspector_result import InspectorResult
+from .._inspector_result import AnalysisResults
+from ..analysis._what_if_analysis import WhatIfAnalysis
+from ..execution._dag_executor import DagExecutor
+from ..execution._multi_query_optimizer import MultiQueryOptimizer
+from ..visualisation import save_fig_to_path
+
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+for _ in ("gensim", "tensorflow", "h5py"):
+    logging.getLogger(_).setLevel(logging.CRITICAL)
+
+logger = logging.getLogger(__name__)
 
 
 class PipelineExecutor:
@@ -33,18 +48,30 @@ class PipelineExecutor:
     next_missing_op_id = -1
     track_code_references = True
     op_id_to_dag_node = dict()
-    inspections = []
+    analyses = []
     custom_monkey_patching = []
-    inspection_results = InspectionResult(networkx.DiGraph(), dict())
+    # TODO: Do we want to add the analysis to the key next to label to isolate analyses and avoid name clashes?
+    labels_to_extracted_plan_results = dict()
+    analysis_results = AnalysisResult(networkx.DiGraph(), dict())
+    prefix_original_dag = None
+    prefix_analysis_dags = None
+    prefix_optimised_analysis_dag = None
+    monkey_patch_duration = 0
+    skip_optimizer = False
 
     def run(self, *,
             notebook_path: str or None = None,
             python_path: str or None = None,
             python_code: str or None = None,
+            analyses: List[WhatIfAnalysis] or None = None,
             reset_state: bool = True,
             track_code_references: bool = True,
-            custom_monkey_patching: List[any] = None
-            ) -> InspectorResult:
+            custom_monkey_patching: List[any] = None,
+            prefix_original_dag: str or None = None,
+            prefix_analysis_dags: str or None = None,
+            prefix_optimised_analysis_dag: str or None = None,
+            skip_optimizer=False
+            ) -> AnalysisResults:
         """
         Instrument and execute the pipeline and evaluate all checks
         """
@@ -56,14 +83,82 @@ class PipelineExecutor:
 
         if custom_monkey_patching is None:
             custom_monkey_patching = []
+        if analyses is None:
+            analyses = []
 
         self.track_code_references = track_code_references
         self.custom_monkey_patching = custom_monkey_patching
+        self.analyses = analyses
+        self.prefix_original_dag = prefix_original_dag
+        self.prefix_analysis_dags = prefix_analysis_dags
+        self.prefix_optimised_analysis_dag = prefix_optimised_analysis_dag
+        self.skip_optimizer = skip_optimizer
 
-        self.run_inspections(notebook_path, python_code, python_path)
-        return InspectorResult(self.inspection_results.dag, self.inspection_results.dag_node_to_inspection_results)
+        logger.info(f'Running instrumented original pipeline...')
+        orig_instrumented_exec_start = time.time()
+        sys.stdout.flush()
+        stdout_output = StringIO()
+        with redirect_stdout(stdout_output):
+            self.run_instrumented_pipeline(notebook_path, python_code, python_path)
+        # TODO: Do we ever need the captured output from the original pipeline version?
+        #  Maybe this gets relevant once we add the DAG as input to mlwhat in case there are multiple executions
+        # captured_output = stdout_output.getvalue()
+        orig_instrumented_exec_duration = time.time() - orig_instrumented_exec_start - singleton.monkey_patch_duration
+        logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms '
+                    f'(excluding imports and monkey-patching)')
 
-    def run_inspections(self, notebook_path, python_code, python_path):
+        logger.info(f'Starting execution of {len(self.analyses)} what-if analyses...')
+        self.run_what_if_analyses()
+
+        logger.info(f'Done!')
+        return AnalysisResults(self.analysis_results.dag, self.analysis_results.analysis_to_result_reports)
+
+    def run_what_if_analyses(self):
+        """
+        Execute the specified what-if analyses
+        """
+        if self.prefix_original_dag is not None:
+            save_fig_to_path(self.analysis_results.dag, f"{self.prefix_original_dag}.png")
+        for analysis in self.analyses:
+            logger.info(f'Start plan generation for analysis {type(analysis).__name__}...')
+            plan_generation_start = time.time()
+            what_if_dags = analysis.generate_plans_to_try(self.analysis_results.dag)
+            plan_generation_duration = time.time() - plan_generation_start
+            logger.info(f'---RUNTIME: Plan generation took {plan_generation_duration * 1000} ms')
+            for dag_index, what_if_dag in enumerate(what_if_dags):
+                if self.prefix_analysis_dags is not None:
+                    save_fig_to_path(what_if_dag,
+                                     f"{self.prefix_analysis_dags}-{type(analysis).__name__}-{dag_index}.png")
+
+            # TODO: Potentially, we might want to also combine multiple analyses to one joint execution plan
+
+            if self.skip_optimizer is False:
+                logger.info(f"Performing Multi-Query Optimization")
+                multi_query_optimization_start = time.time()
+                big_execution_dag = MultiQueryOptimizer(self)\
+                    .create_optimized_plan(self.analysis_results.dag, what_if_dags)
+                multi_query_optimization_duration = time.time() - multi_query_optimization_start
+                logger.info(f'---RUNTIME: Multi-Query Optimization took {multi_query_optimization_duration * 1000} ms')
+                logger.info(f"Executing generated plan")
+                if self.prefix_optimised_analysis_dag is not None:
+                    save_fig_to_path(big_execution_dag, f"{self.prefix_optimised_analysis_dag}.png")
+
+                execution_start = time.time()
+                DagExecutor().execute(big_execution_dag)
+            else:
+                logger.warning("Skipping Multi-Query Optimization")
+                logger.info(f"Executing generated plans")
+                execution_start = time.time()
+                for what_if_dag in what_if_dags:
+                    DagExecutor().execute(what_if_dag)
+
+            execution_duration = time.time() - execution_start
+            logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
+
+            report = analysis.generate_final_report(self.labels_to_extracted_plan_results)
+            self.analysis_results.analysis_to_result_reports[analysis] = report
+
+    def run_instrumented_pipeline(self, notebook_path, python_code, python_path):
         """
         Instrument and execute the pipeline
         """
@@ -71,7 +166,7 @@ class PipelineExecutor:
         self.source_code, self.source_code_path = self.load_source_code(notebook_path, python_path, python_code)
         parsed_ast = ast.parse(self.source_code)
         parsed_modified_ast = self.instrument_pipeline(parsed_ast, self.track_code_references)
-        exec(compile(parsed_modified_ast, filename=self.source_code_path, mode="exec"), PipelineExecutor.script_scope)
+        exec(compile(parsed_modified_ast, filename=self.source_code_path, mode="exec"), self.script_scope)
 
     def get_next_op_id(self):
         """
@@ -104,9 +199,15 @@ class PipelineExecutor:
         self.next_missing_op_id = -1
         self.track_code_references = True
         self.op_id_to_dag_node = dict()
-        self.inspection_results = InspectionResult(networkx.DiGraph(), dict())
-        self.inspections = []
+        self.analysis_results = AnalysisResult(networkx.DiGraph(), dict())
+        self.analyses = []
+        self.labels_to_extracted_plan_results = dict()
         self.custom_monkey_patching = []
+        self.prefix_original_dag = None
+        self.prefix_analysis_dags = None
+        self.prefix_optimised_analysis_dag = None
+        self.monkey_patch_duration = 0
+        self.skip_optimizer = False
 
     @staticmethod
     def instrument_pipeline(parsed_ast, track_code_references):
@@ -205,10 +306,17 @@ def monkey_patch():
     """
     Function that does the actual monkey patching
     """
+    # The first time this is called, this can take a bit because all of the libraries need to be
+    #  loaded by Python, but this cost is present anyway if those libraries are used.
+    #  Because of this, we need to be careful how we fair benchmarking.
+    logger.info(f"Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)")
+    monkey_patch_start = time.time()
     patch_sources = get_monkey_patching_patch_sources()
     patches = gorilla.find_patches(patch_sources)
     for patch in patches:
         gorilla.apply(patch)
+    singleton.monkey_patch_duration = time.time() - monkey_patch_start
+    logger.info(f'---RUNTIME: Importing and monkey-patching took {singleton.monkey_patch_duration * 1000} ms')
 
 
 def undo_monkey_patch():

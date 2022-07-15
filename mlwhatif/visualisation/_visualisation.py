@@ -6,7 +6,7 @@ from inspect import cleandoc
 import networkx
 from networkx.drawing.nx_agraph import to_agraph
 
-from mlwhatif import DagNode
+from mlwhatif.instrumentation._dag_node import DagNode
 
 
 def save_fig_to_path(extracted_dag, filename):
