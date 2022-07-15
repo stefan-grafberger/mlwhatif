@@ -53,17 +53,6 @@ class DataCorruption(WhatIfAnalysis):
                 train_corruption_location = self.find_dag_location_for_corruption(column, dag, True)
                 test_corruption_location = self.find_dag_location_for_corruption(column, dag, False)
 
-                dag_view_without_transformer_dependency = networkx.subgraph_view(
-                    dag, filter_edge=filter_estimator_transformer_edges)
-                from_train_to_test_node = networkx.has_path(dag_view_without_transformer_dependency,
-                                                            train_corruption_location[1],
-                                                            test_corruption_location[1])
-                from_test_to_train_node = networkx.has_path(dag_view_without_transformer_dependency,
-                                                            test_corruption_location[1],
-                                                            train_corruption_location[1])
-                if from_train_to_test_node is True or from_test_to_train_node is True:
-                    raise Exception("No clear separation of train and test set processing!")
-
                 # Test set corruption
                 test_corruption_result_label = f"data-corruption-test-{column}-{corruption_percentage}"
                 corruption_dag = dag.copy()
