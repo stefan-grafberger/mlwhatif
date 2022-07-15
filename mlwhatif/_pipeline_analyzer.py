@@ -90,7 +90,7 @@ class PipelineInspectorBuilder:
         """
         A convenience function to
         """
-        logger.warning("The skip optimizer function is only for benchmarking and will be removed eventually!")
+        logger.info("The skip_multi_query_optimization function is only intended for benchmarking!")
         self._skip_optimizer = skip_optimizer
         return self
 
