@@ -1,7 +1,7 @@
 """
 Util functions to make writing What-If Analyses easier
 """
-from typing import Tuple, Iterable
+from typing import Tuple
 
 import networkx
 

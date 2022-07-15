@@ -78,6 +78,7 @@ class DataCorruption(WhatIfAnalysis):
 
     def add_corruption_in_location(self, column, corruption_dag, corruption_function, corruption_location,
                                    corruption_percentage):
+        # pylint: disable=too-many-arguments
         """We now know where to apply the corruption, and use this function to actually apply it."""
         new_corruption_node = self.create_corruption_node(column, corruption_function,
                                                           corruption_percentage,
@@ -86,6 +87,7 @@ class DataCorruption(WhatIfAnalysis):
 
     @staticmethod
     def find_dag_location_for_corruption(column, dag, test_not_train):
+        """Find out between which two nodes to apply the corruption"""
         search_start_node = DataCorruption.find_train_or_test_pipeline_part_end(dag, test_not_train)
         first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, test_not_train)
         operator_parent_nodes = DataCorruption.get_sorted_parent_nodes(dag, first_op_requiring_corruption)

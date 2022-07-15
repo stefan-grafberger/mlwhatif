@@ -24,6 +24,7 @@ class MultiQueryOptimizer:
         return big_execution_dag
 
     def make_nodes_depending_on_changed_nodes_unique(self, original_dag, what_if_dags):
+        """We need to give new ids to all nodes that require recomputation because some parent node changed."""
         original_ids = set(node.node_id for node in list(original_dag.nodes))
         for dag in what_if_dags:
             added_nodes = [node for node in list(dag.nodes) if node.node_id not in original_ids]
