@@ -11,7 +11,8 @@ import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import add_intermediate_extraction_after_node, find_nodes_by_type, \
-    find_first_op_modifying_a_column, add_new_node_after_node
+    find_first_op_modifying_a_column, add_new_node_after_node, add_new_node_between_nodes, \
+    filter_estimator_transformer_edges
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
@@ -37,7 +38,7 @@ class DataCorruption(WhatIfAnalysis):
     def analysis_id(self):
         return self._analysis_id
 
-    def generate_plans_to_try(self, dag: networkx.DiGraph)\
+    def generate_plans_to_try(self, dag: networkx.DiGraph) \
             -> Iterable[networkx.DiGraph]:
         # pylint: disable=cell-var-from-loop
         score_operators = find_nodes_by_type(dag, OperatorType.SCORE)
@@ -49,48 +50,91 @@ class DataCorruption(WhatIfAnalysis):
         corruption_dags = []
         for corruption_percentage in self.corruption_percentages:
             for (column, corruption_function) in self.column_to_corruption:
+                train_corruption_location = self.find_dag_location_for_corruption(column, dag, True)
+                test_corruption_location = self.find_dag_location_for_corruption(column, dag, False)
+
+                dag_view_without_transformer_dependency = networkx.subgraph_view(
+                    dag, filter_edge=filter_estimator_transformer_edges)
+                from_train_to_test_node = networkx.has_path(dag_view_without_transformer_dependency,
+                                                            train_corruption_location[1],
+                                                            test_corruption_location[1])
+                from_test_to_train_node = networkx.has_path(dag_view_without_transformer_dependency,
+                                                            test_corruption_location[1],
+                                                            train_corruption_location[1])
+                if from_train_to_test_node is True or from_test_to_train_node is True:
+                    raise Exception("No clear separation of train and test set processing!")
+
+                # Test set corruption
                 test_corruption_result_label = f"data-corruption-test-{column}-{corruption_percentage}"
                 corruption_dag = dag.copy()
                 add_intermediate_extraction_after_node(corruption_dag, final_result_value, test_corruption_result_label)
-                self.find_corruption_location_and_add_corruption_node(column, corruption_dag, corruption_function,
-                                                                      corruption_percentage, dag, True)
+
+                self.add_corruption_in_location(column, corruption_dag, corruption_function, train_corruption_location,
+                                                corruption_percentage)
                 corruption_dags.append(corruption_dag)
 
+                # Train and test set corruption
                 if self.also_corrupt_train is True:
                     test_corruption_result_label = f"data-corruption-train-{column}-{corruption_percentage}"
                     corruption_dag = dag.copy()
                     add_intermediate_extraction_after_node(corruption_dag, final_result_value,
                                                            test_corruption_result_label)
-
-                    self.find_corruption_location_and_add_corruption_node(column, corruption_dag, corruption_function,
-                                                                          corruption_percentage, dag, True)
-                    self.find_corruption_location_and_add_corruption_node(column, corruption_dag, corruption_function,
-                                                                          corruption_percentage, dag, False)
-
+                    self.add_corruption_in_location(column, corruption_dag, corruption_function,
+                                                    train_corruption_location, corruption_percentage)
+                    self.add_corruption_in_location(column, corruption_dag, corruption_function,
+                                                    test_corruption_location, corruption_percentage)
                     corruption_dags.append(corruption_dag)
 
         return corruption_dags
 
-    def find_corruption_location_and_add_corruption_node(self, column, corruption_dag, corruption_function,
-                                                         corruption_percentage, dag, test_not_train):
-        first_op_requiring_corruption = find_first_op_modifying_a_column(corruption_dag, column, test_not_train)
-        operator_parent_nodes = list(dag.predecessors(first_op_requiring_corruption))
-        if first_op_requiring_corruption.operator_info.operator == OperatorType.TRANSFORMER:
-            operator_to_apply_corruption_after = operator_parent_nodes[-1]
-        elif first_op_requiring_corruption.operator_info.operator == OperatorType.PROJECTION_MODIFY:
-            operator_to_apply_corruption_after = operator_parent_nodes[0]
-        else:
-            raise Exception("When this was written, only transform and project_modify nodes could"
-                            " change column values!")
-        new_corruption_node = self.create_corruption_node(column, corruption_function, corruption_percentage,
-                                                          first_op_requiring_corruption,
-                                                          operator_to_apply_corruption_after)
-        add_new_node_after_node(corruption_dag, new_corruption_node, operator_to_apply_corruption_after)
+    def add_corruption_in_location(self, column, corruption_dag, corruption_function, corruption_location,
+                                   corruption_percentage):
+        new_corruption_node = self.create_corruption_node(column, corruption_function,
+                                                          corruption_percentage,
+                                                          corruption_location)
+        add_new_node_between_nodes(corruption_dag, new_corruption_node, corruption_location)
 
     @staticmethod
-    def create_corruption_node(column, corruption_function, corruption_percentage, first_op_requiring_corruption,
-                               operator_to_apply_corruption_after):
+    def find_dag_location_for_corruption(column, dag, test_not_train):
+        if test_not_train is True:
+            search_start_nodes = find_nodes_by_type(dag, OperatorType.SCORE)
+            if len(search_start_nodes) != 1:
+                raise Exception("Currently, DataCorruption only supports pipelines with exactly one score call!")
+            search_start_node = search_start_nodes[0]
+        else:
+            search_start_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
+            if len(search_start_nodes) != 1:
+                raise Exception("Currently, DataCorruption only supports pipelines with exactly one estimator!")
+            search_start_node = search_start_nodes[0]
+        first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, test_not_train)
+        operator_parent_nodes = list(dag.predecessors(first_op_requiring_corruption))
+        parent_nodes_with_arg_index = [(parent_node, dag.get_edge_data(parent_node, first_op_requiring_corruption))
+                                       for parent_node in operator_parent_nodes]
+        parent_nodes_with_arg_index = sorted(parent_nodes_with_arg_index, key=lambda x: x[1]['arg_index'])
+        operator_parent_nodes = [node for (node, _) in parent_nodes_with_arg_index]
+        if first_op_requiring_corruption.operator_info.operator == OperatorType.TRANSFORMER:
+            operator_to_apply_corruption_after = operator_parent_nodes[-1]
+        elif first_op_requiring_corruption.operator_info.operator == OperatorType.SCORE:
+            operator_to_apply_corruption_after = operator_parent_nodes[1]
+        elif first_op_requiring_corruption.operator_info.operator == OperatorType.ESTIMATOR:
+            operator_to_apply_corruption_after = operator_parent_nodes[0]
+        elif first_op_requiring_corruption.operator_info.operator == OperatorType.PROJECTION_MODIFY:
+            project_modify_parent_a = operator_parent_nodes[0]
+            project_modify_parent_b = operator_parent_nodes[-1]
+            # We want to introduce the change before all subscript behavior
+            operator_to_apply_corruption_after = networkx.lowest_common_ancestor(dag, project_modify_parent_a,
+                                                                                 project_modify_parent_b)
+            first_op_requiring_corruption = list(dag.successors(operator_to_apply_corruption_after))[0]
+        else:
+            raise Exception("Either a column was changed by a transformer or project_modify or we can apply"
+                            "the corruption right before the estimator operation!")
+        return operator_to_apply_corruption_after, first_op_requiring_corruption
+
+    @staticmethod
+    def create_corruption_node(column, corruption_function, corruption_percentage, corruption_location):
         """Create the node that applies the specified corruption"""
+        operator_to_apply_corruption_after, first_op_requiring_corruption = corruption_location
+
         def corrupt_df(pandas_df, corruption_percentage, corruption_function, column):
             # TODO: If we model this as 3 operations instead of one, optimization should be easy
             # TODO: Think about when we actually want to be defensive and call copy and when not

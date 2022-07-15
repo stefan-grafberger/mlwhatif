@@ -120,28 +120,25 @@ def test_data_corruption_mini_example_only_train_test_split():
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
-    # TODO: WIP update code to train test split etc
     test_code = cleandoc("""
         import pandas as pd
         from sklearn.preprocessing import label_binarize, StandardScaler
         from sklearn.tree import DecisionTreeClassifier
         import numpy as np
+        from sklearn.model_selection import train_test_split
 
-        df = pd.DataFrame({'A': [0, 0, 0, 0], 'B': [0, 1, 3, 4], 'target': ['no', 'no', 'yes', 'yes']})
+        pandas_df = pd.DataFrame({'A': [0, 0, 0, 0, 0, 0, 0, 0], 'B': [0, 1, 3, 4, 4, 3, 4, 3], 
+            'target': ['no', 'no', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes']})
+        train_data, test_data = train_test_split(pandas_df, random_state=0)
 
-        df['A'] = df['A'] / 4
-        df['B'] = df['B'] / 4
-        train = df[['A', 'B']]
-        target = label_binarize(df['target'], classes=['no', 'yes'])
+        target = label_binarize(train_data['target'], classes=['no', 'yes'])
+        train_data = train_data[['A', 'B']]
 
         clf = DecisionTreeClassifier()
-        clf = clf.fit(train, target)
+        clf = clf.fit(train_data, target)
 
-        test_df = pd.DataFrame({'A': [0, 0, 0, 0], 'B':  [4, 3, 4, 3], 'target': ['yes', 'yes', 'yes', 'yes']})
-        test_df['A'] = test_df['A'] / 4
-        test_df['B'] = test_df['B'] / 4
-        test_data = test_df[['A', 'B']]
-        test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
+        test_labels = label_binarize(test_data['target'], classes=['no', 'yes'])
+        test_data = test_data[['A', 'B']]
         test_score = clf.score(test_data, test_labels)
         assert test_score == 1.0
         """)
@@ -165,7 +162,7 @@ def test_data_corruption_mini_example_only_train_test_split():
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (6, 4)
 
-# TODO: Also test manual split using something like date
+# TODO: Also test manual split using a selection, also test if it fails correctly if there is no train test isolation
 
 
 def test_data_corruption_healthcare():
