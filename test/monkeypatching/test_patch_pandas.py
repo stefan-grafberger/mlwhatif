@@ -375,7 +375,8 @@ def test_frame_replace():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                                             RangeComparison(0, 500))),
                                    OptionalCodeInfo(CodeReference(3, 5, 3, 72),
                                                     "pd.DataFrame(['Low', 'Medium', 'Low', 'High', None], "
                                                     "columns=['A'])"),
@@ -384,7 +385,9 @@ def test_frame_replace():
                               BasicCodeLocation("<string-source>", 4),
                               OperatorContext(OperatorType.PROJECTION_MODIFY,
                                               FunctionInfo('pandas.core.frame', 'replace')),
-                              DagNodeDetails("Replace 'Medium' with 'Low'", ['A']),
+                              DagNodeDetails("Replace 'Medium' with 'Low'", ['A'],
+                                             OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                           RangeComparison(0, 500))),
                               OptionalCodeInfo(CodeReference(4, 13, 4, 40), "df.replace('Medium', 'Low')"),
                               Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_modify, arg_index=0)

@@ -247,7 +247,8 @@ class DataFramePatching:
                                         optional_source_code)
             operator_context = OperatorContext(OperatorType.PROJECTION_MODIFY, function_info)
             # No input_infos copy needed because it's only a selection and the rows not being removed don't change
-            result = original(input_info.annotated_dfobject.result_data, *args, **kwargs)
+            initial_func = partial(original, input_info.annotated_dfobject.result_data, *args, **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func, self)
             if isinstance(args[0], dict):
                 raise NotImplementedError("TODO: Add support for replace with dicts")
             description = "Replace '{}' with '{}'".format(args[0], args[1])
@@ -255,7 +256,7 @@ class DataFramePatching:
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(description, list(result.columns)),
+                               DagNodeDetails(description, list(result.columns), optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
 
