@@ -11,15 +11,21 @@ import pandas
 from mlwhatif.instrumentation._dag_node import OptimizerInfo
 
 
-def capture_optimzier_info(instrumented_function_call: partial) -> Tuple[OptimizerInfo, any]:
+def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_ops: any or None = None)\
+        -> Tuple[OptimizerInfo, any]:
     """Function to measure the runtime of instrumented user function calls and get output metadata"""
     execution_start = time.time()
     result = instrumented_function_call()
     execution_duration = time.time() - execution_start
     execution_duration_in_ms = execution_duration * 1000
-    if isinstance(result, pandas.DataFrame):
-        shape = result.shape
+    if result is not None:
+        result_or_inplace_obj = result
+    else:
+        result_or_inplace_obj = obj_for_inplace_ops
+
+    if isinstance(result_or_inplace_obj, pandas.DataFrame):
+        shape = result_or_inplace_obj.shape
     else:
         raise Exception(f"Result type {type(result).__name__} not supported yet!")
-    size = sys.getsizeof(result)
+    size = sys.getsizeof(result_or_inplace_obj)
     return OptimizerInfo(execution_duration_in_ms, shape, size), result

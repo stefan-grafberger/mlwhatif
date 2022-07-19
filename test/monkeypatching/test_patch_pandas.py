@@ -67,7 +67,8 @@ def test_frame__init__():
     expected_node = DagNode(0,
                             BasicCodeLocation("<string-source>", 3),
                             OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                            DagNodeDetails(None, ['A']),
+                            DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 100), (3, 1),
+                                                                      RangeComparison(0, 400))),
                             OptionalCodeInfo(CodeReference(3, 5, 3, 43), "pd.DataFrame([0, 1, 2], columns=['A'])"),
                             Comparison(partial))
     compare(extracted_node, expected_node)

@@ -10,7 +10,7 @@ import gorilla
 import pandas
 
 from mlwhatif import OperatorType, DagNode, BasicCodeLocation, DagNodeDetails
-from mlwhatif.execution._stat_tracking import capture_optimzier_info
+from mlwhatif.execution._stat_tracking import capture_optimizer_info
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo
 from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, get_input_info, add_dag_node, \
@@ -40,7 +40,7 @@ class PandasPatching:
             result = original(*args, **kwargs)
             # TODO: We should also capture the execution time, the output shape, and the memory size of each operator
             processing_func = partial(original, *args, **kwargs)
-            optimizer_info, result = capture_optimzier_info(processing_func)
+            optimizer_info, result = capture_optimizer_info(processing_func)
 
             description = "{}".format(args[0].split(os.path.sep)[-1])
             dag_node = DagNode(op_id,
@@ -71,7 +71,8 @@ class DataFramePatching:
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('pandas.core.frame', 'DataFrame')
             operator_context = OperatorContext(OperatorType.DATA_SOURCE, function_info)
-            original(self, *args, **kwargs)
+            initial_func = partial(original, self, *args, **kwargs)
+            optimizer_info, _ = capture_optimizer_info(initial_func, self)
             result = self
 
             process_func = partial(pandas.DataFrame, *args, **kwargs)
@@ -79,7 +80,7 @@ class DataFramePatching:
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(None, columns),
+                               DagNodeDetails(None, columns, optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                process_func)
             function_call_result = FunctionCallResult(result)
