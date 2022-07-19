@@ -201,7 +201,8 @@ class DataFramePatching:
                                              optional_source_code)
             dag_node_parents = [input_info_self.dag_node]
             if isinstance(args[1], pandas.Series):
-                input_info_other = get_input_info(args[1], caller_filename, lineno, function_info, optional_code_reference,
+                input_info_other = get_input_info(args[1], caller_filename, lineno, function_info,
+                                                  optional_code_reference,
                                                   optional_source_code)
                 dag_node_parents.append(input_info_other.dag_node)
 
@@ -291,16 +292,17 @@ class DataFramePatching:
                                           optional_source_code)
             operator_context = OperatorContext(OperatorType.JOIN, function_info)
             # No input_infos copy needed because it's only a selection and the rows not being removed don't change
-            result = original(input_info_a.annotated_dfobject.result_data,
-                              input_info_b.annotated_dfobject.result_data,
-                              *args[args_start_index:],
-                              **kwargs)
+            initial_func = partial(original, input_info_a.annotated_dfobject.result_data,
+                                   input_info_b.annotated_dfobject.result_data,
+                                   *args[args_start_index:],
+                                   **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
             description = self.get_merge_description(**kwargs)
             processing_func = lambda df_a, df_b: original(df_a, df_b, *args[args_start_index:], **kwargs)
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(description, list(result.columns)),
+                               DagNodeDetails(description, list(result.columns), optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
             function_call_result = FunctionCallResult(result)
