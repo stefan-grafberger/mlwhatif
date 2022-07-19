@@ -11,6 +11,7 @@ import pandas
 
 from mlwhatif import OperatorType, DagNode, BasicCodeLocation, DagNodeDetails
 from mlwhatif.execution._stat_tracking import capture_optimizer_info
+from mlwhatif.instrumentation._dag_node import OptimizerInfo
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo
 from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, get_input_info, add_dag_node, \
@@ -350,10 +351,12 @@ class DataFramePatching:
 
             input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
                                         optional_source_code)
-            result = original(self, *args, **kwargs)
+            initial_func = partial(original, self, *args, **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
             result._mlinspect_dag_node = input_info.dag_node.node_id  # pylint: disable=protected-access
             process_funct = lambda df: original(df, *args, **kwargs)
             result._mlinspect_groupby_func = process_funct  # pylint: disable=protected-access
+            result._mlinspect_groupby_optimizer_info = optimizer_info  # pylint: disable=protected-access
 
             return result
 
@@ -382,22 +385,31 @@ class DataFrameGroupByPatching:
 
             operator_context = OperatorContext(OperatorType.GROUP_BY_AGG, function_info)
             groupby_func = self._mlinspect_groupby_func  # pylint: disable=no-member
+            groupby_optimizer_info = self._mlinspect_groupby_optimizer_info  # pylint: disable=no-member
 
             def process_func(pandas_df):
                 groupby_df = groupby_func(pandas_df)
                 return original(groupby_df, *args, **kwargs)
 
-            result = original(self, *args, **kwargs)
+            initial_func = partial(original, self, *args, **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
 
             if len(args) > 0:
                 description = "Groupby '{}', Aggregate: '{}'".format(result.index.name, args)
             else:
                 description = "Groupby '{}', Aggregate: '{}'".format(result.index.name, kwargs)
             columns = [result.index.name] + list(result.columns)
+            shape_with_index = optimizer_info.shape[0], optimizer_info.shape[1] + 1
+            combined_optimizer_info = OptimizerInfo(optimizer_info.runtime + groupby_optimizer_info.runtime,
+                                                    shape_with_index,
+                                                    # Here, we ignore the groupby processing memory.
+                                                    #  We might want to change this later depending on how much
+                                                    #  processing memory buffer we consider acceptable
+                                                    optimizer_info.memory)
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(description, columns),
+                               DagNodeDetails(description, columns, combined_optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                process_func)
             function_call_result = FunctionCallResult(result)

@@ -636,7 +636,8 @@ def test_groupby_agg():
     expected_data = DagNode(0,
                             BasicCodeLocation("<string-source>", 3),
                             OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                            DagNodeDetails(None, ['group', 'value']),
+                            DagNodeDetails(None, ['group', 'value'], OptimizerInfo(RangeComparison(0, 200), (5, 2),
+                                                                                   RangeComparison(0, 800))),
                             OptionalCodeInfo(CodeReference(3, 5, 3, 81),
                                              "pd.DataFrame({'group': ['A', 'B', 'A', 'C', 'B'], "
                                              "'value': [1, 2, 1, 3, 4]})"),
@@ -646,7 +647,9 @@ def test_groupby_agg():
                                    OperatorContext(OperatorType.GROUP_BY_AGG,
                                                    FunctionInfo('pandas.core.groupby.generic', 'agg')),
                                    DagNodeDetails("Groupby 'group', Aggregate: '{'mean_value': ('value', 'mean')}'",
-                                                  ['group', 'mean_value']),
+                                                  ['group', 'mean_value'],
+                                                  OptimizerInfo(RangeComparison(0, 1000), (3, 2),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(4, 17, 4, 70),
                                                     "df.groupby('group').agg(mean_value=('value', 'mean'))"),
                                    Comparison(FunctionType))

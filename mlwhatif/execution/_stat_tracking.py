@@ -27,6 +27,8 @@ def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_
         shape = result_or_inplace_obj.shape
     elif isinstance(result_or_inplace_obj, pandas.Series):
         shape = len(result_or_inplace_obj), 1
+    elif isinstance(result_or_inplace_obj, pandas.core.groupby.generic.DataFrameGroupBy):
+        shape = None  # Not needed because we only consider combined groupby/agg nodes
     else:
         raise Exception(f"Result type {type(result).__name__} not supported yet!")
     size = sys.getsizeof(result_or_inplace_obj)
