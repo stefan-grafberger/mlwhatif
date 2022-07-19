@@ -105,7 +105,8 @@ def test_frame_dropna():
     expected_select = DagNode(1,
                               BasicCodeLocation("<string-source>", 5),
                               OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'dropna')),
-                              DagNodeDetails('dropna', ['A']),
+                              DagNodeDetails('dropna', ['A'], OptimizerInfo(RangeComparison(0, 1000), (4, 1),
+                                                                            RangeComparison(0, 400))),
                               OptionalCodeInfo(CodeReference(5, 5, 5, 16), 'df.dropna()'),
                               Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_select, arg_index=0)
@@ -136,7 +137,8 @@ def test_frame__getitem__series():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                                             RangeComparison(0, 400))),
                                    OptionalCodeInfo(CodeReference(3, 5, 3, 52),
                                                     "pd.DataFrame([0, 2, 4, 8, None], columns=['A'])"),
                                    Comparison(partial))
@@ -144,7 +146,8 @@ def test_frame__getitem__series():
                                BasicCodeLocation("<string-source>", 4),
                                OperatorContext(OperatorType.PROJECTION,
                                                FunctionInfo('pandas.core.frame', '__getitem__')),
-                               DagNodeDetails("to ['A']", ['A']),
+                               DagNodeDetails("to ['A']", ['A'], OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                                               RangeComparison(0, 400))),
                                OptionalCodeInfo(CodeReference(4, 4, 4, 11), "df['A']"),
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
@@ -177,7 +180,8 @@ def test_frame__getitem__frame():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A', 'B', 'C']),
+                                   DagNodeDetails(None, ['A', 'B', 'C'], OptimizerInfo(RangeComparison(0, 100), (6, 3),
+                                                                                       RangeComparison(0, 500))),
                                    OptionalCodeInfo(CodeReference(3, 5, 4, 28),
                                                     "pd.DataFrame([[0, None, 2], [1, 2, 3], [4, None, 2], "
                                                     "[9, 2, 3], [6, 1, 2], [1, 2, 3]], \n"
@@ -187,7 +191,9 @@ def test_frame__getitem__frame():
                                BasicCodeLocation("<string-source>", 5),
                                OperatorContext(OperatorType.PROJECTION,
                                                FunctionInfo('pandas.core.frame', '__getitem__')),
-                               DagNodeDetails("to ['A', 'C']", ['A', 'C']),
+                               DagNodeDetails("to ['A', 'C']", ['A', 'C'],
+                                              OptimizerInfo(RangeComparison(0, 100), (6, 2),
+                                                            RangeComparison(0, 500))),
                                OptionalCodeInfo(CodeReference(5, 16, 5, 30), "df[['A', 'C']]"),
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
@@ -220,7 +226,8 @@ def test_frame__getitem__selection():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A', 'B']),
+                                   DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 100), (5, 2),
+                                                                                  RangeComparison(0, 500))),
                                    OptionalCodeInfo(CodeReference(3, 5, 3, 67),
                                                     "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 5, 4, 11, None]})"),
                                    Comparison(partial))
@@ -228,7 +235,8 @@ def test_frame__getitem__selection():
                                   BasicCodeLocation("<string-source>", 4),
                                   OperatorContext(OperatorType.PROJECTION,
                                                   FunctionInfo('pandas.core.frame', '__getitem__')),
-                                  DagNodeDetails("to ['A']", ['A']),
+                                  DagNodeDetails("to ['A']", ['A'], OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                                                  RangeComparison(0, 500))),
                                   OptionalCodeInfo(CodeReference(4, 18, 4, 25), "df['A']"),
                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
@@ -236,7 +244,8 @@ def test_frame__getitem__selection():
                                  BasicCodeLocation('<string-source>', 4),
                                  OperatorContext(OperatorType.SUBSCRIPT,
                                                  FunctionInfo('pandas.core.series', '_cmp_method')),
-                                 DagNodeDetails('> 3', ['A']),
+                                 DagNodeDetails('> 3', ['A'], OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                                            RangeComparison(0, 500))),
                                  OptionalCodeInfo(CodeReference(4, 18, 4, 29), "df['A'] > 3"),
                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_projection, expected_subscript, arg_index=0)
@@ -244,7 +253,9 @@ def test_frame__getitem__selection():
                                  BasicCodeLocation("<string-source>", 4),
                                  OperatorContext(OperatorType.SELECTION,
                                                  FunctionInfo('pandas.core.frame', '__getitem__')),
-                                 DagNodeDetails("Select by Series: df[df['A'] > 3]", ['A', 'B']),
+                                 DagNodeDetails("Select by Series: df[df['A'] > 3]", ['A', 'B'],
+                                                OptimizerInfo(RangeComparison(0, 100), (3, 2),
+                                                              RangeComparison(0, 500))),
                                  OptionalCodeInfo(CodeReference(4, 15, 4, 30), "df[df['A'] > 3]"),
                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_selection, arg_index=0)
@@ -286,7 +297,9 @@ def test_frame__setitem__():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['foo', 'bar', 'baz', 'zoo']),
+                                   DagNodeDetails(None, ['foo', 'bar', 'baz', 'zoo'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (6, 4),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(3, 12, 6, 53),
                                                     "pd.DataFrame({'foo': ['one', 'one', 'one', 'two', "
                                                     "'two', 'two'],\n"
@@ -298,7 +311,9 @@ def test_frame__setitem__():
                                BasicCodeLocation("<string-source>", 7),
                                OperatorContext(OperatorType.PROJECTION,
                                                FunctionInfo('pandas.core.frame', '__getitem__')),
-                               DagNodeDetails("to ['baz']", ['baz']),
+                               DagNodeDetails("to ['baz']", ['baz'],
+                                              OptimizerInfo(RangeComparison(0, 200), (6, 1),
+                                                            RangeComparison(0, 4000))),
                                OptionalCodeInfo(CodeReference(7, 19, 7, 35), "pandas_df['baz']"),
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
@@ -306,7 +321,8 @@ def test_frame__setitem__():
                                  BasicCodeLocation('<string-source>', 7),
                                  OperatorContext(OperatorType.SUBSCRIPT,
                                                  FunctionInfo('pandas.core.series', '_arith_method')),
-                                 DagNodeDetails('+ 1', ['baz']),
+                                 DagNodeDetails('+ 1', ['baz'], OptimizerInfo(RangeComparison(0, 200), (6, 1),
+                                                                              RangeComparison(0, 4000))),
                                  OptionalCodeInfo(CodeReference(7, 19, 7, 39), "pandas_df['baz'] + 1"),
                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_project, expected_subscript, arg_index=0)
@@ -314,7 +330,9 @@ def test_frame__setitem__():
                                       BasicCodeLocation("<string-source>", 7),
                                       OperatorContext(OperatorType.PROJECTION_MODIFY,
                                                       FunctionInfo('pandas.core.frame', '__setitem__')),
-                                      DagNodeDetails("modifies ['baz']", ['foo', 'bar', 'baz', 'zoo']),
+                                      DagNodeDetails("modifies ['baz']", ['foo', 'bar', 'baz', 'zoo'],
+                                                     OptimizerInfo(RangeComparison(0, 200), (6, 4),
+                                                                   RangeComparison(0, 4000))),
                                       OptionalCodeInfo(CodeReference(7, 0, 7, 39),
                                                        "pandas_df['baz'] = pandas_df['baz'] + 1"),
                                       Comparison(FunctionType))

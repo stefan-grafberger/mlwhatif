@@ -15,7 +15,7 @@ from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionIn
 from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, get_input_info, add_dag_node, \
     get_dag_node_for_id, execute_patched_func_no_op_id, get_optional_code_info_or_none, FunctionCallResult, \
-    execute_patched_internal_func_with_depth
+    execute_patched_internal_func_with_depth, get_dag_node_copy_with_optimizer_info
 from mlwhatif.monkeypatching._patch_sklearn import call_info_singleton
 
 
@@ -110,7 +110,7 @@ class DataFramePatching:
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails("dropna", list(result.columns)),
+                               DagNodeDetails("dropna", list(result.columns), optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
             function_call_result = FunctionCallResult(result)
@@ -174,8 +174,10 @@ class DataFramePatching:
                                    processing_func)
             else:
                 raise NotImplementedError()
-            result = original(input_info.annotated_dfobject.result_data, *args, **kwargs)
+            initial_func = partial(original, input_info.annotated_dfobject.result_data, *args, **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
             function_call_result = FunctionCallResult(result)
+            dag_node = get_dag_node_copy_with_optimizer_info(dag_node, optimizer_info)
             add_dag_node(dag_node, dag_parents, function_call_result)
             new_result = function_call_result.function_result
 
@@ -209,7 +211,8 @@ class DataFramePatching:
             else:
                 processing_func = lambda df: original(df, *args, **kwargs)
             if isinstance(args[0], str):
-                result = original(self, *args, **kwargs)
+                initial_func = partial(original, self, *args, **kwargs)
+                optimizer_info, result = capture_optimizer_info(initial_func, self)
                 columns = list(self.columns)  # pylint: disable=no-member
                 description = "modifies {}".format([args[0]])
             else:
@@ -217,7 +220,7 @@ class DataFramePatching:
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(description, columns),
+                               DagNodeDetails(description, columns, optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
 
@@ -572,14 +575,15 @@ class SeriesPatching:
             # TODO: Pandas uses a function 'get_op_result_name' to construct the new name, this can also be
             #  None sometimes. If these names are actually important for something, revisit this columns code line.
             columns = [self.name]  # pylint: disable=no-member
+            initial_func = partial(original, self, other, cmp_op)
+            optimizer_info, result = capture_optimizer_info(initial_func)
+            function_call_result = FunctionCallResult(result)
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(description, columns),
+                               DagNodeDetails(description, columns, optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
-            result = original(self, other, cmp_op)
-            function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, dag_node_parents, function_call_result)
             new_result = function_call_result.function_result
 
@@ -616,14 +620,14 @@ class SeriesPatching:
             #  None sometimes. If these names are actually important for something, revisit this columns code line.
             columns = [self.name]  # pylint: disable=no-member
             processing_func = lambda df_one, df_two: original(df_one, df_two, logical_op)
+            initial_func = partial(original, self, other, logical_op)
+            optimizer_info, result = capture_optimizer_info(initial_func)
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(description, columns),
+                               DagNodeDetails(description, columns, optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
-
-            result = original(self, other, logical_op)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [input_info_self.dag_node, input_info_other.dag_node], function_call_result)
             new_result = function_call_result.function_result
@@ -648,14 +652,14 @@ class SeriesPatching:
             description = "!= {}".format(args[0])
             columns = [self.name]  # pylint: disable=no-member
             processing_func = lambda series: original(series, *args, **kwargs)
+            initial_func = partial(original, input_info.annotated_dfobject.result_data, *args, **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(description, columns),
+                               DagNodeDetails(description, columns, optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
-
-            result = original(input_info.annotated_dfobject.result_data, *args, **kwargs)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [input_info.dag_node], function_call_result)
             new_result = function_call_result.function_result
@@ -706,14 +710,14 @@ class SeriesPatching:
             # TODO: Pandas uses a function 'get_op_result_name' to construct the new name, this can also be
             #  None sometimes. If these names are actually important for something, revisit this columns code line.
             columns = [self.name]  # pylint: disable=no-member
+            initial_func = partial(original, self, other, arith_op)
+            optimizer_info, result = capture_optimizer_info(initial_func)
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(description, columns),
+                               DagNodeDetails(description, columns, optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
-
-            result = original(self, other, arith_op)
             function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, dag_node_parents, function_call_result)
             new_result = function_call_result.function_result

@@ -25,6 +25,8 @@ def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_
 
     if isinstance(result_or_inplace_obj, pandas.DataFrame):
         shape = result_or_inplace_obj.shape
+    elif isinstance(result_or_inplace_obj, pandas.Series):
+        shape = len(result_or_inplace_obj), 1
     else:
         raise Exception(f"Result type {type(result).__name__} not supported yet!")
     size = sys.getsizeof(result_or_inplace_obj)

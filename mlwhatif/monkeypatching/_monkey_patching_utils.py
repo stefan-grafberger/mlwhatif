@@ -13,7 +13,7 @@ from scipy.sparse import csr_matrix
 from mlwhatif.instrumentation._operator_types import OperatorContext, OperatorType
 from mlwhatif.instrumentation import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
-    OptionalCodeInfo
+    OptionalCodeInfo, OptimizerInfo
 from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.monkeypatching._mlinspect_ndarray import MlinspectNdarray
 
@@ -224,6 +224,18 @@ def wrap_in_mlinspect_array_if_necessary(df_object):
     if isinstance(df_object, numpy.ndarray):
         df_object = MlinspectNdarray(df_object)
     return df_object
+
+
+def get_dag_node_copy_with_optimizer_info(dag_node: DagNode, optimizer_info: OptimizerInfo):
+    """Because DagNodes are immutable, we need this fuction to create a copy where the optimizer_info is set"""
+    new_node = DagNode(dag_node.node_id,
+                       dag_node.code_location,
+                       dag_node.operator_info,
+                       DagNodeDetails(dag_node.details.description, dag_node.details.columns,
+                                      optimizer_info),
+                       dag_node.optional_code_info,
+                       dag_node.processing_func)
+    return new_node
 
 
 def add_dag_node(dag_node: DagNode, dag_node_parents: List[DagNode], function_call_result: FunctionCallResult):
