@@ -8,12 +8,12 @@ from types import FunctionType
 
 import networkx
 from pandas import DataFrame
-from testfixtures import Comparison
+from testfixtures import Comparison, RangeComparison
 
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif._pipeline_analyzer import PipelineAnalyzer
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
-    OptionalCodeInfo
+    OptionalCodeInfo, OptimizerInfo
 from mlwhatif.visualisation._visualisation import save_fig_to_path
 
 
@@ -35,7 +35,10 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                                    'sex',
                                                    'capital-gain', 'capital-loss', 'hours-per-week',
                                                    'native-country',
-                                                   'income-per-year']),
+                                                   'income-per-year'],
+                                                  OptimizerInfo(RangeComparison(0, 100000), (22792, 15),
+                                                                RangeComparison(0, 30000000))
+                                                  ),
                                    OptionalCodeInfo(CodeReference(12 + line_offset, 11, 12 + line_offset, 62),
                                                     "pd.read_csv(train_file, na_values='?', index_col=0)"),
                                    Comparison(partial))

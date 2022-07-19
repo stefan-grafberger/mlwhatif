@@ -10,6 +10,7 @@ import gorilla
 import pandas
 
 from mlwhatif import OperatorType, DagNode, BasicCodeLocation, DagNodeDetails
+from mlwhatif.execution._stat_tracking import capture_optimzier_info
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo
 from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, get_input_info, add_dag_node, \
@@ -39,12 +40,13 @@ class PandasPatching:
             result = original(*args, **kwargs)
             # TODO: We should also capture the execution time, the output shape, and the memory size of each operator
             processing_func = partial(original, *args, **kwargs)
+            optimizer_info, result = capture_optimzier_info(processing_func)
 
             description = "{}".format(args[0].split(os.path.sep)[-1])
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(description, list(result.columns)),
+                               DagNodeDetails(description, list(result.columns), optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
             function_call_result = FunctionCallResult(result)

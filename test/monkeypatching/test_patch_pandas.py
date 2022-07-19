@@ -7,12 +7,12 @@ from types import FunctionType
 
 import networkx
 import pandas
-from testfixtures import compare, StringComparison, Comparison
+from testfixtures import compare, StringComparison, Comparison, RangeComparison
 
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif.instrumentation import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
-    OptionalCodeInfo
+    OptionalCodeInfo, OptimizerInfo
 
 
 def test_read_csv():
@@ -39,7 +39,9 @@ def test_read_csv():
                                            ['age', 'workclass', 'fnlwgt', 'education', 'education-num',
                                             'marital-status',
                                             'occupation', 'relationship', 'race', 'sex', 'capital-gain', 'capital-loss',
-                                            'hours-per-week', 'native-country', 'income-per-year']),
+                                            'hours-per-week', 'native-country', 'income-per-year'],
+                                           OptimizerInfo(RangeComparison(0, 100000), (22792, 15),
+                                                         RangeComparison(0, 30000000))),
                             OptionalCodeInfo(CodeReference(6, 11, 6, 62),
                                              "pd.read_csv(train_file, na_values='?', index_col=0)"),
                             Comparison(partial))
