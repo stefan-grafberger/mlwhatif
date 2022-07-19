@@ -2,11 +2,21 @@
 The Nodes used in the DAG as nodes for the networkx.DiGraph
 """
 import dataclasses
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, Tuple
 
 import networkx
 
 from mlwhatif.instrumentation._operator_types import OperatorContext
+
+
+@dataclasses.dataclass
+class OptimizerInfo:
+    """
+    Additional info about the DAG node
+    """
+    runtime: int or None = None  # in ms
+    shape: Tuple[int, int] or None = None
+    memory: int or None = None  # in bytes
 
 
 @dataclasses.dataclass(frozen=True)
@@ -45,6 +55,7 @@ class DagNodeDetails:
     """
     description: str or None = None
     columns: List[str] = None
+    optimizer_info: OptimizerInfo or None = None
 
 
 @dataclasses.dataclass
