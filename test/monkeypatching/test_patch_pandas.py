@@ -712,7 +712,8 @@ def test_series_isin():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.series', 'Series')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(3, 12, 3, 48),
                                                     "pd.Series([0, 2, 4, None], name='A')"),
                                    Comparison(partial))
@@ -720,7 +721,8 @@ def test_series_isin():
                             BasicCodeLocation("<string-source>", 4),
                             OperatorContext(OperatorType.SUBSCRIPT,
                                             FunctionInfo('pandas.core.series', 'isin')),
-                            DagNodeDetails('isin: [2, 4]', ['A']),
+                            DagNodeDetails('isin: [2, 4]', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                RangeComparison(0, 800))),
                             OptionalCodeInfo(CodeReference(4, 11, 4, 33),
                                              'pd_series.isin([2, 4])'),
                             Comparison(FunctionType))
