@@ -679,7 +679,8 @@ def test_series__init__():
     expected_node = DagNode(0,
                             BasicCodeLocation("<string-source>", 3),
                             OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.series', 'Series')),
-                            DagNodeDetails(None, ['A']),
+                            DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                      RangeComparison(0, 800))),
                             OptionalCodeInfo(CodeReference(3, 12, 3, 48), "pd.Series([0, 2, 4, None], name='A')"),
                             Comparison(partial))
     compare(extracted_node, expected_node)

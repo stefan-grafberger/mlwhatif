@@ -495,7 +495,8 @@ class SeriesPatching:
             function_info = FunctionInfo('pandas.core.series', 'Series')
 
             operator_context = OperatorContext(OperatorType.DATA_SOURCE, function_info)
-            original(self, *args, **kwargs)
+            initial_func = partial(original, self, *args, **kwargs)
+            optimizer_info, _ = capture_optimizer_info(initial_func, self)
             result = self
 
             process_func = partial(pandas.Series, *args, **kwargs)
@@ -507,7 +508,7 @@ class SeriesPatching:
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(None, columns),
+                               DagNodeDetails(None, columns, optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                process_func)
             function_call_result = FunctionCallResult(result)
