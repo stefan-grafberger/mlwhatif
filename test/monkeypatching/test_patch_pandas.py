@@ -97,7 +97,8 @@ def test_frame_dropna():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                                             RangeComparison(0, 400))),
                                    OptionalCodeInfo(CodeReference(3, 5, 3, 52),
                                                     "pd.DataFrame([0, 2, 4, 5, None], columns=['A'])"),
                                    Comparison(partial))

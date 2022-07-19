@@ -103,7 +103,8 @@ class DataFramePatching:
             operator_context = OperatorContext(OperatorType.SELECTION, function_info)
             # No input_infos copy needed because it's only a selection and the rows not being removed don't change
             processing_func = lambda df: original(df, *args[1:], **kwargs)
-            result = original(input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            initial_func = partial(original, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
             if result is None:
                 raise NotImplementedError("TODO: Support inplace dropna")
             dag_node = DagNode(op_id,
