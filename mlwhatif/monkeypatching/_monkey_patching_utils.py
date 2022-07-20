@@ -10,6 +10,7 @@ import numpy
 from pandas import DataFrame, Series
 from scipy.sparse import csr_matrix
 
+from mlwhatif.execution._stat_tracking import get_df_shape, get_df_memory
 from mlwhatif.instrumentation._operator_types import OperatorContext, OperatorType
 from mlwhatif.instrumentation import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
@@ -74,6 +75,7 @@ def execute_patched_func(original_func, execute_inspections_func, *args, **kwarg
         result = execute_inspections_func(op_id, caller_filename, caller_lineno, None, None)
     return result
 
+
 def execute_patched_internal_func_with_depth(original_func, execute_inspections_func, depth, *args, **kwargs):
     """
     Detects whether the function call comes directly from user code and decides whether to execute the original
@@ -108,6 +110,7 @@ def execute_patched_internal_func_with_depth(original_func, execute_inspections_
         caller_lineno = sys._getframe(2).f_lineno  # pylint: disable=protected-access
         result = execute_inspections_func(op_id, caller_filename, caller_lineno, None, None)
     return result
+
 
 def execute_patched_func_no_op_id(original_func, execute_inspections_func, *args, **kwargs):
     """
@@ -258,7 +261,7 @@ def add_dag_node(dag_node: DagNode, dag_node_parents: List[DagNode], function_ca
         singleton.analysis_results.dag.add_node(dag_node)
     singleton.op_id_to_dag_node[dag_node.node_id] = dag_node
     # if function_call_result.other is not None:
-        # singleton.inspection_results.dag_node_to_inspection_results[dag_node] = backend_result.dag_node_annotation
+    # singleton.inspection_results.dag_node_to_inspection_results[dag_node] = backend_result.dag_node_annotation
     # TODO: Do we want to capture other meta information here? Or as part of the DAG node?
 
 
@@ -298,7 +301,8 @@ def add_train_label_node(estimator, train_label_arg, function_info):
     train_labels_dag_node = DagNode(train_label_op_id,
                                     BasicCodeLocation(estimator.mlinspect_caller_filename, estimator.mlinspect_lineno),
                                     operator_context,
-                                    DagNodeDetails(None, ["array"]),
+                                    DagNodeDetails(None, ["array"], OptimizerInfo(0, get_df_shape(train_label_arg),
+                                                                                  get_df_memory(train_label_arg))),
                                     get_optional_code_info_or_none(estimator.mlinspect_optional_code_reference,
                                                                    estimator.mlinspect_optional_source_code),
                                     process_func)
@@ -320,7 +324,8 @@ def add_train_data_node(estimator, train_data_arg, function_info):
     train_data_dag_node = DagNode(train_data_op_id,
                                   BasicCodeLocation(estimator.mlinspect_caller_filename, estimator.mlinspect_lineno),
                                   operator_context,
-                                  DagNodeDetails(None, ["array"]),
+                                  DagNodeDetails(None, ["array"], OptimizerInfo(0, get_df_shape(train_data_arg),
+                                                                                get_df_memory(train_data_arg))),
                                   get_optional_code_info_or_none(estimator.mlinspect_optional_code_reference,
                                                                  estimator.mlinspect_optional_source_code),
                                   process_func)
@@ -342,7 +347,9 @@ def add_test_data_dag_node(test_data_arg, function_info, lineno, optional_code_r
     test_data_dag_node = DagNode(test_data_op_id,
                                  BasicCodeLocation(caller_filename, lineno),
                                  operator_context,
-                                 DagNodeDetails(None, get_column_names(test_data_arg)),
+                                 DagNodeDetails(None, get_column_names(test_data_arg),
+                                                OptimizerInfo(0, get_df_shape(test_data_arg),
+                                                              get_df_memory(test_data_arg))),
                                  get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                  process_func)
     function_call_result = FunctionCallResult(test_data_arg)
@@ -363,7 +370,9 @@ def add_test_label_node(test_label_arg, caller_filename, function_info, lineno, 
     test_labels_dag_node = DagNode(test_label_op_id,
                                    BasicCodeLocation(caller_filename, lineno),
                                    operator_context,
-                                   DagNodeDetails(None, get_column_names(test_label_arg)),
+                                   DagNodeDetails(None, get_column_names(test_label_arg),
+                                                  OptimizerInfo(0, get_df_shape(test_label_arg),
+                                                                get_df_memory(test_label_arg))),
                                    get_optional_code_info_or_none(optional_code_reference,
                                                                   optional_source_code),
                                    process_func)
