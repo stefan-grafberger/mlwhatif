@@ -7,6 +7,7 @@ import gorilla
 from numpy import random
 
 from mlwhatif import DagNode, BasicCodeLocation, DagNodeDetails
+from mlwhatif.execution._stat_tracking import capture_optimizer_info
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, add_dag_node, \
     get_optional_code_info_or_none, FunctionCallResult
@@ -29,12 +30,13 @@ class NumpyRandomPatching:
             """ Execute inspections, add DAG node """
             function_info = FunctionInfo('numpy.random', 'random')
             operator_context = OperatorContext(OperatorType.DATA_SOURCE, function_info)
-            result = original(*args, **kwargs)
+            initial_func = partial(original, *args, **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
             processing_func = partial(original, *args, **kwargs)
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails("random", ['array']),
+                               DagNodeDetails("random", ['array'], optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
             function_call_result = FunctionCallResult(result)

@@ -40,8 +40,15 @@ def get_df_memory(result_or_inplace_obj):
 
 def get_df_shape(result_or_inplace_obj):
     """Get the shape of a df-like object"""
-    if isinstance(result_or_inplace_obj, (pandas.DataFrame, numpy.ndarray)):
+    if isinstance(result_or_inplace_obj, pandas.DataFrame):
         shape = result_or_inplace_obj.shape
+    elif isinstance(result_or_inplace_obj, numpy.ndarray):
+        if result_or_inplace_obj.ndim == 2:
+            shape = result_or_inplace_obj.shape
+        elif result_or_inplace_obj.ndim == 1:
+            shape = len(result_or_inplace_obj), 1
+        else:
+            raise Exception("Currently only numpy arrays with 1 and 2 dims are supported!")
     elif isinstance(result_or_inplace_obj, pandas.Series):
         shape = len(result_or_inplace_obj), 1
     elif isinstance(result_or_inplace_obj, pandas.core.groupby.generic.DataFrameGroupBy):
