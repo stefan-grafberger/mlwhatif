@@ -8,12 +8,12 @@ from types import FunctionType
 
 import astunparse
 import networkx
-from testfixtures import compare, Comparison
+from testfixtures import compare, Comparison, RangeComparison
 
 from mlwhatif import OperatorType, OperatorContext, FunctionInfo
 from mlwhatif.instrumentation import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import CodeReference, DagNode, BasicCodeLocation, DagNodeDetails, \
-    OptionalCodeInfo
+    OptionalCodeInfo, OptimizerInfo
 from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.testing._testing_helper_utils import get_test_code_with_function_def_and_for_loop
 
@@ -31,20 +31,23 @@ def test_func_defs_and_loops():
                                    BasicCodeLocation("<string-source>", 4),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 800), (2, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(4, 9, 4, 44), "pd.DataFrame([0, 1], columns=['A'])"),
                                    Comparison(partial))
     expected_select_1 = DagNode(1,
                                 BasicCodeLocation("<string-source>", 8),
                                 OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'dropna')),
-                                DagNodeDetails('dropna', ['A']),
+                                DagNodeDetails('dropna', ['A'], OptimizerInfo(RangeComparison(0, 800), (2, 1),
+                                                                              RangeComparison(0, 800))),
                                 OptionalCodeInfo(CodeReference(8, 9, 8, 20), 'df.dropna()'),
                                 Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_select_1, arg_index=0)
     expected_select_2 = DagNode(2,
                                 BasicCodeLocation("<string-source>", 8),
                                 OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'dropna')),
-                                DagNodeDetails('dropna', ['A']),
+                                DagNodeDetails('dropna', ['A'], OptimizerInfo(RangeComparison(0, 800), (2, 1),
+                                                                              RangeComparison(0, 800))),
                                 OptionalCodeInfo(CodeReference(8, 9, 8, 20), 'df.dropna()'),
                                 Comparison(FunctionType))
     expected_dag.add_edge(expected_select_1, expected_select_2, arg_index=0)
@@ -64,18 +67,21 @@ def test_func_defs_and_loops_without_code_reference_tracking():
                                    BasicCodeLocation("<string-source>", 4),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 800), (2, 1),
+                                                                             RangeComparison(0, 800))),
                                    processing_func=Comparison(partial))
     expected_select_1 = DagNode(1,
                                 BasicCodeLocation("<string-source>", 8),
                                 OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'dropna')),
-                                DagNodeDetails('dropna', ['A']),
+                                DagNodeDetails('dropna', ['A'], OptimizerInfo(RangeComparison(0, 800), (2, 1),
+                                                                              RangeComparison(0, 800))),
                                 processing_func=Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_select_1, arg_index=0)
     expected_select_2 = DagNode(2,
                                 BasicCodeLocation("<string-source>", 8),
                                 OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'dropna')),
-                                DagNodeDetails('dropna', ['A']),
+                                DagNodeDetails('dropna', ['A'], OptimizerInfo(RangeComparison(0, 800), (2, 1),
+                                                                              RangeComparison(0, 800))),
                                 processing_func=Comparison(FunctionType))
     expected_dag.add_edge(expected_select_1, expected_select_2, arg_index=0)
     compare(networkx.to_dict_of_dicts(extracted_dag), networkx.to_dict_of_dicts(expected_dag))
@@ -115,12 +121,13 @@ def test_black_box_operation():
                                   OperatorContext(OperatorType.MISSING_OP, None),
                                   DagNodeDetails('Warning! Operator <string-source>:5 (df.dropna()) encountered a '
                                                  'DataFrame resulting from an operation without mlwhatif support!',
-                                                 ['A']),
+                                                 ['A'], OptimizerInfo(None, (5, 1), RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(5, 5, 5, 16), 'df.dropna()'))
     expected_select = DagNode(0,
                               BasicCodeLocation("<string-source>", 5),
                               OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'dropna')),
-                              DagNodeDetails('dropna', ['A']),
+                              DagNodeDetails('dropna', ['A'], OptimizerInfo(RangeComparison(0, 800), (5, 1),
+                                                                            RangeComparison(0, 800))),
                               OptionalCodeInfo(CodeReference(5, 5, 5, 16), 'df.dropna()'),
                               Comparison(FunctionType))
     expected_dag.add_edge(expected_missing_op, expected_select, arg_index=0)
