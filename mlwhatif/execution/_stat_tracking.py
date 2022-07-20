@@ -10,6 +10,7 @@ import numpy
 import pandas
 import sklearn
 from scipy.sparse import csr_matrix
+from tensorflow.python.keras.callbacks import History
 
 from mlwhatif.instrumentation._dag_node import OptimizerInfo
 
@@ -57,7 +58,7 @@ def get_df_shape(result_or_inplace_obj):
         #  This is because we might need it for optimisation purposes to choose whether dense or sparse matrices are
         #  better. We might want to potentially change this in the future.
         shape = result_or_inplace_obj.shape
-    elif isinstance(result_or_inplace_obj, sklearn.base.BaseEstimator):
+    elif isinstance(result_or_inplace_obj, (sklearn.base.BaseEstimator, History)):
         # Estimator fit only, not fit_transform
         shape = None
     elif isinstance(result_or_inplace_obj, float):

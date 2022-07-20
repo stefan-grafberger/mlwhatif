@@ -1445,12 +1445,13 @@ class SklearnKerasClassifierPatching:
         # Estimator
         operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
         # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
-        original(self, train_data_result, train_labels_result, *args[2:], **kwargs)
+        initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
+        optimizer_info, _ = capture_optimizer_info(initial_func, self)
         self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(self.mlinspect_estimator_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                            operator_context,
-                           DagNodeDetails("Neural Network", []),
+                           DagNodeDetails("Neural Network", [], optimizer_info),
                            get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                           self.mlinspect_optional_source_code),
                            processing_func)
@@ -1494,12 +1495,13 @@ class SklearnKerasClassifierPatching:
 
             # This currently calls predict twice, but patching here is complex. Maybe revisit this in future work
             # predictions = self.predict(test_data_result)  # pylint: disable=no-member
-            result = original(self, test_data_result, test_labels_result, *args[2:], **kwargs)
+            initial_func = partial(original, self, test_data_result, test_labels_result, *args[2:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
 
             dag_node = DagNode(singleton.get_next_op_id(),
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails("Neural Network", []),
+                               DagNodeDetails("Neural Network", [], optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
             estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)

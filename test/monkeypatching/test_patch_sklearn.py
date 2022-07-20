@@ -1927,7 +1927,9 @@ def test_keras_wrapper():
                                    BasicCodeLocation("<string-source>", 9),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A', 'B', 'target']),
+                                   DagNodeDetails(None, ['A', 'B', 'target'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(9, 5, 9, 95),
                                                     "pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], "
                                                     "'target': ['no', 'no', 'yes', 'yes']})"),
@@ -1936,14 +1938,18 @@ def test_keras_wrapper():
                                        BasicCodeLocation("<string-source>", 11),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                       DagNodeDetails('Standard Scaler: fit_transform', ['array']),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(11, 8, 11, 24), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_data_projection = DagNode(1,
                                        BasicCodeLocation("<string-source>", 11),
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
-                                       DagNodeDetails("to ['A', 'B']", ['A', 'B']),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(11, 39, 11, 53), "df[['A', 'B']]"),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_data_projection, arg_index=0)
@@ -1952,7 +1958,9 @@ def test_keras_wrapper():
                                         BasicCodeLocation("<string-source>", 12),
                                         OperatorContext(OperatorType.PROJECTION,
                                                         FunctionInfo('pandas.core.frame', '__getitem__')),
-                                        DagNodeDetails("to ['target']", ['target']),
+                                        DagNodeDetails("to ['target']", ['target'],
+                                                       OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                     RangeComparison(0, 800))),
                                         OptionalCodeInfo(CodeReference(12, 51, 12, 65), "df[['target']]"),
                                         Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_label_projection, arg_index=0)
@@ -1960,7 +1968,9 @@ def test_keras_wrapper():
                                     BasicCodeLocation("<string-source>", 12),
                                     OperatorContext(OperatorType.TRANSFORMER,
                                                     FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
-                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
+                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                 RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(12, 9, 12, 36), 'OneHotEncoder(sparse=False)'),
                                     Comparison(FunctionType))
     expected_dag.add_edge(expected_label_projection, expected_label_encode, arg_index=0)
@@ -1969,7 +1979,8 @@ def test_keras_wrapper():
                                   OperatorContext(OperatorType.TRAIN_DATA,
                                                   FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn',
                                                                'KerasClassifier')),
-                                  DagNodeDetails(None, ['array']),
+                                  DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                                RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(22, 6, 22, 92),
                                                    'KerasClassifier(build_fn=create_model, epochs=2, '
                                                    'batch_size=1, verbose=0, input_dim=2)'),
@@ -1980,7 +1991,8 @@ def test_keras_wrapper():
                                     OperatorContext(OperatorType.TRAIN_LABELS,
                                                     FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn',
                                                                  'KerasClassifier')),
-                                    DagNodeDetails(None, ['array']),
+                                    DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                                  RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(22, 6, 22, 92),
                                                      'KerasClassifier(build_fn=create_model, epochs=2, '
                                                      'batch_size=1, verbose=0, input_dim=2)'),
@@ -1991,7 +2003,8 @@ def test_keras_wrapper():
                                   OperatorContext(OperatorType.ESTIMATOR,
                                                   FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn',
                                                                'KerasClassifier')),
-                                  DagNodeDetails('Neural Network', []),
+                                  DagNodeDetails('Neural Network', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                                     RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(22, 6, 22, 92),
                                                    'KerasClassifier(build_fn=create_model, epochs=2, '
                                                    'batch_size=1, verbose=0, input_dim=2)'),
@@ -2065,7 +2078,9 @@ def test_keras_wrapper_score():
                                        BasicCodeLocation("<string-source>", 30),
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
-                                       DagNodeDetails("to ['A', 'B']", ['A', 'B']),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(30, 23, 30, 42), "test_df[['A', 'B']]"),
                                        Comparison(FunctionType))
     expected_test_data = DagNode(12,
@@ -2073,7 +2088,8 @@ def test_keras_wrapper_score():
                                  OperatorContext(OperatorType.TEST_DATA,
                                                  FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn.'
                                                               'KerasClassifier', 'score')),
-                                 DagNodeDetails(None, ['A', 'B']),
+                                 DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                RangeComparison(0, 800))),
                                  OptionalCodeInfo(CodeReference(30, 13, 30, 56),
                                                   "clf.score(test_df[['A', 'B']], test_labels)"),
                                  Comparison(FunctionType))
@@ -2082,7 +2098,9 @@ def test_keras_wrapper_score():
                                     BasicCodeLocation("<string-source>", 29),
                                     OperatorContext(OperatorType.TRANSFORMER,
                                                     FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
-                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
+                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                 RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(29, 14, 29, 41), 'OneHotEncoder(sparse=False)'),
                                     Comparison(FunctionType))
     expected_test_labels = DagNode(13,
@@ -2090,7 +2108,8 @@ def test_keras_wrapper_score():
                                    OperatorContext(OperatorType.TEST_LABELS,
                                                    FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn.'
                                                                 'KerasClassifier', 'score')),
-                                   DagNodeDetails(None, ['array']),
+                                   DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                 RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(30, 13, 30, 56),
                                                     "clf.score(test_df[['A', 'B']], test_labels)"),
                                    Comparison(FunctionType))
@@ -2100,7 +2119,8 @@ def test_keras_wrapper_score():
                                   OperatorContext(OperatorType.ESTIMATOR,
                                                   FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn',
                                                                'KerasClassifier')),
-                                  DagNodeDetails('Neural Network', []),
+                                  DagNodeDetails('Neural Network', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                                     RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(25, 6, 25, 93),
                                                    'KerasClassifier(build_fn=create_model, epochs=15, batch_size=1, '
                                                    'verbose=0, input_dim=2)'),
@@ -2110,7 +2130,8 @@ def test_keras_wrapper_score():
                              OperatorContext(OperatorType.SCORE,
                                              FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn.'
                                                           'KerasClassifier', 'score')),
-                             DagNodeDetails('Neural Network', []),
+                             DagNodeDetails('Neural Network', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
+                                                                                RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(30, 13, 30, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"),
                              Comparison(FunctionType))
