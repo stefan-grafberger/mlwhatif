@@ -249,7 +249,8 @@ def test_function_transformer():
                                    BasicCodeLocation("<string-source>", 8),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(8, 5, 8, 39), "pd.DataFrame({'A': [1, 2, 10, 5]})"),
                                    Comparison(partial))
     expected_transformer = DagNode(1,
@@ -257,7 +258,9 @@ def test_function_transformer():
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.preprocessing_function_transformer',
                                                                 'FunctionTransformer')),
-                                   DagNodeDetails('Function Transformer: fit_transform', ['A']),
+                                   DagNodeDetails('Function Transformer: fit_transform', ['A'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(9, 23, 9, 65),
                                                     'FunctionTransformer(lambda x: safe_log(x))'),
                                    Comparison(FunctionType))
@@ -266,7 +269,8 @@ def test_function_transformer():
                                        BasicCodeLocation("<string-source>", 11),
                                        OperatorContext(OperatorType.DATA_SOURCE,
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                       DagNodeDetails(None, ['A']),
+                                       DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                 RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(11, 10, 11, 44),
                                                         "pd.DataFrame({'A': [1, 2, 10, 5]})"),
                                        Comparison(partial))
@@ -275,7 +279,9 @@ def test_function_transformer():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing_function_transformer',
                                                                     'FunctionTransformer')),
-                                       DagNodeDetails('Function Transformer: transform', ['A']),
+                                       DagNodeDetails('Function Transformer: transform', ['A'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(9, 23, 9, 65),
                                                         'FunctionTransformer(lambda x: safe_log(x))'),
                                        Comparison(FunctionType))
@@ -584,7 +590,8 @@ def test_hashing_vectorizer():
                                    BasicCodeLocation("<string-source>", 8),
                                    OperatorContext(OperatorType.PROJECTION,
                                                    FunctionInfo('pandas.core.frame', '__getitem__')),
-                                   DagNodeDetails("to ['A']", ['A']),
+                                   DagNodeDetails("to ['A']", ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                   RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(8, 40, 8, 47), "df['A']"),
                                    Comparison(FunctionType))
     expected_transformer = DagNode(2,
@@ -592,7 +599,9 @@ def test_hashing_vectorizer():
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.feature_extraction.text',
                                                                 'HashingVectorizer')),
-                                   DagNodeDetails('Hashing Vectorizer: fit_transform', ['array']),
+                                   DagNodeDetails('Hashing Vectorizer: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(7, 13, 7, 67),
                                                     'HashingVectorizer(ngram_range=(1, 3), n_features=2**2)'),
                                    Comparison(FunctionType))
@@ -601,7 +610,8 @@ def test_hashing_vectorizer():
                                        BasicCodeLocation("<string-source>", 12),
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
-                                       DagNodeDetails("to ['A']", ['A']),
+                                       DagNodeDetails("to ['A']", ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                       RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(12, 36, 12, 48), "test_df['A']"),
                                        Comparison(FunctionType))
     expected_transformer_two = DagNode(5,
@@ -609,7 +619,9 @@ def test_hashing_vectorizer():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.feature_extraction.text',
                                                                     'HashingVectorizer')),
-                                       DagNodeDetails('Hashing Vectorizer: transform', ['array']),
+                                       DagNodeDetails('Hashing Vectorizer: transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(7, 13, 7, 67),
                                                         'HashingVectorizer(ngram_range=(1, 3), n_features=2**2)'),
                                        Comparison(FunctionType))

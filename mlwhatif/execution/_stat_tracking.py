@@ -8,6 +8,7 @@ from typing import Tuple
 
 import numpy
 import pandas
+from scipy.sparse import csr_matrix
 
 from mlwhatif.instrumentation._dag_node import OptimizerInfo
 
@@ -50,6 +51,11 @@ def get_df_shape(result_or_inplace_obj):
         shape_b = get_df_shape(result_or_inplace_obj[1])
         assert shape_a[1] == shape_b[1]
         shape = shape_a[0] + shape_b[0], shape_a[1]
+    elif isinstance(result_or_inplace_obj, csr_matrix):
+        # Here we use the csr_matrix column count as width instead of treating it as 1 column only as we do logically.
+        #  This is because we might need it for optimisation purposes to choose whether dense or sparse matrices are
+        #  better. We might want to potentially change this in the future.
+        shape = result_or_inplace_obj.shape
     else:
         raise Exception(f"Result type {type(result_or_inplace_obj).__name__} not supported yet!")
     return shape
