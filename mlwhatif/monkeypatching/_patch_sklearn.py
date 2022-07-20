@@ -90,12 +90,11 @@ class SklearnModelSelectionPatching:
     @gorilla.settings(allow_hit=True)
     def patched_train_test_split(*args, **kwargs):
         """ Patch for ('sklearn.model_selection._split', 'train_test_split') """
-        # pylint: disable=no-method-argument
+        # pylint: disable=no-method-argument,too-many-locals
         original = gorilla.get_original_attribute(model_selection, 'train_test_split')
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
-            # pylint: disable=too-many-locals
             function_info = FunctionInfo('sklearn.model_selection._split', 'train_test_split')
             input_info = get_input_info(args[0], caller_filename, lineno, function_info, optional_code_reference,
                                         optional_source_code)
@@ -790,7 +789,7 @@ class SklearnSimpleImputerPatching:
     @gorilla.settings(allow_hit=True)
     def patched_fit_transform(self, *args, **kwargs):
         """ Patch for ('sklearn.impute._base.SimpleImputer', 'fit_transform') """
-        # pylint: disable=no-method-argument
+        # pylint: disable=no-method-argument,too-many-locals
         self.mlinspect_fit_transform_active = True  # pylint: disable=attribute-defined-outside-init
         original = gorilla.get_original_attribute(impute.SimpleImputer, 'fit_transform')
         function_info = FunctionInfo('sklearn.impute._base', 'SimpleImputer')
@@ -831,7 +830,7 @@ class SklearnSimpleImputerPatching:
     @gorilla.settings(allow_hit=True)
     def patched_transform(self, *args, **kwargs):
         """ Patch for ('sklearn.impute._base.SimpleImputer', 'transform') """
-        # pylint: disable=no-method-argument
+        # pylint: disable=no-method-argument,too-many-locals
         original = gorilla.get_original_attribute(impute.SimpleImputer, 'transform')
         if not self.mlinspect_fit_transform_active:
             function_info = FunctionInfo('sklearn.impute._base', 'SimpleImputer')
@@ -909,7 +908,7 @@ class SklearnFunctionTransformerPatching:
     @gorilla.settings(allow_hit=True)
     def patched_fit_transform(self, *args, **kwargs):
         """ Patch for ('sklearn.preprocessing_function_transformer.FunctionTransformer', 'fit_transform') """
-        # pylint: disable=no-method-argument
+        # pylint: disable=no-method-argument,too-many-locals
         self.mlinspect_fit_transform_active = True  # pylint: disable=attribute-defined-outside-init
         original = gorilla.get_original_attribute(preprocessing.FunctionTransformer, 'fit_transform')
         function_info = FunctionInfo('sklearn.preprocessing_function_transformer', 'FunctionTransformer')
@@ -950,7 +949,7 @@ class SklearnFunctionTransformerPatching:
     @gorilla.settings(allow_hit=True)
     def patched_transform(self, *args, **kwargs):
         """ Patch for ('sklearn.preprocessing_function_transformer.FunctionTransformer', 'transform') """
-        # pylint: disable=no-method-argument
+        # pylint: disable=no-method-argument,too-many-locals
         original = gorilla.get_original_attribute(preprocessing.FunctionTransformer, 'transform')
         if not self.mlinspect_fit_transform_active:
             function_info = FunctionInfo('sklearn.preprocessing_function_transformer', 'FunctionTransformer')

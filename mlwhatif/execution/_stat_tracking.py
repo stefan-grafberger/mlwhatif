@@ -10,7 +10,7 @@ import numpy
 import pandas
 import sklearn
 from scipy.sparse import csr_matrix
-from tensorflow.python.keras.callbacks import History
+from tensorflow.python.keras.callbacks import History  # pylint: disable=no-name-in-module
 
 from mlwhatif.instrumentation._dag_node import OptimizerInfo
 
