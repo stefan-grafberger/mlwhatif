@@ -267,7 +267,8 @@ class SklearnComposePatching:
         operator_context = OperatorContext(OperatorType.CONCATENATION, function_info)
         # input_annotated_dfs = [input_info.annotated_dfobject for input_info in input_infos]
         # No input_infos copy needed because it's only a selection and the rows not being removed don't change
-        result = original(self, *args, **kwargs)
+        initial_func = partial(original, self, *args, **kwargs)
+        optimizer_info, result = capture_optimizer_info(initial_func)
 
         def processing_func(*input_dfs):
             transformer = compose.ColumnTransformer(**self.mlinspect_non_data_func_args)
@@ -289,7 +290,7 @@ class SklearnComposePatching:
         dag_node = DagNode(singleton.get_next_op_id(),
                            BasicCodeLocation(self.mlinspect_filename, self.mlinspect_lineno),
                            operator_context,
-                           DagNodeDetails(None, ['array']),
+                           DagNodeDetails(None, ['array'], optimizer_info),
                            get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                           self.mlinspect_optional_source_code),
                            processing_func)
@@ -356,13 +357,14 @@ class SklearnStandardScalerPatching:
             return transformed_data
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
-        result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        optimizer_info, result = capture_optimizer_info(initial_func)
         dag_node_id = singleton.get_next_op_id()
         self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(dag_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                            operator_context,
-                           DagNodeDetails("Standard Scaler: fit_transform", ['array']),
+                           DagNodeDetails("Standard Scaler: fit_transform", ['array'], optimizer_info),
                            get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                           self.mlinspect_optional_source_code),
                            processing_func)
@@ -391,11 +393,12 @@ class SklearnStandardScalerPatching:
                 return transformed_data
 
             operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
-            result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
             dag_node = DagNode(singleton.get_next_op_id(),
                                BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                                operator_context,
-                               DagNodeDetails("Standard Scaler: transform", ['array']),
+                               DagNodeDetails("Standard Scaler: transform", ['array'], optimizer_info),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
                                processing_func)

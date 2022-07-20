@@ -105,7 +105,7 @@ def test_train_test_split():
                              OperatorContext(OperatorType.TRAIN_TEST_SPLIT,
                                              FunctionInfo('sklearn.model_selection._split', 'train_test_split')),
                              DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
-                                                                        RangeComparison(0, 800))),
+                                                                       RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(5, 24, 5, 67),
                                               'train_test_split(pandas_df, random_state=0)'),
                              Comparison(FunctionType))
@@ -172,14 +172,17 @@ def test_standard_scaler():
                                    BasicCodeLocation("<string-source>", 5),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(5, 5, 5, 39), "pd.DataFrame({'A': [1, 2, 10, 5]})"),
                                    Comparison(partial))
     expected_transformer = DagNode(1,
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                   DagNodeDetails('Standard Scaler: fit_transform', ['array']),
+                                   DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(6, 18, 6, 34), 'StandardScaler()'),
                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
@@ -187,7 +190,8 @@ def test_standard_scaler():
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.DATA_SOURCE,
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                       DagNodeDetails(None, ['A']),
+                                       DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                 RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(8, 10, 8, 44),
                                                         "pd.DataFrame({'A': [1, 2, 10, 5]})"),
                                        Comparison(partial))
@@ -195,7 +199,9 @@ def test_standard_scaler():
                                        BasicCodeLocation("<string-source>", 6),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                       DagNodeDetails('Standard Scaler: transform', ['array']),
+                                       DagNodeDetails('Standard Scaler: transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(6, 18, 6, 34), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
