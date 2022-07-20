@@ -695,13 +695,14 @@ class SklearnOneHotEncoderPatching:
             return transformed_data
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
-        result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        optimizer_info, result = capture_optimizer_info(initial_func)
         dag_node_id = singleton.get_next_op_id()
         self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(dag_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                            operator_context,
-                           DagNodeDetails("One-Hot Encoder: fit_transform", ['array']),
+                           DagNodeDetails("One-Hot Encoder: fit_transform", ['array'], optimizer_info),
                            get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                           self.mlinspect_optional_source_code),
                            processing_func)
@@ -728,11 +729,12 @@ class SklearnOneHotEncoderPatching:
                 return transformed_data
 
             operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
-            result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
             dag_node = DagNode(singleton.get_next_op_id(),
                                BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                                operator_context,
-                               DagNodeDetails("One-Hot Encoder: transform", ['array']),
+                               DagNodeDetails("One-Hot Encoder: transform", ['array'], optimizer_info),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
                                processing_func)

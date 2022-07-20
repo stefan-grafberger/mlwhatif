@@ -478,7 +478,8 @@ def test_one_hot_encoder_not_sparse():
                                    BasicCodeLocation("<string-source>", 5),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(5, 5, 5, 62),
                                                     "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
                                    Comparison(partial))
@@ -486,7 +487,9 @@ def test_one_hot_encoder_not_sparse():
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
-                                   DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
+                                   DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(6, 18, 6, 45), 'OneHotEncoder(sparse=False)'),
                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
@@ -494,7 +497,8 @@ def test_one_hot_encoder_not_sparse():
                                        BasicCodeLocation("<string-source>", 11),
                                        OperatorContext(OperatorType.DATA_SOURCE,
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                       DagNodeDetails(None, ['A']),
+                                       DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                 RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(11, 10, 11, 67),
                                                         "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
                                        Comparison(partial))
@@ -503,7 +507,9 @@ def test_one_hot_encoder_not_sparse():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._encoders',
                                                                     'OneHotEncoder')),
-                                       DagNodeDetails('One-Hot Encoder: transform', ['array']),
+                                       DagNodeDetails('One-Hot Encoder: transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(6, 18, 6, 45), 'OneHotEncoder(sparse=False)'),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
@@ -547,7 +553,8 @@ def test_one_hot_encoder_sparse():
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(6, 5, 6, 62),
                                                     "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
                                    Comparison(partial))
@@ -555,7 +562,9 @@ def test_one_hot_encoder_sparse():
                                    BasicCodeLocation("<string-source>", 7),
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
-                                   DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
+                                   DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(7, 18, 7, 33), 'OneHotEncoder()'),
                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
