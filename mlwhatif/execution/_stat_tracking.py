@@ -24,13 +24,32 @@ def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_
     else:
         result_or_inplace_obj = obj_for_inplace_ops
 
+    shape = get_df_shape(result_or_inplace_obj)
+    size = get_df_memory(result_or_inplace_obj)
+    return OptimizerInfo(execution_duration_in_ms, shape, size), result
+
+
+def get_df_memory(result_or_inplace_obj):
+    """Get the size in bytes of a df-like object"""
+    size = sys.getsizeof(result_or_inplace_obj)
+    return size
+
+
+def get_df_shape(result_or_inplace_obj):
+    """Get the shape of a df-like object"""
     if isinstance(result_or_inplace_obj, (pandas.DataFrame, numpy.ndarray)):
         shape = result_or_inplace_obj.shape
     elif isinstance(result_or_inplace_obj, pandas.Series):
         shape = len(result_or_inplace_obj), 1
     elif isinstance(result_or_inplace_obj, pandas.core.groupby.generic.DataFrameGroupBy):
         shape = None  # Not needed because we only consider combined groupby/agg nodes
+    elif isinstance(result_or_inplace_obj, list):
+        # A few operations like train_test_split return a list
+        assert len(result_or_inplace_obj) == 2
+        shape_a = get_df_shape(result_or_inplace_obj[0])
+        shape_b = get_df_shape(result_or_inplace_obj[1])
+        assert shape_a[1] == shape_b[1]
+        shape = shape_a[0] + shape_b[0], shape_a[1]
     else:
-        raise Exception(f"Result type {type(result).__name__} not supported yet!")
-    size = sys.getsizeof(result_or_inplace_obj)
-    return OptimizerInfo(execution_duration_in_ms, shape, size), result
+        raise Exception(f"Result type {type(result_or_inplace_obj).__name__} not supported yet!")
+    return shape

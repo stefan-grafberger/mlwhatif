@@ -96,14 +96,16 @@ def test_train_test_split():
     expected_source = DagNode(0,
                               BasicCodeLocation("<string-source>", 4),
                               OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                              DagNodeDetails(None, ['A']),
+                              DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                        RangeComparison(0, 800))),
                               OptionalCodeInfo(CodeReference(4, 12, 4, 46), "pd.DataFrame({'A': [1, 2, 10, 5]})"),
                               Comparison(partial))
     expected_split = DagNode(1,
                              BasicCodeLocation("<string-source>", 5),
                              OperatorContext(OperatorType.TRAIN_TEST_SPLIT,
                                              FunctionInfo('sklearn.model_selection._split', 'train_test_split')),
-                             DagNodeDetails(None, ['A']),
+                             DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                        RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(5, 24, 5, 67),
                                               'train_test_split(pandas_df, random_state=0)'),
                              Comparison(FunctionType))
@@ -112,7 +114,7 @@ def test_train_test_split():
                              BasicCodeLocation("<string-source>", 5),
                              OperatorContext(OperatorType.TRAIN_TEST_SPLIT,
                                              FunctionInfo('sklearn.model_selection._split', 'train_test_split')),
-                             DagNodeDetails('(Train Data)', ['A']),
+                             DagNodeDetails('(Train Data)', ['A'], OptimizerInfo(0, (3, 1), RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(5, 24, 5, 67),
                                               'train_test_split(pandas_df, random_state=0)'),
                              Comparison(FunctionType))
@@ -121,7 +123,7 @@ def test_train_test_split():
                             BasicCodeLocation("<string-source>", 5),
                             OperatorContext(OperatorType.TRAIN_TEST_SPLIT,
                                             FunctionInfo('sklearn.model_selection._split', 'train_test_split')),
-                            DagNodeDetails('(Test Data)', ['A']),
+                            DagNodeDetails('(Test Data)', ['A'], OptimizerInfo(0, (1, 1), RangeComparison(0, 800))),
                             OptionalCodeInfo(CodeReference(5, 24, 5, 67),
                                              'train_test_split(pandas_df, random_state=0)'),
                             Comparison(FunctionType))

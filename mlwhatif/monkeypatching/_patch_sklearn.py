@@ -17,9 +17,9 @@ from sklearn.metrics import accuracy_score
 from tensorflow.keras.wrappers import scikit_learn as keras_sklearn_external  # pylint: disable=no-name-in-module
 from tensorflow.python.keras.wrappers import scikit_learn as keras_sklearn_internal  # pylint: disable=no-name-in-module
 
-from mlwhatif.execution._stat_tracking import capture_optimizer_info
+from mlwhatif.execution._stat_tracking import capture_optimizer_info, get_df_shape, get_df_memory
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
-from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails, CodeReference
+from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails, CodeReference, OptimizerInfo
 from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.monkeypatching._mlinspect_ndarray import MlinspectNdarray
 from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, add_dag_node, \
@@ -101,7 +101,8 @@ class SklearnModelSelectionPatching:
                                         optional_source_code)
 
             operator_context = OperatorContext(OperatorType.TRAIN_TEST_SPLIT, function_info)
-            result = original(input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            initial_func = partial(original, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
 
             def train_test_split_and_wrapping(df_object):
                 split_result = original(df_object, *args[1:], **kwargs)
@@ -117,7 +118,7 @@ class SklearnModelSelectionPatching:
             main_dag_node = DagNode(op_id,
                                     BasicCodeLocation(caller_filename, lineno),
                                     operator_context,
-                                    DagNodeDetails(None, columns),
+                                    DagNodeDetails(None, columns, optimizer_info),
                                     get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                     train_test_split_and_wrapping)
             add_dag_node(main_dag_node, [input_info.dag_node], FunctionCallResult(None))
@@ -126,7 +127,8 @@ class SklearnModelSelectionPatching:
             dag_node = DagNode(singleton.get_next_op_id(),
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(description, columns),
+                               DagNodeDetails(description, columns, OptimizerInfo(0, get_df_shape(result[0]),
+                                                                                  get_df_memory(result[0]))),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                train_test_split_train)
 
@@ -138,7 +140,8 @@ class SklearnModelSelectionPatching:
             dag_node = DagNode(singleton.get_next_op_id(),
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(description, columns),
+                               DagNodeDetails(description, columns, OptimizerInfo(0, get_df_shape(result[1]),
+                                                                                  get_df_memory(result[1]))),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                train_test_split_test)
 
