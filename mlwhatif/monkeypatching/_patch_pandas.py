@@ -239,6 +239,7 @@ class DataFramePatching:
     @gorilla.settings(allow_hit=True)
     def patched_replace(self, *args, **kwargs):
         """ Patch for ('pandas.core.frame', 'replace') """
+        # pylint: disable=too-many-locals
         original = gorilla.get_original_attribute(pandas.DataFrame, 'replace')
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
@@ -458,7 +459,8 @@ class LocIndexerPatching:
             operator_context = OperatorContext(OperatorType.PROJECTION, function_info)
             input_info = get_input_info(self.obj, caller_filename,  # pylint: disable=no-member
                                         lineno, function_info, optional_code_reference, optional_source_code)
-            result = original(self, *args, **kwargs)
+            initial_func = partial(original, self, *args, **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
 
             # TODO: This behaves correctly in the default cases but loc getitem supports many strange use cases
             processing_func = lambda df: pandas.DataFrame.__getitem__(df, projection_key)
@@ -466,7 +468,7 @@ class LocIndexerPatching:
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails("to {}".format(columns), columns),
+                               DagNodeDetails("to {}".format(columns), columns, optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
             function_call_result = FunctionCallResult(result)
@@ -520,6 +522,7 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched_isin(self, *args, **kwargs):
         """ Patch for ('pandas.core.series', 'isin') """
+        # pylint: disable=too-many-locals
         original = gorilla.get_original_attribute(pandas.Series, 'isin')
 
         def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):

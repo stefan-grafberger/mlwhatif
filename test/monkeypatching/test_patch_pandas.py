@@ -756,7 +756,8 @@ def test_series__cmp_method():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.series', 'Series')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(3, 12, 3, 48),
                                                     "pd.Series([0, 2, 4, None], name='A')"),
                                    Comparison(partial))
@@ -764,7 +765,8 @@ def test_series__cmp_method():
                                   BasicCodeLocation("<string-source>", 4),
                                   OperatorContext(OperatorType.SUBSCRIPT,
                                                   FunctionInfo('pandas.core.series', '_cmp_method')),
-                                  DagNodeDetails('> 3', ['A']),
+                                  DagNodeDetails('> 3', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(4, 7, 4, 20), 'pd_series > 3'),
                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
@@ -796,7 +798,8 @@ def test_series__arith_method():
                                    BasicCodeLocation("<string-source>", 2),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.series', 'Series')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(2, 12, 2, 48),
                                                     "pd.Series([0, 2, 4, None], name='A')"),
                                    Comparison(partial))
@@ -804,7 +807,8 @@ def test_series__arith_method():
                                   BasicCodeLocation("<string-source>", 3),
                                   OperatorContext(OperatorType.SUBSCRIPT,
                                                   FunctionInfo('pandas.core.series', '_arith_method')),
-                                  DagNodeDetails('+ 2', ['A']),
+                                  DagNodeDetails('+ 2', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(3, 12, 3, 25), 'pd_series + 2'),
                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
@@ -838,7 +842,8 @@ def test_series__logical_method():
                                     BasicCodeLocation("<string-source>", 2),
                                     OperatorContext(OperatorType.DATA_SOURCE,
                                                     FunctionInfo('pandas.core.series', 'Series')),
-                                    DagNodeDetails(None, ['A']),
+                                    DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                              RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(2, 8, 2, 54),
                                                      "pd.Series([True, False, True, True], name='A')"),
                                     Comparison(partial))
@@ -846,7 +851,8 @@ def test_series__logical_method():
                                     BasicCodeLocation("<string-source>", 3),
                                     OperatorContext(OperatorType.DATA_SOURCE,
                                                     FunctionInfo('pandas.core.series', 'Series')),
-                                    DagNodeDetails(None, ['B']),
+                                    DagNodeDetails(None, ['B'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                              RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(3, 8, 3, 55),
                                                      "pd.Series([True, False, False, True], name='B')"),
                                     Comparison(partial))
@@ -854,7 +860,8 @@ def test_series__logical_method():
                                  BasicCodeLocation("<string-source>", 4),
                                  OperatorContext(OperatorType.SUBSCRIPT,
                                                  FunctionInfo('pandas.core.series', '_logical_method')),
-                                 DagNodeDetails('&', ['A']),
+                                 DagNodeDetails('&', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                          RangeComparison(0, 800))),
                                  OptionalCodeInfo(CodeReference(4, 8, 4, 21), 'mask1 & mask2'),
                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source1, expected_subscript, arg_index=0)

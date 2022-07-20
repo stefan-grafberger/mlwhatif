@@ -14,12 +14,12 @@ from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.preprocessing import label_binarize, OneHotEncoder
 from sklearn.tree import DecisionTreeClassifier
 from tensorflow.python.keras.wrappers.scikit_learn import KerasClassifier  # pylint: disable=no-name-in-module
-from testfixtures import compare, Comparison
+from testfixtures import compare, Comparison, RangeComparison
 
 from mlwhatif import OperatorType, OperatorContext, FunctionInfo
 from mlwhatif.instrumentation import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
-    OptionalCodeInfo
+    OptionalCodeInfo, OptimizerInfo
 from mlwhatif.monkeypatching._patch_sklearn import TrainTestSplitResult
 
 
@@ -45,7 +45,8 @@ def test_label_binarize():
                                    BasicCodeLocation("<string-source>", 5),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.series', 'Series')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(5, 12, 5, 59),
                                                     "pd.Series(['yes', 'no', 'no', 'yes'], name='A')"),
                                    Comparison(partial))
@@ -53,7 +54,9 @@ def test_label_binarize():
                                 BasicCodeLocation("<string-source>", 6),
                                 OperatorContext(OperatorType.PROJECTION_MODIFY,
                                                 FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
-                                DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
+                                DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                               OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                             RangeComparison(0, 800))),
                                 OptionalCodeInfo(CodeReference(6, 12, 6, 60),
                                                  "label_binarize(pd_series, classes=['no', 'yes'])"),
                                 Comparison(FunctionType))

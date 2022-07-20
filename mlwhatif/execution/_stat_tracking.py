@@ -6,6 +6,7 @@ import time
 from functools import partial
 from typing import Tuple
 
+import numpy
 import pandas
 
 from mlwhatif.instrumentation._dag_node import OptimizerInfo
@@ -23,7 +24,7 @@ def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_
     else:
         result_or_inplace_obj = obj_for_inplace_ops
 
-    if isinstance(result_or_inplace_obj, pandas.DataFrame):
+    if isinstance(result_or_inplace_obj, (pandas.DataFrame, numpy.ndarray)):
         shape = result_or_inplace_obj.shape
     elif isinstance(result_or_inplace_obj, pandas.Series):
         shape = len(result_or_inplace_obj), 1

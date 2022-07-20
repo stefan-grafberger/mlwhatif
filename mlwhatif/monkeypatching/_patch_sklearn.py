@@ -3,6 +3,7 @@ Monkey patching for sklearn
 """
 # pylint: disable=too-many-lines
 import dataclasses
+from functools import partial
 
 import gorilla
 import numpy
@@ -16,6 +17,7 @@ from sklearn.metrics import accuracy_score
 from tensorflow.keras.wrappers import scikit_learn as keras_sklearn_external  # pylint: disable=no-name-in-module
 from tensorflow.python.keras.wrappers import scikit_learn as keras_sklearn_internal  # pylint: disable=no-name-in-module
 
+from mlwhatif.execution._stat_tracking import capture_optimizer_info
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails, CodeReference
 from mlwhatif.instrumentation._pipeline_executor import singleton
@@ -48,7 +50,8 @@ class SklearnPreprocessingPatching:
                                         optional_source_code)
 
             operator_context = OperatorContext(OperatorType.PROJECTION_MODIFY, function_info)
-            result = original(input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            initial_func = partial(original, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
             processing_func = lambda df: original(df, *args[1:], **kwargs)
 
             classes = kwargs['classes']
@@ -56,7 +59,7 @@ class SklearnPreprocessingPatching:
             dag_node = DagNode(op_id,
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails(description, ["array"]),
+                               DagNodeDetails(description, ["array"], optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
             function_call_result = FunctionCallResult(result)
