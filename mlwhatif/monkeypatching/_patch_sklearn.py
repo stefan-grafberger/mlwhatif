@@ -1189,12 +1189,13 @@ class SklearnSGDClassifierPatching:
         # Estimator
         operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
         # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
-        original(self, train_data_result, train_labels_result, *args[2:], **kwargs)
+        initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
+        optimizer_info, _ = capture_optimizer_info(initial_func, self)
         self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(self.mlinspect_estimator_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                            operator_context,
-                           DagNodeDetails("SGD Classifier", []),
+                           DagNodeDetails("SGD Classifier", [], optimizer_info),
                            get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                           self.mlinspect_optional_source_code),
                            processing_func)
@@ -1235,14 +1236,20 @@ class SklearnSGDClassifierPatching:
             # Score
             operator_context = OperatorContext(OperatorType.SCORE, function_info)
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
+
             # Same as original, but captures the test set predictions
-            predictions = self.predict(test_data_result)  # pylint: disable=no-member
-            result = accuracy_score(test_labels_result, predictions, **kwargs)
+            def original_with_arg_capturing(estimator, test_data_result, test_labels_result, **kwargs):
+                predictions = estimator.predict(test_data_result)  # pylint: disable=no-member
+                score_result = accuracy_score(test_labels_result, predictions, **kwargs)
+                return score_result
+
+            initial_func = partial(original_with_arg_capturing, self, test_data_result, test_labels_result, **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
 
             dag_node = DagNode(singleton.get_next_op_id(),
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails("SGD Classifier", []),
+                               DagNodeDetails("SGD Classifier", [], optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                processing_func)
             estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
