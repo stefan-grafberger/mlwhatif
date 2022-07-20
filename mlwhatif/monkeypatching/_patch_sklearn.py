@@ -924,7 +924,8 @@ class SklearnFunctionTransformerPatching:
             return transformed_data
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
-        result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        optimizer_info, result = capture_optimizer_info(initial_func)
         if isinstance(input_info.annotated_dfobject.result_data, pandas.DataFrame):
             columns = list(input_info.annotated_dfobject.result_data.columns)
         else:
@@ -935,7 +936,7 @@ class SklearnFunctionTransformerPatching:
         dag_node = DagNode(dag_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                            operator_context,
-                           DagNodeDetails("Function Transformer: fit_transform", columns),
+                           DagNodeDetails("Function Transformer: fit_transform", columns, optimizer_info),
                            get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                           self.mlinspect_optional_source_code),
                            processing_func)
@@ -962,7 +963,8 @@ class SklearnFunctionTransformerPatching:
                 return transformed_data
 
             operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
-            result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
             if isinstance(input_info.annotated_dfobject.result_data, pandas.DataFrame):
                 columns = list(input_info.annotated_dfobject.result_data.columns)
             else:
@@ -971,7 +973,7 @@ class SklearnFunctionTransformerPatching:
             dag_node = DagNode(singleton.get_next_op_id(),
                                BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                                operator_context,
-                               DagNodeDetails("Function Transformer: transform", columns),
+                               DagNodeDetails("Function Transformer: transform", columns, optimizer_info),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
                                processing_func)
