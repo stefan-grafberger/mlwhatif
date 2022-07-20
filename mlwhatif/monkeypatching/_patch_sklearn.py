@@ -358,7 +358,7 @@ class SklearnStandardScalerPatching:
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
-        optimizer_info, result = capture_optimizer_info(initial_func)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
         dag_node_id = singleton.get_next_op_id()
         self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(dag_node_id,
@@ -478,7 +478,7 @@ class SklearnHasingVectorizerPatching:
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
-        optimizer_info, result = capture_optimizer_info(initial_func)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
         dag_node_id = singleton.get_next_op_id()
         self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(dag_node_id,
@@ -497,7 +497,7 @@ class SklearnHasingVectorizerPatching:
     @gorilla.name('transform')
     @gorilla.settings(allow_hit=True)
     def patched_transform(self, *args, **kwargs):
-        """ Patch for ('sklearn.preprocessing._data.StandardScaler', 'transform') """
+        """ Patch for ('sklearn.feature_extraction.text', 'HashingVectorizer') """
         # pylint: disable=no-method-argument
         original = gorilla.get_original_attribute(text.HashingVectorizer, 'transform')
         if not self.mlinspect_fit_transform_active:
@@ -585,7 +585,7 @@ class SklearnKBinsDiscretizerPatching:
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
-        optimizer_info, result = capture_optimizer_info(initial_func)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
         dag_node_id = singleton.get_next_op_id()
         self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(dag_node_id,
@@ -696,7 +696,7 @@ class SklearnOneHotEncoderPatching:
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
-        optimizer_info, result = capture_optimizer_info(initial_func)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
         dag_node_id = singleton.get_next_op_id()
         self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(dag_node_id,
@@ -806,7 +806,7 @@ class SklearnSimpleImputerPatching:
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
-        optimizer_info, result = capture_optimizer_info(initial_func)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
         if isinstance(input_info.annotated_dfobject.result_data, pandas.DataFrame):
             columns = list(input_info.annotated_dfobject.result_data.columns)
         else:
@@ -925,7 +925,7 @@ class SklearnFunctionTransformerPatching:
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
         initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
-        optimizer_info, result = capture_optimizer_info(initial_func)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
         if isinstance(input_info.annotated_dfobject.result_data, pandas.DataFrame):
             columns = list(input_info.annotated_dfobject.result_data.columns)
         else:
@@ -1054,7 +1054,7 @@ class SklearnDecisionTreePatching:
         operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
         # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
         initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
-        optimizer_info, _ = capture_optimizer_info(initial_func, self)
+        optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
 
         self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(self.mlinspect_estimator_node_id,
@@ -1190,7 +1190,7 @@ class SklearnSGDClassifierPatching:
         operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
         # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
         initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
-        optimizer_info, _ = capture_optimizer_info(initial_func, self)
+        optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
         self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(self.mlinspect_estimator_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
@@ -1324,7 +1324,7 @@ class SklearnLogisticRegressionPatching:
         operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
         # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
         initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
-        optimizer_info, _ = capture_optimizer_info(initial_func, self)
+        optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
         self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(self.mlinspect_estimator_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
@@ -1446,7 +1446,7 @@ class SklearnKerasClassifierPatching:
         operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
         # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
         initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
-        optimizer_info, _ = capture_optimizer_info(initial_func, self)
+        optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
         self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(self.mlinspect_estimator_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),

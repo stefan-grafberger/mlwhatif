@@ -15,7 +15,8 @@ from tensorflow.python.keras.callbacks import History
 from mlwhatif.instrumentation._dag_node import OptimizerInfo
 
 
-def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_ops: any or None = None)\
+def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_ops: any or None = None,
+                           estimator_transformer_state: any or None = None)\
         -> Tuple[OptimizerInfo, any]:
     """Function to measure the runtime of instrumented user function calls and get output metadata"""
     execution_start = time.time()
@@ -28,13 +29,15 @@ def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_
         result_or_inplace_obj = obj_for_inplace_ops
 
     shape = get_df_shape(result_or_inplace_obj)
-    size = get_df_memory(result_or_inplace_obj)
+    size = get_df_memory(result_or_inplace_obj, estimator_transformer_state)
     return OptimizerInfo(execution_duration_in_ms, shape, size), result
 
 
-def get_df_memory(result_or_inplace_obj):
+def get_df_memory(result_or_inplace_obj, estimator_transformer_state: any or None = None):
     """Get the size in bytes of a df-like object"""
     size = sys.getsizeof(result_or_inplace_obj)
+    if estimator_transformer_state is not None:
+        size = sys.getsizeof(estimator_transformer_state)
     return size
 
 
