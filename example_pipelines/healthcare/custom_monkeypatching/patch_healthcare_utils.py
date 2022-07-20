@@ -1,10 +1,13 @@
 """
 Monkey patching for healthcare_utils
 """
+from functools import partial
+
 import gorilla
 from gensim import sklearn_api
 
 from example_pipelines.healthcare import healthcare_utils
+from mlwhatif.execution._stat_tracking import capture_optimizer_info
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails
 from mlwhatif.instrumentation._pipeline_executor import singleton
@@ -73,13 +76,14 @@ class SklearnMyW2VTransformerPatching:
             return transformed_data
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
-        result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        optimizer_info, result = capture_optimizer_info(initial_func)
         dag_node_id = singleton.get_next_op_id()
         self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(dag_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                            operator_context,
-                           DagNodeDetails("Word2Vec: fit_transform", ['array']),
+                           DagNodeDetails("Word2Vec: fit_transform", ['array'], optimizer_info),
                            get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                           self.mlinspect_optional_source_code),
                            processing_func)
@@ -106,11 +110,13 @@ class SklearnMyW2VTransformerPatching:
                 return transformed_data
 
             operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
-            result = original(self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+
+            initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
             dag_node = DagNode(singleton.get_next_op_id(),
                                BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                                operator_context,
-                               DagNodeDetails("Word2Vec: transform", ['array']),
+                               DagNodeDetails("Word2Vec: transform", ['array'], optimizer_info),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
                                processing_func)
