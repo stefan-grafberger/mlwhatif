@@ -37,7 +37,7 @@ def get_df_memory(result_or_inplace_obj, estimator_transformer_state: any or Non
     """Get the size in bytes of a df-like object"""
     size = sys.getsizeof(result_or_inplace_obj)
     if estimator_transformer_state is not None:
-        size = sys.getsizeof(estimator_transformer_state)
+        size += sys.getsizeof(estimator_transformer_state)
     return size
 
 
