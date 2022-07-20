@@ -1675,7 +1675,9 @@ def test_logistic_regression():
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A', 'B', 'target']),
+                                   DagNodeDetails(None, ['A', 'B', 'target'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(6, 5, 6, 95),
                                                     "pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], "
                                                     "'target': ['no', 'no', 'yes', 'yes']})"),
@@ -1684,14 +1686,18 @@ def test_logistic_regression():
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                       DagNodeDetails('Standard Scaler: fit_transform', ['array']),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_data_projection = DagNode(1,
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
-                                       DagNodeDetails("to ['A', 'B']", ['A', 'B']),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(8, 39, 8, 53), "df[['A', 'B']]"),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_data_projection, arg_index=0)
@@ -1700,7 +1706,9 @@ def test_logistic_regression():
                                         BasicCodeLocation("<string-source>", 9),
                                         OperatorContext(OperatorType.PROJECTION,
                                                         FunctionInfo('pandas.core.frame', '__getitem__')),
-                                        DagNodeDetails("to ['target']", ['target']),
+                                        DagNodeDetails("to ['target']", ['target'],
+                                                       OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                     RangeComparison(0, 800))),
                                         OptionalCodeInfo(CodeReference(9, 24, 9, 36), "df['target']"),
                                         Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_label_projection, arg_index=0)
@@ -1708,7 +1716,9 @@ def test_logistic_regression():
                                     BasicCodeLocation("<string-source>", 9),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
-                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                 RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(9, 9, 9, 60),
                                                      "label_binarize(df['target'], classes=['no', 'yes'])"),
                                     Comparison(FunctionType))
@@ -1717,7 +1727,8 @@ def test_logistic_regression():
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.TRAIN_DATA,
                                                   FunctionInfo('sklearn.linear_model._logistic', 'LogisticRegression')),
-                                  DagNodeDetails(None, ['array']),
+                                  DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                                RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'),
                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
@@ -1726,7 +1737,8 @@ def test_logistic_regression():
                                     OperatorContext(OperatorType.TRAIN_LABELS,
                                                     FunctionInfo('sklearn.linear_model._logistic',
                                                                  'LogisticRegression')),
-                                    DagNodeDetails(None, ['array']),
+                                    DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                  RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'),
                                     Comparison(FunctionType))
     expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
@@ -1735,7 +1747,9 @@ def test_logistic_regression():
                                  OperatorContext(OperatorType.ESTIMATOR,
                                                  FunctionInfo('sklearn.linear_model._logistic',
                                                               'LogisticRegression')),
-                                 DagNodeDetails('Logistic Regression', []),
+                                 DagNodeDetails('Logistic Regression', [],
+                                                OptimizerInfo(RangeComparison(0, 1000), None,
+                                                              RangeComparison(0, 800))),
                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'),
                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_train_data, expected_estimator, arg_index=0)
@@ -1792,7 +1806,9 @@ def test_logistic_regression_score():
                                        BasicCodeLocation("<string-source>", 16),
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
-                                       DagNodeDetails("to ['A', 'B']", ['A', 'B']),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(16, 23, 16, 42), "test_df[['A', 'B']]"),
                                        Comparison(FunctionType))
     expected_test_data = DagNode(12,
@@ -1800,7 +1816,8 @@ def test_logistic_regression_score():
                                  OperatorContext(OperatorType.TEST_DATA,
                                                  FunctionInfo('sklearn.linear_model._logistic.LogisticRegression',
                                                               'score')),
-                                 DagNodeDetails(None, ['A', 'B']),
+                                 DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                RangeComparison(0, 800))),
                                  OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                   "clf.score(test_df[['A', 'B']], test_labels)"),
                                  Comparison(FunctionType))
@@ -1809,7 +1826,9 @@ def test_logistic_regression_score():
                                     BasicCodeLocation("<string-source>", 15),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
-                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (2, 1),
+                                                                 RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(15, 14, 15, 70),
                                                      "label_binarize(test_df['target'], classes=['no', 'yes'])"),
                                     Comparison(FunctionType))
@@ -1818,7 +1837,8 @@ def test_logistic_regression_score():
                                    OperatorContext(OperatorType.TEST_LABELS,
                                                    FunctionInfo('sklearn.linear_model._logistic.LogisticRegression',
                                                                 'score')),
-                                   DagNodeDetails(None, ['array']),
+                                   DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (2, 1),
+                                                                                 RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                     "clf.score(test_df[['A', 'B']], test_labels)"),
                                    Comparison(FunctionType))
@@ -1827,7 +1847,9 @@ def test_logistic_regression_score():
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.ESTIMATOR,
                                                   FunctionInfo('sklearn.linear_model._logistic', 'LogisticRegression')),
-                                  DagNodeDetails('Logistic Regression', []),
+                                  DagNodeDetails('Logistic Regression', [],
+                                                 OptimizerInfo(RangeComparison(0, 1000), None,
+                                                               RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 26),
                                                    'LogisticRegression()'),
                                   Comparison(FunctionType))
@@ -1836,7 +1858,8 @@ def test_logistic_regression_score():
                              OperatorContext(OperatorType.SCORE,
                                              FunctionInfo('sklearn.linear_model._logistic.LogisticRegression',
                                                           'score')),
-                             DagNodeDetails('Logistic Regression', []),
+                             DagNodeDetails('Logistic Regression', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
+                                                                                     RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"),
                              Comparison(FunctionType))
