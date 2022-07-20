@@ -17,6 +17,10 @@ def save_fig_to_path(extracted_dag, filename):
     def get_new_node_label(node: DagNode):
         label = cleandoc(f"""
                 {node.node_id}: {node.operator_info.operator.value} (L{node.code_location.lineno})
+                {node.details.optimizer_info.shape if node.details.optimizer_info and node.details.optimizer_info.shape 
+        else " - "}
+                {str(node.details.optimizer_info.runtime) + "ms" if node.details.optimizer_info else ""}
+                {str(node.details.optimizer_info.memory / 1024 / 1024) + "MB" if node.details.optimizer_info else ""}
                 {node.details.description or ""}
                 """)
         return label
