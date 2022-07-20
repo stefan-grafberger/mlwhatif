@@ -406,7 +406,8 @@ def test_simple_imputer():
                                    BasicCodeLocation("<string-source>", 5),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(5, 5, 5, 61),
                                                     "pd.DataFrame({'A': ['cat_a', np.nan, 'cat_a', 'cat_c']})"),
                                    Comparison(partial))
@@ -414,7 +415,9 @@ def test_simple_imputer():
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.impute._base', 'SimpleImputer')),
-                                   DagNodeDetails('Simple Imputer: fit_transform', ['A']),
+                                   DagNodeDetails('Simple Imputer: fit_transform', ['A'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(6, 10, 6, 72),
                                                     "SimpleImputer(missing_values=np.nan, strategy='most_frequent')"),
                                    Comparison(FunctionType))
@@ -423,7 +426,8 @@ def test_simple_imputer():
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.DATA_SOURCE,
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                       DagNodeDetails(None, ['A']),
+                                       DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                 RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(8, 10, 8, 66),
                                                         "pd.DataFrame({'A': ['cat_a', np.nan, 'cat_a', 'cat_c']})"),
                                        Comparison(partial))
@@ -431,7 +435,9 @@ def test_simple_imputer():
                                        BasicCodeLocation("<string-source>", 6),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.impute._base', 'SimpleImputer')),
-                                       DagNodeDetails('Simple Imputer: transform', ['A']),
+                                       DagNodeDetails('Simple Imputer: transform', ['A'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(6, 10, 6, 72),
                                                         "SimpleImputer(missing_values=np.nan, strategy='most_frequent')"),
                                        Comparison(FunctionType))
