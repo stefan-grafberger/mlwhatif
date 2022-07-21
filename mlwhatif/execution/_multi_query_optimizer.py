@@ -29,10 +29,10 @@ class MultiQueryOptimizer:
         big_execution_dag = networkx.compose_all(what_if_dags)
 
         estimate_optimised_runtime = self._estimate_runtime_of_dag(big_execution_dag)
-        logger.info(f"Estimated optimized what-if runtime is {estimate_optimised_runtime}ms")
+        logger.info(f"Estimated optimised what-if runtime is {estimate_optimised_runtime}ms")
 
         estimated_saving = combined_estimated_runtimes - estimate_optimised_runtime
-        logger.info(f"Estimated optimized runtime saving is {estimated_saving}ms")
+        logger.info(f"Estimated optimisation runtime saving is {estimated_saving}ms")
 
         # TODO: More optimizations, maybe create some optimization rule interface that what-if analyses can use
         #  to specify analysis-specific optimizations
