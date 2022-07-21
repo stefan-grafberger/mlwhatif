@@ -18,3 +18,4 @@ setuptools==57.0.0
 scipy==1.7.0
 statsmodels==0.12.2
 jenga[image]==0.0.1a1
+fairlearn==0.7.0

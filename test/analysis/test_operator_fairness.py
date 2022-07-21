@@ -4,6 +4,8 @@ Tests whether the Data Corruption analysis works
 import os
 from inspect import cleandoc
 
+from fairlearn.metrics import equalized_odds_difference
+
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._operator_fairness import OperatorFairness
 from mlwhatif.utils import get_project_root
@@ -35,14 +37,15 @@ def test_operator_fairness_mini_example_with_transformer_processing_multiple_col
         clf = DecisionTreeClassifier()
         clf = clf.fit(train, target)
 
-        test_df = pd.DataFrame({'A': [0, 0, 0, 0], 'B':  [4, 3, 4, 3], 'target': ['yes', 'yes', 'yes', 'yes']})
+        test_df = pd.DataFrame({'A': [0, 0, 0, 0], 'B':  [4, 3, 4, 3], 
+            'sensitive': ["cat_a", "cat_b", "cat_a", "cat_b"], 'target': ['yes', 'yes', 'yes', 'yes']})
         test_data = standard_scaler.transform(test_df[['A', 'B']])
         test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
         test_score = clf.score(test_data, test_labels)
         assert test_score == 1.0
         """)
 
-    operator_fairness = OperatorFairness()
+    operator_fairness = OperatorFairness(["a"], equalized_odds_difference)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
