@@ -35,7 +35,23 @@ def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_
 
 def get_df_memory(result_or_inplace_obj, estimator_transformer_state: any or None = None):
     """Get the size in bytes of a df-like object"""
-    size = sys.getsizeof(result_or_inplace_obj)
+    # Just using sys.getsize of is not sufficient. See this section of its documentation:
+    #  Only the memory consumption directly attributed to the object is accounted for,
+    #  not the memory consumption of objects it refers to.
+    if isinstance(result_or_inplace_obj, pandas.DataFrame):
+        # For pandas, sizeof seems to work as expected
+        size = sys.getsizeof(result_or_inplace_obj)
+    elif isinstance(result_or_inplace_obj, numpy.ndarray):
+        system_size = sys.getsizeof(result_or_inplace_obj)
+        numpy_self_report = result_or_inplace_obj.nbytes
+        if system_size >= numpy_self_report:
+            size = system_size
+        else:
+            size = system_size + numpy_self_report
+    elif isinstance(result_or_inplace_obj, csr_matrix):
+        size = result_or_inplace_obj.data.nbytes + sys.getsizeof(result_or_inplace_obj)
+    else:
+        size = sys.getsizeof(result_or_inplace_obj)
     if estimator_transformer_state is not None:
         size += sys.getsizeof(estimator_transformer_state)
     return size
