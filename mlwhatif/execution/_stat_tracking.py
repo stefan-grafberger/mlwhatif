@@ -1,20 +1,19 @@
 """
 Functionality to capture optimisation-relevant stats for instrumented operators
 """
-import logging
 import sys
 import time
 from functools import partial
 from typing import Tuple
 
-from pickle import dumps
+from dill import dumps
 import numpy
 import pandas
 import sklearn
 import tensorflow
 from scipy.sparse import csr_matrix
 from tensorflow.python.keras.callbacks import History  # pylint: disable=no-name-in-module
-from tensorflow.python.keras.wrappers.scikit_learn import BaseWrapper
+from tensorflow.python.keras.wrappers.scikit_learn import BaseWrapper  # pylint: disable=no-name-in-module
 
 from mlwhatif.instrumentation._dag_node import OptimizerInfo
 
@@ -82,7 +81,7 @@ def get_model_memory_usage_in_bytes(model, batch_size):
             internal_model_mem_count += get_model_memory_usage_in_bytes(batch_size, layer)
         single_layer_mem = 1
         out_shape = layer.output_shape
-        if type(out_shape) is list:
+        if isinstance(out_shape, list):
             out_shape = out_shape[0]
         for dimension in out_shape:
             if dimension is None:

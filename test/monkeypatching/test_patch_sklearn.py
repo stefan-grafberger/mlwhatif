@@ -182,7 +182,7 @@ def test_standard_scaler():
                                                    FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                    DagNodeDetails('Standard Scaler: fit_transform', ['array'],
                                                   OptimizerInfo(RangeComparison(0, 200), (4, 1),
-                                                                RangeComparison(0, 800))),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(6, 18, 6, 34), 'StandardScaler()'),
                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
@@ -260,7 +260,7 @@ def test_function_transformer():
                                                                 'FunctionTransformer')),
                                    DagNodeDetails('Function Transformer: fit_transform', ['A'],
                                                   OptimizerInfo(RangeComparison(0, 200), (4, 1),
-                                                                RangeComparison(0, 800))),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(9, 23, 9, 65),
                                                     'FunctionTransformer(lambda x: safe_log(x))'),
                                    Comparison(FunctionType))
@@ -281,7 +281,7 @@ def test_function_transformer():
                                                                     'FunctionTransformer')),
                                        DagNodeDetails('Function Transformer: transform', ['A'],
                                                       OptimizerInfo(RangeComparison(0, 200), (4, 1),
-                                                                    RangeComparison(0, 800))),
+                                                                    RangeComparison(0, 10000))),
                                        OptionalCodeInfo(CodeReference(9, 23, 9, 65),
                                                         'FunctionTransformer(lambda x: safe_log(x))'),
                                        Comparison(FunctionType))
@@ -338,7 +338,7 @@ def test_kbins_discretizer():
                                                                 'KBinsDiscretizer')),
                                    DagNodeDetails('K-Bins Discretizer: fit_transform', ['array'],
                                                   OptimizerInfo(RangeComparison(0, 200), (4, 1),
-                                                                RangeComparison(0, 800))),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(6, 14, 6, 78),
                                                     "KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform')"),
                                    Comparison(FunctionType))
@@ -417,7 +417,7 @@ def test_simple_imputer():
                                                    FunctionInfo('sklearn.impute._base', 'SimpleImputer')),
                                    DagNodeDetails('Simple Imputer: fit_transform', ['A'],
                                                   OptimizerInfo(RangeComparison(0, 200), (4, 1),
-                                                                RangeComparison(0, 800))),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(6, 10, 6, 72),
                                                     "SimpleImputer(missing_values=np.nan, strategy='most_frequent')"),
                                    Comparison(FunctionType))
@@ -495,7 +495,7 @@ def test_one_hot_encoder_not_sparse():
                                                    FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
                                                   OptimizerInfo(RangeComparison(0, 200), (4, 3),
-                                                                RangeComparison(0, 800))),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(6, 18, 6, 45), 'OneHotEncoder(sparse=False)'),
                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
@@ -570,7 +570,7 @@ def test_one_hot_encoder_sparse():
                                                    FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
                                                   OptimizerInfo(RangeComparison(0, 200), (4, 3),
-                                                                RangeComparison(0, 800))),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(7, 18, 7, 33), 'OneHotEncoder()'),
                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
@@ -622,7 +622,7 @@ def test_hashing_vectorizer():
                                                                 'HashingVectorizer')),
                                    DagNodeDetails('Hashing Vectorizer: fit_transform', ['array'],
                                                   OptimizerInfo(RangeComparison(0, 200), (4, 4),
-                                                                RangeComparison(0, 800))),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(7, 13, 7, 67),
                                                     'HashingVectorizer(ngram_range=(1, 3), n_features=2**2)'),
                                    Comparison(FunctionType))
@@ -716,7 +716,7 @@ def test_column_transformer_one_transformer():
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array'],
                                                       OptimizerInfo(RangeComparison(0, 200), (4, 2),
-                                                                    RangeComparison(0, 800))),
+                                                                    RangeComparison(0, 4000))),
                                        OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_projection, expected_standard_scaler, arg_index=0)
@@ -789,7 +789,7 @@ def test_column_transformer_one_transformer_single_column_projection():
                                                   FunctionInfo('sklearn.feature_extraction.text', 'HashingVectorizer')),
                                   DagNodeDetails('Hashing Vectorizer: fit_transform', ['array'],
                                                  OptimizerInfo(RangeComparison(0, 200), (4, 4),
-                                                               RangeComparison(0, 800))),
+                                                               RangeComparison(0, 4000))),
                                   OptionalCodeInfo(CodeReference(9, 16, 9, 70), 'HashingVectorizer(ngram_range=(1, 3), '
                                                                                 'n_features=2**2)'),
                                   Comparison(FunctionType))
@@ -902,7 +902,7 @@ def test_column_transformer_multiple_transformers_all_dense():
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array'],
                                                       OptimizerInfo(RangeComparison(0, 200), (4, 1),
-                                                                    RangeComparison(0, 800))),
+                                                                    RangeComparison(0, 4000))),
                                        OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_1, expected_standard_scaler, arg_index=0)
@@ -912,7 +912,7 @@ def test_column_transformer_multiple_transformers_all_dense():
                                                FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
                                               OptimizerInfo(RangeComparison(0, 200), (4, 3),
-                                                            RangeComparison(0, 800))),
+                                                            RangeComparison(0, 4000))),
                                OptionalCodeInfo(CodeReference(10, 20, 10, 47), 'OneHotEncoder(sparse=False)'),
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_2, expected_one_hot, arg_index=0)
@@ -1017,7 +1017,7 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array'],
                                                       OptimizerInfo(RangeComparison(0, 200), (4, 1),
-                                                                    RangeComparison(0, 800))),
+                                                                    RangeComparison(0, 4000))),
                                        OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_1, expected_standard_scaler, arg_index=0)
@@ -1027,7 +1027,7 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                                FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
                                               OptimizerInfo(RangeComparison(0, 200), (4, 3),
-                                                            RangeComparison(0, 800))),
+                                                            RangeComparison(0, 4000))),
                                OptionalCodeInfo(CodeReference(10, 20, 10, 46), 'OneHotEncoder(sparse=True)'),
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_2, expected_one_hot, arg_index=0)
@@ -1237,7 +1237,7 @@ def test_decision_tree():
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array'],
                                                       OptimizerInfo(RangeComparison(0, 200), (4, 2),
-                                                                    RangeComparison(0, 800))),
+                                                                    RangeComparison(0, 10000))),
                                        OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_data_projection, arg_index=0)
@@ -1286,7 +1286,7 @@ def test_decision_tree():
                                      OperatorContext(OperatorType.ESTIMATOR,
                                                      FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
                                      DagNodeDetails('Decision Tree', [], OptimizerInfo(RangeComparison(0, 1000), None,
-                                                                                       RangeComparison(0, 800))),
+                                                                                       RangeComparison(0, 10000))),
                                      OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'),
                                      Comparison(FunctionType))
     expected_dag.add_edge(expected_train_data, expected_decision_tree, arg_index=0)
@@ -1384,7 +1384,7 @@ def test_decision_tree_score():
                                   OperatorContext(OperatorType.ESTIMATOR,
                                                   FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
                                   DagNodeDetails('Decision Tree', [], OptimizerInfo(RangeComparison(0, 1000), None,
-                                                                                    RangeComparison(0, 800))),
+                                                                                    RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 30),
                                                    'DecisionTreeClassifier()'),
                                   Comparison(FunctionType))
@@ -1454,7 +1454,7 @@ def test_sgd_classifier():
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array'],
                                                       OptimizerInfo(RangeComparison(0, 200), (4, 2),
-                                                                    RangeComparison(0, 800))),
+                                                                    RangeComparison(0, 4000))),
                                        OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_train_data = DagNode(5,
@@ -1495,7 +1495,7 @@ def test_sgd_classifier():
                                                   FunctionInfo('sklearn.linear_model._stochastic_gradient',
                                                                'SGDClassifier')),
                                   DagNodeDetails('SGD Classifier', [], OptimizerInfo(RangeComparison(0, 1000), None,
-                                                                                     RangeComparison(0, 800))),
+                                                                                     RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
                                                    "SGDClassifier(loss='log', random_state=42)"),
                                   Comparison(FunctionType))
@@ -1607,7 +1607,7 @@ def test_sgd_classifier_score():
                                                   FunctionInfo('sklearn.linear_model._stochastic_gradient',
                                                                'SGDClassifier')),
                                   DagNodeDetails('SGD Classifier', [], OptimizerInfo(RangeComparison(0, 1000), None,
-                                                                                     RangeComparison(0, 800))),
+                                                                                     RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
                                                    "SGDClassifier(loss='log', random_state=42)"),
                                   Comparison(FunctionType))
@@ -1688,7 +1688,7 @@ def test_logistic_regression():
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array'],
                                                       OptimizerInfo(RangeComparison(0, 200), (4, 2),
-                                                                    RangeComparison(0, 800))),
+                                                                    RangeComparison(0, 10000))),
                                        OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_data_projection = DagNode(1,
@@ -1749,7 +1749,7 @@ def test_logistic_regression():
                                                               'LogisticRegression')),
                                  DagNodeDetails('Logistic Regression', [],
                                                 OptimizerInfo(RangeComparison(0, 1000), None,
-                                                              RangeComparison(0, 800))),
+                                                              RangeComparison(0, 10000))),
                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'),
                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_train_data, expected_estimator, arg_index=0)
@@ -1849,7 +1849,7 @@ def test_logistic_regression_score():
                                                   FunctionInfo('sklearn.linear_model._logistic', 'LogisticRegression')),
                                   DagNodeDetails('Logistic Regression', [],
                                                  OptimizerInfo(RangeComparison(0, 1000), None,
-                                                               RangeComparison(0, 800))),
+                                                               RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 26),
                                                    'LogisticRegression()'),
                                   Comparison(FunctionType))
@@ -1940,7 +1940,7 @@ def test_keras_wrapper():
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
                                        DagNodeDetails('Standard Scaler: fit_transform', ['array'],
                                                       OptimizerInfo(RangeComparison(0, 200), (4, 2),
-                                                                    RangeComparison(0, 800))),
+                                                                    RangeComparison(0, 10000))),
                                        OptionalCodeInfo(CodeReference(11, 8, 11, 24), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_data_projection = DagNode(1,
@@ -1970,7 +1970,7 @@ def test_keras_wrapper():
                                                     FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                     DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
                                                    OptimizerInfo(RangeComparison(0, 200), (4, 2),
-                                                                 RangeComparison(0, 800))),
+                                                                 RangeComparison(0, 10000))),
                                     OptionalCodeInfo(CodeReference(12, 9, 12, 36), 'OneHotEncoder(sparse=False)'),
                                     Comparison(FunctionType))
     expected_dag.add_edge(expected_label_projection, expected_label_encode, arg_index=0)
@@ -2100,7 +2100,7 @@ def test_keras_wrapper_score():
                                                     FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
                                     DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
                                                    OptimizerInfo(RangeComparison(0, 200), (2, 2),
-                                                                 RangeComparison(0, 800))),
+                                                                 RangeComparison(0, 10000))),
                                     OptionalCodeInfo(CodeReference(29, 14, 29, 41), 'OneHotEncoder(sparse=False)'),
                                     Comparison(FunctionType))
     expected_test_labels = DagNode(13,

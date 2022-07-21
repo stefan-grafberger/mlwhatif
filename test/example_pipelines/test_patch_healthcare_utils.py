@@ -52,7 +52,7 @@ def test_my_word_to_vec_transformer():
                                                                 'MyW2VTransformer')),
                                    DagNodeDetails('Word2Vec: fit_transform', ['array'],
                                                   OptimizerInfo(RangeComparison(0, 2000), (4, 2),
-                                                                RangeComparison(0, 5000))),
+                                                                RangeComparison(0, 10000))),
                                    OptionalCodeInfo(CodeReference(6, 14, 6, 62),
                                                     'MyW2VTransformer(min_count=2, size=2, workers=1)'),
                                    Comparison(FunctionType))
