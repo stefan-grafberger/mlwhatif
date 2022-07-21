@@ -1,9 +1,12 @@
 """
 The place where the Multi-Query optimization happens
 """
+import logging
 from typing import List, Iterable
 import networkx
 from mlwhatif.instrumentation._dag_node import DagNode
+
+logger = logging.getLogger(__name__)
 
 
 class MultiQueryOptimizer:
@@ -16,9 +19,21 @@ class MultiQueryOptimizer:
     def create_optimized_plan(self, original_dag: networkx.DiGraph, what_if_dags: List[networkx.DiGraph]) -> networkx.DiGraph:
         """ Optimize and combine multiple given input DAGs """
         # TODO: In the future, we will need to update this once we have more sophisticated optimisations
+        estimate_original_runtime = self._estimate_runtime_of_dag(original_dag)
+        logger.info(f"Estimated runtime of original DAG is {estimate_original_runtime}ms")
         self.make_nodes_depending_on_changed_nodes_unique(original_dag, what_if_dags)
 
+        combined_estimated_runtimes = sum([self._estimate_runtime_of_dag(dag) for dag in what_if_dags])
+        logger.info(f"Estimated unoptimized what-if runtime is {combined_estimated_runtimes}ms")
+
         big_execution_dag = networkx.compose_all(what_if_dags)
+
+        estimate_optimised_runtime = self._estimate_runtime_of_dag(big_execution_dag)
+        logger.info(f"Estimated optimized what-if runtime is {estimate_optimised_runtime}ms")
+
+        estimated_saving = combined_estimated_runtimes - estimate_optimised_runtime
+        logger.info(f"Estimated optimized runtime saving is {estimated_saving}ms")
+
         # TODO: More optimizations, maybe create some optimization rule interface that what-if analyses can use
         #  to specify analysis-specific optimizations
         return big_execution_dag
@@ -51,3 +66,11 @@ class MultiQueryOptimizer:
                 edge_data = dag.get_edge_data(node_to_recompute, child_node)
                 dag.add_edge(replacement_node, child_node, **edge_data)
             dag.remove_node(node_to_recompute)
+
+    @staticmethod
+    def _estimate_runtime_of_dag(dag: networkx.DiGraph):
+        # TODO: Currently, we treat inserted nodes as runtime 0. Especially string data corruptions can be expensive.
+        #  We will need to update the what-if analyses accordingly at some point to provide estimates.
+        runtimes = [node.details.optimizer_info.runtime for node in dag.nodes if node.details.optimizer_info and
+                    node.details.optimizer_info.runtime]
+        return sum(runtimes)
