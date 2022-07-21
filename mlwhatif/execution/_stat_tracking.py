@@ -50,6 +50,8 @@ def get_df_memory(result_or_inplace_obj, estimator_transformer_state: any or Non
             size = system_size + numpy_self_report
     elif isinstance(result_or_inplace_obj, csr_matrix):
         size = result_or_inplace_obj.data.nbytes + sys.getsizeof(result_or_inplace_obj)
+    elif isinstance(result_or_inplace_obj, (tuple, list)):
+        size = sum([get_df_memory(elem) for elem in result_or_inplace_obj])
     else:
         size = sys.getsizeof(result_or_inplace_obj)
     if estimator_transformer_state is not None:
