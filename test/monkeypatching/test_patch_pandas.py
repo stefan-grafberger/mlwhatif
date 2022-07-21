@@ -7,12 +7,12 @@ from types import FunctionType
 
 import networkx
 import pandas
-from testfixtures import compare, StringComparison, Comparison
+from testfixtures import compare, StringComparison, Comparison, RangeComparison
 
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif.instrumentation import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
-    OptionalCodeInfo
+    OptionalCodeInfo, OptimizerInfo
 
 
 def test_read_csv():
@@ -39,7 +39,9 @@ def test_read_csv():
                                            ['age', 'workclass', 'fnlwgt', 'education', 'education-num',
                                             'marital-status',
                                             'occupation', 'relationship', 'race', 'sex', 'capital-gain', 'capital-loss',
-                                            'hours-per-week', 'native-country', 'income-per-year']),
+                                            'hours-per-week', 'native-country', 'income-per-year'],
+                                           OptimizerInfo(RangeComparison(0, 100000), (22792, 15),
+                                                         RangeComparison(0, 30000000))),
                             OptionalCodeInfo(CodeReference(6, 11, 6, 62),
                                              "pd.read_csv(train_file, na_values='?', index_col=0)"),
                             Comparison(partial))
@@ -65,7 +67,8 @@ def test_frame__init__():
     expected_node = DagNode(0,
                             BasicCodeLocation("<string-source>", 3),
                             OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                            DagNodeDetails(None, ['A']),
+                            DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 100), (3, 1),
+                                                                      RangeComparison(0, 400))),
                             OptionalCodeInfo(CodeReference(3, 5, 3, 43), "pd.DataFrame([0, 1, 2], columns=['A'])"),
                             Comparison(partial))
     compare(extracted_node, expected_node)
@@ -94,14 +97,16 @@ def test_frame_dropna():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                                             RangeComparison(0, 400))),
                                    OptionalCodeInfo(CodeReference(3, 5, 3, 52),
                                                     "pd.DataFrame([0, 2, 4, 5, None], columns=['A'])"),
                                    Comparison(partial))
     expected_select = DagNode(1,
                               BasicCodeLocation("<string-source>", 5),
                               OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'dropna')),
-                              DagNodeDetails('dropna', ['A']),
+                              DagNodeDetails('dropna', ['A'], OptimizerInfo(RangeComparison(0, 1000), (4, 1),
+                                                                            RangeComparison(0, 400))),
                               OptionalCodeInfo(CodeReference(5, 5, 5, 16), 'df.dropna()'),
                               Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_select, arg_index=0)
@@ -132,7 +137,8 @@ def test_frame__getitem__series():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                                             RangeComparison(0, 400))),
                                    OptionalCodeInfo(CodeReference(3, 5, 3, 52),
                                                     "pd.DataFrame([0, 2, 4, 8, None], columns=['A'])"),
                                    Comparison(partial))
@@ -140,7 +146,8 @@ def test_frame__getitem__series():
                                BasicCodeLocation("<string-source>", 4),
                                OperatorContext(OperatorType.PROJECTION,
                                                FunctionInfo('pandas.core.frame', '__getitem__')),
-                               DagNodeDetails("to ['A']", ['A']),
+                               DagNodeDetails("to ['A']", ['A'], OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                                               RangeComparison(0, 400))),
                                OptionalCodeInfo(CodeReference(4, 4, 4, 11), "df['A']"),
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
@@ -173,7 +180,8 @@ def test_frame__getitem__frame():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A', 'B', 'C']),
+                                   DagNodeDetails(None, ['A', 'B', 'C'], OptimizerInfo(RangeComparison(0, 100), (6, 3),
+                                                                                       RangeComparison(0, 500))),
                                    OptionalCodeInfo(CodeReference(3, 5, 4, 28),
                                                     "pd.DataFrame([[0, None, 2], [1, 2, 3], [4, None, 2], "
                                                     "[9, 2, 3], [6, 1, 2], [1, 2, 3]], \n"
@@ -183,7 +191,9 @@ def test_frame__getitem__frame():
                                BasicCodeLocation("<string-source>", 5),
                                OperatorContext(OperatorType.PROJECTION,
                                                FunctionInfo('pandas.core.frame', '__getitem__')),
-                               DagNodeDetails("to ['A', 'C']", ['A', 'C']),
+                               DagNodeDetails("to ['A', 'C']", ['A', 'C'],
+                                              OptimizerInfo(RangeComparison(0, 100), (6, 2),
+                                                            RangeComparison(0, 500))),
                                OptionalCodeInfo(CodeReference(5, 16, 5, 30), "df[['A', 'C']]"),
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
@@ -216,7 +226,8 @@ def test_frame__getitem__selection():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A', 'B']),
+                                   DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 100), (5, 2),
+                                                                                  RangeComparison(0, 500))),
                                    OptionalCodeInfo(CodeReference(3, 5, 3, 67),
                                                     "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 5, 4, 11, None]})"),
                                    Comparison(partial))
@@ -224,7 +235,8 @@ def test_frame__getitem__selection():
                                   BasicCodeLocation("<string-source>", 4),
                                   OperatorContext(OperatorType.PROJECTION,
                                                   FunctionInfo('pandas.core.frame', '__getitem__')),
-                                  DagNodeDetails("to ['A']", ['A']),
+                                  DagNodeDetails("to ['A']", ['A'], OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                                                  RangeComparison(0, 500))),
                                   OptionalCodeInfo(CodeReference(4, 18, 4, 25), "df['A']"),
                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
@@ -232,7 +244,8 @@ def test_frame__getitem__selection():
                                  BasicCodeLocation('<string-source>', 4),
                                  OperatorContext(OperatorType.SUBSCRIPT,
                                                  FunctionInfo('pandas.core.series', '_cmp_method')),
-                                 DagNodeDetails('> 3', ['A']),
+                                 DagNodeDetails('> 3', ['A'], OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                                            RangeComparison(0, 500))),
                                  OptionalCodeInfo(CodeReference(4, 18, 4, 29), "df['A'] > 3"),
                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_projection, expected_subscript, arg_index=0)
@@ -240,7 +253,9 @@ def test_frame__getitem__selection():
                                  BasicCodeLocation("<string-source>", 4),
                                  OperatorContext(OperatorType.SELECTION,
                                                  FunctionInfo('pandas.core.frame', '__getitem__')),
-                                 DagNodeDetails("Select by Series: df[df['A'] > 3]", ['A', 'B']),
+                                 DagNodeDetails("Select by Series: df[df['A'] > 3]", ['A', 'B'],
+                                                OptimizerInfo(RangeComparison(0, 100), (3, 2),
+                                                              RangeComparison(0, 500))),
                                  OptionalCodeInfo(CodeReference(4, 15, 4, 30), "df[df['A'] > 3]"),
                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_selection, arg_index=0)
@@ -282,7 +297,9 @@ def test_frame__setitem__():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['foo', 'bar', 'baz', 'zoo']),
+                                   DagNodeDetails(None, ['foo', 'bar', 'baz', 'zoo'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (6, 4),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(3, 12, 6, 53),
                                                     "pd.DataFrame({'foo': ['one', 'one', 'one', 'two', "
                                                     "'two', 'two'],\n"
@@ -294,7 +311,9 @@ def test_frame__setitem__():
                                BasicCodeLocation("<string-source>", 7),
                                OperatorContext(OperatorType.PROJECTION,
                                                FunctionInfo('pandas.core.frame', '__getitem__')),
-                               DagNodeDetails("to ['baz']", ['baz']),
+                               DagNodeDetails("to ['baz']", ['baz'],
+                                              OptimizerInfo(RangeComparison(0, 200), (6, 1),
+                                                            RangeComparison(0, 4000))),
                                OptionalCodeInfo(CodeReference(7, 19, 7, 35), "pandas_df['baz']"),
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
@@ -302,7 +321,8 @@ def test_frame__setitem__():
                                  BasicCodeLocation('<string-source>', 7),
                                  OperatorContext(OperatorType.SUBSCRIPT,
                                                  FunctionInfo('pandas.core.series', '_arith_method')),
-                                 DagNodeDetails('+ 1', ['baz']),
+                                 DagNodeDetails('+ 1', ['baz'], OptimizerInfo(RangeComparison(0, 200), (6, 1),
+                                                                              RangeComparison(0, 4000))),
                                  OptionalCodeInfo(CodeReference(7, 19, 7, 39), "pandas_df['baz'] + 1"),
                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_project, expected_subscript, arg_index=0)
@@ -310,7 +330,9 @@ def test_frame__setitem__():
                                       BasicCodeLocation("<string-source>", 7),
                                       OperatorContext(OperatorType.PROJECTION_MODIFY,
                                                       FunctionInfo('pandas.core.frame', '__setitem__')),
-                                      DagNodeDetails("modifies ['baz']", ['foo', 'bar', 'baz', 'zoo']),
+                                      DagNodeDetails("modifies ['baz']", ['foo', 'bar', 'baz', 'zoo'],
+                                                     OptimizerInfo(RangeComparison(0, 200), (6, 4),
+                                                                   RangeComparison(0, 4000))),
                                       OptionalCodeInfo(CodeReference(7, 0, 7, 39),
                                                        "pandas_df['baz'] = pandas_df['baz'] + 1"),
                                       Comparison(FunctionType))
@@ -353,7 +375,8 @@ def test_frame_replace():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                                             RangeComparison(0, 500))),
                                    OptionalCodeInfo(CodeReference(3, 5, 3, 72),
                                                     "pd.DataFrame(['Low', 'Medium', 'Low', 'High', None], "
                                                     "columns=['A'])"),
@@ -362,7 +385,9 @@ def test_frame_replace():
                               BasicCodeLocation("<string-source>", 4),
                               OperatorContext(OperatorType.PROJECTION_MODIFY,
                                               FunctionInfo('pandas.core.frame', 'replace')),
-                              DagNodeDetails("Replace 'Medium' with 'Low'", ['A']),
+                              DagNodeDetails("Replace 'Medium' with 'Low'", ['A'],
+                                             OptimizerInfo(RangeComparison(0, 100), (5, 1),
+                                                           RangeComparison(0, 500))),
                               OptionalCodeInfo(CodeReference(4, 13, 4, 40), "df.replace('Medium', 'Low')"),
                               Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_modify, arg_index=0)
@@ -395,21 +420,24 @@ def test_frame_merge_on():
     expected_a = DagNode(0,
                          BasicCodeLocation("<string-source>", 3),
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                         DagNodeDetails(None, ['A', 'B']),
+                         DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 100), (5, 2),
+                                                                        RangeComparison(0, 500))),
                          OptionalCodeInfo(CodeReference(3, 7, 3, 65),
                                           "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})"),
                          Comparison(partial))
     expected_b = DagNode(1,
                          BasicCodeLocation("<string-source>", 4),
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                         DagNodeDetails(None, ['B', 'C']),
+                         DagNodeDetails(None, ['B', 'C'], OptimizerInfo(RangeComparison(0, 100), (5, 2),
+                                                                        RangeComparison(0, 500))),
                          OptionalCodeInfo(CodeReference(4, 7, 4, 69),
                                           "pd.DataFrame({'B': [1, 2, 3, 4, 5], 'C': [1, 5, 4, 11, None]})"),
                          Comparison(partial))
     expected_join = DagNode(2,
                             BasicCodeLocation("<string-source>", 5),
                             OperatorContext(OperatorType.JOIN, FunctionInfo('pandas.core.frame', 'merge')),
-                            DagNodeDetails("on 'B'", ['A', 'B', 'C']),
+                            DagNodeDetails("on 'B'", ['A', 'B', 'C'], OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                                    RangeComparison(0, 800))),
                             OptionalCodeInfo(CodeReference(5, 12, 5, 36), "df_a.merge(df_b, on='B')"),
                             Comparison(FunctionType))
     expected_dag.add_edge(expected_a, expected_join, arg_index=0)
@@ -444,21 +472,25 @@ def test_frame_merge_left_right_on():
     expected_a = DagNode(0,
                          BasicCodeLocation("<string-source>", 3),
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                         DagNodeDetails(None, ['A', 'B']),
+                         DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (5, 2),
+                                                                        RangeComparison(0, 800))),
                          OptionalCodeInfo(CodeReference(3, 7, 3, 65),
                                           "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})"),
                          Comparison(partial))
     expected_b = DagNode(1,
                          BasicCodeLocation("<string-source>", 4),
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                         DagNodeDetails(None, ['C', 'D']),
+                         DagNodeDetails(None, ['C', 'D'], OptimizerInfo(RangeComparison(0, 200), (5, 2),
+                                                                        RangeComparison(0, 800))),
                          OptionalCodeInfo(CodeReference(4, 7, 4, 69),
                                           "pd.DataFrame({'C': [1, 2, 3, 4, 5], 'D': [1, 5, 4, 11, None]})"),
                          Comparison(partial))
     expected_join = DagNode(2,
                             BasicCodeLocation("<string-source>", 5),
                             OperatorContext(OperatorType.JOIN, FunctionInfo('pandas.core.frame', 'merge')),
-                            DagNodeDetails("on 'B' == 'C'", ['A', 'B', 'C', 'D']),
+                            DagNodeDetails("on 'B' == 'C'", ['A', 'B', 'C', 'D'],
+                                           OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                         RangeComparison(0, 800))),
                             OptionalCodeInfo(CodeReference(5, 12, 5, 55),
                                              "df_a.merge(df_b, left_on='B', right_on='C')"),
                             Comparison(FunctionType))
@@ -495,21 +527,25 @@ def test_frame_merge_index():
     expected_a = DagNode(0,
                          BasicCodeLocation("<string-source>", 3),
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                         DagNodeDetails(None, ['A', 'B']),
+                         DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (5, 2),
+                                                                        RangeComparison(0, 800))),
                          OptionalCodeInfo(CodeReference(3, 7, 3, 65),
                                           "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})"),
                          Comparison(partial))
     expected_b = DagNode(1,
                          BasicCodeLocation("<string-source>", 4),
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                         DagNodeDetails(None, ['C', 'D']),
+                         DagNodeDetails(None, ['C', 'D'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                        RangeComparison(0, 800))),
                          OptionalCodeInfo(CodeReference(4, 7, 4, 60),
                                           "pd.DataFrame({'C': [1, 2, 3, 4], 'D': [1, 5, 4, 11]})"),
                          Comparison(partial))
     expected_join = DagNode(2,
                             BasicCodeLocation("<string-source>", 5),
                             OperatorContext(OperatorType.JOIN, FunctionInfo('pandas.core.frame', 'merge')),
-                            DagNodeDetails('on left_index == right_index (outer)', ['A', 'B', 'C', 'D']),
+                            DagNodeDetails('on left_index == right_index (outer)', ['A', 'B', 'C', 'D'],
+                                           OptimizerInfo(RangeComparison(0, 200), (5, 4),
+                                                         RangeComparison(0, 800))),
                             OptionalCodeInfo(CodeReference(5, 12, 5, 82),
                                              "df_a.merge(right=df_b, left_index=True, right_index=True, how='outer')"),
                             Comparison(FunctionType))
@@ -547,21 +583,24 @@ def test_frame_merge_sorted():
     expected_a = DagNode(0,
                          BasicCodeLocation("<string-source>", 3),
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                         DagNodeDetails(None, ['A', 'B']),
+                         DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (5, 2),
+                                                                        RangeComparison(0, 800))),
                          OptionalCodeInfo(CodeReference(3, 7, 3, 65),
                                           "pd.DataFrame({'A': [0, 2, 4, 8, 5], 'B': [7, 5, 4, 2, 1]})"),
                          Comparison(partial))
     expected_b = DagNode(1,
                          BasicCodeLocation("<string-source>", 4),
                          OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                         DagNodeDetails(None, ['B', 'C']),
+                         DagNodeDetails(None, ['B', 'C'], OptimizerInfo(RangeComparison(0, 200), (5, 2),
+                                                                        RangeComparison(0, 800))),
                          OptionalCodeInfo(CodeReference(4, 7, 4, 69),
                                           "pd.DataFrame({'B': [1, 4, 3, 2, 5], 'C': [1, 5, 4, 11, None]})"),
                          Comparison(partial))
     expected_join = DagNode(2,
                             BasicCodeLocation("<string-source>", 5),
                             OperatorContext(OperatorType.JOIN, FunctionInfo('pandas.core.frame', 'merge')),
-                            DagNodeDetails("on 'B'", ['A', 'B', 'C']),
+                            DagNodeDetails("on 'B'", ['A', 'B', 'C'], OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                                    RangeComparison(0, 800))),
                             OptionalCodeInfo(CodeReference(5, 12, 5, 47), "df_a.merge(df_b, on='B', sort=True)"),
                             Comparison(FunctionType))
     expected_dag.add_edge(expected_a, expected_join, arg_index=0)
@@ -597,7 +636,8 @@ def test_groupby_agg():
     expected_data = DagNode(0,
                             BasicCodeLocation("<string-source>", 3),
                             OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                            DagNodeDetails(None, ['group', 'value']),
+                            DagNodeDetails(None, ['group', 'value'], OptimizerInfo(RangeComparison(0, 200), (5, 2),
+                                                                                   RangeComparison(0, 800))),
                             OptionalCodeInfo(CodeReference(3, 5, 3, 81),
                                              "pd.DataFrame({'group': ['A', 'B', 'A', 'C', 'B'], "
                                              "'value': [1, 2, 1, 3, 4]})"),
@@ -607,7 +647,9 @@ def test_groupby_agg():
                                    OperatorContext(OperatorType.GROUP_BY_AGG,
                                                    FunctionInfo('pandas.core.groupby.generic', 'agg')),
                                    DagNodeDetails("Groupby 'group', Aggregate: '{'mean_value': ('value', 'mean')}'",
-                                                  ['group', 'mean_value']),
+                                                  ['group', 'mean_value'],
+                                                  OptimizerInfo(RangeComparison(0, 1000), (3, 2),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(4, 17, 4, 70),
                                                     "df.groupby('group').agg(mean_value=('value', 'mean'))"),
                                    Comparison(FunctionType))
@@ -637,7 +679,8 @@ def test_series__init__():
     expected_node = DagNode(0,
                             BasicCodeLocation("<string-source>", 3),
                             OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.series', 'Series')),
-                            DagNodeDetails(None, ['A']),
+                            DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                      RangeComparison(0, 800))),
                             OptionalCodeInfo(CodeReference(3, 12, 3, 48), "pd.Series([0, 2, 4, None], name='A')"),
                             Comparison(partial))
     compare(extracted_node, expected_node)
@@ -669,7 +712,8 @@ def test_series_isin():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.series', 'Series')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(3, 12, 3, 48),
                                                     "pd.Series([0, 2, 4, None], name='A')"),
                                    Comparison(partial))
@@ -677,7 +721,8 @@ def test_series_isin():
                             BasicCodeLocation("<string-source>", 4),
                             OperatorContext(OperatorType.SUBSCRIPT,
                                             FunctionInfo('pandas.core.series', 'isin')),
-                            DagNodeDetails('isin: [2, 4]', ['A']),
+                            DagNodeDetails('isin: [2, 4]', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                RangeComparison(0, 800))),
                             OptionalCodeInfo(CodeReference(4, 11, 4, 33),
                                              'pd_series.isin([2, 4])'),
                             Comparison(FunctionType))
@@ -711,7 +756,8 @@ def test_series__cmp_method():
                                    BasicCodeLocation("<string-source>", 3),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.series', 'Series')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(3, 12, 3, 48),
                                                     "pd.Series([0, 2, 4, None], name='A')"),
                                    Comparison(partial))
@@ -719,7 +765,8 @@ def test_series__cmp_method():
                                   BasicCodeLocation("<string-source>", 4),
                                   OperatorContext(OperatorType.SUBSCRIPT,
                                                   FunctionInfo('pandas.core.series', '_cmp_method')),
-                                  DagNodeDetails('> 3', ['A']),
+                                  DagNodeDetails('> 3', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(4, 7, 4, 20), 'pd_series > 3'),
                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
@@ -751,7 +798,8 @@ def test_series__arith_method():
                                    BasicCodeLocation("<string-source>", 2),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.series', 'Series')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(2, 12, 2, 48),
                                                     "pd.Series([0, 2, 4, None], name='A')"),
                                    Comparison(partial))
@@ -759,7 +807,8 @@ def test_series__arith_method():
                                   BasicCodeLocation("<string-source>", 3),
                                   OperatorContext(OperatorType.SUBSCRIPT,
                                                   FunctionInfo('pandas.core.series', '_arith_method')),
-                                  DagNodeDetails('+ 2', ['A']),
+                                  DagNodeDetails('+ 2', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(3, 12, 3, 25), 'pd_series + 2'),
                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
@@ -793,7 +842,8 @@ def test_series__logical_method():
                                     BasicCodeLocation("<string-source>", 2),
                                     OperatorContext(OperatorType.DATA_SOURCE,
                                                     FunctionInfo('pandas.core.series', 'Series')),
-                                    DagNodeDetails(None, ['A']),
+                                    DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                              RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(2, 8, 2, 54),
                                                      "pd.Series([True, False, True, True], name='A')"),
                                     Comparison(partial))
@@ -801,7 +851,8 @@ def test_series__logical_method():
                                     BasicCodeLocation("<string-source>", 3),
                                     OperatorContext(OperatorType.DATA_SOURCE,
                                                     FunctionInfo('pandas.core.series', 'Series')),
-                                    DagNodeDetails(None, ['B']),
+                                    DagNodeDetails(None, ['B'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                              RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(3, 8, 3, 55),
                                                      "pd.Series([True, False, False, True], name='B')"),
                                     Comparison(partial))
@@ -809,7 +860,8 @@ def test_series__logical_method():
                                  BasicCodeLocation("<string-source>", 4),
                                  OperatorContext(OperatorType.SUBSCRIPT,
                                                  FunctionInfo('pandas.core.series', '_logical_method')),
-                                 DagNodeDetails('&', ['A']),
+                                 DagNodeDetails('&', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                          RangeComparison(0, 800))),
                                  OptionalCodeInfo(CodeReference(4, 8, 4, 21), 'mask1 & mask2'),
                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source1, expected_subscript, arg_index=0)

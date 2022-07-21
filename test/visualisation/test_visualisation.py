@@ -14,7 +14,7 @@ def test_save_fig_to_path():
     """
     extracted_dag = get_expected_dag_adult_easy("<string-source>")
 
-    filename = os.path.join(str(get_project_root()), "example_pipelines", "adult_simple", "adult_simple.png")
+    filename = os.path.join(str(get_project_root()), "test", "visualisation", "test_save_fig_to_path.png")
     save_fig_to_path(extracted_dag, filename)
 
     assert os.path.isfile(filename)

@@ -14,12 +14,12 @@ from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.preprocessing import label_binarize, OneHotEncoder
 from sklearn.tree import DecisionTreeClassifier
 from tensorflow.python.keras.wrappers.scikit_learn import KerasClassifier  # pylint: disable=no-name-in-module
-from testfixtures import compare, Comparison
+from testfixtures import compare, Comparison, RangeComparison
 
 from mlwhatif import OperatorType, OperatorContext, FunctionInfo
 from mlwhatif.instrumentation import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
-    OptionalCodeInfo
+    OptionalCodeInfo, OptimizerInfo
 from mlwhatif.monkeypatching._patch_sklearn import TrainTestSplitResult
 
 
@@ -45,7 +45,8 @@ def test_label_binarize():
                                    BasicCodeLocation("<string-source>", 5),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.series', 'Series')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(5, 12, 5, 59),
                                                     "pd.Series(['yes', 'no', 'no', 'yes'], name='A')"),
                                    Comparison(partial))
@@ -53,7 +54,9 @@ def test_label_binarize():
                                 BasicCodeLocation("<string-source>", 6),
                                 OperatorContext(OperatorType.PROJECTION_MODIFY,
                                                 FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
-                                DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
+                                DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                               OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                             RangeComparison(0, 800))),
                                 OptionalCodeInfo(CodeReference(6, 12, 6, 60),
                                                  "label_binarize(pd_series, classes=['no', 'yes'])"),
                                 Comparison(FunctionType))
@@ -93,14 +96,16 @@ def test_train_test_split():
     expected_source = DagNode(0,
                               BasicCodeLocation("<string-source>", 4),
                               OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.core.frame', 'DataFrame')),
-                              DagNodeDetails(None, ['A']),
+                              DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                        RangeComparison(0, 800))),
                               OptionalCodeInfo(CodeReference(4, 12, 4, 46), "pd.DataFrame({'A': [1, 2, 10, 5]})"),
                               Comparison(partial))
     expected_split = DagNode(1,
                              BasicCodeLocation("<string-source>", 5),
                              OperatorContext(OperatorType.TRAIN_TEST_SPLIT,
                                              FunctionInfo('sklearn.model_selection._split', 'train_test_split')),
-                             DagNodeDetails(None, ['A']),
+                             DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                       RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(5, 24, 5, 67),
                                               'train_test_split(pandas_df, random_state=0)'),
                              Comparison(FunctionType))
@@ -109,7 +114,7 @@ def test_train_test_split():
                              BasicCodeLocation("<string-source>", 5),
                              OperatorContext(OperatorType.TRAIN_TEST_SPLIT,
                                              FunctionInfo('sklearn.model_selection._split', 'train_test_split')),
-                             DagNodeDetails('(Train Data)', ['A']),
+                             DagNodeDetails('(Train Data)', ['A'], OptimizerInfo(0, (3, 1), RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(5, 24, 5, 67),
                                               'train_test_split(pandas_df, random_state=0)'),
                              Comparison(FunctionType))
@@ -118,7 +123,7 @@ def test_train_test_split():
                             BasicCodeLocation("<string-source>", 5),
                             OperatorContext(OperatorType.TRAIN_TEST_SPLIT,
                                             FunctionInfo('sklearn.model_selection._split', 'train_test_split')),
-                            DagNodeDetails('(Test Data)', ['A']),
+                            DagNodeDetails('(Test Data)', ['A'], OptimizerInfo(0, (1, 1), RangeComparison(0, 800))),
                             OptionalCodeInfo(CodeReference(5, 24, 5, 67),
                                              'train_test_split(pandas_df, random_state=0)'),
                             Comparison(FunctionType))
@@ -167,14 +172,17 @@ def test_standard_scaler():
                                    BasicCodeLocation("<string-source>", 5),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(5, 5, 5, 39), "pd.DataFrame({'A': [1, 2, 10, 5]})"),
                                    Comparison(partial))
     expected_transformer = DagNode(1,
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                   DagNodeDetails('Standard Scaler: fit_transform', ['array']),
+                                   DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(6, 18, 6, 34), 'StandardScaler()'),
                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
@@ -182,7 +190,8 @@ def test_standard_scaler():
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.DATA_SOURCE,
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                       DagNodeDetails(None, ['A']),
+                                       DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                 RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(8, 10, 8, 44),
                                                         "pd.DataFrame({'A': [1, 2, 10, 5]})"),
                                        Comparison(partial))
@@ -190,7 +199,9 @@ def test_standard_scaler():
                                        BasicCodeLocation("<string-source>", 6),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                       DagNodeDetails('Standard Scaler: transform', ['array']),
+                                       DagNodeDetails('Standard Scaler: transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(6, 18, 6, 34), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
@@ -238,7 +249,8 @@ def test_function_transformer():
                                    BasicCodeLocation("<string-source>", 8),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(8, 5, 8, 39), "pd.DataFrame({'A': [1, 2, 10, 5]})"),
                                    Comparison(partial))
     expected_transformer = DagNode(1,
@@ -246,7 +258,9 @@ def test_function_transformer():
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.preprocessing_function_transformer',
                                                                 'FunctionTransformer')),
-                                   DagNodeDetails('Function Transformer: fit_transform', ['A']),
+                                   DagNodeDetails('Function Transformer: fit_transform', ['A'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(9, 23, 9, 65),
                                                     'FunctionTransformer(lambda x: safe_log(x))'),
                                    Comparison(FunctionType))
@@ -255,7 +269,8 @@ def test_function_transformer():
                                        BasicCodeLocation("<string-source>", 11),
                                        OperatorContext(OperatorType.DATA_SOURCE,
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                       DagNodeDetails(None, ['A']),
+                                       DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                 RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(11, 10, 11, 44),
                                                         "pd.DataFrame({'A': [1, 2, 10, 5]})"),
                                        Comparison(partial))
@@ -264,7 +279,9 @@ def test_function_transformer():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing_function_transformer',
                                                                     'FunctionTransformer')),
-                                       DagNodeDetails('Function Transformer: transform', ['A']),
+                                       DagNodeDetails('Function Transformer: transform', ['A'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                    RangeComparison(0, 10000))),
                                        OptionalCodeInfo(CodeReference(9, 23, 9, 65),
                                                         'FunctionTransformer(lambda x: safe_log(x))'),
                                        Comparison(FunctionType))
@@ -310,7 +327,8 @@ def test_kbins_discretizer():
                                    BasicCodeLocation("<string-source>", 5),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(5, 5, 5, 39), "pd.DataFrame({'A': [1, 2, 10, 5]})"),
                                    Comparison(partial))
     expected_transformer = DagNode(1,
@@ -318,7 +336,9 @@ def test_kbins_discretizer():
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.preprocessing._discretization',
                                                                 'KBinsDiscretizer')),
-                                   DagNodeDetails('K-Bins Discretizer: fit_transform', ['array']),
+                                   DagNodeDetails('K-Bins Discretizer: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(6, 14, 6, 78),
                                                     "KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform')"),
                                    Comparison(FunctionType))
@@ -327,7 +347,8 @@ def test_kbins_discretizer():
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.DATA_SOURCE,
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                       DagNodeDetails(None, ['A']),
+                                       DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                 RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(8, 10, 8, 44),
                                                         "pd.DataFrame({'A': [1, 2, 10, 5]})"),
                                        Comparison(partial))
@@ -336,7 +357,9 @@ def test_kbins_discretizer():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._discretization',
                                                                     'KBinsDiscretizer')),
-                                       DagNodeDetails('K-Bins Discretizer: transform', ['array']),
+                                       DagNodeDetails('K-Bins Discretizer: transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(6, 14, 6, 78),
                                                         "KBinsDiscretizer(n_bins=3, encode='ordinal', "
                                                         "strategy='uniform')"),
@@ -383,7 +406,8 @@ def test_simple_imputer():
                                    BasicCodeLocation("<string-source>", 5),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(5, 5, 5, 61),
                                                     "pd.DataFrame({'A': ['cat_a', np.nan, 'cat_a', 'cat_c']})"),
                                    Comparison(partial))
@@ -391,7 +415,9 @@ def test_simple_imputer():
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.impute._base', 'SimpleImputer')),
-                                   DagNodeDetails('Simple Imputer: fit_transform', ['A']),
+                                   DagNodeDetails('Simple Imputer: fit_transform', ['A'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(6, 10, 6, 72),
                                                     "SimpleImputer(missing_values=np.nan, strategy='most_frequent')"),
                                    Comparison(FunctionType))
@@ -400,7 +426,8 @@ def test_simple_imputer():
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.DATA_SOURCE,
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                       DagNodeDetails(None, ['A']),
+                                       DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                 RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(8, 10, 8, 66),
                                                         "pd.DataFrame({'A': ['cat_a', np.nan, 'cat_a', 'cat_c']})"),
                                        Comparison(partial))
@@ -408,7 +435,9 @@ def test_simple_imputer():
                                        BasicCodeLocation("<string-source>", 6),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.impute._base', 'SimpleImputer')),
-                                       DagNodeDetails('Simple Imputer: transform', ['A']),
+                                       DagNodeDetails('Simple Imputer: transform', ['A'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(6, 10, 6, 72),
                                                         "SimpleImputer(missing_values=np.nan, strategy='most_frequent')"),
                                        Comparison(FunctionType))
@@ -455,7 +484,8 @@ def test_one_hot_encoder_not_sparse():
                                    BasicCodeLocation("<string-source>", 5),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(5, 5, 5, 62),
                                                     "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
                                    Comparison(partial))
@@ -463,7 +493,9 @@ def test_one_hot_encoder_not_sparse():
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
-                                   DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
+                                   DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(6, 18, 6, 45), 'OneHotEncoder(sparse=False)'),
                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
@@ -471,7 +503,8 @@ def test_one_hot_encoder_not_sparse():
                                        BasicCodeLocation("<string-source>", 11),
                                        OperatorContext(OperatorType.DATA_SOURCE,
                                                        FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                       DagNodeDetails(None, ['A']),
+                                       DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                 RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(11, 10, 11, 67),
                                                         "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
                                        Comparison(partial))
@@ -480,7 +513,9 @@ def test_one_hot_encoder_not_sparse():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._encoders',
                                                                     'OneHotEncoder')),
-                                       DagNodeDetails('One-Hot Encoder: transform', ['array']),
+                                       DagNodeDetails('One-Hot Encoder: transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(6, 18, 6, 45), 'OneHotEncoder(sparse=False)'),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
@@ -524,7 +559,8 @@ def test_one_hot_encoder_sparse():
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A']),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(6, 5, 6, 62),
                                                     "pd.DataFrame({'A': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
                                    Comparison(partial))
@@ -532,7 +568,9 @@ def test_one_hot_encoder_sparse():
                                    BasicCodeLocation("<string-source>", 7),
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
-                                   DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
+                                   DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(7, 18, 7, 33), 'OneHotEncoder()'),
                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
@@ -573,7 +611,8 @@ def test_hashing_vectorizer():
                                    BasicCodeLocation("<string-source>", 8),
                                    OperatorContext(OperatorType.PROJECTION,
                                                    FunctionInfo('pandas.core.frame', '__getitem__')),
-                                   DagNodeDetails("to ['A']", ['A']),
+                                   DagNodeDetails("to ['A']", ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                   RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(8, 40, 8, 47), "df['A']"),
                                    Comparison(FunctionType))
     expected_transformer = DagNode(2,
@@ -581,7 +620,9 @@ def test_hashing_vectorizer():
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.feature_extraction.text',
                                                                 'HashingVectorizer')),
-                                   DagNodeDetails('Hashing Vectorizer: fit_transform', ['array']),
+                                   DagNodeDetails('Hashing Vectorizer: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                                RangeComparison(0, 4000))),
                                    OptionalCodeInfo(CodeReference(7, 13, 7, 67),
                                                     'HashingVectorizer(ngram_range=(1, 3), n_features=2**2)'),
                                    Comparison(FunctionType))
@@ -590,7 +631,8 @@ def test_hashing_vectorizer():
                                        BasicCodeLocation("<string-source>", 12),
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
-                                       DagNodeDetails("to ['A']", ['A']),
+                                       DagNodeDetails("to ['A']", ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                       RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(12, 36, 12, 48), "test_df['A']"),
                                        Comparison(FunctionType))
     expected_transformer_two = DagNode(5,
@@ -598,7 +640,9 @@ def test_hashing_vectorizer():
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.feature_extraction.text',
                                                                     'HashingVectorizer')),
-                                       DagNodeDetails('Hashing Vectorizer: transform', ['array']),
+                                       DagNodeDetails('Hashing Vectorizer: transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(7, 13, 7, 67),
                                                         'HashingVectorizer(ngram_range=(1, 3), n_features=2**2)'),
                                        Comparison(FunctionType))
@@ -647,7 +691,9 @@ def test_column_transformer_one_transformer():
                                    BasicCodeLocation("<string-source>", 7),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, columns=['A', 'B']),
+                                   DagNodeDetails(None, ['A', 'B'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(7, 5, 7, 59),
                                                     "pd.DataFrame({'A': [1, 2, 10, 5], 'B': [1, 2, 10, 5]})"),
                                    Comparison(partial))
@@ -656,7 +702,9 @@ def test_column_transformer_one_transformer():
                                   OperatorContext(OperatorType.PROJECTION,
                                                   FunctionInfo('sklearn.compose._column_transformer',
                                                                'ColumnTransformer')),
-                                  DagNodeDetails("to ['A', 'B']", ['A', 'B']),
+                                  DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                 OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                               RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(8, 21, 10, 2),
                                                    "ColumnTransformer(transformers=[\n"
                                                    "    ('numeric', StandardScaler(), ['A', 'B'])\n])"),
@@ -666,7 +714,9 @@ def test_column_transformer_one_transformer():
                                        BasicCodeLocation("<string-source>", 9),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                       DagNodeDetails('Standard Scaler: fit_transform', ['array']),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 4000))),
                                        OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_projection, expected_standard_scaler, arg_index=0)
@@ -674,7 +724,8 @@ def test_column_transformer_one_transformer():
                               BasicCodeLocation("<string-source>", 8),
                               OperatorContext(OperatorType.CONCATENATION,
                                               FunctionInfo('sklearn.compose._column_transformer', 'ColumnTransformer')),
-                              DagNodeDetails(None, ['array']),
+                              DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                            RangeComparison(0, 800))),
                               OptionalCodeInfo(CodeReference(8, 21, 10, 2),
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A', 'B'])\n])"),
@@ -725,7 +776,8 @@ def test_column_transformer_one_transformer_single_column_projection():
                                   OperatorContext(OperatorType.PROJECTION,
                                                   FunctionInfo('sklearn.compose._column_transformer',
                                                                'ColumnTransformer')),
-                                  DagNodeDetails("to ['A']", ['A']),
+                                  DagNodeDetails("to ['A']", ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                  RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(8, 21, 10, 2),
                                                    "ColumnTransformer(transformers=[\n"
                                                    "    ('hashing', HashingVectorizer(ngram_range=(1, 3), "
@@ -735,7 +787,9 @@ def test_column_transformer_one_transformer_single_column_projection():
                                   BasicCodeLocation("<string-source>", 9),
                                   OperatorContext(OperatorType.TRANSFORMER,
                                                   FunctionInfo('sklearn.feature_extraction.text', 'HashingVectorizer')),
-                                  DagNodeDetails('Hashing Vectorizer: fit_transform', ['array']),
+                                  DagNodeDetails('Hashing Vectorizer: fit_transform', ['array'],
+                                                 OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                               RangeComparison(0, 4000))),
                                   OptionalCodeInfo(CodeReference(9, 16, 9, 70), 'HashingVectorizer(ngram_range=(1, 3), '
                                                                                 'n_features=2**2)'),
                                   Comparison(FunctionType))
@@ -744,7 +798,8 @@ def test_column_transformer_one_transformer_single_column_projection():
                               BasicCodeLocation("<string-source>", 8),
                               OperatorContext(OperatorType.CONCATENATION,
                                               FunctionInfo('sklearn.compose._column_transformer', 'ColumnTransformer')),
-                              DagNodeDetails(None, ['array']),
+                              DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                                            RangeComparison(0, 800))),
                               OptionalCodeInfo(CodeReference(8, 21, 10, 2),
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('hashing', HashingVectorizer(ngram_range=(1, 3), "
@@ -756,7 +811,9 @@ def test_column_transformer_one_transformer_single_column_projection():
                                  BasicCodeLocation("<string-source>", 9),
                                  OperatorContext(OperatorType.TRANSFORMER,
                                                  FunctionInfo('sklearn.feature_extraction.text', 'HashingVectorizer')),
-                                 DagNodeDetails('Hashing Vectorizer: transform', ['array']),
+                                 DagNodeDetails('Hashing Vectorizer: transform', ['array'],
+                                                OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                              RangeComparison(0, 800))),
                                  OptionalCodeInfo(CodeReference(9, 16, 9, 70), 'HashingVectorizer(ngram_range=(1, 3), '
                                                                                'n_features=2**2)'),
                                  Comparison(FunctionType))
@@ -807,7 +864,8 @@ def test_column_transformer_multiple_transformers_all_dense():
                                    BasicCodeLocation("<string-source>", 7),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A', 'B']),
+                                   DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                                  RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(7, 5, 7, 82),
                                                     "pd.DataFrame({'A': [1, 2, 10, 5], "
                                                     "'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
@@ -817,7 +875,8 @@ def test_column_transformer_multiple_transformers_all_dense():
                                     OperatorContext(OperatorType.PROJECTION,
                                                     FunctionInfo('sklearn.compose._column_transformer',
                                                                  'ColumnTransformer')),
-                                    DagNodeDetails("to ['A']", ['A']),
+                                    DagNodeDetails("to ['A']", ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                    RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
@@ -829,7 +888,8 @@ def test_column_transformer_multiple_transformers_all_dense():
                                     OperatorContext(OperatorType.PROJECTION,
                                                     FunctionInfo('sklearn.compose._column_transformer',
                                                                  'ColumnTransformer')),
-                                    DagNodeDetails("to ['B']", ['B']),
+                                    DagNodeDetails("to ['B']", ['B'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                    RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
@@ -840,7 +900,9 @@ def test_column_transformer_multiple_transformers_all_dense():
                                        BasicCodeLocation("<string-source>", 9),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                       DagNodeDetails('Standard Scaler: fit_transform', ['array']),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                    RangeComparison(0, 4000))),
                                        OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_1, expected_standard_scaler, arg_index=0)
@@ -848,7 +910,9 @@ def test_column_transformer_multiple_transformers_all_dense():
                                BasicCodeLocation("<string-source>", 10),
                                OperatorContext(OperatorType.TRANSFORMER,
                                                FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
-                               DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
+                               DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
+                                              OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                            RangeComparison(0, 4000))),
                                OptionalCodeInfo(CodeReference(10, 20, 10, 47), 'OneHotEncoder(sparse=False)'),
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_2, expected_one_hot, arg_index=0)
@@ -856,7 +920,8 @@ def test_column_transformer_multiple_transformers_all_dense():
                               BasicCodeLocation("<string-source>", 8),
                               OperatorContext(OperatorType.CONCATENATION,
                                               FunctionInfo('sklearn.compose._column_transformer', 'ColumnTransformer')),
-                              DagNodeDetails(None, ['array']),
+                              DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                                            RangeComparison(0, 800))),
                               OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A']),\n"
@@ -914,7 +979,8 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                    BasicCodeLocation("<string-source>", 7),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A', 'B']),
+                                   DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                                  RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(7, 5, 7, 82),
                                                     "pd.DataFrame({'A': [1, 2, 10, 5], "
                                                     "'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
@@ -924,7 +990,8 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                     OperatorContext(OperatorType.PROJECTION,
                                                     FunctionInfo('sklearn.compose._column_transformer',
                                                                  'ColumnTransformer')),
-                                    DagNodeDetails("to ['A']", ['A']),
+                                    DagNodeDetails("to ['A']", ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                    RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
@@ -936,7 +1003,8 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                     OperatorContext(OperatorType.PROJECTION,
                                                     FunctionInfo('sklearn.compose._column_transformer',
                                                                  'ColumnTransformer')),
-                                    DagNodeDetails("to ['B']", ['B']),
+                                    DagNodeDetails("to ['B']", ['B'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                    RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
@@ -947,7 +1015,9 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                        BasicCodeLocation("<string-source>", 9),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                       DagNodeDetails('Standard Scaler: fit_transform', ['array']),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                    RangeComparison(0, 4000))),
                                        OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_1, expected_standard_scaler, arg_index=0)
@@ -955,7 +1025,9 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                                BasicCodeLocation("<string-source>", 10),
                                OperatorContext(OperatorType.TRANSFORMER,
                                                FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
-                               DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
+                               DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
+                                              OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                            RangeComparison(0, 4000))),
                                OptionalCodeInfo(CodeReference(10, 20, 10, 46), 'OneHotEncoder(sparse=True)'),
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_2, expected_one_hot, arg_index=0)
@@ -963,7 +1035,8 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                               BasicCodeLocation("<string-source>", 8),
                               OperatorContext(OperatorType.CONCATENATION,
                                               FunctionInfo('sklearn.compose._column_transformer', 'ColumnTransformer')),
-                              DagNodeDetails(None, ['array']),
+                              DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                                            RangeComparison(0, 800))),
                               OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A']),\n"
@@ -1026,7 +1099,8 @@ def test_column_transformer_transform_after_fit_transform():
                                    BasicCodeLocation("<string-source>", 13),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A', 'B']),
+                                   DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                                  RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(13, 10, 13, 87),
                                                     "pd.DataFrame({'A': [1, 2, 10, 5], "
                                                     "'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})"),
@@ -1036,7 +1110,8 @@ def test_column_transformer_transform_after_fit_transform():
                                     OperatorContext(OperatorType.PROJECTION,
                                                     FunctionInfo('sklearn.compose._column_transformer',
                                                                  'ColumnTransformer')),
-                                    DagNodeDetails("to ['A']", ['A']),
+                                    DagNodeDetails("to ['A']", ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                    RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
@@ -1048,7 +1123,8 @@ def test_column_transformer_transform_after_fit_transform():
                                     OperatorContext(OperatorType.PROJECTION,
                                                     FunctionInfo('sklearn.compose._column_transformer',
                                                                  'ColumnTransformer')),
-                                    DagNodeDetails("to ['B']", ['B']),
+                                    DagNodeDetails("to ['B']", ['B'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                    RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                      "ColumnTransformer(transformers=[\n"
                                                      "    ('numeric', StandardScaler(), ['A']),\n"
@@ -1059,7 +1135,9 @@ def test_column_transformer_transform_after_fit_transform():
                                        BasicCodeLocation("<string-source>", 9),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                       DagNodeDetails('Standard Scaler: transform', ['array']),
+                                       DagNodeDetails('Standard Scaler: transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(9, 16, 9, 32), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_1, expected_standard_scaler, arg_index=1)
@@ -1067,7 +1145,9 @@ def test_column_transformer_transform_after_fit_transform():
                                BasicCodeLocation("<string-source>", 10),
                                OperatorContext(OperatorType.TRANSFORMER,
                                                FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
-                               DagNodeDetails('One-Hot Encoder: transform', ['array']),
+                               DagNodeDetails('One-Hot Encoder: transform', ['array'],
+                                              OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                            RangeComparison(0, 800))),
                                OptionalCodeInfo(CodeReference(10, 20, 10, 46), 'OneHotEncoder(sparse=True)'),
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_projection_2, expected_one_hot, arg_index=1)
@@ -1075,7 +1155,8 @@ def test_column_transformer_transform_after_fit_transform():
                               BasicCodeLocation("<string-source>", 8),
                               OperatorContext(OperatorType.CONCATENATION,
                                               FunctionInfo('sklearn.compose._column_transformer', 'ColumnTransformer')),
-                              DagNodeDetails(None, ['array']),
+                              DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                                            RangeComparison(0, 800))),
                               OptionalCodeInfo(CodeReference(8, 21, 11, 2),
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A']),\n"
@@ -1134,7 +1215,9 @@ def test_decision_tree():
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A', 'B', 'target']),
+                                   DagNodeDetails(None, ['A', 'B', 'target'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(6, 5, 6, 95),
                                                     "pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], "
                                                     "'target': ['no', 'no', 'yes', 'yes']})"),
@@ -1143,14 +1226,18 @@ def test_decision_tree():
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
-                                       DagNodeDetails("to ['A', 'B']", ['A', 'B']),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(8, 39, 8, 53), "df[['A', 'B']]"),
                                        Comparison(FunctionType))
     expected_standard_scaler = DagNode(2,
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                       DagNodeDetails('Standard Scaler: fit_transform', ['array']),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 10000))),
                                        OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_data_projection, arg_index=0)
@@ -1159,7 +1246,9 @@ def test_decision_tree():
                                         BasicCodeLocation("<string-source>", 9),
                                         OperatorContext(OperatorType.PROJECTION,
                                                         FunctionInfo('pandas.core.frame', '__getitem__')),
-                                        DagNodeDetails("to ['target']", ['target']),
+                                        DagNodeDetails("to ['target']", ['target'],
+                                                       OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                     RangeComparison(0, 800))),
                                         OptionalCodeInfo(CodeReference(9, 24, 9, 36), "df['target']"),
                                         Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_label_projection, arg_index=0)
@@ -1167,7 +1256,9 @@ def test_decision_tree():
                                     BasicCodeLocation("<string-source>", 9),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
-                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                 RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(9, 9, 9, 60),
                                                      "label_binarize(df['target'], classes=['no', 'yes'])"),
                                     Comparison(FunctionType))
@@ -1176,7 +1267,8 @@ def test_decision_tree():
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.TRAIN_DATA,
                                                   FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
-                                  DagNodeDetails(None, ['array']),
+                                  DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                                RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'),
                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
@@ -1184,7 +1276,8 @@ def test_decision_tree():
                                     BasicCodeLocation("<string-source>", 11),
                                     OperatorContext(OperatorType.TRAIN_LABELS,
                                                     FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
-                                    DagNodeDetails(None, ['array']),
+                                    DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                  RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'),
                                     Comparison(FunctionType))
     expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
@@ -1192,7 +1285,8 @@ def test_decision_tree():
                                      BasicCodeLocation("<string-source>", 11),
                                      OperatorContext(OperatorType.ESTIMATOR,
                                                      FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
-                                     DagNodeDetails('Decision Tree', []),
+                                     DagNodeDetails('Decision Tree', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                                       RangeComparison(0, 10000))),
                                      OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'),
                                      Comparison(FunctionType))
     expected_dag.add_edge(expected_train_data, expected_decision_tree, arg_index=0)
@@ -1249,14 +1343,17 @@ def test_decision_tree_score():
                                        BasicCodeLocation("<string-source>", 16),
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
-                                       DagNodeDetails("to ['A', 'B']", ['A', 'B']),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(16, 23, 16, 42), "test_df[['A', 'B']]"),
                                        Comparison(FunctionType))
     expected_test_data = DagNode(12,
                                  BasicCodeLocation("<string-source>", 16),
                                  OperatorContext(OperatorType.TEST_DATA,
                                                  FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier', 'score')),
-                                 DagNodeDetails(None, ['A', 'B']),
+                                 DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                RangeComparison(0, 800))),
                                  OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                   "clf.score(test_df[['A', 'B']], test_labels)"),
                                  Comparison(FunctionType))
@@ -1265,7 +1362,9 @@ def test_decision_tree_score():
                                     BasicCodeLocation("<string-source>", 15),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
-                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (2, 1),
+                                                                 RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(15, 14, 15, 70),
                                                      "label_binarize(test_df['target'], classes=['no', 'yes'])"),
                                     Comparison(FunctionType))
@@ -1274,7 +1373,8 @@ def test_decision_tree_score():
                                    OperatorContext(OperatorType.TEST_LABELS,
                                                    FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier',
                                                                 'score')),
-                                   DagNodeDetails(None, ['array']),
+                                   DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (2, 1),
+                                                                                 RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                     "clf.score(test_df[['A', 'B']], test_labels)"),
                                    Comparison(FunctionType))
@@ -1283,7 +1383,8 @@ def test_decision_tree_score():
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.ESTIMATOR,
                                                   FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
-                                  DagNodeDetails('Decision Tree', []),
+                                  DagNodeDetails('Decision Tree', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                                    RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 30),
                                                    'DecisionTreeClassifier()'),
                                   Comparison(FunctionType))
@@ -1291,7 +1392,8 @@ def test_decision_tree_score():
                              BasicCodeLocation("<string-source>", 16),
                              OperatorContext(OperatorType.SCORE,
                                              FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier', 'score')),
-                             DagNodeDetails('Decision Tree', []),
+                             DagNodeDetails('Decision Tree', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
+                                                                               RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"),
                              Comparison(FunctionType))
@@ -1350,7 +1452,9 @@ def test_sgd_classifier():
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                       DagNodeDetails('Standard Scaler: fit_transform', ['array']),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 4000))),
                                        OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_train_data = DagNode(5,
@@ -1358,7 +1462,8 @@ def test_sgd_classifier():
                                   OperatorContext(OperatorType.TRAIN_DATA,
                                                   FunctionInfo('sklearn.linear_model._stochastic_gradient',
                                                                'SGDClassifier')),
-                                  DagNodeDetails(None, ['array']),
+                                  DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                                RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
                                                    "SGDClassifier(loss='log', random_state=42)"),
                                   Comparison(FunctionType))
@@ -1367,7 +1472,9 @@ def test_sgd_classifier():
                                     BasicCodeLocation("<string-source>", 9),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
-                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                 RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(9, 9, 9, 60),
                                                      "label_binarize(df['target'], classes=['no', 'yes'])"),
                                     Comparison(FunctionType))
@@ -1376,7 +1483,8 @@ def test_sgd_classifier():
                                     OperatorContext(OperatorType.TRAIN_LABELS,
                                                     FunctionInfo('sklearn.linear_model._stochastic_gradient',
                                                                  'SGDClassifier')),
-                                    DagNodeDetails(None, ['array']),
+                                    DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                  RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(11, 6, 11, 48),
                                                      "SGDClassifier(loss='log', random_state=42)"),
                                     Comparison(FunctionType))
@@ -1386,7 +1494,8 @@ def test_sgd_classifier():
                                   OperatorContext(OperatorType.ESTIMATOR,
                                                   FunctionInfo('sklearn.linear_model._stochastic_gradient',
                                                                'SGDClassifier')),
-                                  DagNodeDetails('SGD Classifier', []),
+                                  DagNodeDetails('SGD Classifier', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                                     RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
                                                    "SGDClassifier(loss='log', random_state=42)"),
                                   Comparison(FunctionType))
@@ -1455,7 +1564,9 @@ def test_sgd_classifier_score():
                                        BasicCodeLocation("<string-source>", 16),
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
-                                       DagNodeDetails("to ['A', 'B']", ['A', 'B']),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(16, 23, 16, 42), "test_df[['A', 'B']]"),
                                        Comparison(FunctionType))
     expected_test_data = DagNode(12,
@@ -1463,7 +1574,8 @@ def test_sgd_classifier_score():
                                  OperatorContext(OperatorType.TEST_DATA,
                                                  FunctionInfo('sklearn.linear_model._stochastic_gradient.'
                                                               'SGDClassifier', 'score')),
-                                 DagNodeDetails(None, ['A', 'B']),
+                                 DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                RangeComparison(0, 800))),
                                  OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                   "clf.score(test_df[['A', 'B']], test_labels)"),
                                  Comparison(FunctionType))
@@ -1472,7 +1584,9 @@ def test_sgd_classifier_score():
                                     BasicCodeLocation("<string-source>", 15),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
-                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (2, 1),
+                                                                 RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(15, 14, 15, 70),
                                                      "label_binarize(test_df['target'], classes=['no', 'yes'])"),
                                     Comparison(FunctionType))
@@ -1481,7 +1595,8 @@ def test_sgd_classifier_score():
                                    OperatorContext(OperatorType.TEST_LABELS,
                                                    FunctionInfo('sklearn.linear_model._stochastic_gradient.'
                                                                 'SGDClassifier', 'score')),
-                                   DagNodeDetails(None, ['array']),
+                                   DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (2, 1),
+                                                                                 RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                     "clf.score(test_df[['A', 'B']], test_labels)"),
                                    Comparison(FunctionType))
@@ -1491,7 +1606,8 @@ def test_sgd_classifier_score():
                                   OperatorContext(OperatorType.ESTIMATOR,
                                                   FunctionInfo('sklearn.linear_model._stochastic_gradient',
                                                                'SGDClassifier')),
-                                  DagNodeDetails('SGD Classifier', []),
+                                  DagNodeDetails('SGD Classifier', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                                     RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
                                                    "SGDClassifier(loss='log', random_state=42)"),
                                   Comparison(FunctionType))
@@ -1500,7 +1616,8 @@ def test_sgd_classifier_score():
                              OperatorContext(OperatorType.SCORE,
                                              FunctionInfo('sklearn.linear_model._stochastic_gradient.SGDClassifier',
                                                           'score')),
-                             DagNodeDetails('SGD Classifier', []),
+                             DagNodeDetails('SGD Classifier', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
+                                                                                RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"),
                              Comparison(FunctionType))
@@ -1558,7 +1675,9 @@ def test_logistic_regression():
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A', 'B', 'target']),
+                                   DagNodeDetails(None, ['A', 'B', 'target'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(6, 5, 6, 95),
                                                     "pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], "
                                                     "'target': ['no', 'no', 'yes', 'yes']})"),
@@ -1567,14 +1686,18 @@ def test_logistic_regression():
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                       DagNodeDetails('Standard Scaler: fit_transform', ['array']),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 10000))),
                                        OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_data_projection = DagNode(1,
                                        BasicCodeLocation("<string-source>", 8),
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
-                                       DagNodeDetails("to ['A', 'B']", ['A', 'B']),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(8, 39, 8, 53), "df[['A', 'B']]"),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_data_projection, arg_index=0)
@@ -1583,7 +1706,9 @@ def test_logistic_regression():
                                         BasicCodeLocation("<string-source>", 9),
                                         OperatorContext(OperatorType.PROJECTION,
                                                         FunctionInfo('pandas.core.frame', '__getitem__')),
-                                        DagNodeDetails("to ['target']", ['target']),
+                                        DagNodeDetails("to ['target']", ['target'],
+                                                       OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                     RangeComparison(0, 800))),
                                         OptionalCodeInfo(CodeReference(9, 24, 9, 36), "df['target']"),
                                         Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_label_projection, arg_index=0)
@@ -1591,7 +1716,9 @@ def test_logistic_regression():
                                     BasicCodeLocation("<string-source>", 9),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
-                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                 RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(9, 9, 9, 60),
                                                      "label_binarize(df['target'], classes=['no', 'yes'])"),
                                     Comparison(FunctionType))
@@ -1600,7 +1727,8 @@ def test_logistic_regression():
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.TRAIN_DATA,
                                                   FunctionInfo('sklearn.linear_model._logistic', 'LogisticRegression')),
-                                  DagNodeDetails(None, ['array']),
+                                  DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                                RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'),
                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
@@ -1609,7 +1737,8 @@ def test_logistic_regression():
                                     OperatorContext(OperatorType.TRAIN_LABELS,
                                                     FunctionInfo('sklearn.linear_model._logistic',
                                                                  'LogisticRegression')),
-                                    DagNodeDetails(None, ['array']),
+                                    DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                  RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'),
                                     Comparison(FunctionType))
     expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
@@ -1618,7 +1747,9 @@ def test_logistic_regression():
                                  OperatorContext(OperatorType.ESTIMATOR,
                                                  FunctionInfo('sklearn.linear_model._logistic',
                                                               'LogisticRegression')),
-                                 DagNodeDetails('Logistic Regression', []),
+                                 DagNodeDetails('Logistic Regression', [],
+                                                OptimizerInfo(RangeComparison(0, 1000), None,
+                                                              RangeComparison(0, 10000))),
                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'),
                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_train_data, expected_estimator, arg_index=0)
@@ -1675,7 +1806,9 @@ def test_logistic_regression_score():
                                        BasicCodeLocation("<string-source>", 16),
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
-                                       DagNodeDetails("to ['A', 'B']", ['A', 'B']),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(16, 23, 16, 42), "test_df[['A', 'B']]"),
                                        Comparison(FunctionType))
     expected_test_data = DagNode(12,
@@ -1683,7 +1816,8 @@ def test_logistic_regression_score():
                                  OperatorContext(OperatorType.TEST_DATA,
                                                  FunctionInfo('sklearn.linear_model._logistic.LogisticRegression',
                                                               'score')),
-                                 DagNodeDetails(None, ['A', 'B']),
+                                 DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                RangeComparison(0, 800))),
                                  OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                   "clf.score(test_df[['A', 'B']], test_labels)"),
                                  Comparison(FunctionType))
@@ -1692,7 +1826,9 @@ def test_logistic_regression_score():
                                     BasicCodeLocation("<string-source>", 15),
                                     OperatorContext(OperatorType.PROJECTION_MODIFY,
                                                     FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
-                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array']),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (2, 1),
+                                                                 RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(15, 14, 15, 70),
                                                      "label_binarize(test_df['target'], classes=['no', 'yes'])"),
                                     Comparison(FunctionType))
@@ -1701,7 +1837,8 @@ def test_logistic_regression_score():
                                    OperatorContext(OperatorType.TEST_LABELS,
                                                    FunctionInfo('sklearn.linear_model._logistic.LogisticRegression',
                                                                 'score')),
-                                   DagNodeDetails(None, ['array']),
+                                   DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (2, 1),
+                                                                                 RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                     "clf.score(test_df[['A', 'B']], test_labels)"),
                                    Comparison(FunctionType))
@@ -1710,7 +1847,9 @@ def test_logistic_regression_score():
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.ESTIMATOR,
                                                   FunctionInfo('sklearn.linear_model._logistic', 'LogisticRegression')),
-                                  DagNodeDetails('Logistic Regression', []),
+                                  DagNodeDetails('Logistic Regression', [],
+                                                 OptimizerInfo(RangeComparison(0, 1000), None,
+                                                               RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 26),
                                                    'LogisticRegression()'),
                                   Comparison(FunctionType))
@@ -1719,7 +1858,8 @@ def test_logistic_regression_score():
                              OperatorContext(OperatorType.SCORE,
                                              FunctionInfo('sklearn.linear_model._logistic.LogisticRegression',
                                                           'score')),
-                             DagNodeDetails('Logistic Regression', []),
+                             DagNodeDetails('Logistic Regression', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
+                                                                                     RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"),
                              Comparison(FunctionType))
@@ -1787,7 +1927,9 @@ def test_keras_wrapper():
                                    BasicCodeLocation("<string-source>", 9),
                                    OperatorContext(OperatorType.DATA_SOURCE,
                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
-                                   DagNodeDetails(None, ['A', 'B', 'target']),
+                                   DagNodeDetails(None, ['A', 'B', 'target'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(9, 5, 9, 95),
                                                     "pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], "
                                                     "'target': ['no', 'no', 'yes', 'yes']})"),
@@ -1796,14 +1938,18 @@ def test_keras_wrapper():
                                        BasicCodeLocation("<string-source>", 11),
                                        OperatorContext(OperatorType.TRANSFORMER,
                                                        FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
-                                       DagNodeDetails('Standard Scaler: fit_transform', ['array']),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 10000))),
                                        OptionalCodeInfo(CodeReference(11, 8, 11, 24), 'StandardScaler()'),
                                        Comparison(FunctionType))
     expected_data_projection = DagNode(1,
                                        BasicCodeLocation("<string-source>", 11),
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
-                                       DagNodeDetails("to ['A', 'B']", ['A', 'B']),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(11, 39, 11, 53), "df[['A', 'B']]"),
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_data_projection, arg_index=0)
@@ -1812,7 +1958,9 @@ def test_keras_wrapper():
                                         BasicCodeLocation("<string-source>", 12),
                                         OperatorContext(OperatorType.PROJECTION,
                                                         FunctionInfo('pandas.core.frame', '__getitem__')),
-                                        DagNodeDetails("to ['target']", ['target']),
+                                        DagNodeDetails("to ['target']", ['target'],
+                                                       OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                     RangeComparison(0, 800))),
                                         OptionalCodeInfo(CodeReference(12, 51, 12, 65), "df[['target']]"),
                                         Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_label_projection, arg_index=0)
@@ -1820,7 +1968,9 @@ def test_keras_wrapper():
                                     BasicCodeLocation("<string-source>", 12),
                                     OperatorContext(OperatorType.TRANSFORMER,
                                                     FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
-                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
+                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                 RangeComparison(0, 10000))),
                                     OptionalCodeInfo(CodeReference(12, 9, 12, 36), 'OneHotEncoder(sparse=False)'),
                                     Comparison(FunctionType))
     expected_dag.add_edge(expected_label_projection, expected_label_encode, arg_index=0)
@@ -1829,7 +1979,8 @@ def test_keras_wrapper():
                                   OperatorContext(OperatorType.TRAIN_DATA,
                                                   FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn',
                                                                'KerasClassifier')),
-                                  DagNodeDetails(None, ['array']),
+                                  DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                                RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(22, 6, 22, 92),
                                                    'KerasClassifier(build_fn=create_model, epochs=2, '
                                                    'batch_size=1, verbose=0, input_dim=2)'),
@@ -1840,7 +1991,8 @@ def test_keras_wrapper():
                                     OperatorContext(OperatorType.TRAIN_LABELS,
                                                     FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn',
                                                                  'KerasClassifier')),
-                                    DagNodeDetails(None, ['array']),
+                                    DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                                  RangeComparison(0, 800))),
                                     OptionalCodeInfo(CodeReference(22, 6, 22, 92),
                                                      'KerasClassifier(build_fn=create_model, epochs=2, '
                                                      'batch_size=1, verbose=0, input_dim=2)'),
@@ -1851,7 +2003,8 @@ def test_keras_wrapper():
                                   OperatorContext(OperatorType.ESTIMATOR,
                                                   FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn',
                                                                'KerasClassifier')),
-                                  DagNodeDetails('Neural Network', []),
+                                  DagNodeDetails('Neural Network', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                                     RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(22, 6, 22, 92),
                                                    'KerasClassifier(build_fn=create_model, epochs=2, '
                                                    'batch_size=1, verbose=0, input_dim=2)'),
@@ -1925,7 +2078,9 @@ def test_keras_wrapper_score():
                                        BasicCodeLocation("<string-source>", 30),
                                        OperatorContext(OperatorType.PROJECTION,
                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
-                                       DagNodeDetails("to ['A', 'B']", ['A', 'B']),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                    RangeComparison(0, 800))),
                                        OptionalCodeInfo(CodeReference(30, 23, 30, 42), "test_df[['A', 'B']]"),
                                        Comparison(FunctionType))
     expected_test_data = DagNode(12,
@@ -1933,7 +2088,8 @@ def test_keras_wrapper_score():
                                  OperatorContext(OperatorType.TEST_DATA,
                                                  FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn.'
                                                               'KerasClassifier', 'score')),
-                                 DagNodeDetails(None, ['A', 'B']),
+                                 DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                RangeComparison(0, 800))),
                                  OptionalCodeInfo(CodeReference(30, 13, 30, 56),
                                                   "clf.score(test_df[['A', 'B']], test_labels)"),
                                  Comparison(FunctionType))
@@ -1942,7 +2098,9 @@ def test_keras_wrapper_score():
                                     BasicCodeLocation("<string-source>", 29),
                                     OperatorContext(OperatorType.TRANSFORMER,
                                                     FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
-                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array']),
+                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                 RangeComparison(0, 10000))),
                                     OptionalCodeInfo(CodeReference(29, 14, 29, 41), 'OneHotEncoder(sparse=False)'),
                                     Comparison(FunctionType))
     expected_test_labels = DagNode(13,
@@ -1950,7 +2108,8 @@ def test_keras_wrapper_score():
                                    OperatorContext(OperatorType.TEST_LABELS,
                                                    FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn.'
                                                                 'KerasClassifier', 'score')),
-                                   DagNodeDetails(None, ['array']),
+                                   DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                 RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(30, 13, 30, 56),
                                                     "clf.score(test_df[['A', 'B']], test_labels)"),
                                    Comparison(FunctionType))
@@ -1960,7 +2119,8 @@ def test_keras_wrapper_score():
                                   OperatorContext(OperatorType.ESTIMATOR,
                                                   FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn',
                                                                'KerasClassifier')),
-                                  DagNodeDetails('Neural Network', []),
+                                  DagNodeDetails('Neural Network', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                                     RangeComparison(0, 800))),
                                   OptionalCodeInfo(CodeReference(25, 6, 25, 93),
                                                    'KerasClassifier(build_fn=create_model, epochs=15, batch_size=1, '
                                                    'verbose=0, input_dim=2)'),
@@ -1970,7 +2130,8 @@ def test_keras_wrapper_score():
                              OperatorContext(OperatorType.SCORE,
                                              FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn.'
                                                           'KerasClassifier', 'score')),
-                             DagNodeDetails('Neural Network', []),
+                             DagNodeDetails('Neural Network', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
+                                                                                RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(30, 13, 30, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"),
                              Comparison(FunctionType))

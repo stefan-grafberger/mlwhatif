@@ -285,9 +285,6 @@ def test_data_corruption_adult_complex():
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(ADULT_COMPLEX_PY) \
         .add_what_if_analysis(data_corruption) \
-        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
-        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
-        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
