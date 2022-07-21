@@ -1,5 +1,5 @@
 """
-The Interface for the What-If Analyses
+The Data Corruption What-If Analysis
 """
 import functools
 from types import FunctionType
