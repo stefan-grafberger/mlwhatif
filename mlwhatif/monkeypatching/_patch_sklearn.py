@@ -1445,7 +1445,8 @@ class SklearnKerasClassifierPatching:
         operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
         # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
         initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
-        optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
+        optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self,
+                                                   keras_batch_size=self.sk_params.get("batch_size", 32))
         self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
         dag_node = DagNode(self.mlinspect_estimator_node_id,
                            BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),

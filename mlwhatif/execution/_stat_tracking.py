@@ -1,22 +1,27 @@
 """
 Functionality to capture optimisation-relevant stats for instrumented operators
 """
+import logging
 import sys
 import time
 from functools import partial
 from typing import Tuple
 
+from pickle import dumps
 import numpy
 import pandas
 import sklearn
+import tensorflow
 from scipy.sparse import csr_matrix
 from tensorflow.python.keras.callbacks import History  # pylint: disable=no-name-in-module
+from tensorflow.python.keras.wrappers.scikit_learn import BaseWrapper
 
 from mlwhatif.instrumentation._dag_node import OptimizerInfo
 
 
 def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_ops: any or None = None,
-                           estimator_transformer_state: any or None = None)\
+                           estimator_transformer_state: any or None = None,
+                           keras_batch_size: int or None = None)\
         -> Tuple[OptimizerInfo, any]:
     """Function to measure the runtime of instrumented user function calls and get output metadata"""
     execution_start = time.time()
@@ -29,11 +34,12 @@ def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_
         result_or_inplace_obj = obj_for_inplace_ops
 
     shape = get_df_shape(result_or_inplace_obj)
-    size = get_df_memory(result_or_inplace_obj, estimator_transformer_state)
+    size = get_df_memory(result_or_inplace_obj, estimator_transformer_state, keras_batch_size)
     return OptimizerInfo(execution_duration_in_ms, shape, size), result
 
 
-def get_df_memory(result_or_inplace_obj, estimator_transformer_state: any or None = None):
+def get_df_memory(result_or_inplace_obj, estimator_transformer_state: any or None = None,
+                  keras_batch_size: int or None = None):
     """Get the size in bytes of a df-like object"""
     # Just using sys.getsize of is not sufficient. See this section of its documentation:
     #  Only the memory consumption directly attributed to the object is accounted for,
@@ -55,8 +61,46 @@ def get_df_memory(result_or_inplace_obj, estimator_transformer_state: any or Non
     else:
         size = sys.getsizeof(result_or_inplace_obj)
     if estimator_transformer_state is not None:
-        size += sys.getsizeof(estimator_transformer_state)
+        if isinstance(estimator_transformer_state, (sklearn.base.BaseEstimator, sklearn.base.TransformerMixin)):
+            size += sys.getsizeof(dumps(estimator_transformer_state))
+        elif isinstance(estimator_transformer_state, BaseWrapper):
+            size += get_model_memory_usage_in_bytes(estimator_transformer_state.model, keras_batch_size)
+        else:
+            raise Exception(f"Measuring the memory size of {type(estimator_transformer_state).__name__} is "
+                            f"not supported yet!")
     return size
+
+
+def get_model_memory_usage_in_bytes(model, batch_size):
+    """Function to get the memory size of a Keras model"""
+    # Based on https://stackoverflow.com/questions/43137288/how-to-determine-needed-memory-of-keras-model
+    shapes_mem_count = 0
+    internal_model_mem_count = 0
+    for layer in model.layers:
+        layer_type = layer.__class__.__name__
+        if layer_type == 'Model':
+            internal_model_mem_count += get_model_memory_usage_in_bytes(batch_size, layer)
+        single_layer_mem = 1
+        out_shape = layer.output_shape
+        if type(out_shape) is list:
+            out_shape = out_shape[0]
+        for dimension in out_shape:
+            if dimension is None:
+                continue
+            single_layer_mem *= dimension
+        shapes_mem_count += single_layer_mem
+
+    trainable_count = numpy.sum([tensorflow.keras.backend.count_params(p) for p in model.trainable_weights])
+    non_trainable_count = numpy.sum([tensorflow.keras.backend.count_params(p) for p in model.non_trainable_weights])
+
+    number_size = 4
+    if tensorflow.keras.backend.floatx() == 'float16':
+        number_size = 2
+    if tensorflow.keras.backend.floatx() == 'float64':
+        number_size = 8
+
+    total_memory = number_size * (batch_size * shapes_mem_count + trainable_count + non_trainable_count)
+    return round(total_memory + internal_model_mem_count)
 
 
 def get_df_shape(result_or_inplace_obj):

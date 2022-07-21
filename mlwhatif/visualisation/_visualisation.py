@@ -4,6 +4,7 @@ Utility functions to visualise the extracted DAG
 from inspect import cleandoc
 
 import networkx
+import numpy
 from humanize import naturalsize
 from networkx.drawing.nx_agraph import to_agraph
 
@@ -20,7 +21,7 @@ def save_fig_to_path(extracted_dag, filename):
                 {node.node_id}: {node.operator_info.operator.value} (L{node.code_location.lineno})
                 {node.details.optimizer_info.shape if node.details.optimizer_info and node.details.optimizer_info.shape 
                 else " - "}
-                {str(node.details.optimizer_info.runtime) + "ms" if node.details.optimizer_info else ""}
+                {str(numpy.round(node.details.optimizer_info.runtime, 3)) + "ms" if node.details.optimizer_info else ""}
                 {naturalsize(node.details.optimizer_info.memory) if node.details.optimizer_info
                 and isinstance(node.details.optimizer_info.memory, int) else ""}
                 {node.details.description or ""}
