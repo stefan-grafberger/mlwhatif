@@ -1497,8 +1497,6 @@ class SklearnKerasClassifierPatching:
     def patched_score(self, *args, **kwargs):
         """ Patch for ('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'score') """
         # pylint: disable=no-method-argument
-        original = gorilla.get_original_attribute(keras_sklearn_external.KerasClassifier, 'score')
-
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             # pylint: disable=too-many-locals
@@ -1534,8 +1532,8 @@ class SklearnKerasClassifierPatching:
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
 
             # This currently calls predict twice, but patching here is complex. Maybe revisit this in future work
-            initial_func_predict = partial(keras_sklearn_external.KerasClassifier.predict,
-                                           self, test_data_result)  # pylint: disable=no-member
+            uninstrumented_predict = gorilla.get_original_attribute(keras_sklearn_external.KerasClassifier, 'predict')
+            initial_func_predict = partial(uninstrumented_predict, self, test_data_result)  # pylint: disable=no-member
             optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
 
             dag_node_predict = DagNode(singleton.get_next_op_id(),
@@ -1563,5 +1561,47 @@ class SklearnKerasClassifierPatching:
             add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
                          function_call_result)
             return result_score
+
+        return execute_patched_func_indirect_allowed(execute_inspections)
+
+    @gorilla.patch(keras_sklearn_external.KerasClassifier, name='predict', settings=gorilla.Settings(allow_hit=True))
+    def patched_predict(self, *args, **kwargs):
+        """ Patch for ('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'score') """
+        # pylint: disable=no-method-argument
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
+            original = gorilla.get_original_attribute(keras_sklearn_external.KerasClassifier, 'predict')
+            function_info = FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'predict')
+            # Test data
+            _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
+                                                                         function_info,
+                                                                         lineno,
+                                                                         optional_code_reference,
+                                                                         optional_source_code,
+                                                                         caller_filename)
+
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            # Score
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+
+            initial_func_predict = partial(original, self, test_data_result)  # pylint: disable=no-member
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("Neural Network", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
+            estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node],
+                         function_call_result)
+
+            return result_predict
 
         return execute_patched_func_indirect_allowed(execute_inspections)
