@@ -1488,29 +1488,49 @@ class SklearnKerasClassifierPatching:
                                                                           optional_code_reference,
                                                                           optional_source_code)
 
-            def processing_func(estimator, test_data, test_labels):
-                score = estimator.score(test_data, test_labels, **kwargs)
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            def processing_func_score(predictions, test_labels):
+                one_d_labels = numpy.argmax(test_labels, axis=1)
+                score = accuracy_score(predictions, one_d_labels)
                 return score
 
             # Score
-            operator_context = OperatorContext(OperatorType.SCORE, function_info)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            operator_context_score = OperatorContext(OperatorType.SCORE, function_info)
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
 
             # This currently calls predict twice, but patching here is complex. Maybe revisit this in future work
-            # predictions = self.predict(test_data_result)  # pylint: disable=no-member
-            initial_func = partial(original, self, test_data_result, test_labels_result, *args[2:], **kwargs)
-            optimizer_info, result = capture_optimizer_info(initial_func)
+            initial_func_predict = partial(keras_sklearn_external.KerasClassifier.predict,
+                                           self, test_data_result)  # pylint: disable=no-member
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
 
-            dag_node = DagNode(singleton.get_next_op_id(),
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails("Neural Network", [], optimizer_info),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
-                               processing_func)
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("Neural Network", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
             estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
-            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
-            add_dag_node(dag_node, [estimator_dag_node, test_data_node, test_labels_node],
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node],
                          function_call_result)
-            return result
+
+            initial_func_score = partial(processing_func_score, result_predict, test_labels_result, *args[2:],
+                                         **kwargs)
+            optimizer_info_score, result_score = capture_optimizer_info(initial_func_score)
+
+            dag_node_score = DagNode(singleton.get_next_op_id(),
+                                     BasicCodeLocation(caller_filename, lineno),
+                                     operator_context_score,
+                                     DagNodeDetails("Neural Network", [], optimizer_info_score),
+                                     get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                     processing_func_score)
+            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
+            add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
+                         function_call_result)
+            return result_score
 
         return execute_patched_func_indirect_allowed(execute_inspections)
