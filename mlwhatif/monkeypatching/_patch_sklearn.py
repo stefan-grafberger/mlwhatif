@@ -1133,7 +1133,7 @@ class SklearnDecisionTreePatching:
 
     @gorilla.name('predict')
     @gorilla.settings(allow_hit=True)
-    def patched_predict(self, *args, **kwargs):
+    def patched_predict(self, *args):
         """ Patch for ('sklearn.tree._classes.DecisionTreeClassifier', 'predict') """
 
         # pylint: disable=no-method-argument
@@ -1323,7 +1323,7 @@ class SklearnSGDClassifierPatching:
 
     @gorilla.name('predict')
     @gorilla.settings(allow_hit=True)
-    def patched_predict(self, *args, **kwargs):
+    def patched_predict(self, *args):
         """ Patch for ('sklearn.linear_model._stochastic_gradient.SGDClassifier', 'predict') """
 
         # pylint: disable=no-method-argument
@@ -1509,7 +1509,7 @@ class SklearnLogisticRegressionPatching:
 
     @gorilla.name('predict')
     @gorilla.settings(allow_hit=True)
-    def patched_predict(self, *args, **kwargs):
+    def patched_predict(self, *args):
         """ Patch for ('sklearn.linear_model._logistic.LogisticRegression', 'predict') """
 
         # pylint: disable=no-method-argument
@@ -1686,7 +1686,7 @@ class SklearnKerasClassifierPatching:
         return execute_patched_func_indirect_allowed(execute_inspections)
 
     @gorilla.patch(keras_sklearn_external.KerasClassifier, name='predict', settings=gorilla.Settings(allow_hit=True))
-    def patched_predict(self, *args, **kwargs):
+    def patched_predict(self, *args):
         """ Patch for ('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'score') """
         # pylint: disable=no-method-argument
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):

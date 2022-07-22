@@ -94,9 +94,8 @@ class DataCorruption(WhatIfAnalysis):
         """Add a new node behind some given node to extract the intermediate result of that given node"""
         node_linenos = []
         for node, lineno in self.score_nodes_and_linenos:
-            node_lineno = node.code_location.lineno
-            node_linenos.append(node_lineno)
-            node_label = f"{label}_L{node_lineno}"
+            node_linenos.append(lineno)
+            node_label = f"{label}_L{lineno}"
             add_intermediate_extraction_after_node(dag, node, node_label)
         return node_linenos
 
@@ -203,6 +202,7 @@ class DataCorruption(WhatIfAnalysis):
         return new_corruption_node
 
     def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:
+        # pylint: disable=too-many-locals
         result_df_columns = []
         result_df_percentages = []
         result_df_metrics_corrupt_test_only = {}

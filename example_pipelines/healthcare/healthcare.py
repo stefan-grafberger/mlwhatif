@@ -3,7 +3,7 @@ import os
 import warnings
 
 import pandas as pd
-from fairlearn.metrics import MetricFrame, equalized_odds_difference, false_negative_rate
+from fairlearn.metrics import MetricFrame, false_negative_rate
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score

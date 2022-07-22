@@ -1203,12 +1203,15 @@ def test_decision_tree():
                 clf = DecisionTreeClassifier()
                 clf = clf.fit(train, target)
                 
-                test_predict = clf.predict([[0., 0.], [0.6, 0.6]])
+                test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]], columns=['A', 'B']))
                 expected = np.array([0., 1.])
                 assert np.allclose(test_predict, expected)
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[10])
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[9])
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[8])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -1538,13 +1541,13 @@ def test_sgd_classifier():
                 clf = SGDClassifier(loss='log', random_state=42)
                 clf = clf.fit(train, target)
 
-                test_predict = clf.predict([[0., 0.], [0.6, 0.6]])
+                test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]], columns=['A', 'B']))
                 expected = np.array([0., 1.])
                 assert np.allclose(test_predict, expected)
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    filter_dag_for_nodes_with_ids(inspector_result, {2, 5, 4, 6, 7}, 8)
+    filter_dag_for_nodes_with_ids(inspector_result, {2, 5, 4, 6, 7}, 11)
 
     expected_dag = networkx.DiGraph()
     expected_standard_scaler = DagNode(2,
