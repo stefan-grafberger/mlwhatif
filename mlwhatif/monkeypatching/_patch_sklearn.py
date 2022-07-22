@@ -1120,7 +1120,7 @@ class SklearnDecisionTreePatching:
             dag_node_score = DagNode(singleton.get_next_op_id(),
                                      BasicCodeLocation(caller_filename, lineno),
                                      operator_context_score,
-                                     DagNodeDetails("Decision Tree", [], optimizer_info_score),
+                                     DagNodeDetails("Accuracy", [], optimizer_info_score),
                                      get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                      processing_func_score)
             function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
@@ -1271,7 +1271,7 @@ class SklearnSGDClassifierPatching:
             dag_node_score = DagNode(singleton.get_next_op_id(),
                                      BasicCodeLocation(caller_filename, lineno),
                                      operator_context_score,
-                                     DagNodeDetails("SGD Classifier", [], optimizer_info_score),
+                                     DagNodeDetails("Accuracy", [], optimizer_info_score),
                                      get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                      processing_func_score)
             function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
@@ -1367,6 +1367,9 @@ class SklearnLogisticRegressionPatching:
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             # pylint: disable=too-many-locals
+            if len(kwargs) != 0:
+                raise Exception("TODO: Support other metrics in model.score calls!")
+
             function_info = FunctionInfo('sklearn.linear_model._logistic.LogisticRegression', 'score')
             # Test data
             _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
@@ -1384,35 +1387,42 @@ class SklearnLogisticRegressionPatching:
                                                                           optional_code_reference,
                                                                           optional_source_code)
 
-            def processing_func(estimator, test_data, test_labels):
-                score = estimator.score(test_data, test_labels, **kwargs)
-                return score
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
 
-            # Score
-            operator_context = OperatorContext(OperatorType.SCORE, function_info)
+            def processing_func_score(predictions, test_labels):
+                score = accuracy_score(predictions, test_labels)
+                return score
 
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
 
-            # Same as original, but captures the test set predictions
-            def original_with_arg_capturing(estimator, test_data_result, test_labels_result, **kwargs):
-                predictions = estimator.predict(test_data_result)  # pylint: disable=no-member
-                score_result = accuracy_score(test_labels_result, predictions, **kwargs)
-                return score_result
-
-            initial_func = partial(original_with_arg_capturing, self, test_data_result, test_labels_result, **kwargs)
-            optimizer_info, result = capture_optimizer_info(initial_func)
-
-            dag_node = DagNode(singleton.get_next_op_id(),
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails("Logistic Regression", [], optimizer_info),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
-                               processing_func)
+            initial_func_predict = partial(processing_func_predict, self, test_data_result)
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("Logistic Regression", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
             estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
+
+            initial_func_score = partial(processing_func_score, result_predict, test_labels_result)
+            optimizer_info_score, result_score = capture_optimizer_info(initial_func_score)
+            operator_context_score = OperatorContext(OperatorType.SCORE, function_info)
+            dag_node_score = DagNode(singleton.get_next_op_id(),
+                                     BasicCodeLocation(caller_filename, lineno),
+                                     operator_context_score,
+                                     DagNodeDetails("Accuracy", [], optimizer_info_score),
+                                     get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                     processing_func_score)
             function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
-            add_dag_node(dag_node, [estimator_dag_node, test_data_node, test_labels_node],
+            add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
                          function_call_result)
-            return result
+            return result_score
 
         return execute_patched_func_indirect_allowed(execute_inspections)
 
@@ -1546,7 +1556,7 @@ class SklearnKerasClassifierPatching:
             dag_node_score = DagNode(singleton.get_next_op_id(),
                                      BasicCodeLocation(caller_filename, lineno),
                                      operator_context_score,
-                                     DagNodeDetails("Neural Network", [], optimizer_info_score),
+                                     DagNodeDetails("Accuracy", [], optimizer_info_score),
                                      get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                      processing_func_score)
             function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
