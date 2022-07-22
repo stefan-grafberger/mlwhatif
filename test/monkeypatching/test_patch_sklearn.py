@@ -1336,7 +1336,7 @@ def test_decision_tree_score():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    filter_dag_for_nodes_with_ids(inspector_result, {7, 10, 11, 12, 13, 14}, 15)
+    filter_dag_for_nodes_with_ids(inspector_result, {7, 10, 11, 12, 13, 14, 15}, 16)
 
     expected_dag = networkx.DiGraph()
     expected_data_projection = DagNode(11,
@@ -1388,7 +1388,19 @@ def test_decision_tree_score():
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 30),
                                                    'DecisionTreeClassifier()'),
                                   Comparison(FunctionType))
-    expected_score = DagNode(14,
+    expected_predict = DagNode(14,
+                               BasicCodeLocation("<string-source>", 16),
+                               OperatorContext(OperatorType.PREDICT,
+                                               FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier', 'score')),
+                               DagNodeDetails('Decision Tree', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                                 RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(16, 13, 16, 56),
+                                                "clf.score(test_df[['A', 'B']], test_labels)"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
+
+    expected_score = DagNode(15,
                              BasicCodeLocation("<string-source>", 16),
                              OperatorContext(OperatorType.SCORE,
                                              FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier', 'score')),
@@ -1397,14 +1409,14 @@ def test_decision_tree_score():
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"),
                              Comparison(FunctionType))
-    expected_dag.add_edge(expected_classifier, expected_score, arg_index=0)
-    expected_dag.add_edge(expected_test_data, expected_score, arg_index=1)
-    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=2)
+    expected_dag.add_edge(expected_predict, expected_score, arg_index=0)
+    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
     fit_node = list(inspector_result.dag.nodes)[0]
-    score_node = list(inspector_result.dag.nodes)[5]
+    predict_node = list(inspector_result.dag.nodes)[5]
+    score_node = list(inspector_result.dag.nodes)[6]
     test_data_node = list(inspector_result.dag.nodes)[3]
     test_label_node = list(inspector_result.dag.nodes)[4]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
@@ -1416,7 +1428,8 @@ def test_decision_tree_score():
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
     test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
     test_labels = test_label_node.processing_func(test_labels)
-    test_score = score_node.processing_func(fitted_estimator, test_data, test_labels)
+    test_predictions = predict_node.processing_func(fitted_estimator, test_data)
+    test_score = score_node.processing_func(test_predictions, test_labels)
     assert test_score == 0.5
 
 
