@@ -39,9 +39,10 @@ class DataCorruption(WhatIfAnalysis):
 
     def generate_plans_to_try(self, dag: networkx.DiGraph) \
             -> Iterable[networkx.DiGraph]:
-        score_operators = find_nodes_by_type(dag, OperatorType.SCORE)
+        score_operators = find_nodes_by_type(dag, OperatorType.PREDICT)
         if len(score_operators) != 1:
-            raise Exception("Currently, DataCorruption only supports pipelines with exactly one score call!")
+            raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call which "
+                            "must be on the test set!")
         final_result_value = score_operators[0]
         # TODO: Performance optimisation: deduplication for transformers that process multiple columns at once
         #  For project_modify, we can think about a similar deduplication: splitting operations on multiple columns and
@@ -99,9 +100,11 @@ class DataCorruption(WhatIfAnalysis):
     def find_train_or_test_pipeline_part_end(dag, test_not_train):
         """We want to start at the end of the pipeline to find the relevant train or test operations"""
         if test_not_train is True:
-            search_start_nodes = find_nodes_by_type(dag, OperatorType.SCORE)
+            search_start_nodes = find_nodes_by_type(dag, OperatorType.PREDICT)
             if len(search_start_nodes) != 1:
-                raise Exception("Currently, DataCorruption only supports pipelines with exactly one score call!")
+                raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call "
+                                "for the test set!")
+
             search_start_node = search_start_nodes[0]
         else:
             search_start_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
@@ -111,7 +114,7 @@ class DataCorruption(WhatIfAnalysis):
         return search_start_node
 
     @staticmethod
-    def get_sorted_parent_nodes(dag, first_op_requiring_corruption):
+    def get_sorted_parent_nodes(dag: networkx.DiGraph, first_op_requiring_corruption):
         """Get the parent nodes of a node sorted by arg_index"""
         operator_parent_nodes = list(dag.predecessors(first_op_requiring_corruption))
         parent_nodes_with_arg_index = [(parent_node, dag.get_edge_data(parent_node, first_op_requiring_corruption))
@@ -121,6 +124,13 @@ class DataCorruption(WhatIfAnalysis):
         return operator_parent_nodes
 
     @staticmethod
+    def get_sorted_children_nodes(dag: networkx.DiGraph, first_op_requiring_corruption):
+        """Get the parent nodes of a node sorted by arg_index"""
+        operator_child_nodes = list(dag.successors(first_op_requiring_corruption))
+        sorted_operator_child_nodes = sorted(operator_child_nodes, key=lambda x: x.node_id)
+        return sorted_operator_child_nodes
+
+    @staticmethod
     def find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, operator_parent_nodes):
         """
         We know which operator requires the corruption to be present already; now we need to decide between which
@@ -128,7 +138,7 @@ class DataCorruption(WhatIfAnalysis):
         """
         if first_op_requiring_corruption.operator_info.operator == OperatorType.TRANSFORMER:
             operator_to_apply_corruption_after = operator_parent_nodes[-1]
-        elif first_op_requiring_corruption.operator_info.operator == OperatorType.SCORE:
+        elif first_op_requiring_corruption.operator_info.operator == OperatorType.PREDICT:
             operator_to_apply_corruption_after = operator_parent_nodes[1]
         elif first_op_requiring_corruption.operator_info.operator == OperatorType.ESTIMATOR:
             operator_to_apply_corruption_after = operator_parent_nodes[0]
@@ -138,7 +148,8 @@ class DataCorruption(WhatIfAnalysis):
             # We want to introduce the change before all subscript behavior
             operator_to_apply_corruption_after = networkx.lowest_common_ancestor(dag, project_modify_parent_a,
                                                                                  project_modify_parent_b)
-            first_op_requiring_corruption = list(dag.successors(operator_to_apply_corruption_after))[0]
+            sorted_successors = DataCorruption.get_sorted_children_nodes(dag, operator_to_apply_corruption_after)
+            first_op_requiring_corruption = sorted_successors[0]
         else:
             raise Exception("Either a column was changed by a transformer or project_modify or we can apply"
                             "the corruption right before the estimator operation!")
