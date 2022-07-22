@@ -10,8 +10,8 @@ import numpy
 import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
-from mlwhatif.analysis._analysis_utils import add_intermediate_extraction_after_node, find_nodes_by_type, \
-    find_first_op_modifying_a_column, add_new_node_between_nodes
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, \
+    find_first_op_modifying_a_column, add_new_node_between_nodes, add_intermediate_extraction_after_node
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
@@ -31,6 +31,7 @@ class DataCorruption(WhatIfAnalysis):
             self.corruption_percentages = [0.2, 0.5, 0.9]
         else:
             self.corruption_percentages = corruption_percentages
+        self.score_nodes_and_linenos = []
         self._analysis_id = (*self.column_to_corruption, *self.corruption_percentages, self.also_corrupt_train)
 
     @property
@@ -39,11 +40,15 @@ class DataCorruption(WhatIfAnalysis):
 
     def generate_plans_to_try(self, dag: networkx.DiGraph) \
             -> Iterable[networkx.DiGraph]:
-        score_operators = find_nodes_by_type(dag, OperatorType.PREDICT)
-        if len(score_operators) != 1:
+        predict_operators = find_nodes_by_type(dag, OperatorType.PREDICT)
+        if len(predict_operators) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call which "
                             "must be on the test set!")
-        final_result_value = score_operators[0]
+        score_operators = find_nodes_by_type(dag, OperatorType.SCORE)
+        self.score_nodes_and_linenos = [(node, node.code_location.lineno) for node in score_operators]
+        if len(self.score_nodes_and_linenos) != len(set(self.score_nodes_and_linenos)):
+            raise Exception("Currently, DataCorruption only supports pipelines where different score operations can "
+                            "be uniquely identified by the line number in the code!")
         # TODO: Performance optimisation: deduplication for transformers that process multiple columns at once
         #  For project_modify, we can think about a similar deduplication: splitting operations on multiple columns and
         #  then using a concat in the end.
@@ -57,7 +62,7 @@ class DataCorruption(WhatIfAnalysis):
                 # Test set corruption
                 test_corruption_result_label = f"data-corruption-test-{column}-{corruption_percentage}"
                 corruption_dag = dag.copy()
-                add_intermediate_extraction_after_node(corruption_dag, final_result_value, test_corruption_result_label)
+                self.add_intermediate_extraction_after_score_nodes(corruption_dag, test_corruption_result_label)
 
                 self.add_corruption_in_location(column, corruption_dag, corruption_function, train_corruption_location,
                                                 corruption_percentage)
@@ -67,8 +72,7 @@ class DataCorruption(WhatIfAnalysis):
                 if self.also_corrupt_train is True:
                     test_corruption_result_label = f"data-corruption-train-{column}-{corruption_percentage}"
                     corruption_dag = dag.copy()
-                    add_intermediate_extraction_after_node(corruption_dag, final_result_value,
-                                                           test_corruption_result_label)
+                    self.add_intermediate_extraction_after_score_nodes(corruption_dag, test_corruption_result_label)
                     self.add_corruption_in_location(column, corruption_dag, corruption_function,
                                                     train_corruption_location, corruption_percentage)
                     self.add_corruption_in_location(column, corruption_dag, corruption_function,
@@ -85,6 +89,16 @@ class DataCorruption(WhatIfAnalysis):
                                                           corruption_percentage,
                                                           corruption_location)
         add_new_node_between_nodes(corruption_dag, new_corruption_node, corruption_location)
+
+    def add_intermediate_extraction_after_score_nodes(self, dag: networkx.DiGraph, label: str):
+        """Add a new node behind some given node to extract the intermediate result of that given node"""
+        node_linenos = []
+        for node, lineno in self.score_nodes_and_linenos:
+            node_lineno = node.code_location.lineno
+            node_linenos.append(node_lineno)
+            node_label = f"{label}_L{node_lineno}"
+            add_intermediate_extraction_after_node(dag, node, node_label)
+        return node_linenos
 
     @staticmethod
     def find_dag_location_for_corruption(column, dag, test_not_train):
@@ -191,26 +205,29 @@ class DataCorruption(WhatIfAnalysis):
     def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:
         result_df_columns = []
         result_df_percentages = []
-        result_df_metrics_corrupt_test_only = []
-        result_df_metrics_corrupt_train_and_test = []
+        result_df_metrics_corrupt_test_only = {}
+        result_df_metrics_corrupt_train_and_test = {}
+        score_linenos = [lineno for (_, lineno) in self.score_nodes_and_linenos]
         for (column, _) in self.column_to_corruption:
             for corruption_percentage in self.corruption_percentages:
-                test_label = f"data-corruption-test-{column}-{corruption_percentage}"
-                result_df_columns.append(column)
-                result_df_percentages.append(corruption_percentage)
-                result_df_metrics_corrupt_test_only.append(singleton.labels_to_extracted_plan_results[test_label])
+                for lineno in score_linenos:
+                    test_label = f"data-corruption-test-{column}-{corruption_percentage}_L{lineno}"
+                    result_df_columns.append(column)
+                    result_df_percentages.append(corruption_percentage)
+                    test_result_column_name = f"metric_corrupt_test_only_L{lineno}"
+                    test_column_values = result_df_metrics_corrupt_test_only.get(test_result_column_name, [])
+                    test_column_values.append(singleton.labels_to_extracted_plan_results[test_label])
+                    result_df_metrics_corrupt_test_only[test_result_column_name] = test_column_values
 
-                train_label = f"data-corruption-train-{column}-{corruption_percentage}"
-                if train_label in singleton.labels_to_extracted_plan_results:
-                    train_and_test_metric = singleton.labels_to_extracted_plan_results[train_label]
-                    result_df_metrics_corrupt_train_and_test.append(train_and_test_metric)
-        if self.also_corrupt_train is True:
-            result_df = pandas.DataFrame({'column': result_df_columns,
-                                          'corruption_percentage': result_df_percentages,
-                                          'metric_corrupt_test_only': result_df_metrics_corrupt_test_only,
-                                          'metric_corrupt_train_and_test:': result_df_metrics_corrupt_train_and_test})
-        else:
-            result_df = pandas.DataFrame({'column': result_df_columns,
-                                          'corruption_percentage': result_df_percentages,
-                                          'metric_corrupt_test_only': result_df_metrics_corrupt_test_only})
+                    train_label = f"data-corruption-train-{column}-{corruption_percentage}_L{lineno}"
+                    if train_label in singleton.labels_to_extracted_plan_results:
+                        train_and_test_metric = singleton.labels_to_extracted_plan_results[train_label]
+                        train_result_column_name = f"metric_corrupt_train_and_test_L{lineno}"
+                        train_column_values = result_df_metrics_corrupt_train_and_test.get(train_result_column_name, [])
+                        train_column_values.append(train_and_test_metric)
+                        result_df_metrics_corrupt_train_and_test[train_result_column_name] = train_column_values
+        result_df = pandas.DataFrame({'column': result_df_columns,
+                                      'corruption_percentage': result_df_percentages,
+                                      **result_df_metrics_corrupt_test_only,
+                                      **result_df_metrics_corrupt_train_and_test})
         return result_df
