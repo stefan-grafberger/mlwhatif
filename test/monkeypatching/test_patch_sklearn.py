@@ -1690,12 +1690,15 @@ def test_logistic_regression():
                 clf = LogisticRegression()
                 clf = clf.fit(train, target)
 
-                test_predict = clf.predict([[0., 0.], [0.6, 0.6]])
+                test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]], columns=['A', 'B']))
                 expected = np.array([0., 1.])
                 assert np.allclose(test_predict, expected)
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[10])
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[9])
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[8])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -1925,6 +1928,93 @@ def test_logistic_regression_score():
     test_predict = predict_node.processing_func(fitted_estimator, test_data)
     test_score = score_node.processing_func(test_predict, test_labels)
     assert test_score == 0.5
+
+
+def test_logistic_regression_predict():
+    """
+    Tests whether the monkey patching of ('sklearn.linear_model._logistic.LogisticRegression', 'score') works
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler
+                from sklearn.linear_model import LogisticRegression
+                import numpy as np
+
+                df = pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+
+                train = StandardScaler().fit_transform(df[['A', 'B']])
+                target = label_binarize(df['target'], classes=['no', 'yes'])
+
+                clf = LogisticRegression()
+                clf = clf.fit(train, target)
+
+                test_df = pd.DataFrame({'A': [0., 0.6], 'B':  [0., 0.6], 'target': ['no', 'yes']})
+                predictions = clf.predict(test_df[['A', 'B']])
+                assert len(predictions) == 2
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, {7, 9, 10, 11}, 12)
+
+    expected_dag = networkx.DiGraph()
+    expected_data_projection = DagNode(9,
+                                       BasicCodeLocation("<string-source>", 15),
+                                       OperatorContext(OperatorType.PROJECTION,
+                                                       FunctionInfo('pandas.core.frame', '__getitem__')),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                    RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(15, 26, 15, 45), "test_df[['A', 'B']]"),
+                                       Comparison(FunctionType))
+    expected_test_data = DagNode(10,
+                                 BasicCodeLocation("<string-source>", 15),
+                                 OperatorContext(OperatorType.TEST_DATA,
+                                                 FunctionInfo('sklearn.linear_model._logistic.LogisticRegression',
+                                                              'predict')),
+                                 DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                RangeComparison(0, 800))),
+                                 OptionalCodeInfo(CodeReference(15, 14, 15, 46),
+                                                  "clf.predict(test_df[['A', 'B']])"),
+                                 Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
+    expected_classifier = DagNode(7,
+                                  BasicCodeLocation("<string-source>", 11),
+                                  OperatorContext(OperatorType.ESTIMATOR,
+                                                  FunctionInfo('sklearn.linear_model._logistic', 'LogisticRegression')),
+                                  DagNodeDetails('Logistic Regression', [],
+                                                 OptimizerInfo(RangeComparison(0, 1000), None,
+                                                               RangeComparison(0, 10000))),
+                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26),
+                                                   'LogisticRegression()'),
+                                  Comparison(FunctionType))
+    expected_predict = DagNode(11,
+                               BasicCodeLocation("<string-source>", 15),
+                               OperatorContext(OperatorType.PREDICT,
+                                               FunctionInfo('sklearn.linear_model._logistic.LogisticRegression',
+                                                            'predict')),
+                               DagNodeDetails('Logistic Regression', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                                       RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(15, 14, 15, 46),
+                                                "clf.predict(test_df[['A', 'B']])"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[0]
+    predict_node = list(inspector_result.dag.nodes)[3]
+    test_data_node = list(inspector_result.dag.nodes)[2]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
+    assert isinstance(fitted_estimator, LogisticRegression)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_data = test_data_node.processing_func(test_df[['C', 'D']])
+    test_predict = predict_node.processing_func(fitted_estimator, test_data)
+    assert len(test_predict) == 2
 
 
 def test_keras_wrapper():

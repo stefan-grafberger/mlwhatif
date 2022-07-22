@@ -1397,7 +1397,8 @@ class SklearnLogisticRegressionPatching:
 
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
 
-            initial_func_predict = partial(processing_func_predict, self, test_data_result)
+            original_predict = gorilla.get_original_attribute(linear_model.LogisticRegression, 'predict')
+            initial_func_predict = partial(original_predict, self, test_data_result)
             optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
             operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
             dag_node_predict = DagNode(singleton.get_next_op_id(),
@@ -1423,6 +1424,46 @@ class SklearnLogisticRegressionPatching:
             add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
                          function_call_result)
             return result_score
+
+        return execute_patched_func_indirect_allowed(execute_inspections)
+
+    @gorilla.name('predict')
+    @gorilla.settings(allow_hit=True)
+    def patched_predict(self, *args, **kwargs):
+        """ Patch for ('sklearn.linear_model._logistic.LogisticRegression', 'predict') """
+
+        # pylint: disable=no-method-argument
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
+            function_info = FunctionInfo('sklearn.linear_model._logistic.LogisticRegression', 'predict')
+            # Test data
+            _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
+                                                                         function_info,
+                                                                         lineno,
+                                                                         optional_code_reference,
+                                                                         optional_source_code,
+                                                                         caller_filename)
+
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            original_predict = gorilla.get_original_attribute(linear_model.LogisticRegression, 'predict')
+            initial_func_predict = partial(original_predict, self, test_data_result)
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("Logistic Regression", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
+            estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
+
+            return result_predict
 
         return execute_patched_func_indirect_allowed(execute_inspections)
 
