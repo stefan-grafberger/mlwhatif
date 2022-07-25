@@ -737,6 +737,53 @@ def test_series_isin():
     pandas.testing.assert_series_equal(extracted_func_result.reset_index(drop=True), expected.reset_index(drop=True))
 
 
+def test_series_astype():
+    """
+    Tests whether the monkey patching of ('pandas.core.series', 'astype') works
+    """
+    test_code = cleandoc("""
+        import pandas as pd
+
+        pd_series = pd.Series([0, 2, 4, None], name='A')
+        filtered = pd_series.astype(str)
+        expected = pd.Series(['0.0', '2.0', '4.0', 'nan'], name='A')
+        pd.testing.assert_series_equal(filtered.reset_index(drop=True), expected.reset_index(drop=True))
+        """)
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    extracted_dag = inspector_result.dag
+    extracted_dag.remove_node(list(extracted_dag.nodes)[2])
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 3),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.series', 'Series')),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(3, 12, 3, 48),
+                                                    "pd.Series([0, 2, 4, None], name='A')"),
+                                   Comparison(partial))
+    expected_astype = DagNode(1,
+                            BasicCodeLocation("<string-source>", 4),
+                            OperatorContext(OperatorType.SUBSCRIPT,
+                                            FunctionInfo('pandas.core.series', 'astype')),
+                            DagNodeDetails('as type: str', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                RangeComparison(0, 800))),
+                            OptionalCodeInfo(CodeReference(4, 11, 4, 32),
+                                             'pd_series.astype(str)'),
+                            Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_astype, arg_index=0)
+
+    compare(extracted_dag, expected_dag)
+
+    extracted_node = list(extracted_dag.nodes)[1]
+    pd_series = pandas.Series([2, 2, 4, 0], name='A')
+    extracted_func_result = extracted_node.processing_func(pd_series)
+    expected = pandas.Series(['2', '2', '4', '0'], name='A')
+    pandas.testing.assert_series_equal(extracted_func_result.reset_index(drop=True), expected.reset_index(drop=True))
+
+
 def test_series__cmp_method():
     """
     Tests whether the monkey patching of ('pandas.core.series', '_cmp_method') works
