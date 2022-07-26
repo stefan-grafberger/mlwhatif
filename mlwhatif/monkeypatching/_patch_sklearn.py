@@ -1166,8 +1166,8 @@ class SklearnDecisionTreePatching:
             estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
             function_call_result = FunctionCallResult(result_predict)
             add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
-
-            return result_predict
+            new_result = function_call_result.function_result
+            return new_result
 
         return execute_patched_func_indirect_allowed(execute_inspections)
 
@@ -1356,8 +1356,8 @@ class SklearnSGDClassifierPatching:
             estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
             function_call_result = FunctionCallResult(result_predict)
             add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
-
-            return result_predict
+            new_result = function_call_result.function_result
+            return new_result
 
         return execute_patched_func_indirect_allowed(execute_inspections)
 
@@ -1542,8 +1542,8 @@ class SklearnLogisticRegressionPatching:
             estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
             function_call_result = FunctionCallResult(result_predict)
             add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
-
-            return result_predict
+            new_result = function_call_result.function_result
+            return new_result
 
         return execute_patched_func_indirect_allowed(execute_inspections)
 
@@ -1722,7 +1722,7 @@ class SklearnKerasClassifierPatching:
             function_call_result = FunctionCallResult(result_predict)
             add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node],
                          function_call_result)
-
-            return result_predict
+            new_result = function_call_result.function_result
+            return new_result
 
         return execute_patched_func_indirect_allowed(execute_inspections)
