@@ -11,6 +11,7 @@ import numpy
 import pandas
 import sklearn
 import tensorflow
+from fairlearn.metrics import MetricFrame
 from scipy.sparse import csr_matrix
 from tensorflow.python.keras.callbacks import History  # pylint: disable=no-name-in-module
 from tensorflow.python.keras.wrappers.scikit_learn import BaseWrapper  # pylint: disable=no-name-in-module
@@ -132,7 +133,7 @@ def get_df_shape(result_or_inplace_obj):
     elif isinstance(result_or_inplace_obj, (sklearn.base.BaseEstimator, History)):
         # Estimator fit only, not fit_transform
         shape = None
-    elif isinstance(result_or_inplace_obj, float):
+    elif isinstance(result_or_inplace_obj, (float, MetricFrame)):
         # E.g., a score metric output from estimator.score
         shape = (1, 1)
     else:
