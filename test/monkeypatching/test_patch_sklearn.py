@@ -2658,6 +2658,7 @@ def test_grid_search_cv_sgd_classifier():
     """
     Tests whether the monkey patching of ('sklearn.linear_model._stochastic_gradient', 'SGDClassifier') works
     """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import label_binarize, StandardScaler
@@ -2765,6 +2766,7 @@ def test_grid_search_cv_decision_tree():
     """
     Tests whether the monkey patching of DecisionTreeClassifier works with GridSearchCV
     """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import label_binarize, StandardScaler
@@ -2872,6 +2874,7 @@ def test_grid_search_cv_logistic_regression():
     """
     Tests whether the monkey patching of ('sklearn.linear_model._stochastic_gradient', 'SGDClassifier') works
     """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import label_binarize, StandardScaler
@@ -2979,6 +2982,7 @@ def test_grid_search_cv_keras_wrapper():
     """
     Tests whether the monkey patching of the KerasClassifier works with GridSearchCV
     """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import StandardScaler, OneHotEncoder

@@ -169,6 +169,7 @@ class SklearnCallInfo:
     score_active: bool = False
     param_search_active: bool = False
     make_grid_search_func: Callable or None = None
+    param_search_duration: int = 0
 
 
 call_info_singleton = SklearnCallInfo()
@@ -235,8 +236,10 @@ class SklearnGridSearchCVPatching:
 
         call_info_singleton.param_search_active = True
         original = gorilla.get_original_attribute(model_selection.GridSearchCV, '_run_search')
-        result = original(self, *args, **kwargs)
+        initial_func = partial(original, self, *args, **kwargs)
+        optimizer_info, result = capture_optimizer_info(initial_func, self)
         call_info_singleton.param_search_active = False
+        call_info_singleton.param_search_duration = optimizer_info.runtime
 
         return result
 
@@ -1121,6 +1124,7 @@ class SklearnDecisionTreePatching:
                     estimator = tree.DecisionTreeClassifier(**self.mlinspect_non_data_func_args)
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
+                param_search_runtime = 0
             else:
                 def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
                     estimator = make_grid_search_func(tree.DecisionTreeClassifier(**self.mlinspect_non_data_func_args))
@@ -1128,18 +1132,22 @@ class SklearnDecisionTreePatching:
                     return fitted_estimator
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
                 call_info_singleton.make_grid_search_func = None
+                param_search_runtime = call_info_singleton.param_search_duration
+                call_info_singleton.param_search_duration = 0
 
             # Estimator
             operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
             initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
             optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
+            optimizer_info_with_search = OptimizerInfo(optimizer_info.runtime + param_search_runtime,
+                                                       optimizer_info.shape, optimizer_info.memory)
 
             self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
             dag_node = DagNode(self.mlinspect_estimator_node_id,
                                BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                                operator_context,
-                               DagNodeDetails("Decision Tree", [], optimizer_info),
+                               DagNodeDetails("Decision Tree", [], optimizer_info_with_search),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
                                processing_func)
@@ -1329,6 +1337,7 @@ class SklearnSGDClassifierPatching:
                     estimator = linear_model.SGDClassifier(**self.mlinspect_non_data_func_args)
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
+                param_search_runtime = 0
             else:
                 def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
                     estimator = make_grid_search_func(linear_model.SGDClassifier(**self.mlinspect_non_data_func_args))
@@ -1336,17 +1345,21 @@ class SklearnSGDClassifierPatching:
                     return fitted_estimator
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
                 call_info_singleton.make_grid_search_func = None
+                param_search_runtime = call_info_singleton.param_search_duration
+                call_info_singleton.param_search_duration = 0
 
             # Estimator
             operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
             initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
             optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
+            optimizer_info_with_search = OptimizerInfo(optimizer_info.runtime + param_search_runtime,
+                                                       optimizer_info.shape, optimizer_info.memory)
             self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
             dag_node = DagNode(self.mlinspect_estimator_node_id,
                                BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                                operator_context,
-                               DagNodeDetails("SGD Classifier", [], optimizer_info),
+                               DagNodeDetails("SGD Classifier", [], optimizer_info_with_search),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
                                processing_func)
@@ -1534,6 +1547,7 @@ class SklearnLogisticRegressionPatching:
                     estimator = linear_model.LogisticRegression(**self.mlinspect_non_data_func_args)
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
+                param_search_runtime = 0
             else:
                 def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
                     estimator = make_grid_search_func(linear_model.LogisticRegression(
@@ -1542,17 +1556,21 @@ class SklearnLogisticRegressionPatching:
                     return fitted_estimator
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
                 call_info_singleton.make_grid_search_func = None
+                param_search_runtime = call_info_singleton.param_search_duration
+                call_info_singleton.param_search_duration = 0
 
             # Estimator
             operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
             initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
             optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
+            optimizer_info_with_search = OptimizerInfo(optimizer_info.runtime + param_search_runtime,
+                                                       optimizer_info.shape, optimizer_info.memory)
             self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
             dag_node = DagNode(self.mlinspect_estimator_node_id,
                                BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                                operator_context,
-                               DagNodeDetails("Logistic Regression", [], optimizer_info),
+                               DagNodeDetails("Logistic Regression", [], optimizer_info_with_search),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
                                processing_func)
@@ -1731,6 +1749,7 @@ class SklearnKerasClassifierPatching:
                         **self.mlinspect_non_data_func_args)
                     estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return estimator
+                param_search_runtime = 0
             else:
                 def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
                     estimator = make_grid_search_func(tensorflow.keras.wrappers.scikit_learn.KerasClassifier(
@@ -1739,6 +1758,8 @@ class SklearnKerasClassifierPatching:
                     return estimator
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
                 call_info_singleton.make_grid_search_func = None
+                param_search_runtime = call_info_singleton.param_search_duration
+                call_info_singleton.param_search_duration = 0
 
             # Estimator
             operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
@@ -1747,11 +1768,13 @@ class SklearnKerasClassifierPatching:
             keras_batch_size = self.sk_params.get("batch_size", 32)  # pylint: disable=no-member
             optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self,
                                                        keras_batch_size=keras_batch_size)
+            optimizer_info_with_search = OptimizerInfo(optimizer_info.runtime + param_search_runtime,
+                                                       optimizer_info.shape, optimizer_info.memory)
             self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
             dag_node = DagNode(self.mlinspect_estimator_node_id,
                                BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                                operator_context,
-                               DagNodeDetails("Neural Network", [], optimizer_info),
+                               DagNodeDetails("Neural Network", [], optimizer_info_with_search),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
                                processing_func)
