@@ -1126,6 +1126,7 @@ class SklearnDecisionTreePatching:
                     estimator = make_grid_search_func(tree.DecisionTreeClassifier(**self.mlinspect_non_data_func_args))
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
+                call_info_singleton.make_grid_search_func = None
 
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
@@ -1334,6 +1335,7 @@ class SklearnSGDClassifierPatching:
                     estimator = make_grid_search_func(linear_model.SGDClassifier(**self.mlinspect_non_data_func_args))
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
+                call_info_singleton.make_grid_search_func = None
 
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
@@ -1540,6 +1542,7 @@ class SklearnLogisticRegressionPatching:
                         **self.mlinspect_non_data_func_args))
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
+                call_info_singleton.make_grid_search_func = None
 
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
@@ -1737,6 +1740,7 @@ class SklearnKerasClassifierPatching:
                         **self.mlinspect_non_data_func_args))
                     estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return estimator
+                call_info_singleton.make_grid_search_func = None
 
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
