@@ -3,7 +3,7 @@ import os
 import warnings
 
 import pandas as pd
-from fairlearn.metrics import MetricFrame, false_negative_rate
+from fairlearn.metrics import MetricFrame, false_negative_rate, equalized_odds_difference
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score
@@ -58,3 +58,6 @@ sensitive_features['race'] = sensitive_features['race'].astype(str)
 fnr_by_group = MetricFrame(metrics=false_negative_rate, y_pred=test_predictions, y_true=test_data['label'],
                            sensitive_features=sensitive_features)
 print(f"False-negative by group: {fnr_by_group.by_group}")
+equalized_odds_diff = equalized_odds_difference(y_pred=test_predictions, y_true=test_data['label'],
+                                                sensitive_features=sensitive_features)
+print(f"Equalized odds difference: {equalized_odds_diff}")

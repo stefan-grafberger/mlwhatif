@@ -110,3 +110,91 @@ def test_metric_frame___init__():
     expected = pandas.DataFrame({'sensitive': ['cat_a', 'cat_c'], 'false_negative_rate': [0.0, 0.0]})
     expected['false_negative_rate'] = expected['false_negative_rate'].astype(object)
     pandas.testing.assert_frame_equal(actual_fnr_by_group, expected, atol=1.0)
+
+
+def test_equalized_odds_difference():
+    """
+    Tests whether the monkey patching of ('pandas.core.series', 'test_series__logical_method') works
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                from fairlearn.metrics import equalized_odds_difference
+
+                predictions = pd.Series([True, False, True, True], name='A')
+                labels = pd.Series([True, False, False, True], name='B')
+                sensitive_features = pd.DataFrame(['cat_a', 'cat_a', 'cat_b', 'cat_a'], columns=['cat_col'])
+
+                metric = equalized_odds_difference(y_pred=predictions, y_true=labels, 
+                                                   sensitive_features=sensitive_features)
+                assert 0.0 <= metric <= 1.0
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source1 = DagNode(0,
+                                    BasicCodeLocation("<string-source>", 4),
+                                    OperatorContext(OperatorType.DATA_SOURCE,
+                                                    FunctionInfo('pandas.core.series', 'Series')),
+                                    DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                              RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(4, 14, 4, 60),
+                                                     "pd.Series([True, False, True, True], name='A')"),
+                                    Comparison(partial))
+    expected_data_source2 = DagNode(1,
+                                    BasicCodeLocation("<string-source>", 5),
+                                    OperatorContext(OperatorType.DATA_SOURCE,
+                                                    FunctionInfo('pandas.core.series', 'Series')),
+                                    DagNodeDetails(None, ['B'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                              RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(5, 9, 5, 56),
+                                                     "pd.Series([True, False, False, True], name='B')"),
+                                    Comparison(partial))
+    expected_data_source3 = DagNode(2,
+                                    BasicCodeLocation("<string-source>", 6),
+                                    OperatorContext(OperatorType.DATA_SOURCE,
+                                                    FunctionInfo('pandas.core.frame', 'DataFrame')),
+                                    DagNodeDetails(None, ['cat_col'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                    RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(6, 21, 6, 92),
+                                                     "pd.DataFrame(['cat_a', 'cat_a', 'cat_b', 'cat_a'], "
+                                                     "columns=['cat_col'])"),
+                                    Comparison(partial))
+    expected_test_labels = DagNode(3,
+                                   BasicCodeLocation("<string-source>", 8),
+                                   OperatorContext(OperatorType.TEST_LABELS,
+                                                   FunctionInfo('fairlearn.metrics._disparities',
+                                                                'equalized_odds_difference')),
+                                   DagNodeDetails(None, ['B'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(8, 9, 9, 73),
+                                                    'equalized_odds_difference(y_pred=predictions, y_true=labels, \n'
+                                                    '                                   sensitive_features='
+                                                    'sensitive_features)'),
+                                   Comparison(FunctionType))
+    expected_score = DagNode(4,
+                             BasicCodeLocation("<string-source>", 8),
+                             OperatorContext(OperatorType.SCORE,
+                                             FunctionInfo('fairlearn.metrics._disparities',
+                                                          'equalized_odds_difference')),
+                             DagNodeDetails('equalized_odds_difference', [],
+                                            OptimizerInfo(RangeComparison(0, 200), (1, 1),
+                                                          RangeComparison(0, 800))),
+                             OptionalCodeInfo(CodeReference(8, 9, 9, 73),
+                                              'equalized_odds_difference(y_pred=predictions, y_true=labels, \n'
+                                              '                                   sensitive_features='
+                                              'sensitive_features)'),
+                             Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source2, expected_test_labels, arg_index=0)
+    expected_dag.add_edge(expected_data_source1, expected_score, arg_index=0)
+    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
+    expected_dag.add_edge(expected_data_source3, expected_score, arg_index=2)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_node = list(inspector_result.dag.nodes)[4]
+    pd_series1 = pandas.Series([True, False, True, True], name='C')
+    pd_series2 = pandas.Series([False, False, False, True], name='D')
+    pd_series3 = pandas.Series(['cat_a', 'cat_a', 'cat_a', 'cat_c'], name='sensitive')
+    extracted_func_result = extracted_node.processing_func(pd_series1, pd_series2, pd_series3)
+    assert 0.0 <= extracted_func_result <= 1.0
