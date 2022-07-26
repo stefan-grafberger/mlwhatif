@@ -10,6 +10,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.model_selection import GridSearchCV
 
 from example_pipelines.healthcare.healthcare_utils import MyW2VTransformer, MyKerasClassifier, \
     create_model
@@ -44,9 +45,11 @@ featurisation = ColumnTransformer(transformers=[
     ('numeric', StandardScaler(), ['num_children', 'income']),
 ], remainder='drop')
 neural_net = MyKerasClassifier(build_fn=create_model, epochs=10, batch_size=1, verbose=0)
+param_grid = {'epochs': [10, 15]}
+neural_net_with_grid_search = GridSearchCV(neural_net, param_grid, cv=2)
 pipeline = Pipeline([
     ('features', featurisation),
-    ('learner', neural_net)])
+    ('learner', neural_net_with_grid_search)])
 
 train_data, test_data = train_test_split(data)
 model = pipeline.fit(train_data, train_data['label'])
