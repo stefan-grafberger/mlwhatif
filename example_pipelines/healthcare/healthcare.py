@@ -45,7 +45,7 @@ featurisation = ColumnTransformer(transformers=[
     ('numeric', StandardScaler(), ['num_children', 'income']),
 ], remainder='drop')
 neural_net = MyKerasClassifier(build_fn=create_model, epochs=10, batch_size=1, verbose=0)
-param_grid = {'epochs': [10, 15]}
+param_grid = {'epochs': [10]}
 neural_net_with_grid_search = GridSearchCV(neural_net, param_grid, cv=2)
 pipeline = Pipeline([
     ('features', featurisation),
