@@ -51,7 +51,7 @@ pipeline = Pipeline([
 train_data, test_data = train_test_split(data)
 model = pipeline.fit(train_data, train_data['label'])
 test_predictions = model.predict(test_data)
-print("Mean accuracy: {}".format(accuracy_score(test_predictions, test_data['label'])))
+print("Mean accuracy: {}".format(accuracy_score(test_data['label'], test_predictions)))
 
 sensitive_features = test_data[['race']]
 sensitive_features['race'] = sensitive_features['race'].astype(str)

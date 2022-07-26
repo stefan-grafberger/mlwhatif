@@ -210,15 +210,16 @@ class DataCorruption(WhatIfAnalysis):
         score_linenos = [lineno for (_, lineno) in self.score_nodes_and_linenos]
         for (column, _) in self.column_to_corruption:
             for corruption_percentage in self.corruption_percentages:
+                result_df_columns.append(column)
+                result_df_percentages.append(corruption_percentage)
                 for lineno in score_linenos:
                     test_label = f"data-corruption-test-{column}-{corruption_percentage}_L{lineno}"
-                    result_df_columns.append(column)
-                    result_df_percentages.append(corruption_percentage)
                     test_result_column_name = f"metric_corrupt_test_only_L{lineno}"
                     test_column_values = result_df_metrics_corrupt_test_only.get(test_result_column_name, [])
                     test_column_values.append(singleton.labels_to_extracted_plan_results[test_label])
                     result_df_metrics_corrupt_test_only[test_result_column_name] = test_column_values
 
+                for lineno in score_linenos:
                     train_label = f"data-corruption-train-{column}-{corruption_percentage}_L{lineno}"
                     if train_label in singleton.labels_to_extracted_plan_results:
                         train_and_test_metric = singleton.labels_to_extracted_plan_results[train_label]

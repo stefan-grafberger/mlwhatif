@@ -10,7 +10,7 @@ import numpy
 import pandas
 import scipy
 import tensorflow
-from sklearn import preprocessing, compose, tree, impute, linear_model, model_selection
+from sklearn import preprocessing, compose, tree, impute, linear_model, model_selection, metrics
 from sklearn.feature_extraction import text
 from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.metrics import accuracy_score
@@ -32,7 +32,6 @@ from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func,
 @gorilla.patches(preprocessing)
 class SklearnPreprocessingPatching:
     """ Patches for sklearn """
-
     # pylint: disable=too-few-public-methods
 
     @gorilla.name('label_binarize')
@@ -165,6 +164,7 @@ class SklearnCallInfo:
     transformer_optional_code_reference: CodeReference or None = None
     transformer_optional_source_code: str or None = None
     column_transformer_active: bool = False
+    score_active: bool = False
 
 
 call_info_singleton = SklearnCallInfo()
@@ -1617,6 +1617,7 @@ class SklearnKerasClassifierPatching:
     @gorilla.patch(keras_sklearn_external.KerasClassifier, name='score', settings=gorilla.Settings(allow_hit=True))
     def patched_score(self, *args, **kwargs):
         """ Patch for ('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'score') """
+
         # pylint: disable=no-method-argument
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
@@ -1688,6 +1689,7 @@ class SklearnKerasClassifierPatching:
     @gorilla.patch(keras_sklearn_external.KerasClassifier, name='predict', settings=gorilla.Settings(allow_hit=True))
     def patched_predict(self, *args):
         """ Patch for ('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'score') """
+
         # pylint: disable=no-method-argument
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
@@ -1726,3 +1728,52 @@ class SklearnKerasClassifierPatching:
             return new_result
 
         return execute_patched_func_indirect_allowed(execute_inspections)
+
+
+@gorilla.patches(metrics)
+class MetricsPatching:
+    """ Patches for 'sklearn.metrics' """
+    # pylint: disable=too-few-public-methods
+
+    @gorilla.name('accuracy_score')
+    @gorilla.settings(allow_hit=True)
+    def patched_accuracy_score(y_true, y_pred, *args, **kwargs):
+        """ Patch for ('sklearn.metrics._classification', 'accuracy_score') """
+        # pylint: disable=too-many-locals, no-self-argument
+        original = gorilla.get_original_attribute(metrics, 'accuracy_score')
+
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            function_info = FunctionInfo('sklearn.metrics._classification', 'accuracy_score')
+
+            input_info_pred = get_input_info(y_pred, caller_filename, lineno, function_info,
+                                             optional_code_reference, optional_source_code)
+
+            # Test labels
+            _, test_labels_node, _ = add_test_label_node(y_true,
+                                                         caller_filename,
+                                                         function_info,
+                                                         lineno,
+                                                         optional_code_reference,
+                                                         optional_source_code)
+
+            operator_context = OperatorContext(OperatorType.SCORE, function_info)
+            initial_func = partial(original, y_true, y_pred, *args, **kwargs)
+            call_info_singleton.score_active = True
+            optimizer_info, result = capture_optimizer_info(initial_func)
+            call_info_singleton.score_active = False
+
+            def process_metric_frame(y_true, y_pred):
+                return original(y_true=y_true, y_pred=y_pred)
+
+            dag_node = DagNode(singleton.get_next_op_id(),
+                               BasicCodeLocation(caller_filename, lineno),
+                               operator_context,
+                               DagNodeDetails('accuracy_score', [], optimizer_info),
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               process_metric_frame)
+            function_call_result = FunctionCallResult(None)
+            add_dag_node(dag_node, [input_info_pred.dag_node, test_labels_node], function_call_result)
+            return result
+
+        return execute_patched_func_no_op_id(original, execute_inspections, y_true, y_pred, *args, **kwargs)

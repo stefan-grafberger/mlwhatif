@@ -2582,3 +2582,72 @@ def test_keras_wrapper_predict():
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
     test_predictions = predict_node.processing_func(fitted_estimator, test_data)
     assert len(test_predictions) == 2
+
+
+def test_accuracy_score():
+    """
+    Tests whether the monkey patching of ('pandas.core.series', 'test_series__logical_method') works
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.metrics import accuracy_score
+
+                predictions = pd.Series([True, False, True, True], name='A')
+                labels = pd.Series([True, False, False, True], name='B')
+                metric = accuracy_score(y_pred=predictions, y_true=labels)
+                assert 0.0 <= metric <= 1.0
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source1 = DagNode(0,
+                                    BasicCodeLocation("<string-source>", 4),
+                                    OperatorContext(OperatorType.DATA_SOURCE,
+                                                    FunctionInfo('pandas.core.series', 'Series')),
+                                    DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                              RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(4, 14, 4, 60),
+                                                     "pd.Series([True, False, True, True], name='A')"),
+                                    Comparison(partial))
+    expected_data_source2 = DagNode(1,
+                                    BasicCodeLocation("<string-source>", 5),
+                                    OperatorContext(OperatorType.DATA_SOURCE,
+                                                    FunctionInfo('pandas.core.series', 'Series')),
+                                    DagNodeDetails(None, ['B'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                              RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(5, 9, 5, 56),
+                                                     "pd.Series([True, False, False, True], name='B')"),
+                                    Comparison(partial))
+    expected_test_labels = DagNode(2,
+                                   BasicCodeLocation("<string-source>", 6),
+                                   OperatorContext(OperatorType.TEST_LABELS,
+                                                   FunctionInfo('sklearn.metrics._classification',
+                                                                'accuracy_score')),
+                                   DagNodeDetails(None, ['B'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(6, 9, 6, 58),
+                                                    'accuracy_score(y_pred=predictions, y_true=labels)'),
+                                   Comparison(FunctionType))
+    expected_score = DagNode(3,
+                             BasicCodeLocation("<string-source>", 6),
+                             OperatorContext(OperatorType.SCORE,
+                                             FunctionInfo('sklearn.metrics._classification',
+                                                          'accuracy_score')),
+                             DagNodeDetails('accuracy_score', [],
+                                            OptimizerInfo(RangeComparison(0, 200), (1, 1),
+                                                          RangeComparison(0, 800))),
+                             OptionalCodeInfo(CodeReference(6, 9, 6, 58),
+                                              'accuracy_score(y_pred=predictions, y_true=labels)'),
+                             Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source2, expected_test_labels, arg_index=0)
+    expected_dag.add_edge(expected_data_source1, expected_score, arg_index=0)
+    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_node = list(inspector_result.dag.nodes)[3]
+    pd_series1 = pandas.Series([True, False, True, True], name='C')
+    pd_series2 = pandas.Series([False, False, False, True], name='D')
+    extracted_func_result = extracted_node.processing_func(pd_series1, pd_series2)
+    assert 0.0 <= extracted_func_result <= 1.0

@@ -5,6 +5,7 @@ from functools import partial
 from inspect import cleandoc
 from types import FunctionType
 
+from test.monkeypatching.test_patch_sklearn import filter_dag_for_nodes_with_ids
 import networkx
 import pandas
 from testfixtures import compare, Comparison, RangeComparison
@@ -13,7 +14,6 @@ from mlwhatif import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif.instrumentation import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
-from test.monkeypatching.test_patch_sklearn import filter_dag_for_nodes_with_ids
 
 
 def test_metric_frame___init__():
