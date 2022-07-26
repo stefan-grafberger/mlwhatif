@@ -6,6 +6,8 @@ from inspect import cleandoc
 
 from fairlearn.metrics import equalized_odds_difference
 
+from example_pipelines import HEALTHCARE_PY
+from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._operator_fairness import OperatorFairness
 from mlwhatif.utils import get_project_root
@@ -45,15 +47,31 @@ def test_operator_fairness_mini_example_with_transformer_processing_multiple_col
         assert test_score == 1.0
         """)
 
-    operator_fairness = OperatorFairness(["a"], equalized_odds_difference)
-
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
-        .add_what_if_analysis(operator_fairness) \
+        .add_what_if_analysis(OperatorFairness(True, True)) \
         .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
         .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
         .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[operator_fairness]
-    assert report is None
+    report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
+    assert report.shape == (1, 4)
+
+
+def test_data_corruption_healthcare():
+    """
+    Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
+    """
+    analysis_result = PipelineAnalyzer \
+        .on_pipeline_from_py_file(HEALTHCARE_PY) \
+        .skip_multi_query_optimization(False) \
+        .add_custom_monkey_patching_module(custom_monkeypatching) \
+        .add_what_if_analysis(OperatorFairness(True, True)) \
+        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
+        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
+        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
+        .execute()
+
+    report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
+    assert report.shape == (5, 6)

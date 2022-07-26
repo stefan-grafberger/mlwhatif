@@ -1,11 +1,16 @@
 """
 The Operator Fairness What-If Analysis
 """
-from typing import Iterable, Dict, List, Callable
+from typing import Iterable, Dict
 
 import networkx
+import pandas
 
+from mlwhatif import OperatorType
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, add_intermediate_extraction_after_node
+from mlwhatif.analysis._data_corruption import DataCorruption
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.instrumentation._pipeline_executor import singleton
 
 
 class OperatorFairness(WhatIfAnalysis):
@@ -13,10 +18,12 @@ class OperatorFairness(WhatIfAnalysis):
     The Operator Fairness What-If Analysis
     """
 
-    def __init__(self, sensitive_columns: List[str], metric: Callable):
-        self._sensitive_columns = sensitive_columns
-        self._metric = metric
-        self._analysis_id = tuple(*self._sensitive_columns)
+    def __init__(self, test_transformers=True, test_selections=False):
+        self._test_transformers = test_transformers
+        self._test_selections = test_selections
+        self._analysis_id = (test_transformers, test_selections)
+        self._operators_to_test = []
+        self._score_nodes_and_linenos = []
 
     @property
     def analysis_id(self):
@@ -24,7 +31,81 @@ class OperatorFairness(WhatIfAnalysis):
 
     def generate_plans_to_try(self, dag: networkx.DiGraph) \
             -> Iterable[networkx.DiGraph]:
-        return [dag]
+        predict_operators = find_nodes_by_type(dag, OperatorType.PREDICT)
+        if len(predict_operators) != 1:
+            raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call which "
+                            "must be on the test set!")
+        score_operators = find_nodes_by_type(dag, OperatorType.SCORE)
+        self._score_nodes_and_linenos = [(node, node.code_location.lineno) for node in score_operators]
+        if len(self._score_nodes_and_linenos) != len(set(self._score_nodes_and_linenos)):
+            raise Exception("Currently, DataCorruption only supports pipelines where different score operations can "
+                            "be uniquely identified by the line number in the code!")
+        self._operators_to_test = self.get_operators_to_test(dag)
+        result_dags = []
+        for operator_to_replace in self._operators_to_test:
+            modified_dag = dag.copy()
+            result_label = self.get_label_for_operator(operator_to_replace)
+            self.add_intermediate_extraction_after_score_nodes(modified_dag, result_label)
+            # TODO: Replace operator, two operator types exist here currently: transformers and selections
+            result_dags.append(modified_dag)
+        return result_dags
+
+    @staticmethod
+    def get_label_for_operator(operator_to_replace):
+        """Generate the label under which results for this operator get saved"""
+        result_label = f"operator-fairness-{operator_to_replace.operator_info.operator.value}" \
+                       f"-OP_L{operator_to_replace.code_location.lineno}"
+        return result_label
 
     def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:
-        return None
+        # pylint: disable=too-many-locals
+        result_df_op_type = []
+        result_df_lineno = []
+        result_df_op_code = []
+        result_df_metrics = {}
+        score_linenos = [lineno for (_, lineno) in self._score_nodes_and_linenos]
+        for operator_to_replace in self._operators_to_test:
+            result_df_op_type.append(operator_to_replace.operator_info.operator.value)
+            result_df_lineno.append(operator_to_replace.code_location.lineno)
+            result_df_op_code.append(operator_to_replace.optional_code_info.source_code)
+            label_for_operator = self.get_label_for_operator(operator_to_replace)
+            for lineno in score_linenos:
+                test_label = f"{label_for_operator}_L{lineno}"
+                test_result_column_name = f"score_L{lineno}"
+                test_column_values = result_df_metrics.get(test_result_column_name, [])
+                test_column_values.append(singleton.labels_to_extracted_plan_results[test_label])
+                result_df_metrics[test_result_column_name] = test_column_values
+        result_df = pandas.DataFrame({'operator_type': result_df_op_type,
+                                      'operator_lineno': result_df_lineno,
+                                      'operator_code': result_df_op_code,
+                                      **result_df_metrics})
+        return result_df
+
+    def add_intermediate_extraction_after_score_nodes(self, dag: networkx.DiGraph, label: str):
+        """Add a new node behind some given node to extract the intermediate result of that given node"""
+        node_linenos = []
+        for node, lineno in self._score_nodes_and_linenos:
+            node_linenos.append(lineno)
+            node_label = f"{label}_L{lineno}"
+            add_intermediate_extraction_after_node(dag, node, node_label)
+        return node_linenos
+
+    def get_operators_to_test(self, dag):
+        """
+        For now, we will ignore project modifies and focus on selections and transformers.
+        This is because for transformers it is easy to find the corresponding test set operation and for the
+        selection we do not need to worry about finding corresponding test set operations.
+        """
+        search_start_node = DataCorruption.find_train_or_test_pipeline_part_end(dag, False)
+        nodes_to_search = set(networkx.ancestors(dag, search_start_node))
+        all_nodes_to_test = []
+        if self._test_transformers is True:
+            transformers_to_replace = [node for node in nodes_to_search if
+                                       node.operator_info.operator == OperatorType.TRANSFORMER
+                                       and ": fit_transform" in node.details.description]
+            all_nodes_to_test.extend(transformers_to_replace)
+        if self._test_selections is True:
+            selections_to_replace = [node for node in nodes_to_search if
+                                     node.operator_info.operator == OperatorType.SELECTION]
+            all_nodes_to_test.extend(selections_to_replace)
+        return all_nodes_to_test
