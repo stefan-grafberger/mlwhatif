@@ -33,6 +33,7 @@ from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func,
 @gorilla.patches(preprocessing)
 class SklearnPreprocessingPatching:
     """ Patches for sklearn """
+
     # pylint: disable=too-few-public-methods
 
     @gorilla.name('label_binarize')
@@ -209,8 +210,9 @@ class SklearnGridSearchCVPatching:
             self.mlinspect_optional_source_code = optional_source_code
 
             make_grid_search_kwargs = {'param_grid': param_grid, 'scoring': scoring, 'n_jobs': n_jobs,
-                     'iid': iid, 'refit': refit, 'cv': cv, 'verbose': verbose, 'pre_dispatch': pre_dispatch,
-                     'error_score': error_score, 'return_train_score': return_train_score}
+                                       'iid': iid, 'refit': refit, 'cv': cv, 'verbose': verbose,
+                                       'pre_dispatch': pre_dispatch, 'error_score': error_score,
+                                       'return_train_score': return_train_score}
 
             def make_grid_search(grid_search_kwargs, estimator_to_wrap):
                 return model_selection.GridSearchCV(estimator=estimator_to_wrap, **grid_search_kwargs)
@@ -1124,6 +1126,7 @@ class SklearnDecisionTreePatching:
                     estimator = make_grid_search_func(tree.DecisionTreeClassifier(**self.mlinspect_non_data_func_args))
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
+
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
             # Estimator
@@ -1331,6 +1334,7 @@ class SklearnSGDClassifierPatching:
                     estimator = make_grid_search_func(linear_model.SGDClassifier(**self.mlinspect_non_data_func_args))
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
+
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
             # Estimator
@@ -1536,6 +1540,7 @@ class SklearnLogisticRegressionPatching:
                         **self.mlinspect_non_data_func_args))
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
+
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
             # Estimator
@@ -1706,7 +1711,7 @@ class SklearnKerasClassifierPatching:
             self.mlinspect_optional_code_reference = optional_code_reference
             self.mlinspect_optional_source_code = optional_source_code
 
-        return execute_patched_func_no_op_id(original, execute_inspections, self, **sk_params)
+        return execute_patched_func_indirect_allowed(execute_inspections)
 
     @gorilla.patch(keras_sklearn_external.KerasClassifier, name='fit', settings=gorilla.Settings(allow_hit=True))
     def patched_fit(self, *args, **kwargs):
@@ -1732,6 +1737,7 @@ class SklearnKerasClassifierPatching:
                         **self.mlinspect_non_data_func_args))
                     estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return estimator
+
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
             # Estimator
@@ -1884,6 +1890,7 @@ class SklearnKerasClassifierPatching:
 @gorilla.patches(metrics)
 class MetricsPatching:
     """ Patches for 'sklearn.metrics' """
+
     # pylint: disable=too-few-public-methods
 
     @gorilla.name('accuracy_score')
