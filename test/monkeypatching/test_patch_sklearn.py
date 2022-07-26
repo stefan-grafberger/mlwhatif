@@ -1499,7 +1499,7 @@ def test_decision_tree_predict():
                                                FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier',
                                                             'predict')),
                                DagNodeDetails('Decision Tree', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
-                                                                                  RangeComparison(0, 800))),
+                                                                                 RangeComparison(0, 800))),
                                OptionalCodeInfo(CodeReference(15, 14, 15, 46),
                                                 "clf.predict(test_df[['A', 'B']])"),
                                Comparison(FunctionType))
@@ -2651,3 +2651,96 @@ def test_accuracy_score():
     pd_series2 = pandas.Series([False, False, False, True], name='D')
     extracted_func_result = extracted_node.processing_func(pd_series1, pd_series2)
     assert 0.0 <= extracted_func_result <= 1.0
+
+
+def test_grid_search_cv_sgd_classifier():
+    """
+    Tests whether the monkey patching of ('sklearn.linear_model._stochastic_gradient', 'SGDClassifier') works
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler
+                from sklearn.linear_model import SGDClassifier
+                from sklearn.model_selection import GridSearchCV
+                import numpy as np
+
+                df = pd.DataFrame({'A': [0, 1, 2, 3, 4, 5], 'B': [0, 1, 2, 3, 4, 5], 
+                                   'target': ['no', 'no', 'no', 'yes', 'yes', 'yes']})
+
+                train = StandardScaler().fit_transform(df[['A', 'B']])
+                target = label_binarize(df['target'], classes=['no', 'yes'])
+
+                param_grid = {
+                    'penalty': ['l2', 'l1'],
+                }
+                clf = GridSearchCV(SGDClassifier(loss='log', random_state=42), param_grid, cv=3)
+                clf = clf.fit(train, target)
+
+                test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]]))
+                expected = np.array([0., 1.])
+                assert np.allclose(test_predict, expected)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, {2, 5, 4, 6, 7}, 11)
+
+    expected_dag = networkx.DiGraph()
+    expected_standard_scaler = DagNode(2,
+                                       BasicCodeLocation("<string-source>", 10),
+                                       OperatorContext(OperatorType.TRANSFORMER,
+                                                       FunctionInfo('sklearn.preprocessing._data',
+                                                                    'StandardScaler')),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (6, 2),
+                                                                    RangeComparison(0, 3000))),
+                                       OptionalCodeInfo(CodeReference(10, 8, 10, 24), 'StandardScaler()'),
+                                       Comparison(FunctionType))
+    expected_train_data = DagNode(5,
+                                  BasicCodeLocation("<string-source>", 16),
+                                  OperatorContext(OperatorType.TRAIN_DATA,
+                                                  FunctionInfo('sklearn.linear_model._stochastic_gradient',
+                                                               'SGDClassifier')),
+                                  DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (6, 2),
+                                                                                RangeComparison(0, 800))),
+                                  OptionalCodeInfo(CodeReference(16, 19, 16, 61),
+                                                   "SGDClassifier(loss='log', random_state=42)"),
+                                  Comparison(FunctionType))
+    expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
+    expected_label_encode = DagNode(4,
+                                    BasicCodeLocation("<string-source>", 11),
+                                    OperatorContext(OperatorType.PROJECTION_MODIFY,
+                                                    FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (6, 1),
+                                                                 RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(11, 9, 11, 60),
+                                                     "label_binarize(df['target'], classes=['no', 'yes'])"),
+                                    Comparison(FunctionType))
+    expected_train_labels = DagNode(6,
+                                    BasicCodeLocation("<string-source>", 16),
+                                    OperatorContext(OperatorType.TRAIN_LABELS,
+                                                    FunctionInfo('sklearn.linear_model._stochastic_gradient',
+                                                                 'SGDClassifier')),
+                                    DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (6, 1),
+                                                                                  RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(16, 19, 16, 61),
+                                                     "SGDClassifier(loss='log', random_state=42)"),
+                                    Comparison(FunctionType))
+    expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
+    expected_classifier = DagNode(7,
+                                  BasicCodeLocation("<string-source>", 16),
+                                  OperatorContext(OperatorType.ESTIMATOR,
+                                                  FunctionInfo('sklearn.linear_model._stochastic_gradient',
+                                                               'SGDClassifier')),
+                                  DagNodeDetails('SGD Classifier', [],
+                                                 OptimizerInfo(RangeComparison(0, 1000), None,
+                                                               RangeComparison(0, 5000))),
+                                  OptionalCodeInfo(CodeReference(16, 19, 16, 61),
+                                                   "SGDClassifier(loss='log', random_state=42)"),
+                                  Comparison(FunctionType))
+    expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
+    expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    # FIXME: Add tests for processing_func
