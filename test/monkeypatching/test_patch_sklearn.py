@@ -11,6 +11,7 @@ import numpy
 import pandas
 from scipy.sparse import csr_matrix
 from sklearn.linear_model import SGDClassifier, LogisticRegression
+from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import label_binarize, OneHotEncoder
 from sklearn.tree import DecisionTreeClassifier
 from tensorflow.python.keras.wrappers.scikit_learn import KerasClassifier  # pylint: disable=no-name-in-module
@@ -2673,7 +2674,7 @@ def test_grid_search_cv_sgd_classifier():
                 param_grid = {
                     'penalty': ['l2', 'l1'],
                 }
-                clf = GridSearchCV(SGDClassifier(loss='log', random_state=42), param_grid, cv=3)
+                clf = GridSearchCV(SGDClassifier(loss='log', random_state=42), param_grid, cv=2)
                 clf = clf.fit(train, target)
 
                 test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]]))
@@ -2737,10 +2738,24 @@ def test_grid_search_cv_sgd_classifier():
                                                                RangeComparison(0, 5000))),
                                   OptionalCodeInfo(CodeReference(16, 19, 16, 61),
                                                    "SGDClassifier(loss='log', random_state=42)"),
-                                  Comparison(FunctionType))
+                                  Comparison(partial))
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
-    # FIXME: Add tests for processing_func
+    fit_node = list(inspector_result.dag.nodes)[4]
+    train_data_node = list(inspector_result.dag.nodes)[2]
+    train_label_node = list(inspector_result.dag.nodes)[3]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_data = train_data_node.processing_func(train_df[['C', 'D']])
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    train_labels = train_label_node.processing_func(train_labels)
+    fitted_estimator = fit_node.processing_func(train_data, train_labels)
+    assert isinstance(fitted_estimator, GridSearchCV)
+    assert isinstance(fitted_estimator.estimator, SGDClassifier)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
+    test_score = fitted_estimator.score(test_df[['C', 'D']], test_labels)
+    assert test_score == 0.5

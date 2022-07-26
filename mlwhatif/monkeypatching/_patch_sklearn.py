@@ -192,6 +192,13 @@ class SklearnGridSearchCVPatching:
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             # pylint: disable=attribute-defined-outside-init
+            supported_estimators = (tree.DecisionTreeClassifier, linear_model.SGDClassifier,
+                                    linear_model.LogisticRegression, keras_sklearn_external.KerasClassifier)
+            if not isinstance(estimator, supported_estimators):  # pylint: disable=no-member
+                raise NotImplementedError(f"TODO: Estimator is an instance of "
+                                          f"{type(self.estimator)}, "  # pylint: disable=no-member
+                                          f"which is not supported yet!")
+
             original(self, estimator, param_grid, scoring=scoring, n_jobs=n_jobs,
                      iid=iid, refit=refit, cv=cv, verbose=verbose, pre_dispatch=pre_dispatch,
                      error_score=error_score, return_train_score=return_train_score)
@@ -201,6 +208,15 @@ class SklearnGridSearchCVPatching:
             self.mlinspect_optional_code_reference = optional_code_reference
             self.mlinspect_optional_source_code = optional_source_code
 
+            make_grid_search_kwargs = {'param_grid': param_grid, 'scoring': scoring, 'n_jobs': n_jobs,
+                     'iid': iid, 'refit': refit, 'cv': cv, 'verbose': verbose, 'pre_dispatch': pre_dispatch,
+                     'error_score': error_score, 'return_train_score': return_train_score}
+
+            def make_grid_search(grid_search_kwargs, estimator_to_wrap):
+                return model_selection.GridSearchCV(estimator=estimator_to_wrap, **grid_search_kwargs)
+
+            call_info_singleton.make_grid_search_func = partial(make_grid_search, make_grid_search_kwargs)
+
         return execute_patched_func_indirect_allowed(execute_inspections)
 
     @gorilla.name('_run_search')
@@ -208,47 +224,17 @@ class SklearnGridSearchCVPatching:
     def patched__run_search(self, *args, **kwargs):
         """ Patch for ('sklearn.compose.model_selection._search', 'GridSearchCV') """
         # pylint: disable=no-method-argument
+        call_info_singleton.transformer_filename = self.mlinspect_filename
+        call_info_singleton.transformer_lineno = self.mlinspect_lineno
+        call_info_singleton.transformer_function_info = FunctionInfo(
+            'sklearn.compose.model_selection._search.GridSearchCV', 'fit_transform')
+        call_info_singleton.transformer_optional_code_reference = self.mlinspect_optional_code_reference
+        call_info_singleton.transformer_optional_source_code = self.mlinspect_optional_source_code
+
         call_info_singleton.param_search_active = True
         original = gorilla.get_original_attribute(model_selection.GridSearchCV, '_run_search')
         result = original(self, *args, **kwargs)
         call_info_singleton.param_search_active = False
-
-        return result
-
-    @gorilla.name('fit')
-    @gorilla.settings(allow_hit=True)
-    def patched_fit(self, *args, **kwargs):
-        """ Patch for ('sklearn.compose.model_selection._search', 'GridSearchCV') """
-        # pylint: disable=no-method-argument
-        supported_estimators = (tree.DecisionTreeClassifier, linear_model.SGDClassifier,
-                                linear_model.LogisticRegression, keras_sklearn_external.KerasClassifier)
-        if not isinstance(self.estimator, supported_estimators):  # pylint: disable=no-member
-            raise NotImplementedError(f"TODO: Estimator is an instance of "
-                                      f"{type(self.estimator)}, "  # pylint: disable=no-member
-                                      f"which is not supported yet!")
-
-        call_info_singleton.transformer_filename = self.mlinspect_filename
-        call_info_singleton.transformer_lineno = self.mlinspect_lineno
-        call_info_singleton.transformer_function_info = FunctionInfo(
-            'sklearn.compose.model_selection._search.GridSearchCV', 'fit')
-        call_info_singleton.transformer_optional_code_reference = self.mlinspect_optional_code_reference
-        call_info_singleton.transformer_optional_source_code = self.mlinspect_optional_source_code
-
-        make_grid_search_args = list(args)
-        make_grid_search_kwargs = kwargs.copy()
-        if 'estimator' not in kwargs:
-            make_grid_search_args = args[1:]
-        else:
-            make_grid_search_kwargs.pop('estimator')
-
-        def make_grid_search(grid_search_args, grid_search_kwargs, estimator):
-            return model_selection.GridSearchCV(*grid_search_args, estimator=estimator, **grid_search_kwargs)
-
-        call_info_singleton.make_grid_search_func = partial(make_grid_search, make_grid_search_args,
-                                                            make_grid_search_kwargs)
-        original = gorilla.get_original_attribute(model_selection.GridSearchCV, 'fit')
-        result = original(self, *args, **kwargs)
-        call_info_singleton.make_grid_search_func = None
 
         return result
 
@@ -1128,10 +1114,17 @@ class SklearnDecisionTreePatching:
             _, train_labels_node, train_labels_result = add_train_label_node(self, args[1],
                                                                              function_info)
 
-            def processing_func(train_data, train_labels):
-                estimator = tree.DecisionTreeClassifier(**self.mlinspect_non_data_func_args)
-                fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
-                return fitted_estimator
+            if call_info_singleton.make_grid_search_func is None:
+                def processing_func(train_data, train_labels):
+                    estimator = tree.DecisionTreeClassifier(**self.mlinspect_non_data_func_args)
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+            else:
+                def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
+                    estimator = make_grid_search_func(tree.DecisionTreeClassifier(**self.mlinspect_non_data_func_args))
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+                processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
             # Estimator
             operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
@@ -1328,11 +1321,17 @@ class SklearnSGDClassifierPatching:
             _, train_data_node, train_data_result = add_train_data_node(self, args[0], function_info)
             _, train_labels_node, train_labels_result = add_train_label_node(self, args[1],
                                                                              function_info)
-
-            def processing_func(train_data, train_labels):
-                estimator = linear_model.SGDClassifier(**self.mlinspect_non_data_func_args)
-                fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
-                return fitted_estimator
+            if call_info_singleton.make_grid_search_func is None:
+                def processing_func(train_data, train_labels):
+                    estimator = linear_model.SGDClassifier(**self.mlinspect_non_data_func_args)
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+            else:
+                def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
+                    estimator = make_grid_search_func(linear_model.SGDClassifier(**self.mlinspect_non_data_func_args))
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+                processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
             # Estimator
             operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
@@ -1526,10 +1525,18 @@ class SklearnLogisticRegressionPatching:
             _, train_data_node, train_data_result = add_train_data_node(self, args[0], function_info)
             _, train_labels_node, train_labels_result = add_train_label_node(self, args[1], function_info)
 
-            def processing_func(train_data, train_labels):
-                estimator = linear_model.LogisticRegression(**self.mlinspect_non_data_func_args)
-                fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
-                return fitted_estimator
+            if call_info_singleton.make_grid_search_func is None:
+                def processing_func(train_data, train_labels):
+                    estimator = linear_model.LogisticRegression(**self.mlinspect_non_data_func_args)
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+            else:
+                def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
+                    estimator = make_grid_search_func(linear_model.LogisticRegression(
+                        **self.mlinspect_non_data_func_args))
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+                processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
             # Estimator
             operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
@@ -1713,10 +1720,19 @@ class SklearnKerasClassifierPatching:
             _, train_labels_dag_node, train_labels_result = add_train_label_node(self, args[1], function_info)
             self.mlinspect_non_data_func_args.update(self.sk_params)  # pylint: disable=no-member
 
-            def processing_func(train_data, train_labels):
-                estimator = tensorflow.keras.wrappers.scikit_learn.KerasClassifier(**self.mlinspect_non_data_func_args)
-                estimator.fit(train_data, train_labels, *args[2:], **kwargs)
-                return estimator
+            if call_info_singleton.make_grid_search_func is None:
+                def processing_func(train_data, train_labels):
+                    estimator = tensorflow.keras.wrappers.scikit_learn.KerasClassifier(
+                        **self.mlinspect_non_data_func_args)
+                    estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return estimator
+            else:
+                def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
+                    estimator = make_grid_search_func(tensorflow.keras.wrappers.scikit_learn.KerasClassifier(
+                        **self.mlinspect_non_data_func_args))
+                    estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return estimator
+                processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
             # Estimator
             operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
