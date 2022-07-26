@@ -4,6 +4,7 @@ Monkey patching for sklearn
 # pylint: disable=too-many-lines
 import dataclasses
 from functools import partial
+from typing import Callable
 
 import gorilla
 import numpy
@@ -166,6 +167,7 @@ class SklearnCallInfo:
     column_transformer_active: bool = False
     score_active: bool = False
     param_search_active: bool = False
+    make_grid_search_func: Callable or None = None
 
 
 call_info_singleton = SklearnCallInfo()
@@ -203,7 +205,19 @@ class SklearnGridSearchCVPatching:
 
     @gorilla.name('_run_search')
     @gorilla.settings(allow_hit=True)
-    def patched_fit_transform(self, *args, **kwargs):
+    def patched__run_search(self, *args, **kwargs):
+        """ Patch for ('sklearn.compose.model_selection._search', 'GridSearchCV') """
+        # pylint: disable=no-method-argument
+        call_info_singleton.param_search_active = True
+        original = gorilla.get_original_attribute(model_selection.GridSearchCV, '_run_search')
+        result = original(self, *args, **kwargs)
+        call_info_singleton.param_search_active = False
+
+        return result
+
+    @gorilla.name('fit')
+    @gorilla.settings(allow_hit=True)
+    def patched_fit(self, *args, **kwargs):
         """ Patch for ('sklearn.compose.model_selection._search', 'GridSearchCV') """
         # pylint: disable=no-method-argument
         supported_estimators = (tree.DecisionTreeClassifier, linear_model.SGDClassifier,
@@ -215,15 +229,26 @@ class SklearnGridSearchCVPatching:
 
         call_info_singleton.transformer_filename = self.mlinspect_filename
         call_info_singleton.transformer_lineno = self.mlinspect_lineno
-        call_info_singleton.transformer_function_info = FunctionInfo('sklearn.compose.model_selection._search.GridSearchCV',
-                                                                     '_run_search')
+        call_info_singleton.transformer_function_info = FunctionInfo(
+            'sklearn.compose.model_selection._search.GridSearchCV', 'fit')
         call_info_singleton.transformer_optional_code_reference = self.mlinspect_optional_code_reference
         call_info_singleton.transformer_optional_source_code = self.mlinspect_optional_source_code
 
-        call_info_singleton.param_search_active = True
-        original = gorilla.get_original_attribute(model_selection.GridSearchCV, '_run_search')
+        make_grid_search_args = list(args)
+        make_grid_search_kwargs = kwargs.copy()
+        if 'estimator' not in kwargs:
+            make_grid_search_args = args[1:]
+        else:
+            make_grid_search_kwargs.pop('estimator')
+
+        def make_grid_search(grid_search_args, grid_search_kwargs, estimator):
+            return model_selection.GridSearchCV(*grid_search_args, estimator=estimator, **grid_search_kwargs)
+
+        call_info_singleton.make_grid_search_func = partial(make_grid_search, make_grid_search_args,
+                                                            make_grid_search_kwargs)
+        original = gorilla.get_original_attribute(model_selection.GridSearchCV, 'fit')
         result = original(self, *args, **kwargs)
-        call_info_singleton.param_search_active = False
+        call_info_singleton.make_grid_search_func = None
 
         return result
 
