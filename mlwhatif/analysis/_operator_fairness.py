@@ -11,8 +11,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type, add_intermediate_extraction_after_node, replace_node, \
-    get_sorted_parent_nodes
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, add_intermediate_extraction_after_node, \
+    replace_node, get_sorted_parent_nodes
 from mlwhatif.analysis._data_corruption import DataCorruption
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
@@ -156,12 +156,22 @@ class OperatorFairness(WhatIfAnalysis):
         result_df_op_type = []
         result_df_lineno = []
         result_df_op_code = []
+        result_df_replacement_description = []
         result_df_metrics = {}
         score_linenos = [lineno for (_, lineno) in self._score_nodes_and_linenos]
         for operator_to_replace in self._operators_to_test:
             result_df_op_type.append(operator_to_replace.operator_info.operator.value)
             result_df_lineno.append(operator_to_replace.code_location.lineno)
             result_df_op_code.append(operator_to_replace.optional_code_info.source_code)
+            if operator_to_replace.operator_info.operator == OperatorType.TRANSFORMER:
+                if "Word2Vec" in operator_to_replace.details.description:
+                    result_df_replacement_description.append("one-hot encode instead")
+                elif "Imputer" in operator_to_replace.details.description:
+                    result_df_replacement_description.append("replace nan with constant")
+                else:
+                    result_df_replacement_description.append("passthrough")
+            elif operator_to_replace.operator_info.operator == OperatorType.SELECTION:
+                result_df_replacement_description.append("drop the filter")
             label_for_operator = self.get_label_for_operator(operator_to_replace)
             for lineno in score_linenos:
                 test_label = f"{label_for_operator}_L{lineno}"
@@ -172,6 +182,7 @@ class OperatorFairness(WhatIfAnalysis):
         result_df = pandas.DataFrame({'operator_type': result_df_op_type,
                                       'operator_lineno': result_df_lineno,
                                       'operator_code': result_df_op_code,
+                                      'strategy_description': result_df_replacement_description,
                                       **result_df_metrics})
         return result_df
 

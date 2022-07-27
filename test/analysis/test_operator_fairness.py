@@ -54,7 +54,7 @@ def test_operator_fairness_mini_example_with_transformer_processing_multiple_col
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
-    assert report.shape == (1, 4)
+    assert report.shape == (1, 5)
 
 
 def test_operator_fairness_healthcare():
@@ -72,7 +72,7 @@ def test_operator_fairness_healthcare():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
-    assert report.shape == (4, 6)
+    assert report.shape == (4, 7)
 
 
 def test_operator_fairness_compas():
@@ -89,7 +89,7 @@ def test_operator_fairness_compas():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
-    assert report.shape == (7, 4)
+    assert report.shape == (7, 5)
 
 
 def test_operator_fairness_restrict_to_linenos():
@@ -106,7 +106,7 @@ def test_operator_fairness_restrict_to_linenos():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
-    assert report.shape == (2, 4)
+    assert report.shape == (2, 5)
 
 
 def test_operator_fairness_test_transformers():
@@ -123,7 +123,7 @@ def test_operator_fairness_test_transformers():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, False)]
-    assert report.shape == (3, 4)
+    assert report.shape == (3, 5)
 
 
 def test_operator_fairness_test_selections():
@@ -140,7 +140,7 @@ def test_operator_fairness_test_selections():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(False, True)]
-    assert report.shape == (4, 4)
+    assert report.shape == (4, 5)
 
 
 def test_operator_fairness_adult_complex():
@@ -153,4 +153,4 @@ def test_operator_fairness_adult_complex():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
-    assert report.shape == (2, 4)
+    assert report.shape == (2, 5)
