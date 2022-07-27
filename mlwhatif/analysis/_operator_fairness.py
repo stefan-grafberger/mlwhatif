@@ -57,16 +57,7 @@ class OperatorFairness(WhatIfAnalysis):
             #  that uses the identity function
             if operator_to_replace.operator_info.operator == OperatorType.TRANSFORMER:
                 def onehot_transformer_processing_func(input_df):
-                    # if not isinstance(input_df, pandas.DataFrame):
-                    #     input_df = pandas.DataFrame(input_df)
-                    transformer = ColumnTransformer(
-                        transformers=[
-                            ("num", OneHotEncoder(sparse=False), make_column_selector(dtype_include="number")),
-                            ("cat", OneHotEncoder(sparse=False), make_column_selector(dtype_include="category")),
-                            ("bool", OneHotEncoder(sparse=False), make_column_selector(dtype_include="bool")),
-                            ("string", OneHotEncoder(sparse=False), make_column_selector(dtype_include="string")),
-                        ]
-                    )
+                    transformer = OneHotEncoder(sparse=False, handle_unknown='ignore')
                     transformed_data = transformer.fit_transform(input_df)
                     transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
                     transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
@@ -80,6 +71,18 @@ class OperatorFairness(WhatIfAnalysis):
                     return transformed_data
 
                 def imputer_transformer_processing_func(input_df):
+                    # if not isinstance(input_df, pandas.DataFrame):
+                    #     input_df = pandas.DataFrame(input_df)
+                    # transformer = ColumnTransformer(
+                    #     transformers=[
+                    #         ("num", OneHotEncoder(sparse=False), make_column_selector(dtype_include="number")),
+                    #         ("cat", OneHotEncoder(sparse=False), make_column_selector(dtype_include="category")),
+                    #         ("bool", OneHotEncoder(sparse=False), make_column_selector(dtype_include="bool")),
+                    #         ("string", OneHotEncoder(sparse=False), make_column_selector(dtype_include="string")),
+                    #         ("object", OneHotEncoder(sparse=False), make_column_selector(dtype_include="object"))
+                    #     ]
+                    # )
+
                     transformer = ColumnTransformer(
                         transformers=[
                             ("non_bool", SimpleImputer(strategy='constant'),
