@@ -11,7 +11,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type, add_intermediate_extraction_after_node, replace_node
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, add_intermediate_extraction_after_node, replace_node, \
+    get_sorted_parent_nodes
 from mlwhatif.analysis._data_corruption import DataCorruption
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
@@ -56,59 +57,91 @@ class OperatorFairness(WhatIfAnalysis):
             # This is the passthrough transformer the sklearn ColumnTransformer uses internally, a FunctionTransformer
             #  that uses the identity function
             if operator_to_replace.operator_info.operator == OperatorType.TRANSFORMER:
-                def onehot_transformer_processing_func(input_df):
-                    transformer = OneHotEncoder(sparse=False, handle_unknown='ignore')
-                    transformed_data = transformer.fit_transform(input_df)
-                    transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
-                    transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
-                    return transformed_data
-
-                def passthrough_transformer_processing_func(input_df):
-                    transformer = FunctionTransformer(accept_sparse=True, check_inverse=False)
-                    transformed_data = transformer.fit_transform(input_df)
-                    transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
-                    transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
-                    return transformed_data
-
-                def imputer_transformer_processing_func(input_df):
-                    # TODO: Is converting numpy to pandas df necessary or not?
-                    # if not isinstance(input_df, pandas.DataFrame):
-                    #     input_df = pandas.DataFrame.from_records(input_df)
-                    stringify_and_impute = Pipeline([
-                                ('stringify_bool',
-                                 FunctionTransformer(func=lambda maybe_bool: maybe_bool.astype(str), check_inverse=False)),
-                                ('impute_replacement', SimpleImputer(strategy='constant'))])
-
-                    transformer = ColumnTransformer(
-                        transformers=[
-                            ("num", SimpleImputer(strategy='constant'), make_column_selector(dtype_include="number")),
-                            ("non_num", stringify_and_impute, make_column_selector(dtype_exclude="number"))
-                        ]
-                    )
-                    transformed_data = transformer.fit_transform(input_df)
-                    transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
-                    transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
-                    return transformed_data
-
-                # TODO: When else do we need to use a OneHotEncoder?
-                if "Word2Vec" in operator_to_replace.details.description:
-                    replacement_func = onehot_transformer_processing_func
-                elif "Imputer" in operator_to_replace.details.description:
-                    replacement_func = imputer_transformer_processing_func
-                else:
-                    replacement_func = passthrough_transformer_processing_func
-
-                replacement_node = DagNode(singleton.get_next_op_id(),
-                                           operator_to_replace.code_location,
-                                           OperatorContext(OperatorType.TRANSFORMER, None),
-                                           DagNodeDetails(f"Do nothing",
-                                                          operator_to_replace.details.columns),
-                                           None,
-                                           replacement_func)
+                replacement_node = self.get_transformer_replacement_node(operator_to_replace)
                 replace_node(modified_dag, operator_to_replace, replacement_node)
+            elif operator_to_replace.operator_info.operator == OperatorType.SELECTION:
+                self.remove_nodes_associated_with_selection(modified_dag, operator_to_replace)
+            else:
+                raise Exception(f"Replacing operator type {operator_to_replace.operator_info.operator.value} is "
+                                f"not supported yet!")
 
             result_dags.append(modified_dag)
         return result_dags
+
+    @staticmethod
+    def remove_nodes_associated_with_selection(modified_dag, operator_to_replace):
+        """Removes the selection node as well as nodes that are there for the selection condition"""
+        # TODO: This code assumes a selection based on a simple condition like in our example pipelines for now.
+        operator_parent_nodes = get_sorted_parent_nodes(modified_dag, operator_to_replace)
+        selection_parent_a = operator_parent_nodes[0]
+        selection_parent_b = operator_parent_nodes[-1]
+        # We want to introduce the change before all subscript behavior
+        operator_after_which_cutoff_required = networkx.lowest_common_ancestor(modified_dag, selection_parent_a,
+                                                                               selection_parent_b)
+        paths_between_generator = networkx.all_simple_paths(modified_dag,
+                                                            source=operator_after_which_cutoff_required,
+                                                            target=operator_to_replace)
+        nodes_between_set = {node for path in paths_between_generator for node in path}
+        nodes_between_set.remove(operator_after_which_cutoff_required)
+        children_before_modifications = list(modified_dag.successors(operator_to_replace))
+        for child_node in children_before_modifications:
+            edge_data = modified_dag.get_edge_data(operator_to_replace, child_node)
+            modified_dag.add_edge(operator_after_which_cutoff_required, child_node, **edge_data)
+        modified_dag.remove_node(operator_to_replace)
+        modified_dag.remove_nodes_from(nodes_between_set)
+
+    @staticmethod
+    def get_transformer_replacement_node(operator_to_replace):
+        """Replace a transformer with an alternative that does nothing."""
+        def onehot_transformer_processing_func(input_df):
+            transformer = OneHotEncoder(sparse=False, handle_unknown='ignore')
+            transformed_data = transformer.fit_transform(input_df)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+            transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+            return transformed_data
+
+        def passthrough_transformer_processing_func(input_df):
+            transformer = FunctionTransformer(accept_sparse=True, check_inverse=False)
+            transformed_data = transformer.fit_transform(input_df)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+            transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+            return transformed_data
+
+        def imputer_transformer_processing_func(input_df):
+            # TODO: Is converting numpy to pandas df necessary or not?
+            # if not isinstance(input_df, pandas.DataFrame):
+            #     input_df = pandas.DataFrame.from_records(input_df)
+            stringify_and_impute = Pipeline([
+                ('stringify_bool',
+                 FunctionTransformer(func=lambda maybe_bool: maybe_bool.astype(str), check_inverse=False)),
+                ('impute_replacement', SimpleImputer(strategy='constant'))])
+
+            transformer = ColumnTransformer(
+                transformers=[
+                    ("num", SimpleImputer(strategy='constant'), make_column_selector(dtype_include="number")),
+                    ("non_num", stringify_and_impute, make_column_selector(dtype_exclude="number"))
+                ]
+            )
+            transformed_data = transformer.fit_transform(input_df)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+            transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+            return transformed_data
+
+        # TODO: When else do we need to use a OneHotEncoder?
+        if "Word2Vec" in operator_to_replace.details.description:
+            replacement_func = onehot_transformer_processing_func
+        elif "Imputer" in operator_to_replace.details.description:
+            replacement_func = imputer_transformer_processing_func
+        else:
+            replacement_func = passthrough_transformer_processing_func
+        replacement_node = DagNode(singleton.get_next_op_id(),
+                                   operator_to_replace.code_location,
+                                   OperatorContext(OperatorType.TRANSFORMER, None),
+                                   DagNodeDetails(f"Do nothing",
+                                                  operator_to_replace.details.columns),
+                                   None,
+                                   replacement_func)
+        return replacement_node
 
     @staticmethod
     def get_label_for_operator(operator_to_replace):

@@ -11,7 +11,8 @@ import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, \
-    find_first_op_modifying_a_column, add_new_node_between_nodes, add_intermediate_extraction_after_node
+    find_first_op_modifying_a_column, add_new_node_between_nodes, add_intermediate_extraction_after_node, \
+    get_sorted_parent_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
@@ -104,7 +105,7 @@ class DataCorruption(WhatIfAnalysis):
         """Find out between which two nodes to apply the corruption"""
         search_start_node = DataCorruption.find_train_or_test_pipeline_part_end(dag, test_not_train)
         first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, test_not_train)
-        operator_parent_nodes = DataCorruption.get_sorted_parent_nodes(dag, first_op_requiring_corruption)
+        operator_parent_nodes = get_sorted_parent_nodes(dag, first_op_requiring_corruption)
         first_op_requiring_corruption, operator_to_apply_corruption_after = DataCorruption\
             .find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, operator_parent_nodes)
         return operator_to_apply_corruption_after, first_op_requiring_corruption
@@ -125,16 +126,6 @@ class DataCorruption(WhatIfAnalysis):
                 raise Exception("Currently, DataCorruption only supports pipelines with exactly one estimator!")
             search_start_node = search_start_nodes[0]
         return search_start_node
-
-    @staticmethod
-    def get_sorted_parent_nodes(dag: networkx.DiGraph, first_op_requiring_corruption):
-        """Get the parent nodes of a node sorted by arg_index"""
-        operator_parent_nodes = list(dag.predecessors(first_op_requiring_corruption))
-        parent_nodes_with_arg_index = [(parent_node, dag.get_edge_data(parent_node, first_op_requiring_corruption))
-                                       for parent_node in operator_parent_nodes]
-        parent_nodes_with_arg_index = sorted(parent_nodes_with_arg_index, key=lambda x: x[1]['arg_index'])
-        operator_parent_nodes = [node for (node, _) in parent_nodes_with_arg_index]
-        return operator_parent_nodes
 
     @staticmethod
     def get_sorted_children_nodes(dag: networkx.DiGraph, first_op_requiring_corruption):
