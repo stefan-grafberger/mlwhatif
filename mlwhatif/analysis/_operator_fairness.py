@@ -1,13 +1,13 @@
 """
 The Operator Fairness What-If Analysis
 """
-import functools
 from typing import Iterable, Dict
 
 import networkx
 import pandas
 from sklearn.compose import ColumnTransformer, make_column_selector
 from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
@@ -71,23 +71,18 @@ class OperatorFairness(WhatIfAnalysis):
                     return transformed_data
 
                 def imputer_transformer_processing_func(input_df):
+                    # TODO: Is converting numpy to pandas df necessary or not?
                     # if not isinstance(input_df, pandas.DataFrame):
-                    #     input_df = pandas.DataFrame(input_df)
-                    # transformer = ColumnTransformer(
-                    #     transformers=[
-                    #         ("num", OneHotEncoder(sparse=False), make_column_selector(dtype_include="number")),
-                    #         ("cat", OneHotEncoder(sparse=False), make_column_selector(dtype_include="category")),
-                    #         ("bool", OneHotEncoder(sparse=False), make_column_selector(dtype_include="bool")),
-                    #         ("string", OneHotEncoder(sparse=False), make_column_selector(dtype_include="string")),
-                    #         ("object", OneHotEncoder(sparse=False), make_column_selector(dtype_include="object"))
-                    #     ]
-                    # )
+                    #     input_df = pandas.DataFrame.from_records(input_df)
+                    stringify_and_impute = Pipeline([
+                                ('stringify_bool',
+                                 FunctionTransformer(func=lambda maybe_bool: maybe_bool.astype(str), check_inverse=False)),
+                                ('impute_replacement', SimpleImputer(strategy='constant'))])
 
                     transformer = ColumnTransformer(
                         transformers=[
-                            ("non_bool", SimpleImputer(strategy='constant'),
-                             make_column_selector(dtype_exclude="bool")),
-                            # ("bool", SimpleImputer(strategy='constant'), make_column_selector(dtype_include="bool")),
+                            ("num", SimpleImputer(strategy='constant'), make_column_selector(dtype_include="number")),
+                            ("non_num", stringify_and_impute, make_column_selector(dtype_exclude="number"))
                         ]
                     )
                     transformed_data = transformer.fit_transform(input_df)
@@ -168,8 +163,7 @@ class OperatorFairness(WhatIfAnalysis):
             transformers_to_replace = [node for node in nodes_to_search if
                                        node.operator_info.operator == OperatorType.TRANSFORMER
                                        and ": fit_transform" in node.details.description
-                                       and "One-Hot" not in node.details.description
-                                       and "Imputer" not in node.details.description]
+                                       and "One-Hot" not in node.details.description]
             all_nodes_to_test.extend(transformers_to_replace)
         if self._test_selections is True:
             selections_to_replace = [node for node in nodes_to_search if

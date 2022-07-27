@@ -72,4 +72,4 @@ def test_data_corruption_healthcare():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
-    assert report.shape == (5, 6)
+    assert report.shape == (4, 6)
