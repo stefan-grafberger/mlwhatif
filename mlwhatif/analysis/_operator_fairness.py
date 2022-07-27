@@ -64,6 +64,7 @@ class OperatorFairness(WhatIfAnalysis):
                             ("num", OneHotEncoder(sparse=False), make_column_selector(dtype_include="number")),
                             ("cat", OneHotEncoder(sparse=False), make_column_selector(dtype_include="category")),
                             ("bool", OneHotEncoder(sparse=False), make_column_selector(dtype_include="bool")),
+                            ("string", OneHotEncoder(sparse=False), make_column_selector(dtype_include="string")),
                         ]
                     )
                     transformed_data = transformer.fit_transform(input_df)

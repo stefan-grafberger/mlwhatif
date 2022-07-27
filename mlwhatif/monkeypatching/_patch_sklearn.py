@@ -1747,6 +1747,7 @@ class SklearnKerasClassifierPatching:
                 def processing_func(train_data, train_labels):
                     estimator = tensorflow.keras.wrappers.scikit_learn.KerasClassifier(
                         **self.mlinspect_non_data_func_args)
+                    estimator.sk_params['input_dim'] = train_data.shape[1]
                     estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return estimator
                 param_search_runtime = 0
@@ -1754,6 +1755,7 @@ class SklearnKerasClassifierPatching:
                 def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
                     estimator = make_grid_search_func(tensorflow.keras.wrappers.scikit_learn.KerasClassifier(
                         **self.mlinspect_non_data_func_args))
+                    estimator.estimator.sk_params['input_dim'] = train_data.shape[1]
                     estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return estimator
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
