@@ -163,15 +163,8 @@ class OperatorFairness(WhatIfAnalysis):
             result_df_op_type.append(operator_to_replace.operator_info.operator.value)
             result_df_lineno.append(operator_to_replace.code_location.lineno)
             result_df_op_code.append(operator_to_replace.optional_code_info.source_code)
-            if operator_to_replace.operator_info.operator == OperatorType.TRANSFORMER:
-                if "Word2Vec" in operator_to_replace.details.description:
-                    result_df_replacement_description.append("one-hot encode instead")
-                elif "Imputer" in operator_to_replace.details.description:
-                    result_df_replacement_description.append("replace nan with constant")
-                else:
-                    result_df_replacement_description.append("passthrough")
-            elif operator_to_replace.operator_info.operator == OperatorType.SELECTION:
-                result_df_replacement_description.append("drop the filter")
+            replacement_description = self.get_op_replacement_description(operator_to_replace)
+            result_df_replacement_description.append(replacement_description)
             label_for_operator = self.get_label_for_operator(operator_to_replace)
             for lineno in score_linenos:
                 test_label = f"{label_for_operator}_L{lineno}"
@@ -185,6 +178,23 @@ class OperatorFairness(WhatIfAnalysis):
                                       'strategy_description': result_df_replacement_description,
                                       **result_df_metrics})
         return result_df
+
+    @staticmethod
+    def get_op_replacement_description(operator_to_replace):
+        """Generate a description explaining the baseline the operator is being compared to"""
+        if operator_to_replace.operator_info.operator == OperatorType.TRANSFORMER:
+            if "Word2Vec" in operator_to_replace.details.description:
+                replacement_description = "one-hot encode instead"
+            elif "Imputer" in operator_to_replace.details.description:
+                replacement_description = "replace nan with constant"
+            else:
+                replacement_description = "passthrough"
+        elif operator_to_replace.operator_info.operator == OperatorType.SELECTION:
+            replacement_description = "drop the filter"
+        else:
+            raise Exception(f"Replacing operator type {operator_to_replace.operator_info.operator.value} is "
+                            f"not supported yet!")
+        return replacement_description
 
     def add_intermediate_extraction_after_score_nodes(self, dag: networkx.DiGraph, label: str):
         """Add a new node behind some given node to extract the intermediate result of that given node"""
