@@ -4,7 +4,7 @@ Tests whether the Data Corruption analysis works
 import os
 from inspect import cleandoc
 
-from example_pipelines import HEALTHCARE_PY
+from example_pipelines import HEALTHCARE_PY, ADULT_COMPLEX_PY, COMPAS_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._operator_fairness import OperatorFairness
@@ -20,7 +20,7 @@ INTERMEDIATE_EXTRACTION_OPTIMISED_PATH = os.path.join(str(get_project_root()), "
 
 def test_operator_fairness_mini_example_with_transformer_processing_multiple_columns():
     """
-    Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
+    Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
     test_code = cleandoc("""
         import pandas as pd
@@ -57,9 +57,9 @@ def test_operator_fairness_mini_example_with_transformer_processing_multiple_col
     assert report.shape == (1, 4)
 
 
-def test_data_corruption_healthcare():
+def test_operator_fairness_healthcare():
     """
-    Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
+    Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(HEALTHCARE_PY) \
@@ -73,3 +73,33 @@ def test_data_corruption_healthcare():
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
     assert report.shape == (4, 6)
+
+
+def test_operator_fairness_compas():
+    """
+    Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
+    """
+
+    analysis_result = PipelineAnalyzer \
+        .on_pipeline_from_py_file(COMPAS_PY) \
+        .add_what_if_analysis(OperatorFairness(True, True)) \
+        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
+        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
+        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
+        .execute()
+
+    report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
+    assert report.shape == (7, 4)
+
+
+def test_operator_fairness_adult_complex():
+    """
+    Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
+    """
+    analysis_result = PipelineAnalyzer \
+        .on_pipeline_from_py_file(ADULT_COMPLEX_PY) \
+        .add_what_if_analysis(OperatorFairness(True, True)) \
+        .execute()
+
+    report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
+    assert report.shape == (2, 4)
