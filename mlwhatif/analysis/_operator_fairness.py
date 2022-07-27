@@ -1,16 +1,20 @@
 """
 The Operator Fairness What-If Analysis
 """
+import functools
 from typing import Iterable, Dict
 
 import networkx
 import pandas
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 
-from mlwhatif import OperatorType
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type, add_intermediate_extraction_after_node
+from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, add_intermediate_extraction_after_node, replace_node
 from mlwhatif.analysis._data_corruption import DataCorruption
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.monkeypatching._monkey_patching_utils import wrap_in_mlinspect_array_if_necessary
 
 
 class OperatorFairness(WhatIfAnalysis):
@@ -47,6 +51,48 @@ class OperatorFairness(WhatIfAnalysis):
             result_label = self.get_label_for_operator(operator_to_replace)
             self.add_intermediate_extraction_after_score_nodes(modified_dag, result_label)
             # TODO: Replace operator, two operator types exist here currently: transformers and selections
+
+            # This is the passthrough transformer the sklearn ColumnTransformer uses internally, a FunctionTransformer
+            #  that uses the identity function
+            if operator_to_replace.operator_info.operator == OperatorType.TRANSFORMER:
+                def onehot_transformer_processing_func(input_df):
+                    transformer = OneHotEncoder(sparse=False)
+                    transformed_data = transformer.fit_transform(input_df)
+                    transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+                    transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+                    return transformed_data
+
+                def passthrough_transformer_processing_func(input_df):
+                    transformer = FunctionTransformer(accept_sparse=True, check_inverse=False)
+                    transformed_data = transformer.fit_transform(input_df)
+                    transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+                    transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+                    return transformed_data
+
+                def imputer_transformer_processing_func(input_df):
+                    transformer = SimpleImputer(strategy='constant')
+                    transformed_data = transformer.fit_transform(input_df)
+                    transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+                    transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+                    return transformed_data
+
+                # TODO: When else do we need to use a OneHotEncoder?
+                if "Word2Vec" in operator_to_replace.details.description:
+                    replacement_func = onehot_transformer_processing_func
+                elif "Imputer" in operator_to_replace.details.description:
+                    replacement_func = imputer_transformer_processing_func
+                else:
+                    replacement_func = passthrough_transformer_processing_func
+
+                replacement_node = DagNode(singleton.get_next_op_id(),
+                                           operator_to_replace.code_location,
+                                           OperatorContext(OperatorType.TRANSFORMER, None),
+                                           DagNodeDetails(f"Do nothing",
+                                                          operator_to_replace.details.columns),
+                                           None,
+                                           replacement_func)
+                replace_node(modified_dag, operator_to_replace, replacement_node)
+
             result_dags.append(modified_dag)
         return result_dags
 
@@ -102,7 +148,8 @@ class OperatorFairness(WhatIfAnalysis):
         if self._test_transformers is True:
             transformers_to_replace = [node for node in nodes_to_search if
                                        node.operator_info.operator == OperatorType.TRANSFORMER
-                                       and ": fit_transform" in node.details.description]
+                                       and ": fit_transform" in node.details.description
+                                       and "One-Hot" not in node.details.description]
             all_nodes_to_test.extend(transformers_to_replace)
         if self._test_selections is True:
             selections_to_replace = [node for node in nodes_to_search if

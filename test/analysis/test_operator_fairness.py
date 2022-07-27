@@ -4,8 +4,6 @@ Tests whether the Data Corruption analysis works
 import os
 from inspect import cleandoc
 
-from fairlearn.metrics import equalized_odds_difference
-
 from example_pipelines import HEALTHCARE_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
