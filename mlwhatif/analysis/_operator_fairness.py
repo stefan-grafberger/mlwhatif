@@ -1,7 +1,7 @@
 """
 The Operator Fairness What-If Analysis
 """
-from typing import Iterable, Dict
+from typing import Iterable, Dict, List
 
 import networkx
 import pandas
@@ -24,9 +24,10 @@ class OperatorFairness(WhatIfAnalysis):
     The Operator Fairness What-If Analysis
     """
 
-    def __init__(self, test_transformers=True, test_selections=False):
+    def __init__(self, test_transformers=True, test_selections=False, restrict_to_linenos: List[int] or None = None):
         self._test_transformers = test_transformers
         self._test_selections = test_selections
+        self._restrict_to_linenos = restrict_to_linenos
         self._analysis_id = (test_transformers, test_selections)
         self._operators_to_test = []
         self._score_nodes_and_linenos = []
@@ -202,4 +203,7 @@ class OperatorFairness(WhatIfAnalysis):
             selections_to_replace = [node for node in nodes_to_search if
                                      node.operator_info.operator == OperatorType.SELECTION]
             all_nodes_to_test.extend(selections_to_replace)
+        if self._restrict_to_linenos is not None:
+            lineno_set = set(self._restrict_to_linenos)
+            all_nodes_to_test = set(node for node in all_nodes_to_test if node.code_location.lineno in lineno_set)
         return all_nodes_to_test

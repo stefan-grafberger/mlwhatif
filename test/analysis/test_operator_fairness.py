@@ -92,6 +92,57 @@ def test_operator_fairness_compas():
     assert report.shape == (7, 4)
 
 
+def test_operator_fairness_restrict_to_linenos():
+    """
+    Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
+    """
+
+    analysis_result = PipelineAnalyzer \
+        .on_pipeline_from_py_file(COMPAS_PY) \
+        .add_what_if_analysis(OperatorFairness(True, True, [41, 29])) \
+        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
+        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
+        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
+        .execute()
+
+    report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
+    assert report.shape == (2, 4)
+
+
+def test_operator_fairness_test_transformers():
+    """
+    Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
+    """
+
+    analysis_result = PipelineAnalyzer \
+        .on_pipeline_from_py_file(COMPAS_PY) \
+        .add_what_if_analysis(OperatorFairness(True, False)) \
+        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
+        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
+        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
+        .execute()
+
+    report = analysis_result.analysis_to_result_reports[OperatorFairness(True, False)]
+    assert report.shape == (3, 4)
+
+
+def test_operator_fairness_test_selections():
+    """
+    Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
+    """
+
+    analysis_result = PipelineAnalyzer \
+        .on_pipeline_from_py_file(COMPAS_PY) \
+        .add_what_if_analysis(OperatorFairness(False, True)) \
+        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
+        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
+        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
+        .execute()
+
+    report = analysis_result.analysis_to_result_reports[OperatorFairness(False, True)]
+    assert report.shape == (4, 4)
+
+
 def test_operator_fairness_adult_complex():
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
