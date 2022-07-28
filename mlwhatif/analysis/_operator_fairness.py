@@ -131,15 +131,17 @@ class OperatorFairness(WhatIfAnalysis):
         # TODO: When else do we need to use a OneHotEncoder?
         if "Word2Vec" in operator_to_replace.details.description:
             replacement_func = onehot_transformer_processing_func
+            replacement_desc = "One-hot encoding"
         elif "Imputer" in operator_to_replace.details.description:
             replacement_func = imputer_transformer_processing_func
+            replacement_desc = "Replace nan with constant"
         else:
             replacement_func = passthrough_transformer_processing_func
+            replacement_desc = "Do nothing"
         replacement_node = DagNode(singleton.get_next_op_id(),
                                    operator_to_replace.code_location,
                                    OperatorContext(OperatorType.TRANSFORMER, None),
-                                   DagNodeDetails(f"Do nothing",
-                                                  operator_to_replace.details.columns),
+                                   DagNodeDetails(replacement_desc, operator_to_replace.details.columns),
                                    None,
                                    replacement_func)
         return replacement_node
