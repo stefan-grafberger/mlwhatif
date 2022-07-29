@@ -11,6 +11,7 @@ import numpy
 import pandas
 from scipy.sparse import csr_matrix
 from sklearn.linear_model import SGDClassifier, LogisticRegression
+from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import label_binarize, OneHotEncoder
 from sklearn.tree import DecisionTreeClassifier
 from tensorflow.python.keras.wrappers.scikit_learn import KerasClassifier  # pylint: disable=no-name-in-module
@@ -1203,12 +1204,15 @@ def test_decision_tree():
                 clf = DecisionTreeClassifier()
                 clf = clf.fit(train, target)
                 
-                test_predict = clf.predict([[0., 0.], [0.6, 0.6]])
+                test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]], columns=['A', 'B']))
                 expected = np.array([0., 1.])
                 assert np.allclose(test_predict, expected)
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[10])
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[9])
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[8])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -1336,7 +1340,7 @@ def test_decision_tree_score():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    filter_dag_for_nodes_with_ids(inspector_result, {7, 10, 11, 12, 13, 14}, 15)
+    filter_dag_for_nodes_with_ids(inspector_result, {7, 10, 11, 12, 13, 14, 15}, 16)
 
     expected_dag = networkx.DiGraph()
     expected_data_projection = DagNode(11,
@@ -1388,23 +1392,35 @@ def test_decision_tree_score():
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 30),
                                                    'DecisionTreeClassifier()'),
                                   Comparison(FunctionType))
-    expected_score = DagNode(14,
+    expected_predict = DagNode(14,
+                               BasicCodeLocation("<string-source>", 16),
+                               OperatorContext(OperatorType.PREDICT,
+                                               FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier', 'score')),
+                               DagNodeDetails('Decision Tree', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                                 RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(16, 13, 16, 56),
+                                                "clf.score(test_df[['A', 'B']], test_labels)"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
+
+    expected_score = DagNode(15,
                              BasicCodeLocation("<string-source>", 16),
                              OperatorContext(OperatorType.SCORE,
                                              FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier', 'score')),
-                             DagNodeDetails('Decision Tree', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
-                                                                               RangeComparison(0, 800))),
+                             DagNodeDetails('Accuracy', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
+                                                                          RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"),
                              Comparison(FunctionType))
-    expected_dag.add_edge(expected_classifier, expected_score, arg_index=0)
-    expected_dag.add_edge(expected_test_data, expected_score, arg_index=1)
-    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=2)
+    expected_dag.add_edge(expected_predict, expected_score, arg_index=0)
+    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
     fit_node = list(inspector_result.dag.nodes)[0]
-    score_node = list(inspector_result.dag.nodes)[5]
+    predict_node = list(inspector_result.dag.nodes)[5]
+    score_node = list(inspector_result.dag.nodes)[6]
     test_data_node = list(inspector_result.dag.nodes)[3]
     test_label_node = list(inspector_result.dag.nodes)[4]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
@@ -1416,8 +1432,95 @@ def test_decision_tree_score():
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
     test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
     test_labels = test_label_node.processing_func(test_labels)
-    test_score = score_node.processing_func(fitted_estimator, test_data, test_labels)
+    test_predictions = predict_node.processing_func(fitted_estimator, test_data)
+    test_score = score_node.processing_func(test_predictions, test_labels)
     assert test_score == 0.5
+
+
+def test_decision_tree_predict():
+    """
+    Tests whether the monkey patching of ('sklearn.tree._classes.DecisionTreeClassifier', 'predict') works
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler
+                from sklearn.tree import DecisionTreeClassifier
+                import numpy as np
+
+                df = pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+
+                train = StandardScaler().fit_transform(df[['A', 'B']])
+                target = label_binarize(df['target'], classes=['no', 'yes'])
+
+                clf = DecisionTreeClassifier()
+                clf = clf.fit(train, target)
+
+                test_df = pd.DataFrame({'A': [0., 0.6], 'B':  [0., 0.6], 'target': ['no', 'yes']})
+                predictions = clf.predict(test_df[['A', 'B']])
+                assert len(predictions) == 2
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, {7, 9, 10, 11}, 12)
+
+    expected_dag = networkx.DiGraph()
+    expected_data_projection = DagNode(9,
+                                       BasicCodeLocation("<string-source>", 15),
+                                       OperatorContext(OperatorType.PROJECTION,
+                                                       FunctionInfo('pandas.core.frame', '__getitem__')),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                    RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(15, 26, 15, 45), "test_df[['A', 'B']]"),
+                                       Comparison(FunctionType))
+    expected_test_data = DagNode(10,
+                                 BasicCodeLocation("<string-source>", 15),
+                                 OperatorContext(OperatorType.TEST_DATA,
+                                                 FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier',
+                                                              'predict')),
+                                 DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                RangeComparison(0, 800))),
+                                 OptionalCodeInfo(CodeReference(15, 14, 15, 46),
+                                                  "clf.predict(test_df[['A', 'B']])"),
+                                 Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
+    expected_classifier = DagNode(7,
+                                  BasicCodeLocation("<string-source>", 11),
+                                  OperatorContext(OperatorType.ESTIMATOR,
+                                                  FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')),
+                                  DagNodeDetails('Decision Tree', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                                    RangeComparison(0, 10000))),
+                                  OptionalCodeInfo(CodeReference(11, 6, 11, 30),
+                                                   'DecisionTreeClassifier()'),
+                                  Comparison(FunctionType))
+    expected_predict = DagNode(11,
+                               BasicCodeLocation("<string-source>", 15),
+                               OperatorContext(OperatorType.PREDICT,
+                                               FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier',
+                                                            'predict')),
+                               DagNodeDetails('Decision Tree', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                                 RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(15, 14, 15, 46),
+                                                "clf.predict(test_df[['A', 'B']])"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[0]
+    predict_node = list(inspector_result.dag.nodes)[3]
+    test_data_node = list(inspector_result.dag.nodes)[2]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
+    assert isinstance(fitted_estimator, DecisionTreeClassifier)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_data = test_data_node.processing_func(test_df[['C', 'D']])
+    test_predict = predict_node.processing_func(fitted_estimator, test_data)
+    assert len(test_predict) == 2
 
 
 def test_sgd_classifier():
@@ -1439,13 +1542,13 @@ def test_sgd_classifier():
                 clf = SGDClassifier(loss='log', random_state=42)
                 clf = clf.fit(train, target)
 
-                test_predict = clf.predict([[0., 0.], [0.6, 0.6]])
+                test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]], columns=['A', 'B']))
                 expected = np.array([0., 1.])
                 assert np.allclose(test_predict, expected)
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    filter_dag_for_nodes_with_ids(inspector_result, {2, 5, 4, 6, 7}, 8)
+    filter_dag_for_nodes_with_ids(inspector_result, {2, 5, 4, 6, 7}, 11)
 
     expected_dag = networkx.DiGraph()
     expected_standard_scaler = DagNode(2,
@@ -1557,7 +1660,7 @@ def test_sgd_classifier_score():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    filter_dag_for_nodes_with_ids(inspector_result, {7, 10, 11, 12, 13, 14}, 15)
+    filter_dag_for_nodes_with_ids(inspector_result, {7, 10, 11, 12, 13, 14, 15}, 16)
 
     expected_dag = networkx.DiGraph()
     expected_data_projection = DagNode(11,
@@ -1611,24 +1714,37 @@ def test_sgd_classifier_score():
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
                                                    "SGDClassifier(loss='log', random_state=42)"),
                                   Comparison(FunctionType))
-    expected_score = DagNode(14,
+    expected_predict = DagNode(14,
+                               BasicCodeLocation("<string-source>", 16),
+                               OperatorContext(OperatorType.PREDICT,
+                                               FunctionInfo('sklearn.linear_model._stochastic_gradient.SGDClassifier',
+                                                            'score')),
+                               DagNodeDetails('SGD Classifier', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                                  RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(16, 13, 16, 56),
+                                                "clf.score(test_df[['A', 'B']], test_labels)"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
+
+    expected_score = DagNode(15,
                              BasicCodeLocation("<string-source>", 16),
                              OperatorContext(OperatorType.SCORE,
                                              FunctionInfo('sklearn.linear_model._stochastic_gradient.SGDClassifier',
                                                           'score')),
-                             DagNodeDetails('SGD Classifier', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
-                                                                                RangeComparison(0, 800))),
+                             DagNodeDetails('Accuracy', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
+                                                                          RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"),
                              Comparison(FunctionType))
-    expected_dag.add_edge(expected_classifier, expected_score, arg_index=0)
-    expected_dag.add_edge(expected_test_data, expected_score, arg_index=1)
-    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=2)
+    expected_dag.add_edge(expected_predict, expected_score, arg_index=0)
+    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
     fit_node = list(inspector_result.dag.nodes)[0]
-    score_node = list(inspector_result.dag.nodes)[5]
+    predict_node = list(inspector_result.dag.nodes)[5]
+    score_node = list(inspector_result.dag.nodes)[6]
     test_data_node = list(inspector_result.dag.nodes)[3]
     test_label_node = list(inspector_result.dag.nodes)[4]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
@@ -1640,8 +1756,96 @@ def test_sgd_classifier_score():
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
     test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
     test_labels = test_label_node.processing_func(test_labels)
-    test_score = score_node.processing_func(fitted_estimator, test_data, test_labels)
+    test_predict = predict_node.processing_func(fitted_estimator, test_data)
+    test_score = score_node.processing_func(test_predict, test_labels)
     assert test_score == 0.5
+
+
+def test_sgd_classifier_predict():
+    """
+    Tests whether the monkey patching of ('sklearn.linear_model._stochastic_gradient.SGDClassifier', 'predict') works
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler
+                from sklearn.linear_model import SGDClassifier
+                import numpy as np
+
+                df = pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+
+                train = StandardScaler().fit_transform(df[['A', 'B']])
+                target = label_binarize(df['target'], classes=['no', 'yes'])
+
+                clf = SGDClassifier(loss='log', random_state=42)
+                clf = clf.fit(train, target)
+
+                test_df = pd.DataFrame({'A': [0., 0.6], 'B':  [0., 0.6], 'target': ['no', 'yes']})
+                predictions = clf.predict(test_df[['A', 'B']])
+                assert len(predictions) == 2
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, {7, 9, 10, 11}, 12)
+
+    expected_dag = networkx.DiGraph()
+    expected_data_projection = DagNode(9,
+                                       BasicCodeLocation("<string-source>", 15),
+                                       OperatorContext(OperatorType.PROJECTION,
+                                                       FunctionInfo('pandas.core.frame', '__getitem__')),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                    RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(15, 26, 15, 45), "test_df[['A', 'B']]"),
+                                       Comparison(FunctionType))
+    expected_test_data = DagNode(10,
+                                 BasicCodeLocation("<string-source>", 15),
+                                 OperatorContext(OperatorType.TEST_DATA,
+                                                 FunctionInfo('sklearn.linear_model._stochastic_gradient.SGDClassifier',
+                                                              'predict')),
+                                 DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                RangeComparison(0, 800))),
+                                 OptionalCodeInfo(CodeReference(15, 14, 15, 46),
+                                                  "clf.predict(test_df[['A', 'B']])"),
+                                 Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
+    expected_classifier = DagNode(7,
+                                  BasicCodeLocation("<string-source>", 11),
+                                  OperatorContext(OperatorType.ESTIMATOR,
+                                                  FunctionInfo('sklearn.linear_model._stochastic_gradient',
+                                                               'SGDClassifier')),
+                                  DagNodeDetails('SGD Classifier', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                                     RangeComparison(0, 10000))),
+                                  OptionalCodeInfo(CodeReference(11, 6, 11, 48),
+                                                   "SGDClassifier(loss='log', random_state=42)"),
+                                  Comparison(FunctionType))
+    expected_predict = DagNode(11,
+                               BasicCodeLocation("<string-source>", 15),
+                               OperatorContext(OperatorType.PREDICT,
+                                               FunctionInfo('sklearn.linear_model._stochastic_gradient.SGDClassifier',
+                                                            'predict')),
+                               DagNodeDetails('SGD Classifier', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                                  RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(15, 14, 15, 46),
+                                                "clf.predict(test_df[['A', 'B']])"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[0]
+    predict_node = list(inspector_result.dag.nodes)[3]
+    test_data_node = list(inspector_result.dag.nodes)[2]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
+    assert isinstance(fitted_estimator, SGDClassifier)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_data = test_data_node.processing_func(test_df[['C', 'D']])
+    test_predict = predict_node.processing_func(fitted_estimator, test_data)
+    assert len(test_predict) == 2
 
 
 def test_logistic_regression():
@@ -1663,12 +1867,15 @@ def test_logistic_regression():
                 clf = LogisticRegression()
                 clf = clf.fit(train, target)
 
-                test_predict = clf.predict([[0., 0.], [0.6, 0.6]])
+                test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]], columns=['A', 'B']))
                 expected = np.array([0., 1.])
                 assert np.allclose(test_predict, expected)
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[10])
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[9])
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[8])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -1799,7 +2006,7 @@ def test_logistic_regression_score():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    filter_dag_for_nodes_with_ids(inspector_result, {7, 10, 11, 12, 13, 14}, 15)
+    filter_dag_for_nodes_with_ids(inspector_result, {7, 10, 11, 12, 13, 14, 15}, 16)
 
     expected_dag = networkx.DiGraph()
     expected_data_projection = DagNode(11,
@@ -1853,24 +2060,37 @@ def test_logistic_regression_score():
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 26),
                                                    'LogisticRegression()'),
                                   Comparison(FunctionType))
-    expected_score = DagNode(14,
+    expected_predict = DagNode(14,
+                               BasicCodeLocation("<string-source>", 16),
+                               OperatorContext(OperatorType.PREDICT,
+                                               FunctionInfo('sklearn.linear_model._logistic.LogisticRegression',
+                                                            'score')),
+                               DagNodeDetails('Logistic Regression', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                                       RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(16, 13, 16, 56),
+                                                "clf.score(test_df[['A', 'B']], test_labels)"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
+
+    expected_score = DagNode(15,
                              BasicCodeLocation("<string-source>", 16),
                              OperatorContext(OperatorType.SCORE,
                                              FunctionInfo('sklearn.linear_model._logistic.LogisticRegression',
                                                           'score')),
-                             DagNodeDetails('Logistic Regression', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
-                                                                                     RangeComparison(0, 800))),
+                             DagNodeDetails('Accuracy', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
+                                                                          RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"),
                              Comparison(FunctionType))
-    expected_dag.add_edge(expected_classifier, expected_score, arg_index=0)
-    expected_dag.add_edge(expected_test_data, expected_score, arg_index=1)
-    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=2)
+    expected_dag.add_edge(expected_predict, expected_score, arg_index=0)
+    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
     fit_node = list(inspector_result.dag.nodes)[0]
-    score_node = list(inspector_result.dag.nodes)[5]
+    predict_node = list(inspector_result.dag.nodes)[5]
+    score_node = list(inspector_result.dag.nodes)[6]
     test_data_node = list(inspector_result.dag.nodes)[3]
     test_label_node = list(inspector_result.dag.nodes)[4]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
@@ -1882,8 +2102,96 @@ def test_logistic_regression_score():
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
     test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
     test_labels = test_label_node.processing_func(test_labels)
-    test_score = score_node.processing_func(fitted_estimator, test_data, test_labels)
+    test_predict = predict_node.processing_func(fitted_estimator, test_data)
+    test_score = score_node.processing_func(test_predict, test_labels)
     assert test_score == 0.5
+
+
+def test_logistic_regression_predict():
+    """
+    Tests whether the monkey patching of ('sklearn.linear_model._logistic.LogisticRegression', 'score') works
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler
+                from sklearn.linear_model import LogisticRegression
+                import numpy as np
+
+                df = pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+
+                train = StandardScaler().fit_transform(df[['A', 'B']])
+                target = label_binarize(df['target'], classes=['no', 'yes'])
+
+                clf = LogisticRegression()
+                clf = clf.fit(train, target)
+
+                test_df = pd.DataFrame({'A': [0., 0.6], 'B':  [0., 0.6], 'target': ['no', 'yes']})
+                predictions = clf.predict(test_df[['A', 'B']])
+                assert len(predictions) == 2
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, {7, 9, 10, 11}, 12)
+
+    expected_dag = networkx.DiGraph()
+    expected_data_projection = DagNode(9,
+                                       BasicCodeLocation("<string-source>", 15),
+                                       OperatorContext(OperatorType.PROJECTION,
+                                                       FunctionInfo('pandas.core.frame', '__getitem__')),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                    RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(15, 26, 15, 45), "test_df[['A', 'B']]"),
+                                       Comparison(FunctionType))
+    expected_test_data = DagNode(10,
+                                 BasicCodeLocation("<string-source>", 15),
+                                 OperatorContext(OperatorType.TEST_DATA,
+                                                 FunctionInfo('sklearn.linear_model._logistic.LogisticRegression',
+                                                              'predict')),
+                                 DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                RangeComparison(0, 800))),
+                                 OptionalCodeInfo(CodeReference(15, 14, 15, 46),
+                                                  "clf.predict(test_df[['A', 'B']])"),
+                                 Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
+    expected_classifier = DagNode(7,
+                                  BasicCodeLocation("<string-source>", 11),
+                                  OperatorContext(OperatorType.ESTIMATOR,
+                                                  FunctionInfo('sklearn.linear_model._logistic', 'LogisticRegression')),
+                                  DagNodeDetails('Logistic Regression', [],
+                                                 OptimizerInfo(RangeComparison(0, 1000), None,
+                                                               RangeComparison(0, 10000))),
+                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26),
+                                                   'LogisticRegression()'),
+                                  Comparison(FunctionType))
+    expected_predict = DagNode(11,
+                               BasicCodeLocation("<string-source>", 15),
+                               OperatorContext(OperatorType.PREDICT,
+                                               FunctionInfo('sklearn.linear_model._logistic.LogisticRegression',
+                                                            'predict')),
+                               DagNodeDetails('Logistic Regression', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                                       RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(15, 14, 15, 46),
+                                                "clf.predict(test_df[['A', 'B']])"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[0]
+    predict_node = list(inspector_result.dag.nodes)[3]
+    test_data_node = list(inspector_result.dag.nodes)[2]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
+    assert isinstance(fitted_estimator, LogisticRegression)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_data = test_data_node.processing_func(test_df[['C', 'D']])
+    test_predict = predict_node.processing_func(fitted_estimator, test_data)
+    assert len(test_predict) == 2
 
 
 def test_keras_wrapper():
@@ -1916,11 +2224,14 @@ def test_keras_wrapper():
                 clf = KerasClassifier(build_fn=create_model, epochs=2, batch_size=1, verbose=0, input_dim=2)
                 clf.fit(train, target)
 
-                test_predict = clf.predict([[0., 0.], [0.6, 0.6]])
+                test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]], columns=['A', 'B']))
                 assert test_predict.shape == (2,)
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[10])
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[9])
+    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[8])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -2071,7 +2382,7 @@ def test_keras_wrapper_score():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    filter_dag_for_nodes_with_ids(inspector_result, {7, 10, 11, 12, 13, 14}, 15)
+    filter_dag_for_nodes_with_ids(inspector_result, {7, 10, 11, 12, 13, 14, 15}, 16)
 
     expected_dag = networkx.DiGraph()
     expected_data_projection = DagNode(11,
@@ -2125,24 +2436,37 @@ def test_keras_wrapper_score():
                                                    'KerasClassifier(build_fn=create_model, epochs=15, batch_size=1, '
                                                    'verbose=0, input_dim=2)'),
                                   Comparison(FunctionType))
-    expected_score = DagNode(14,
+    expected_predict = DagNode(14,
+                               BasicCodeLocation("<string-source>", 30),
+                               OperatorContext(OperatorType.PREDICT,
+                                               FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn.'
+                                                            'KerasClassifier', 'score')),
+                               DagNodeDetails('Neural Network', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                                  RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(30, 13, 30, 56),
+                                                "clf.score(test_df[['A', 'B']], test_labels)"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
+
+    expected_score = DagNode(15,
                              BasicCodeLocation("<string-source>", 30),
                              OperatorContext(OperatorType.SCORE,
                                              FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn.'
                                                           'KerasClassifier', 'score')),
-                             DagNodeDetails('Neural Network', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
-                                                                                RangeComparison(0, 800))),
+                             DagNodeDetails('Accuracy', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
+                                                                          RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(30, 13, 30, 56),
                                               "clf.score(test_df[['A', 'B']], test_labels)"),
                              Comparison(FunctionType))
-    expected_dag.add_edge(expected_classifier, expected_score, arg_index=0)
-    expected_dag.add_edge(expected_test_data, expected_score, arg_index=1)
-    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=2)
+    expected_dag.add_edge(expected_predict, expected_score, arg_index=0)
+    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
 
     compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
 
     fit_node = list(inspector_result.dag.nodes)[0]
-    score_node = list(inspector_result.dag.nodes)[5]
+    predict_node = list(inspector_result.dag.nodes)[5]
+    score_node = list(inspector_result.dag.nodes)[6]
     test_data_node = list(inspector_result.dag.nodes)[3]
     test_label_node = list(inspector_result.dag.nodes)[4]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
@@ -2154,5 +2478,629 @@ def test_keras_wrapper_score():
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
     test_labels = OneHotEncoder(sparse=False).fit_transform(test_df[['target']])
     test_labels = test_label_node.processing_func(test_labels)
-    test_score = score_node.processing_func(fitted_estimator, test_data, test_labels)
+    test_predictions = predict_node.processing_func(fitted_estimator, test_data)
+    test_score = score_node.processing_func(test_predictions, test_labels)
     assert test_score >= 0.5
+
+
+def test_keras_wrapper_predict():
+    """
+    Tests whether the monkey patching of ('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'score')
+     works
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import StandardScaler, OneHotEncoder
+                from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
+                from tensorflow.keras.layers import Dense
+                from tensorflow.keras.models import Sequential
+                from tensorflow.python.keras.optimizer_v2.gradient_descent import SGD
+                import tensorflow as tf
+                import numpy as np
+
+                df = pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+
+                train = StandardScaler().fit_transform(df[['A', 'B']])
+                target = OneHotEncoder(sparse=False).fit_transform(df[['target']])
+
+                def create_model(input_dim):
+                    clf = Sequential()
+                    clf.add(Dense(2, activation='relu', input_dim=input_dim))
+                    clf.add(Dense(2, activation='relu'))
+                    clf.add(Dense(2, activation='softmax'))
+                    clf.compile(loss='categorical_crossentropy', optimizer=SGD(), metrics=["accuracy"])
+                    return clf
+
+                np.random.seed(42)
+                tf.random.set_seed(42)
+                clf = KerasClassifier(build_fn=create_model, epochs=15, batch_size=1, verbose=0, input_dim=2)
+                clf = clf.fit(train, target)
+
+                test_df = pd.DataFrame({'A': [0., 0.8], 'B':  [0., 0.8], 'target': ['no', 'yes']})
+                predictions = clf.predict(test_df[['A', 'B']])
+                print(predictions.shape)
+                assert predictions.shape == (2,)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, {7, 9, 10, 11}, 12)
+
+    expected_dag = networkx.DiGraph()
+    expected_data_projection = DagNode(9,
+                                       BasicCodeLocation("<string-source>", 29),
+                                       OperatorContext(OperatorType.PROJECTION,
+                                                       FunctionInfo('pandas.core.frame', '__getitem__')),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                    RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(29, 26, 29, 45), "test_df[['A', 'B']]"),
+                                       Comparison(FunctionType))
+    expected_test_data = DagNode(10,
+                                 BasicCodeLocation("<string-source>", 29),
+                                 OperatorContext(OperatorType.TEST_DATA,
+                                                 FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn.'
+                                                              'KerasClassifier', 'predict')),
+                                 DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                RangeComparison(0, 800))),
+                                 OptionalCodeInfo(CodeReference(29, 14, 29, 46), "clf.predict(test_df[['A', 'B']])"),
+                                 Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
+    expected_classifier = DagNode(7,
+                                  BasicCodeLocation("<string-source>", 25),
+                                  OperatorContext(OperatorType.ESTIMATOR,
+                                                  FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn',
+                                                               'KerasClassifier')),
+                                  DagNodeDetails('Neural Network', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                                     RangeComparison(0, 800))),
+                                  OptionalCodeInfo(CodeReference(25, 6, 25, 93),
+                                                   'KerasClassifier(build_fn=create_model, epochs=15, batch_size=1, '
+                                                   'verbose=0, input_dim=2)'),
+                                  Comparison(FunctionType))
+    expected_predict = DagNode(11,
+                               BasicCodeLocation("<string-source>", 29),
+                               OperatorContext(OperatorType.PREDICT,
+                                               FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn.'
+                                                            'KerasClassifier', 'predict')),
+                               DagNodeDetails('Neural Network', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                                  RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(29, 14, 29, 46), "clf.predict(test_df[['A', 'B']])"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[0]
+    predict_node = list(inspector_result.dag.nodes)[3]
+    test_data_node = list(inspector_result.dag.nodes)[2]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_labels = OneHotEncoder(sparse=False).fit_transform(train_df[['target']])
+    fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
+    assert isinstance(fitted_estimator, KerasClassifier)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_data = test_data_node.processing_func(test_df[['C', 'D']])
+    test_predictions = predict_node.processing_func(fitted_estimator, test_data)
+    assert len(test_predictions) == 2
+
+
+def test_accuracy_score():
+    """
+    Tests whether the monkey patching of ('pandas.core.series', 'test_series__logical_method') works
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.metrics import accuracy_score
+
+                predictions = pd.Series([True, False, True, True], name='A')
+                labels = pd.Series([True, False, False, True], name='B')
+                metric = accuracy_score(y_pred=predictions, y_true=labels)
+                assert 0.0 <= metric <= 1.0
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source1 = DagNode(0,
+                                    BasicCodeLocation("<string-source>", 4),
+                                    OperatorContext(OperatorType.DATA_SOURCE,
+                                                    FunctionInfo('pandas.core.series', 'Series')),
+                                    DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                              RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(4, 14, 4, 60),
+                                                     "pd.Series([True, False, True, True], name='A')"),
+                                    Comparison(partial))
+    expected_data_source2 = DagNode(1,
+                                    BasicCodeLocation("<string-source>", 5),
+                                    OperatorContext(OperatorType.DATA_SOURCE,
+                                                    FunctionInfo('pandas.core.series', 'Series')),
+                                    DagNodeDetails(None, ['B'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                              RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(5, 9, 5, 56),
+                                                     "pd.Series([True, False, False, True], name='B')"),
+                                    Comparison(partial))
+    expected_test_labels = DagNode(2,
+                                   BasicCodeLocation("<string-source>", 6),
+                                   OperatorContext(OperatorType.TEST_LABELS,
+                                                   FunctionInfo('sklearn.metrics._classification',
+                                                                'accuracy_score')),
+                                   DagNodeDetails(None, ['B'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(6, 9, 6, 58),
+                                                    'accuracy_score(y_pred=predictions, y_true=labels)'),
+                                   Comparison(FunctionType))
+    expected_score = DagNode(3,
+                             BasicCodeLocation("<string-source>", 6),
+                             OperatorContext(OperatorType.SCORE,
+                                             FunctionInfo('sklearn.metrics._classification',
+                                                          'accuracy_score')),
+                             DagNodeDetails('accuracy_score', [],
+                                            OptimizerInfo(RangeComparison(0, 200), (1, 1),
+                                                          RangeComparison(0, 800))),
+                             OptionalCodeInfo(CodeReference(6, 9, 6, 58),
+                                              'accuracy_score(y_pred=predictions, y_true=labels)'),
+                             Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source2, expected_test_labels, arg_index=0)
+    expected_dag.add_edge(expected_data_source1, expected_score, arg_index=0)
+    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_node = list(inspector_result.dag.nodes)[3]
+    pd_series1 = pandas.Series([True, False, True, True], name='C')
+    pd_series2 = pandas.Series([False, False, False, True], name='D')
+    extracted_func_result = extracted_node.processing_func(pd_series1, pd_series2)
+    assert 0.0 <= extracted_func_result <= 1.0
+
+
+def test_grid_search_cv_sgd_classifier():
+    """
+    Tests whether the monkey patching of ('sklearn.linear_model._stochastic_gradient', 'SGDClassifier') works
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler
+                from sklearn.linear_model import SGDClassifier
+                from sklearn.model_selection import GridSearchCV
+                import numpy as np
+
+                df = pd.DataFrame({'A': [0, 1, 2, 3, 4, 5], 'B': [0, 1, 2, 3, 4, 5], 
+                                   'target': ['no', 'no', 'no', 'yes', 'yes', 'yes']})
+
+                train = StandardScaler().fit_transform(df[['A', 'B']])
+                target = label_binarize(df['target'], classes=['no', 'yes'])
+
+                param_grid = {
+                    'penalty': ['l2', 'l1'],
+                }
+                clf = GridSearchCV(SGDClassifier(loss='log', random_state=42), param_grid, cv=2)
+                clf = clf.fit(train, target)
+
+                test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]]))
+                expected = np.array([0., 1.])
+                assert np.allclose(test_predict, expected)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, {2, 5, 4, 6, 7}, 11)
+
+    expected_dag = networkx.DiGraph()
+    expected_standard_scaler = DagNode(2,
+                                       BasicCodeLocation("<string-source>", 10),
+                                       OperatorContext(OperatorType.TRANSFORMER,
+                                                       FunctionInfo('sklearn.preprocessing._data',
+                                                                    'StandardScaler')),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (6, 2),
+                                                                    RangeComparison(0, 3000))),
+                                       OptionalCodeInfo(CodeReference(10, 8, 10, 24), 'StandardScaler()'),
+                                       Comparison(FunctionType))
+    expected_train_data = DagNode(5,
+                                  BasicCodeLocation("<string-source>", 16),
+                                  OperatorContext(OperatorType.TRAIN_DATA,
+                                                  FunctionInfo('sklearn.linear_model._stochastic_gradient',
+                                                               'SGDClassifier')),
+                                  DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (6, 2),
+                                                                                RangeComparison(0, 800))),
+                                  OptionalCodeInfo(CodeReference(16, 19, 16, 61),
+                                                   "SGDClassifier(loss='log', random_state=42)"),
+                                  Comparison(FunctionType))
+    expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
+    expected_label_encode = DagNode(4,
+                                    BasicCodeLocation("<string-source>", 11),
+                                    OperatorContext(OperatorType.PROJECTION_MODIFY,
+                                                    FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (6, 1),
+                                                                 RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(11, 9, 11, 60),
+                                                     "label_binarize(df['target'], classes=['no', 'yes'])"),
+                                    Comparison(FunctionType))
+    expected_train_labels = DagNode(6,
+                                    BasicCodeLocation("<string-source>", 16),
+                                    OperatorContext(OperatorType.TRAIN_LABELS,
+                                                    FunctionInfo('sklearn.linear_model._stochastic_gradient',
+                                                                 'SGDClassifier')),
+                                    DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (6, 1),
+                                                                                  RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(16, 19, 16, 61),
+                                                     "SGDClassifier(loss='log', random_state=42)"),
+                                    Comparison(FunctionType))
+    expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
+    expected_classifier = DagNode(7,
+                                  BasicCodeLocation("<string-source>", 16),
+                                  OperatorContext(OperatorType.ESTIMATOR,
+                                                  FunctionInfo('sklearn.linear_model._stochastic_gradient',
+                                                               'SGDClassifier')),
+                                  DagNodeDetails('SGD Classifier', [],
+                                                 OptimizerInfo(RangeComparison(0, 1000), None,
+                                                               RangeComparison(0, 5000))),
+                                  OptionalCodeInfo(CodeReference(16, 19, 16, 61),
+                                                   "SGDClassifier(loss='log', random_state=42)"),
+                                  Comparison(partial))
+    expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
+    expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[4]
+    train_data_node = list(inspector_result.dag.nodes)[2]
+    train_label_node = list(inspector_result.dag.nodes)[3]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_data = train_data_node.processing_func(train_df[['C', 'D']])
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    train_labels = train_label_node.processing_func(train_labels)
+    fitted_estimator = fit_node.processing_func(train_data, train_labels)
+    assert isinstance(fitted_estimator, GridSearchCV)
+    assert isinstance(fitted_estimator.estimator, SGDClassifier)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
+    test_score = fitted_estimator.score(test_df[['C', 'D']], test_labels)
+    assert test_score == 0.5
+
+
+def test_grid_search_cv_decision_tree():
+    """
+    Tests whether the monkey patching of DecisionTreeClassifier works with GridSearchCV
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler
+                from sklearn.tree import DecisionTreeClassifier
+                from sklearn.model_selection import GridSearchCV
+                import numpy as np
+
+                df = pd.DataFrame({'A': [0, 1, 2, 3, 4, 5], 'B': [0, 1, 2, 3, 4, 5], 
+                                   'target': ['no', 'no', 'no', 'yes', 'yes', 'yes']})
+
+                train = StandardScaler().fit_transform(df[['A', 'B']])
+                target = label_binarize(df['target'], classes=['no', 'yes'])
+
+                param_grid = {
+                    'criterion': ["gini", "entropy"],
+                }
+                clf = GridSearchCV(DecisionTreeClassifier(), param_grid, cv=2)
+                clf = clf.fit(train, target)
+
+                test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]]))
+                expected = np.array([0., 1.])
+                assert np.allclose(test_predict, expected)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, {2, 5, 4, 6, 7}, 11)
+
+    expected_dag = networkx.DiGraph()
+    expected_standard_scaler = DagNode(2,
+                                       BasicCodeLocation("<string-source>", 10),
+                                       OperatorContext(OperatorType.TRANSFORMER,
+                                                       FunctionInfo('sklearn.preprocessing._data',
+                                                                    'StandardScaler')),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (6, 2),
+                                                                    RangeComparison(0, 3000))),
+                                       OptionalCodeInfo(CodeReference(10, 8, 10, 24), 'StandardScaler()'),
+                                       Comparison(FunctionType))
+    expected_train_data = DagNode(5,
+                                  BasicCodeLocation("<string-source>", 16),
+                                  OperatorContext(OperatorType.TRAIN_DATA,
+                                                  FunctionInfo('sklearn.tree._classes',
+                                                               'DecisionTreeClassifier')),
+                                  DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (6, 2),
+                                                                                RangeComparison(0, 800))),
+                                  OptionalCodeInfo(CodeReference(16, 19, 16, 43),
+                                                   "DecisionTreeClassifier()"),
+                                  Comparison(FunctionType))
+    expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
+    expected_label_encode = DagNode(4,
+                                    BasicCodeLocation("<string-source>", 11),
+                                    OperatorContext(OperatorType.PROJECTION_MODIFY,
+                                                    FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (6, 1),
+                                                                 RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(11, 9, 11, 60),
+                                                     "label_binarize(df['target'], classes=['no', 'yes'])"),
+                                    Comparison(FunctionType))
+    expected_train_labels = DagNode(6,
+                                    BasicCodeLocation("<string-source>", 16),
+                                    OperatorContext(OperatorType.TRAIN_LABELS,
+                                                    FunctionInfo('sklearn.tree._classes',
+                                                                 'DecisionTreeClassifier')),
+                                    DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (6, 1),
+                                                                                  RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(16, 19, 16, 43),
+                                                     "DecisionTreeClassifier()"),
+                                    Comparison(FunctionType))
+    expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
+    expected_classifier = DagNode(7,
+                                  BasicCodeLocation("<string-source>", 16),
+                                  OperatorContext(OperatorType.ESTIMATOR,
+                                                  FunctionInfo('sklearn.tree._classes',
+                                                               'DecisionTreeClassifier')),
+                                  DagNodeDetails('Decision Tree', [],
+                                                 OptimizerInfo(RangeComparison(0, 1000), None,
+                                                               RangeComparison(0, 5000))),
+                                  OptionalCodeInfo(CodeReference(16, 19, 16, 43),
+                                                   "DecisionTreeClassifier()"),
+                                  Comparison(partial))
+    expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
+    expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[4]
+    train_data_node = list(inspector_result.dag.nodes)[2]
+    train_label_node = list(inspector_result.dag.nodes)[3]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_data = train_data_node.processing_func(train_df[['C', 'D']])
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    train_labels = train_label_node.processing_func(train_labels)
+    fitted_estimator = fit_node.processing_func(train_data, train_labels)
+    assert isinstance(fitted_estimator, GridSearchCV)
+    assert isinstance(fitted_estimator.estimator, DecisionTreeClassifier)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
+    test_score = fitted_estimator.score(test_df[['C', 'D']], test_labels)
+    assert test_score == 0.5
+
+
+def test_grid_search_cv_logistic_regression():
+    """
+    Tests whether the monkey patching of ('sklearn.linear_model._stochastic_gradient', 'SGDClassifier') works
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler
+                from sklearn.linear_model import LogisticRegression
+                from sklearn.model_selection import GridSearchCV
+                import numpy as np
+
+                df = pd.DataFrame({'A': [0, 1, 2, 3, 4, 5], 'B': [0, 1, 2, 3, 4, 5], 
+                                   'target': ['no', 'no', 'no', 'yes', 'yes', 'yes']})
+
+                train = StandardScaler().fit_transform(df[['A', 'B']])
+                target = label_binarize(df['target'], classes=['no', 'yes'])
+
+                param_grid = {
+                    'penalty': ['l2', 'l1'],
+                }
+                clf = GridSearchCV(LogisticRegression(), param_grid, cv=2)
+                clf = clf.fit(train, target)
+
+                test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]]))
+                expected = np.array([0., 1.])
+                assert np.allclose(test_predict, expected)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, {2, 5, 4, 6, 7}, 11)
+
+    expected_dag = networkx.DiGraph()
+    expected_standard_scaler = DagNode(2,
+                                       BasicCodeLocation("<string-source>", 10),
+                                       OperatorContext(OperatorType.TRANSFORMER,
+                                                       FunctionInfo('sklearn.preprocessing._data',
+                                                                    'StandardScaler')),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (6, 2),
+                                                                    RangeComparison(0, 3000))),
+                                       OptionalCodeInfo(CodeReference(10, 8, 10, 24), 'StandardScaler()'),
+                                       Comparison(FunctionType))
+    expected_train_data = DagNode(5,
+                                  BasicCodeLocation("<string-source>", 16),
+                                  OperatorContext(OperatorType.TRAIN_DATA,
+                                                  FunctionInfo('sklearn.linear_model._logistic',
+                                                               'LogisticRegression')),
+                                  DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (6, 2),
+                                                                                RangeComparison(0, 800))),
+                                  OptionalCodeInfo(CodeReference(16, 19, 16, 39),
+                                                   "LogisticRegression()"),
+                                  Comparison(FunctionType))
+    expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
+    expected_label_encode = DagNode(4,
+                                    BasicCodeLocation("<string-source>", 11),
+                                    OperatorContext(OperatorType.PROJECTION_MODIFY,
+                                                    FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (6, 1),
+                                                                 RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(11, 9, 11, 60),
+                                                     "label_binarize(df['target'], classes=['no', 'yes'])"),
+                                    Comparison(FunctionType))
+    expected_train_labels = DagNode(6,
+                                    BasicCodeLocation("<string-source>", 16),
+                                    OperatorContext(OperatorType.TRAIN_LABELS,
+                                                    FunctionInfo('sklearn.linear_model._logistic',
+                                                                 'LogisticRegression')),
+                                    DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (6, 1),
+                                                                                  RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(16, 19, 16, 39),
+                                                     "LogisticRegression()"),
+                                    Comparison(FunctionType))
+    expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
+    expected_classifier = DagNode(7,
+                                  BasicCodeLocation("<string-source>", 16),
+                                  OperatorContext(OperatorType.ESTIMATOR,
+                                                  FunctionInfo('sklearn.linear_model._logistic',
+                                                               'LogisticRegression')),
+                                  DagNodeDetails('Logistic Regression', [],
+                                                 OptimizerInfo(RangeComparison(0, 1000), None,
+                                                               RangeComparison(0, 5000))),
+                                  OptionalCodeInfo(CodeReference(16, 19, 16, 39),
+                                                   "LogisticRegression()"),
+                                  Comparison(partial))
+    expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
+    expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[4]
+    train_data_node = list(inspector_result.dag.nodes)[2]
+    train_label_node = list(inspector_result.dag.nodes)[3]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_data = train_data_node.processing_func(train_df[['C', 'D']])
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    train_labels = train_label_node.processing_func(train_labels)
+    fitted_estimator = fit_node.processing_func(train_data, train_labels)
+    assert isinstance(fitted_estimator, GridSearchCV)
+    assert isinstance(fitted_estimator.estimator, LogisticRegression)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
+    test_score = fitted_estimator.score(test_df[['C', 'D']], test_labels)
+    assert test_score == 0.5
+
+
+def test_grid_search_cv_keras_wrapper():
+    """
+    Tests whether the monkey patching of the KerasClassifier works with GridSearchCV
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import StandardScaler, OneHotEncoder
+                from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
+                from tensorflow.keras.layers import Dense
+                from tensorflow.keras.models import Sequential
+                from tensorflow.python.keras.optimizer_v2.gradient_descent import SGD
+                from sklearn.linear_model import LogisticRegression
+                from sklearn.model_selection import GridSearchCV
+                import tensorflow as tf
+                import numpy as np
+
+                df = pd.DataFrame({'A': [0, 1, 2, 3, 4, 5], 'B': [0, 1, 2, 3, 4, 5], 
+                                   'target': ['no', 'no', 'no', 'yes', 'yes', 'yes']})
+
+                train = StandardScaler().fit_transform(df[['A', 'B']])
+                target = OneHotEncoder(sparse=False).fit_transform(df[['target']])
+
+                param_grid = {
+                    'epochs': [10, 15],
+                }
+                
+                def create_model(input_dim):
+                    clf = Sequential()
+                    clf.add(Dense(2, activation='relu', input_dim=input_dim))
+                    clf.add(Dense(2, activation='relu'))
+                    clf.add(Dense(2, activation='softmax'))
+                    clf.compile(loss='categorical_crossentropy', optimizer=SGD(), metrics=["accuracy"])
+                    return clf
+
+                np.random.seed(42)
+                tf.random.set_seed(42)
+                
+                clf = KerasClassifier(build_fn=create_model, batch_size=1, verbose=0, input_dim=2)
+                clf = GridSearchCV(clf, param_grid, cv=2)
+                clf = clf.fit(train, target)
+
+                test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]]))
+                assert test_predict.shape == (2,)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, {2, 5, 4, 6, 7}, 11)
+
+    expected_dag = networkx.DiGraph()
+    expected_standard_scaler = DagNode(2,
+                                       BasicCodeLocation("<string-source>", 15),
+                                       OperatorContext(OperatorType.TRANSFORMER,
+                                                       FunctionInfo('sklearn.preprocessing._data',
+                                                                    'StandardScaler')),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 1000), (6, 2),
+                                                                    RangeComparison(0, 4000))),
+                                       OptionalCodeInfo(CodeReference(15, 8, 15, 24), 'StandardScaler()'),
+                                       Comparison(FunctionType))
+    expected_train_data = DagNode(5,
+                                  BasicCodeLocation("<string-source>", 27),
+                                  OperatorContext(OperatorType.TRAIN_DATA,
+                                                  FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn',
+                                                               'KerasClassifier')),
+                                  DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 1000), (6, 2),
+                                                                                RangeComparison(0, 4000))),
+                                  OptionalCodeInfo(CodeReference(27, 4, 27, 87),
+                                                   'clf.compile(loss=\'categorical_crossentropy\', '
+                                                   'optimizer=SGD(), metrics=["accuracy"])'),
+                                  Comparison(FunctionType))
+    expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
+    expected_label_encode = DagNode(4,
+                                    BasicCodeLocation("<string-source>", 16),
+                                    OperatorContext(OperatorType.TRANSFORMER,
+                                                    FunctionInfo('sklearn.preprocessing._encoders', 'OneHotEncoder')),
+                                    DagNodeDetails('One-Hot Encoder: fit_transform', ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 800), (6, 2),
+                                                                 RangeComparison(0, 5000))),
+                                    OptionalCodeInfo(CodeReference(16, 9, 16, 36),
+                                                     'OneHotEncoder(sparse=False)'),
+                                    Comparison(FunctionType))
+    expected_train_labels = DagNode(6,
+                                    BasicCodeLocation("<string-source>", 27),
+                                    OperatorContext(OperatorType.TRAIN_LABELS,
+                                                    FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn',
+                                                                 'KerasClassifier')),
+                                    DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 800), (6, 2),
+                                                                                  RangeComparison(0, 2000))),
+                                    OptionalCodeInfo(CodeReference(27, 4, 27, 87),
+                                                     'clf.compile(loss=\'categorical_crossentropy\', '
+                                                     'optimizer=SGD(), metrics=["accuracy"])'),
+                                    Comparison(FunctionType))
+    expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
+    expected_classifier = DagNode(7,
+                                  BasicCodeLocation("<string-source>", 27),
+                                  OperatorContext(OperatorType.ESTIMATOR,
+                                                  FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn',
+                                                               'KerasClassifier')),
+                                  DagNodeDetails('Neural Network', [],
+                                                 OptimizerInfo(RangeComparison(0, 10000), None,
+                                                               RangeComparison(0, 8000))),
+                                  OptionalCodeInfo(CodeReference(27, 4, 27, 87),
+                                                   'clf.compile(loss=\'categorical_crossentropy\', '
+                                                   'optimizer=SGD(), metrics=["accuracy"])'),
+                                  Comparison(partial))
+    expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
+    expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.dag.nodes)[4]
+    train_data_node = list(inspector_result.dag.nodes)[2]
+    train_label_node = list(inspector_result.dag.nodes)[3]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_data = train_data_node.processing_func(train_df[['C', 'D']])
+    train_labels = OneHotEncoder(sparse=False).fit_transform(train_df[['target']])
+    train_labels = train_label_node.processing_func(train_labels)
+    fitted_estimator = fit_node.processing_func(train_data, train_labels)
+    assert isinstance(fitted_estimator, GridSearchCV)
+    assert isinstance(fitted_estimator.estimator, KerasClassifier)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_labels = OneHotEncoder(sparse=False).fit_transform(test_df[['target']])
+    test_score = fitted_estimator.score(test_df[['C', 'D']], test_labels)
+    assert test_score >= 0.0

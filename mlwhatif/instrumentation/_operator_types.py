@@ -47,6 +47,7 @@ class OperatorType(Enum):
     TRANSFORMER = "Transformer"
     CONCATENATION = "Concatenation"
     ESTIMATOR = "Estimator"
+    PREDICT = "Predict"
     SCORE = "Score"
     TRAIN_DATA = "Train Data"
     TRAIN_LABELS = "Train Labels"

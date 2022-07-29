@@ -42,6 +42,33 @@ def add_new_node_after_node(dag: networkx.DiGraph, new_node: DagNode, dag_node: 
     dag.add_edge(dag_node, new_node)
 
 
+def get_sorted_parent_nodes(dag: networkx.DiGraph, first_op_requiring_corruption):
+    """Get the parent nodes of a node sorted by arg_index"""
+    operator_parent_nodes = list(dag.predecessors(first_op_requiring_corruption))
+    parent_nodes_with_arg_index = [(parent_node, dag.get_edge_data(parent_node, first_op_requiring_corruption))
+                                   for parent_node in operator_parent_nodes]
+    parent_nodes_with_arg_index = sorted(parent_nodes_with_arg_index, key=lambda x: x[1]['arg_index'])
+    operator_parent_nodes = [node for (node, _) in parent_nodes_with_arg_index]
+    return operator_parent_nodes
+
+
+def replace_node(dag: networkx.DiGraph, dag_node_to_be_replaced: DagNode, new_node: DagNode):
+    """Replace a given DAG node with a new node"""
+    dag.add_node(new_node)
+
+    children_before_modifications = list(dag.successors(dag_node_to_be_replaced))
+    for child_node in children_before_modifications:
+        edge_data = dag.get_edge_data(dag_node_to_be_replaced, child_node)
+        dag.add_edge(new_node, child_node, **edge_data)
+
+    parents_before_modifications = list(dag.predecessors(dag_node_to_be_replaced))
+    for parent_node in parents_before_modifications:
+        edge_data = dag.get_edge_data(parent_node, dag_node_to_be_replaced)
+        dag.add_edge(parent_node, new_node, **edge_data)
+
+    dag.remove_node(dag_node_to_be_replaced)
+
+
 def add_new_node_between_nodes(dag: networkx.DiGraph, new_node: DagNode, dag_location: Tuple[DagNode, DagNode]):
     """Add a new node between two chosen nodes"""
     parent, child = dag_location
@@ -58,7 +85,7 @@ def filter_estimator_transformer_edges(parent, child):
                            and child.operator_info.operator == OperatorType.TRANSFORMER
                            and ": transform" in child.details.description) or
                            (parent.operator_info.operator == OperatorType.ESTIMATOR
-                           and child.operator_info.operator == OperatorType.SCORE))
+                           and child.operator_info.operator == OperatorType.PREDICT))
     return not is_transformer_edge
 
 

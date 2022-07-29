@@ -4,13 +4,14 @@ Monkey patching for sklearn
 # pylint: disable=too-many-lines
 import dataclasses
 from functools import partial
+from typing import Callable
 
 import gorilla
 import numpy
 import pandas
 import scipy
 import tensorflow
-from sklearn import preprocessing, compose, tree, impute, linear_model, model_selection
+from sklearn import preprocessing, compose, tree, impute, linear_model, model_selection, metrics
 from sklearn.feature_extraction import text
 from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.metrics import accuracy_score
@@ -157,7 +158,7 @@ class SklearnModelSelectionPatching:
 
 class SklearnCallInfo:
     """ Contains info like lineno from the current Transformer so indirect utility function calls can access it """
-    # pylint: disable=too-few-public-methods
+    # pylint: disable=too-few-public-methods,too-many-instance-attributes
 
     transformer_filename: str or None = None
     transformer_lineno: int or None = None
@@ -165,9 +166,82 @@ class SklearnCallInfo:
     transformer_optional_code_reference: CodeReference or None = None
     transformer_optional_source_code: str or None = None
     column_transformer_active: bool = False
+    score_active: bool = False
+    param_search_active: bool = False
+    make_grid_search_func: Callable or None = None
+    param_search_duration: int = 0
 
 
 call_info_singleton = SklearnCallInfo()
+
+
+@gorilla.patches(model_selection.GridSearchCV)
+class SklearnGridSearchCVPatching:
+    """ Patches for sklearn GridSearchCV"""
+
+    # pylint: disable=too-few-public-methods
+
+    @gorilla.name('__init__')
+    @gorilla.settings(allow_hit=True)
+    def patched__init__(self, estimator, param_grid, *, scoring=None,
+                        n_jobs=None, iid='deprecated', refit=True, cv=None,
+                        verbose=0, pre_dispatch='2*n_jobs',
+                        error_score=numpy.nan, return_train_score=False):
+        """ Patch for ('sklearn.compose.model_selection._search', 'GridSearchCV') """
+        # pylint: disable=no-method-argument,invalid-name
+        original = gorilla.get_original_attribute(model_selection.GridSearchCV, '__init__')
+
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            # pylint: disable=attribute-defined-outside-init
+            supported_estimators = (tree.DecisionTreeClassifier, linear_model.SGDClassifier,
+                                    linear_model.LogisticRegression, keras_sklearn_external.KerasClassifier)
+            if not isinstance(estimator, supported_estimators):  # pylint: disable=no-member
+                raise NotImplementedError(f"TODO: Estimator is an instance of "
+                                          f"{type(self.estimator)}, "  # pylint: disable=no-member
+                                          f"which is not supported yet!")
+
+            original(self, estimator, param_grid, scoring=scoring, n_jobs=n_jobs,
+                     iid=iid, refit=refit, cv=cv, verbose=verbose, pre_dispatch=pre_dispatch,
+                     error_score=error_score, return_train_score=return_train_score)
+
+            self.mlinspect_filename = caller_filename
+            self.mlinspect_lineno = lineno
+            self.mlinspect_optional_code_reference = optional_code_reference
+            self.mlinspect_optional_source_code = optional_source_code
+
+            make_grid_search_kwargs = {'param_grid': param_grid, 'scoring': scoring, 'n_jobs': n_jobs,
+                                       'iid': iid, 'refit': refit, 'cv': cv, 'verbose': verbose,
+                                       'pre_dispatch': pre_dispatch, 'error_score': error_score,
+                                       'return_train_score': return_train_score}
+
+            def make_grid_search(grid_search_kwargs, estimator_to_wrap):
+                return model_selection.GridSearchCV(estimator=estimator_to_wrap, **grid_search_kwargs)
+
+            call_info_singleton.make_grid_search_func = partial(make_grid_search, make_grid_search_kwargs)
+
+        return execute_patched_func_indirect_allowed(execute_inspections)
+
+    @gorilla.name('_run_search')
+    @gorilla.settings(allow_hit=True)
+    def patched__run_search(self, *args, **kwargs):
+        """ Patch for ('sklearn.compose.model_selection._search', 'GridSearchCV') """
+        # pylint: disable=no-method-argument
+        call_info_singleton.transformer_filename = self.mlinspect_filename
+        call_info_singleton.transformer_lineno = self.mlinspect_lineno
+        call_info_singleton.transformer_function_info = FunctionInfo(
+            'sklearn.compose.model_selection._search.GridSearchCV', 'fit_transform')
+        call_info_singleton.transformer_optional_code_reference = self.mlinspect_optional_code_reference
+        call_info_singleton.transformer_optional_source_code = self.mlinspect_optional_source_code
+
+        call_info_singleton.param_search_active = True
+        original = gorilla.get_original_attribute(model_selection.GridSearchCV, '_run_search')
+        initial_func = partial(original, self, *args, **kwargs)
+        optimizer_info, result = capture_optimizer_info(initial_func, self)
+        call_info_singleton.param_search_active = False
+        call_info_singleton.param_search_duration = optimizer_info.runtime
+
+        return result
 
 
 @gorilla.patches(compose.ColumnTransformer)
@@ -1038,33 +1112,49 @@ class SklearnDecisionTreePatching:
         """ Patch for ('sklearn.tree._classes.DecisionTreeClassifier', 'fit') """
         # pylint: disable=no-method-argument, too-many-locals
         original = gorilla.get_original_attribute(tree.DecisionTreeClassifier, 'fit')
-        function_info = FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')
+        if not call_info_singleton.param_search_active:
+            function_info = FunctionInfo('sklearn.tree._classes', 'DecisionTreeClassifier')
 
-        _, train_data_node, train_data_result = add_train_data_node(self, args[0], function_info)
-        _, train_labels_node, train_labels_result = add_train_label_node(self, args[1],
-                                                                         function_info)
+            _, train_data_node, train_data_result = add_train_data_node(self, args[0], function_info)
+            _, train_labels_node, train_labels_result = add_train_label_node(self, args[1],
+                                                                             function_info)
 
-        def processing_func(train_data, train_labels):
-            estimator = tree.DecisionTreeClassifier(**self.mlinspect_non_data_func_args)
-            fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
-            return fitted_estimator
+            if call_info_singleton.make_grid_search_func is None:
+                def processing_func(train_data, train_labels):
+                    estimator = tree.DecisionTreeClassifier(**self.mlinspect_non_data_func_args)
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+                param_search_runtime = 0
+            else:
+                def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
+                    estimator = make_grid_search_func(tree.DecisionTreeClassifier(**self.mlinspect_non_data_func_args))
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+                processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
+                call_info_singleton.make_grid_search_func = None
+                param_search_runtime = call_info_singleton.param_search_duration
+                call_info_singleton.param_search_duration = 0
 
-        # Estimator
-        operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
-        # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
-        initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
-        optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
+            # Estimator
+            operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
+            # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
+            initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
+            optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
+            optimizer_info_with_search = OptimizerInfo(optimizer_info.runtime + param_search_runtime,
+                                                       optimizer_info.shape, optimizer_info.memory)
 
-        self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
-        dag_node = DagNode(self.mlinspect_estimator_node_id,
-                           BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
-                           operator_context,
-                           DagNodeDetails("Decision Tree", [], optimizer_info),
-                           get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
-                                                          self.mlinspect_optional_source_code),
-                           processing_func)
-        function_call_result = FunctionCallResult(None)
-        add_dag_node(dag_node, [train_data_node, train_labels_node], function_call_result)
+            self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
+            dag_node = DagNode(self.mlinspect_estimator_node_id,
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("Decision Tree", [], optimizer_info_with_search),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
+            function_call_result = FunctionCallResult(None)
+            add_dag_node(dag_node, [train_data_node, train_labels_node], function_call_result)
+        else:
+            original(self, *args, **kwargs)
         return self
 
     @gorilla.name('score')
@@ -1076,6 +1166,9 @@ class SklearnDecisionTreePatching:
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             # pylint: disable=too-many-locals
+            if len(kwargs) != 0:
+                raise Exception("TODO: Support other metrics in model.score calls!")
+
             function_info = FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier', 'score')
             _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
                                                                          function_info,
@@ -1090,34 +1183,93 @@ class SklearnDecisionTreePatching:
                                                                           optional_code_reference,
                                                                           optional_source_code)
 
-            def processing_func(estimator, test_data, test_labels):
-                score = estimator.score(test_data, test_labels, **kwargs)
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            def processing_func_score(predictions, test_labels):
+                score = accuracy_score(predictions, test_labels)
                 return score
 
-            operator_context = OperatorContext(OperatorType.SCORE, function_info)
-
-            # Same as original, but captures the test set predictions
-            def original_with_arg_capturing(estimator, test_data_result, test_labels_result, **kwargs):
-                predictions = estimator.predict(test_data_result)  # pylint: disable=no-member
-                score_result = accuracy_score(test_labels_result, predictions, **kwargs)
-                return score_result
-
-            initial_func = partial(original_with_arg_capturing, self, test_data_result, test_labels_result, **kwargs)
-            optimizer_info, result = capture_optimizer_info(initial_func)
-
-            dag_node = DagNode(singleton.get_next_op_id(),
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails("Decision Tree", [], optimizer_info),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
-                               processing_func)
+            original_predict = gorilla.get_original_attribute(tree.DecisionTreeClassifier, 'predict')
+            initial_func_predict = partial(original_predict, self, test_data_result)
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("Decision Tree", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
             estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
-            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
-            add_dag_node(dag_node, [estimator_dag_node, test_data_node, test_labels_node],
-                         function_call_result)
-            return result
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
 
-        return execute_patched_func_indirect_allowed(execute_inspections)
+            initial_func_score = partial(processing_func_score, result_predict, test_labels_result)
+            optimizer_info_score, result_score = capture_optimizer_info(initial_func_score)
+            operator_context_score = OperatorContext(OperatorType.SCORE, function_info)
+            dag_node_score = DagNode(singleton.get_next_op_id(),
+                                     BasicCodeLocation(caller_filename, lineno),
+                                     operator_context_score,
+                                     DagNodeDetails("Accuracy", [], optimizer_info_score),
+                                     get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                     processing_func_score)
+            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
+            add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
+                         function_call_result)
+            return result_score
+
+        if not call_info_singleton.param_search_active:
+            new_result = execute_patched_func_indirect_allowed(execute_inspections)
+        else:
+            original = gorilla.get_original_attribute(tree.DecisionTreeClassifier, 'score')
+            new_result = original(self, *args, **kwargs)
+        return new_result
+
+    @gorilla.name('predict')
+    @gorilla.settings(allow_hit=True)
+    def patched_predict(self, *args):
+        """ Patch for ('sklearn.tree._classes.DecisionTreeClassifier', 'predict') """
+
+        # pylint: disable=no-method-argument
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
+            function_info = FunctionInfo('sklearn.tree._classes.DecisionTreeClassifier', 'predict')
+            # Test data
+            _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
+                                                                         function_info,
+                                                                         lineno,
+                                                                         optional_code_reference,
+                                                                         optional_source_code,
+                                                                         caller_filename)
+
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            original_predict = gorilla.get_original_attribute(tree.DecisionTreeClassifier, 'predict')
+            initial_func_predict = partial(original_predict, self, test_data_result)
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("Decision Tree", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
+            estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
+            new_result = function_call_result.function_result
+            return new_result
+
+        if not call_info_singleton.param_search_active:
+            new_result = execute_patched_func_indirect_allowed(execute_inspections)
+        else:
+            original = gorilla.get_original_attribute(tree.DecisionTreeClassifier, 'predict')
+            new_result = original(self, *args)
+        return new_result
 
 
 @gorilla.patches(linear_model.SGDClassifier)
@@ -1174,32 +1326,47 @@ class SklearnSGDClassifierPatching:
         """ Patch for ('sklearn.linear_model._stochastic_gradient', 'fit') """
         # pylint: disable=no-method-argument, too-many-locals
         original = gorilla.get_original_attribute(linear_model.SGDClassifier, 'fit')
-        function_info = FunctionInfo('sklearn.linear_model._stochastic_gradient', 'SGDClassifier')
+        if not call_info_singleton.param_search_active:
+            function_info = FunctionInfo('sklearn.linear_model._stochastic_gradient', 'SGDClassifier')
 
-        _, train_data_node, train_data_result = add_train_data_node(self, args[0], function_info)
-        _, train_labels_node, train_labels_result = add_train_label_node(self, args[1],
-                                                                         function_info)
+            _, train_data_node, train_data_result = add_train_data_node(self, args[0], function_info)
+            _, train_labels_node, train_labels_result = add_train_label_node(self, args[1],
+                                                                             function_info)
+            if call_info_singleton.make_grid_search_func is None:
+                def processing_func(train_data, train_labels):
+                    estimator = linear_model.SGDClassifier(**self.mlinspect_non_data_func_args)
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+                param_search_runtime = 0
+            else:
+                def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
+                    estimator = make_grid_search_func(linear_model.SGDClassifier(**self.mlinspect_non_data_func_args))
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+                processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
+                call_info_singleton.make_grid_search_func = None
+                param_search_runtime = call_info_singleton.param_search_duration
+                call_info_singleton.param_search_duration = 0
 
-        def processing_func(train_data, train_labels):
-            estimator = linear_model.SGDClassifier(**self.mlinspect_non_data_func_args)
-            fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
-            return fitted_estimator
-
-        # Estimator
-        operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
-        # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
-        initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
-        optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
-        self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
-        dag_node = DagNode(self.mlinspect_estimator_node_id,
-                           BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
-                           operator_context,
-                           DagNodeDetails("SGD Classifier", [], optimizer_info),
-                           get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
-                                                          self.mlinspect_optional_source_code),
-                           processing_func)
-        function_call_result = FunctionCallResult(None)
-        add_dag_node(dag_node, [train_data_node, train_labels_node], function_call_result)
+            # Estimator
+            operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
+            # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
+            initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
+            optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
+            optimizer_info_with_search = OptimizerInfo(optimizer_info.runtime + param_search_runtime,
+                                                       optimizer_info.shape, optimizer_info.memory)
+            self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
+            dag_node = DagNode(self.mlinspect_estimator_node_id,
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("SGD Classifier", [], optimizer_info_with_search),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
+            function_call_result = FunctionCallResult(None)
+            add_dag_node(dag_node, [train_data_node, train_labels_node], function_call_result)
+        else:
+            original(self, *args, **kwargs)
         return self
 
     @gorilla.name('score')
@@ -1211,6 +1378,9 @@ class SklearnSGDClassifierPatching:
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             # pylint: disable=too-many-locals
+            if len(kwargs) != 0:
+                raise Exception("TODO: Support other metrics in model.score calls!")
+
             function_info = FunctionInfo('sklearn.linear_model._stochastic_gradient.SGDClassifier', 'score')
             # Test data
             _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
@@ -1228,37 +1398,93 @@ class SklearnSGDClassifierPatching:
                                                                           optional_code_reference,
                                                                           optional_source_code)
 
-            def processing_func(estimator, test_data, test_labels):
-                score = estimator.score(test_data, test_labels, **kwargs)
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            def processing_func_score(predictions, test_labels):
+                score = accuracy_score(predictions, test_labels)
                 return score
 
-            # Score
-            operator_context = OperatorContext(OperatorType.SCORE, function_info)
-
-            # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
-
-            # Same as original, but captures the test set predictions
-            def original_with_arg_capturing(estimator, test_data_result, test_labels_result, **kwargs):
-                predictions = estimator.predict(test_data_result)  # pylint: disable=no-member
-                score_result = accuracy_score(test_labels_result, predictions, **kwargs)
-                return score_result
-
-            initial_func = partial(original_with_arg_capturing, self, test_data_result, test_labels_result, **kwargs)
-            optimizer_info, result = capture_optimizer_info(initial_func)
-
-            dag_node = DagNode(singleton.get_next_op_id(),
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails("SGD Classifier", [], optimizer_info),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
-                               processing_func)
+            original_predict = gorilla.get_original_attribute(linear_model.SGDClassifier, 'predict')
+            initial_func_predict = partial(original_predict, self, test_data_result)
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("SGD Classifier", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
             estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
-            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
-            add_dag_node(dag_node, [estimator_dag_node, test_data_node, test_labels_node],
-                         function_call_result)
-            return result
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
 
-        return execute_patched_func_indirect_allowed(execute_inspections)
+            initial_func_score = partial(processing_func_score, result_predict, test_labels_result)
+            optimizer_info_score, result_score = capture_optimizer_info(initial_func_score)
+            operator_context_score = OperatorContext(OperatorType.SCORE, function_info)
+            dag_node_score = DagNode(singleton.get_next_op_id(),
+                                     BasicCodeLocation(caller_filename, lineno),
+                                     operator_context_score,
+                                     DagNodeDetails("Accuracy", [], optimizer_info_score),
+                                     get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                     processing_func_score)
+            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
+            add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
+                         function_call_result)
+            return result_score
+
+        if not call_info_singleton.param_search_active:
+            new_result = execute_patched_func_indirect_allowed(execute_inspections)
+        else:
+            original = gorilla.get_original_attribute(linear_model.SGDClassifier, 'score')
+            new_result = original(self, *args, **kwargs)
+        return new_result
+
+    @gorilla.name('predict')
+    @gorilla.settings(allow_hit=True)
+    def patched_predict(self, *args):
+        """ Patch for ('sklearn.linear_model._stochastic_gradient.SGDClassifier', 'predict') """
+
+        # pylint: disable=no-method-argument
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
+            function_info = FunctionInfo('sklearn.linear_model._stochastic_gradient.SGDClassifier', 'predict')
+            # Test data
+            _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
+                                                                         function_info,
+                                                                         lineno,
+                                                                         optional_code_reference,
+                                                                         optional_source_code,
+                                                                         caller_filename)
+
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            original_predict = gorilla.get_original_attribute(linear_model.SGDClassifier, 'predict')
+            initial_func_predict = partial(original_predict, self, test_data_result)
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("SGD Classifier", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
+            estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
+            new_result = function_call_result.function_result
+            return new_result
+
+        if not call_info_singleton.param_search_active:
+            new_result = execute_patched_func_indirect_allowed(execute_inspections)
+        else:
+            original = gorilla.get_original_attribute(linear_model.SGDClassifier, 'predict')
+            new_result = original(self, *args)
+        return new_result
 
 
 @gorilla.patches(linear_model.LogisticRegression)
@@ -1310,31 +1536,48 @@ class SklearnLogisticRegressionPatching:
         """ Patch for ('sklearn.linear_model._logistic.LogisticRegression', 'fit') """
         # pylint: disable=no-method-argument, too-many-locals
         original = gorilla.get_original_attribute(linear_model.LogisticRegression, 'fit')
-        function_info = FunctionInfo('sklearn.linear_model._logistic', 'LogisticRegression')
+        if not call_info_singleton.param_search_active:
+            function_info = FunctionInfo('sklearn.linear_model._logistic', 'LogisticRegression')
 
-        _, train_data_node, train_data_result = add_train_data_node(self, args[0], function_info)
-        _, train_labels_node, train_labels_result = add_train_label_node(self, args[1], function_info)
+            _, train_data_node, train_data_result = add_train_data_node(self, args[0], function_info)
+            _, train_labels_node, train_labels_result = add_train_label_node(self, args[1], function_info)
 
-        def processing_func(train_data, train_labels):
-            estimator = linear_model.LogisticRegression(**self.mlinspect_non_data_func_args)
-            fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
-            return fitted_estimator
+            if call_info_singleton.make_grid_search_func is None:
+                def processing_func(train_data, train_labels):
+                    estimator = linear_model.LogisticRegression(**self.mlinspect_non_data_func_args)
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+                param_search_runtime = 0
+            else:
+                def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
+                    estimator = make_grid_search_func(linear_model.LogisticRegression(
+                        **self.mlinspect_non_data_func_args))
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+                processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
+                call_info_singleton.make_grid_search_func = None
+                param_search_runtime = call_info_singleton.param_search_duration
+                call_info_singleton.param_search_duration = 0
 
-        # Estimator
-        operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
-        # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
-        initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
-        optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
-        self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
-        dag_node = DagNode(self.mlinspect_estimator_node_id,
-                           BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
-                           operator_context,
-                           DagNodeDetails("Logistic Regression", [], optimizer_info),
-                           get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
-                                                          self.mlinspect_optional_source_code),
-                           processing_func)
-        function_call_result = FunctionCallResult(None)
-        add_dag_node(dag_node, [train_data_node, train_labels_node], function_call_result)
+            # Estimator
+            operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
+            # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
+            initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
+            optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
+            optimizer_info_with_search = OptimizerInfo(optimizer_info.runtime + param_search_runtime,
+                                                       optimizer_info.shape, optimizer_info.memory)
+            self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
+            dag_node = DagNode(self.mlinspect_estimator_node_id,
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("Logistic Regression", [], optimizer_info_with_search),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
+            function_call_result = FunctionCallResult(None)
+            add_dag_node(dag_node, [train_data_node, train_labels_node], function_call_result)
+        else:
+            original(self, *args, **kwargs)
         return self
 
     @gorilla.name('score')
@@ -1346,6 +1589,9 @@ class SklearnLogisticRegressionPatching:
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             # pylint: disable=too-many-locals
+            if len(kwargs) != 0:
+                raise Exception("TODO: Support other metrics in model.score calls!")
+
             function_info = FunctionInfo('sklearn.linear_model._logistic.LogisticRegression', 'score')
             # Test data
             _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
@@ -1363,37 +1609,95 @@ class SklearnLogisticRegressionPatching:
                                                                           optional_code_reference,
                                                                           optional_source_code)
 
-            def processing_func(estimator, test_data, test_labels):
-                score = estimator.score(test_data, test_labels, **kwargs)
-                return score
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
 
-            # Score
-            operator_context = OperatorContext(OperatorType.SCORE, function_info)
+            def processing_func_score(predictions, test_labels):
+                score = accuracy_score(predictions, test_labels)
+                return score
 
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
 
-            # Same as original, but captures the test set predictions
-            def original_with_arg_capturing(estimator, test_data_result, test_labels_result, **kwargs):
-                predictions = estimator.predict(test_data_result)  # pylint: disable=no-member
-                score_result = accuracy_score(test_labels_result, predictions, **kwargs)
-                return score_result
-
-            initial_func = partial(original_with_arg_capturing, self, test_data_result, test_labels_result, **kwargs)
-            optimizer_info, result = capture_optimizer_info(initial_func)
-
-            dag_node = DagNode(singleton.get_next_op_id(),
-                               BasicCodeLocation(caller_filename, lineno),
-                               operator_context,
-                               DagNodeDetails("Logistic Regression", [], optimizer_info),
-                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
-                               processing_func)
+            original_predict = gorilla.get_original_attribute(linear_model.LogisticRegression, 'predict')
+            initial_func_predict = partial(original_predict, self, test_data_result)
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("Logistic Regression", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
             estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
-            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
-            add_dag_node(dag_node, [estimator_dag_node, test_data_node, test_labels_node],
-                         function_call_result)
-            return result
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
 
-        return execute_patched_func_indirect_allowed(execute_inspections)
+            initial_func_score = partial(processing_func_score, result_predict, test_labels_result)
+            optimizer_info_score, result_score = capture_optimizer_info(initial_func_score)
+            operator_context_score = OperatorContext(OperatorType.SCORE, function_info)
+            dag_node_score = DagNode(singleton.get_next_op_id(),
+                                     BasicCodeLocation(caller_filename, lineno),
+                                     operator_context_score,
+                                     DagNodeDetails("Accuracy", [], optimizer_info_score),
+                                     get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                     processing_func_score)
+            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
+            add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
+                         function_call_result)
+            return result_score
+
+        if not call_info_singleton.param_search_active:
+            new_result = execute_patched_func_indirect_allowed(execute_inspections)
+        else:
+            original = gorilla.get_original_attribute(linear_model.LogisticRegression, 'score')
+            new_result = original(self, *args, **kwargs)
+        return new_result
+
+    @gorilla.name('predict')
+    @gorilla.settings(allow_hit=True)
+    def patched_predict(self, *args):
+        """ Patch for ('sklearn.linear_model._logistic.LogisticRegression', 'predict') """
+
+        # pylint: disable=no-method-argument
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
+            function_info = FunctionInfo('sklearn.linear_model._logistic.LogisticRegression', 'predict')
+            # Test data
+            _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
+                                                                         function_info,
+                                                                         lineno,
+                                                                         optional_code_reference,
+                                                                         optional_source_code,
+                                                                         caller_filename)
+
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            original_predict = gorilla.get_original_attribute(linear_model.LogisticRegression, 'predict')
+            initial_func_predict = partial(original_predict, self, test_data_result)
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("Logistic Regression", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
+            estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
+            new_result = function_call_result.function_result
+            return new_result
+
+        if not call_info_singleton.param_search_active:
+            new_result = execute_patched_func_indirect_allowed(execute_inspections)
+        else:
+            original = gorilla.get_original_attribute(linear_model.LogisticRegression, 'predict')
+            new_result = original(self, *args)
+        return new_result
 
 
 class SklearnKerasClassifierPatching:
@@ -1425,49 +1729,68 @@ class SklearnKerasClassifierPatching:
             self.mlinspect_optional_code_reference = optional_code_reference
             self.mlinspect_optional_source_code = optional_source_code
 
-        return execute_patched_func_no_op_id(original, execute_inspections, self, **sk_params)
+        return execute_patched_func_indirect_allowed(execute_inspections)
 
     @gorilla.patch(keras_sklearn_external.KerasClassifier, name='fit', settings=gorilla.Settings(allow_hit=True))
     def patched_fit(self, *args, **kwargs):
         """ Patch for ('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'fit') """
         # pylint: disable=no-method-argument, too-many-locals
         original = gorilla.get_original_attribute(keras_sklearn_external.KerasClassifier, 'fit')
-        function_info = FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn', 'KerasClassifier')
+        if not call_info_singleton.param_search_active:
+            function_info = FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn', 'KerasClassifier')
 
-        _, train_data_dag_node, train_data_result = add_train_data_node(self, args[0], function_info)
-        _, train_labels_dag_node, train_labels_result = add_train_label_node(self, args[1], function_info)
-        self.mlinspect_non_data_func_args.update(self.sk_params)  # pylint: disable=no-member
+            _, train_data_dag_node, train_data_result = add_train_data_node(self, args[0], function_info)
+            _, train_labels_dag_node, train_labels_result = add_train_label_node(self, args[1], function_info)
+            self.mlinspect_non_data_func_args.update(self.sk_params)  # pylint: disable=no-member
 
-        def processing_func(train_data, train_labels):
-            estimator = tensorflow.keras.wrappers.scikit_learn.KerasClassifier(**self.mlinspect_non_data_func_args)
-            estimator.fit(train_data, train_labels, *args[2:], **kwargs)
-            return estimator
+            if call_info_singleton.make_grid_search_func is None:
+                def processing_func(train_data, train_labels):
+                    estimator = tensorflow.keras.wrappers.scikit_learn.KerasClassifier(
+                        **self.mlinspect_non_data_func_args)
+                    estimator.sk_params['input_dim'] = train_data.shape[1]
+                    estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return estimator
+                param_search_runtime = 0
+            else:
+                def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
+                    estimator = make_grid_search_func(tensorflow.keras.wrappers.scikit_learn.KerasClassifier(
+                        **self.mlinspect_non_data_func_args))
+                    estimator.estimator.sk_params['input_dim'] = train_data.shape[1]
+                    estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return estimator
+                processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
+                call_info_singleton.make_grid_search_func = None
+                param_search_runtime = call_info_singleton.param_search_duration
+                call_info_singleton.param_search_duration = 0
 
-        # Estimator
-        operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
-        # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
-        initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
-        keras_batch_size = self.sk_params.get("batch_size", 32)  # pylint: disable=no-member
-        optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self,
-                                                   keras_batch_size=keras_batch_size)
-        self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
-        dag_node = DagNode(self.mlinspect_estimator_node_id,
-                           BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
-                           operator_context,
-                           DagNodeDetails("Neural Network", [], optimizer_info),
-                           get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
-                                                          self.mlinspect_optional_source_code),
-                           processing_func)
-        function_call_result = FunctionCallResult(None)
-        add_dag_node(dag_node, [train_data_dag_node, train_labels_dag_node], function_call_result)
+            # Estimator
+            operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
+            # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
+            initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
+            keras_batch_size = self.sk_params.get("batch_size", 32)  # pylint: disable=no-member
+            optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self,
+                                                       keras_batch_size=keras_batch_size)
+            optimizer_info_with_search = OptimizerInfo(optimizer_info.runtime + param_search_runtime,
+                                                       optimizer_info.shape, optimizer_info.memory)
+            self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
+            dag_node = DagNode(self.mlinspect_estimator_node_id,
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("Neural Network", [], optimizer_info_with_search),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
+            function_call_result = FunctionCallResult(None)
+            add_dag_node(dag_node, [train_data_dag_node, train_labels_dag_node], function_call_result)
+        else:
+            original(self, *args, **kwargs)
         return self
 
     @gorilla.patch(keras_sklearn_external.KerasClassifier, name='score', settings=gorilla.Settings(allow_hit=True))
     def patched_score(self, *args, **kwargs):
         """ Patch for ('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'score') """
-        # pylint: disable=no-method-argument
-        original = gorilla.get_original_attribute(keras_sklearn_external.KerasClassifier, 'score')
 
+        # pylint: disable=no-method-argument
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
             # pylint: disable=too-many-locals
@@ -1488,29 +1811,152 @@ class SklearnKerasClassifierPatching:
                                                                           optional_code_reference,
                                                                           optional_source_code)
 
-            def processing_func(estimator, test_data, test_labels):
-                score = estimator.score(test_data, test_labels, **kwargs)
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            def processing_func_score(predictions, test_labels):
+                one_d_labels = numpy.argmax(test_labels, axis=1)
+                score = accuracy_score(predictions, one_d_labels)
                 return score
 
             # Score
-            operator_context = OperatorContext(OperatorType.SCORE, function_info)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            operator_context_score = OperatorContext(OperatorType.SCORE, function_info)
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
 
             # This currently calls predict twice, but patching here is complex. Maybe revisit this in future work
-            # predictions = self.predict(test_data_result)  # pylint: disable=no-member
-            initial_func = partial(original, self, test_data_result, test_labels_result, *args[2:], **kwargs)
+            uninstrumented_predict = gorilla.get_original_attribute(keras_sklearn_external.KerasClassifier, 'predict')
+            initial_func_predict = partial(uninstrumented_predict, self, test_data_result)  # pylint: disable=no-member
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("Neural Network", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
+            estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node],
+                         function_call_result)
+
+            initial_func_score = partial(processing_func_score, result_predict, test_labels_result, *args[2:],
+                                         **kwargs)
+            optimizer_info_score, result_score = capture_optimizer_info(initial_func_score)
+
+            dag_node_score = DagNode(singleton.get_next_op_id(),
+                                     BasicCodeLocation(caller_filename, lineno),
+                                     operator_context_score,
+                                     DagNodeDetails("Accuracy", [], optimizer_info_score),
+                                     get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                     processing_func_score)
+            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
+            add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
+                         function_call_result)
+            return result_score
+
+        if not call_info_singleton.param_search_active:
+            new_result = execute_patched_func_indirect_allowed(execute_inspections)
+        else:
+            original = gorilla.get_original_attribute(keras_sklearn_external.KerasClassifier, 'score')
+            new_result = original(self, *args, **kwargs)
+        return new_result
+
+    @gorilla.patch(keras_sklearn_external.KerasClassifier, name='predict', settings=gorilla.Settings(allow_hit=True))
+    def patched_predict(self, *args):
+        """ Patch for ('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'score') """
+
+        # pylint: disable=no-method-argument
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
+            original = gorilla.get_original_attribute(keras_sklearn_external.KerasClassifier, 'predict')
+            function_info = FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'predict')
+            # Test data
+            _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
+                                                                         function_info,
+                                                                         lineno,
+                                                                         optional_code_reference,
+                                                                         optional_source_code,
+                                                                         caller_filename)
+
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            # Score
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+
+            initial_func_predict = partial(original, self, test_data_result)  # pylint: disable=no-member
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("Neural Network", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
+            estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node],
+                         function_call_result)
+            new_result = function_call_result.function_result
+            return new_result
+
+        if not call_info_singleton.param_search_active:
+            new_result = execute_patched_func_indirect_allowed(execute_inspections)
+        else:
+            original = gorilla.get_original_attribute(keras_sklearn_external.KerasClassifier, 'predict')
+            new_result = original(self, *args)
+        return new_result
+
+
+@gorilla.patches(metrics)
+class MetricsPatching:
+    """ Patches for 'sklearn.metrics' """
+
+    # pylint: disable=too-few-public-methods
+
+    @gorilla.name('accuracy_score')
+    @gorilla.settings(allow_hit=True)
+    def patched_accuracy_score(y_true, y_pred, *args, **kwargs):
+        """ Patch for ('sklearn.metrics._classification', 'accuracy_score') """
+        # pylint: disable=too-many-locals, no-self-argument
+        original = gorilla.get_original_attribute(metrics, 'accuracy_score')
+
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            function_info = FunctionInfo('sklearn.metrics._classification', 'accuracy_score')
+
+            input_info_pred = get_input_info(y_pred, caller_filename, lineno, function_info,
+                                             optional_code_reference, optional_source_code)
+
+            # Test labels
+            _, test_labels_node, _ = add_test_label_node(y_true,
+                                                         caller_filename,
+                                                         function_info,
+                                                         lineno,
+                                                         optional_code_reference,
+                                                         optional_source_code)
+
+            operator_context = OperatorContext(OperatorType.SCORE, function_info)
+            initial_func = partial(original, y_true, y_pred, *args, **kwargs)
+            call_info_singleton.score_active = True
             optimizer_info, result = capture_optimizer_info(initial_func)
+            call_info_singleton.score_active = False
+
+            def process_metric_frame(y_true, y_pred):
+                return original(y_true=y_true, y_pred=y_pred)
 
             dag_node = DagNode(singleton.get_next_op_id(),
                                BasicCodeLocation(caller_filename, lineno),
                                operator_context,
-                               DagNodeDetails("Neural Network", [], optimizer_info),
+                               DagNodeDetails('accuracy_score', [], optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
-                               processing_func)
-            estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
-            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
-            add_dag_node(dag_node, [estimator_dag_node, test_data_node, test_labels_node],
-                         function_call_result)
+                               process_metric_frame)
+            function_call_result = FunctionCallResult(None)
+            add_dag_node(dag_node, [input_info_pred.dag_node, test_labels_node], function_call_result)
             return result
 
-        return execute_patched_func_indirect_allowed(execute_inspections)
+        return execute_patched_func_no_op_id(original, execute_inspections, y_true, y_pred, *args, **kwargs)

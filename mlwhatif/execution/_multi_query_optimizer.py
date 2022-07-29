@@ -42,30 +42,40 @@ class MultiQueryOptimizer:
         """We need to give new ids to all nodes that require recomputation because some parent node changed."""
         original_ids = set(node.node_id for node in list(original_dag.nodes))
         for dag in what_if_dags:
-            added_nodes = [node for node in list(dag.nodes) if node.node_id not in original_ids]
             all_nodes_needing_recomputation = set()
+            # added nodes
+            added_nodes = [node for node in list(dag.nodes) if node.node_id not in original_ids]
             for added_node in added_nodes:
                 local_nodes_needing_recomputation = set(networkx.descendants(dag, added_node))
                 all_nodes_needing_recomputation.update(local_nodes_needing_recomputation)
+            # removed_nodes
+            ids_in_modified_dag = set(node.node_id for node in list(dag.nodes))
+            removed_nodes = [node for node in list(original_dag.nodes) if node.node_id not in ids_in_modified_dag]
+            for removed_node in removed_nodes:
+                original_nodes_needing_recomputation = set(networkx.descendants(original_dag, removed_node))
+                all_nodes_needing_recomputation.update(original_nodes_needing_recomputation)
+
             self.generate_unique_ids_for_selected_nodes(dag, all_nodes_needing_recomputation)
 
     def generate_unique_ids_for_selected_nodes(self, dag: networkx.DiGraph, nodes_to_recompute: Iterable[DagNode]):
         """ This gives new node_ids to all reachable nodes given some input node """
+        what_if_node_set = set(dag.nodes)
         for node_to_recompute in nodes_to_recompute:
-            replacement_node = DagNode(self.pipeline_executor.get_next_op_id(),
-                                       node_to_recompute.code_location,
-                                       node_to_recompute.operator_info,
-                                       node_to_recompute.details,
-                                       node_to_recompute.optional_code_info,
-                                       node_to_recompute.processing_func)
-            dag.add_node(replacement_node)
-            for parent_node in dag.predecessors(node_to_recompute):
-                edge_data = dag.get_edge_data(parent_node, node_to_recompute)
-                dag.add_edge(parent_node, replacement_node, **edge_data)
-            for child_node in dag.successors(node_to_recompute):
-                edge_data = dag.get_edge_data(node_to_recompute, child_node)
-                dag.add_edge(replacement_node, child_node, **edge_data)
-            dag.remove_node(node_to_recompute)
+            if node_to_recompute in what_if_node_set:  # condition required because node may be removed
+                replacement_node = DagNode(self.pipeline_executor.get_next_op_id(),
+                                           node_to_recompute.code_location,
+                                           node_to_recompute.operator_info,
+                                           node_to_recompute.details,
+                                           node_to_recompute.optional_code_info,
+                                           node_to_recompute.processing_func)
+                dag.add_node(replacement_node)
+                for parent_node in dag.predecessors(node_to_recompute):
+                    edge_data = dag.get_edge_data(parent_node, node_to_recompute)
+                    dag.add_edge(parent_node, replacement_node, **edge_data)
+                for child_node in dag.successors(node_to_recompute):
+                    edge_data = dag.get_edge_data(node_to_recompute, child_node)
+                    dag.add_edge(replacement_node, child_node, **edge_data)
+                dag.remove_node(node_to_recompute)
 
     @staticmethod
     def _estimate_runtime_of_dag(dag: networkx.DiGraph):

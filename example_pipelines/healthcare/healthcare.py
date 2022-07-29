@@ -1,12 +1,17 @@
 """Predicting which patients are at a higher risk of complications"""
-import warnings
 import os
+import warnings
+
 import pandas as pd
+from fairlearn.metrics import MetricFrame, false_negative_rate, equalized_odds_difference
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.model_selection import GridSearchCV
+
 from example_pipelines.healthcare.healthcare_utils import MyW2VTransformer, MyKerasClassifier, \
     create_model
 from mlwhatif.utils import get_project_root
@@ -40,10 +45,22 @@ featurisation = ColumnTransformer(transformers=[
     ('numeric', StandardScaler(), ['num_children', 'income']),
 ], remainder='drop')
 neural_net = MyKerasClassifier(build_fn=create_model, epochs=10, batch_size=1, verbose=0)
+param_grid = {'epochs': [10]}
+neural_net_with_grid_search = GridSearchCV(neural_net, param_grid, cv=2)
 pipeline = Pipeline([
     ('features', featurisation),
-    ('learner', neural_net)])
+    ('learner', neural_net_with_grid_search)])
 
 train_data, test_data = train_test_split(data)
 model = pipeline.fit(train_data, train_data['label'])
-print("Mean accuracy: {}".format(model.score(test_data, test_data['label'])))
+test_predictions = model.predict(test_data)
+print("Mean accuracy: {}".format(accuracy_score(test_data['label'], test_predictions)))
+
+sensitive_features = test_data[['race']]
+sensitive_features['race'] = sensitive_features['race'].astype(str)
+fnr_by_group = MetricFrame(metrics=false_negative_rate, y_pred=test_predictions, y_true=test_data['label'],
+                           sensitive_features=sensitive_features)
+print(f"False-negative by group: {fnr_by_group.by_group}")
+equalized_odds_diff = equalized_odds_difference(y_pred=test_predictions, y_true=test_data['label'],
+                                                sensitive_features=sensitive_features)
+print(f"Equalized odds difference: {equalized_odds_diff}")

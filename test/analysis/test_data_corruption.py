@@ -236,7 +236,7 @@ def test_data_corruption_healthcare():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (4, 4)
+    assert report.shape == (4, 8)
 
 
 def test_data_corruption_compas():
