@@ -8,11 +8,11 @@ from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._data_cleaning import DataCleaning
 from mlwhatif.utils import get_project_root
 
-INTERMEDIATE_EXTRACTION_ORIG_PATH = os.path.join(str(get_project_root()), "test", "analysis",
+INTERMEDIATE_EXTRACTION_ORIG_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
                                                  "data-cleaning-orig")
-INTERMEDIATE_EXTRACTION_GENERATED_PATH = os.path.join(str(get_project_root()), "test", "analysis",
+INTERMEDIATE_EXTRACTION_GENERATED_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
                                                       "data-cleaning-what-if")
-INTERMEDIATE_EXTRACTION_OPTIMISED_PATH = os.path.join(str(get_project_root()), "test", "analysis",
+INTERMEDIATE_EXTRACTION_OPTIMISED_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
                                                       "data-cleaning-what-if-optimised")
 
 

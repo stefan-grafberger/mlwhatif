@@ -17,6 +17,7 @@ class DataCleaning(WhatIfAnalysis):
 
     def __init__(self, ):
         self._analysis_id = ()
+        self._score_nodes_and_linenos = []
 
     @property
     def analysis_id(self):
