@@ -13,7 +13,7 @@ from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, add_intermediate_extraction_after_node, \
     find_dag_location_for_data_patch, \
     add_new_node_after_node
-from mlwhatif.analysis._cleaning_methods import MissingValueCleaner
+from mlwhatif.analysis._cleaning_methods import MissingValueCleaner, DuplicateCleaner
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
@@ -57,9 +57,7 @@ CLEANING_METHODS_FOR_ERROR_TYPE = {
                        transformer_transform_func=None)
     ],
     ErrorType.DUPLICATES: [
-        CleaningMethod("duplicates_cleaner", False,
-                       transformer_fit_transform_func=None,  # TODO: MVCleaner("impute", num="mean", cat="mode")...
-                       transformer_transform_func=None)
+        CleaningMethod("delete", True, filter_func=DuplicateCleaner.drop_duplicates)
     ],
     ErrorType.MISLABEL: [
         CleaningMethod("cleanlab", False,
@@ -75,9 +73,9 @@ class DataCleaning(WhatIfAnalysis):
     """
 
     def __init__(self, columns_with_error: Dict[str or None, ErrorType]):
-        self._analysis_id = ()
         self._columns_with_error = list(columns_with_error.items())
-        self._score_nodes_and_linenos = tuple(*columns_with_error.items())
+        self._score_nodes_and_linenos = []
+        self._analysis_id = (*self._columns_with_error,)
 
     @property
     def analysis_id(self):
@@ -110,7 +108,7 @@ class DataCleaning(WhatIfAnalysis):
                                                       train_first_node_with_column.code_location,
                                                       OperatorContext(OperatorType.SELECTION, None),
                                                       DagNodeDetails(
-                                                          f"Cleaning: {cleaning_method.method_name}",
+                                                          f"Clean {column}: {cleaning_method.method_name}",
                                                           train_first_node_with_column.details.columns),
                                                       None,
                                                       filter_func)
@@ -121,7 +119,7 @@ class DataCleaning(WhatIfAnalysis):
                                                          test_first_node_with_column.code_location,
                                                          OperatorContext(OperatorType.SELECTION, None),
                                                          DagNodeDetails(
-                                                             f"Cleaning: {cleaning_method.method_name}",
+                                                             f"Clean {column}: {cleaning_method.method_name}",
                                                              train_first_node_with_column.details.columns),
                                                          None,
                                                          filter_func)

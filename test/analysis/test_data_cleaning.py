@@ -62,7 +62,8 @@ def test_data_cleaning_healthcare():
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
-    data_cleaning = DataCleaning({'smoker': ErrorType.MISSING_VALUES})
+    data_cleaning = DataCleaning({'smoker': ErrorType.MISSING_VALUES,
+                                  'ssn': ErrorType.DUPLICATES})
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(HEALTHCARE_PY) \
@@ -75,4 +76,4 @@ def test_data_cleaning_healthcare():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
-    assert report.shape == (2, 6)
+    assert report.shape == (3, 6)

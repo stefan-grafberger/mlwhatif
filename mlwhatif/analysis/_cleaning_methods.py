@@ -15,6 +15,15 @@ class MissingValueCleaner:
         return input_df.dropna(subset=[column])
 
 
+class DuplicateCleaner:
+    """
+    Missing value ErrorType
+    """
+    @staticmethod
+    def drop_duplicates(input_df, column):
+        return input_df.drop_duplicates(subset=[column])
+
+
 class MVCleaner(object):
     # pylint: disable-all
     def __init__(self, method='delete', **kwargs):
