@@ -4,6 +4,11 @@ Cleaning functions for the DataCleaning What-if Analysis
 import sys
 
 import pandas
+from pandas import DataFrame
+from pandas.core.dtypes.common import is_numeric_dtype
+from sklearn.impute import SimpleImputer
+
+from mlwhatif.monkeypatching._monkey_patching_utils import wrap_in_mlinspect_array_if_necessary
 
 
 class MissingValueCleaner:
@@ -13,6 +18,45 @@ class MissingValueCleaner:
     @staticmethod
     def drop_missing(input_df, column):
         return input_df.dropna(subset=[column])
+
+    @staticmethod
+    def fit_transform_all(input_df, column, cat_strategy, num_strategy):
+        if num_strategy == 'mean':
+            num_strategy = 'mean'
+        if cat_strategy == 'mode':
+            cat_strategy = 'most_frequent'
+        if isinstance(input_df, DataFrame):
+            if is_numeric_dtype(input_df[column]):
+                transformer = SimpleImputer(strategy=num_strategy)
+                input_df[[column]] = transformer.fit_transform(input_df[[column]])
+                transformed_data = wrap_in_mlinspect_array_if_necessary(input_df)
+                transformed_data._mlinspect_annotation = transformer
+            else:
+                transformer = SimpleImputer(strategy=cat_strategy)
+                input_df[[column]] = transformer.fit_transform(input_df[[column]])
+                transformed_data = wrap_in_mlinspect_array_if_necessary(input_df)
+                transformed_data._mlinspect_annotation = transformer
+        else:
+            if is_numeric_dtype(input_df):
+                transformer = SimpleImputer(strategy=num_strategy)
+                input_df = transformer.fit_transform(input_df)
+                transformed_data = wrap_in_mlinspect_array_if_necessary(input_df)
+                transformed_data._mlinspect_annotation = transformer
+            else:
+                transformer = SimpleImputer(strategy=cat_strategy)
+                input_df = transformer.fit_transform(input_df)
+                transformed_data = wrap_in_mlinspect_array_if_necessary(input_df)
+                transformed_data._mlinspect_annotation = transformer
+        return transformed_data
+
+    @staticmethod
+    def transform_all(fit_data, input_df, column):
+        transformer = fit_data._mlinspect_annotation  # pylint: disable=protected-access
+        if isinstance(input_df, DataFrame):
+            input_df[[column]] = transformer.transform(input_df[[column]])
+        else:
+            input_df = transformer.transform(input_df)
+        return input_df
 
 
 class DuplicateCleaner:

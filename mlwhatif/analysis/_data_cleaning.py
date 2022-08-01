@@ -39,6 +39,8 @@ class CleaningMethod:
     filter_func: Callable or None = None
     transformer_fit_transform_func: Callable or None = None
     transformer_transform_func: Callable or None = None
+    numeric_only: bool = False
+    categorical_only: bool = False
 
     def __hash__(self):
         return hash(self.method_name)
@@ -48,8 +50,10 @@ CLEANING_METHODS_FOR_ERROR_TYPE = {
     ErrorType.MISSING_VALUES: [
         CleaningMethod("delete", True, filter_func=MissingValueCleaner.drop_missing),
         CleaningMethod("impute_mean_mode", False,
-                       transformer_fit_transform_func=None,  # TODO: MVCleaner("impute", num="mean", cat="mode")...
-                       transformer_transform_func=None)
+                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
+                                                              num_strategy='mean',
+                                                              cat_strategy='mode'),
+                       transformer_transform_func=MissingValueCleaner.transform_all)
     ],
     ErrorType.OUTLIERS: [
         CleaningMethod("clean_SD_impute_mean_dummy", False,
@@ -125,16 +129,32 @@ class DataCleaning(WhatIfAnalysis):
                                                          filter_func)
                         add_new_node_after_node(cleaning_dag, new_test_cleaning_node, test_first_node_with_column)
                 else:
-                    fit_transform = cleaning_method.transformer_fit_transform_func
-                    transform = cleaning_method.transformer_transform_func
-                    print("todo")
-                    print(fit_transform)
-                    print(transform)
-                    # TODO: add transformer node
-                    # self.add_cleaning_in_location(column, cleaning_dag, cleaning_method,
-                    #                                 train_corruption_location)
-                    # self.add_cleaning_in_location(column, cleaning_dag, cleaning_method,
-                    #                                 test_corruption_location)
+                    # TODO: Get first node after train test split instead
+                    fit_transform = partial(cleaning_method.transformer_fit_transform_func, column=column)
+                    transform = partial(cleaning_method.transformer_transform_func, column=column)
+                    new_train_cleaning_node = DagNode(singleton.get_next_op_id(),
+                                                      train_first_node_with_column.code_location,
+                                                      OperatorContext(OperatorType.TRANSFORMER, None),
+                                                      DagNodeDetails(
+                                                          f"Clean {column}: {cleaning_method.method_name}",
+                                                          train_first_node_with_column.details.columns),
+                                                      None,
+                                                      fit_transform)
+                    add_new_node_after_node(cleaning_dag, new_train_cleaning_node, test_first_node_with_column)
+
+                    if test_first_node_with_column != train_first_node_with_column:
+                        new_test_cleaning_node = DagNode(singleton.get_next_op_id(),
+                                                         test_first_node_with_column.code_location,
+                                                         OperatorContext(OperatorType.SELECTION, None),
+                                                         DagNodeDetails(
+                                                             f"Clean {column}: {cleaning_method.method_name}",
+                                                             train_first_node_with_column.details.columns),
+                                                         None,
+                                                         transform)
+                        add_new_node_after_node(cleaning_dag, new_test_cleaning_node, test_first_node_with_column)
+                        # TODO: It would be cleaner to increase the other arg_index numbers by 1 instead
+                        #  of using -1 here to substitute 0
+                        cleaning_dag.add_edge(new_train_cleaning_node, new_test_cleaning_node, arg_index=-1)
                 cleaning_dags.append(cleaning_dag)
         return cleaning_dags
 
