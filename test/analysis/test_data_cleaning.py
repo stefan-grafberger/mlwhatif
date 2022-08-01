@@ -5,7 +5,7 @@ import os
 from inspect import cleandoc
 
 from mlwhatif import PipelineAnalyzer
-from mlwhatif.analysis._data_cleaning import DataCleaning
+from mlwhatif.analysis._data_cleaning import DataCleaning, ErrorType
 from mlwhatif.utils import get_project_root
 
 INTERMEDIATE_EXTRACTION_ORIG_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
@@ -43,13 +43,14 @@ def test_data_cleaning_mini_example_with_transformer_processing_multiple_columns
         assert test_score == 1.0
         """)
 
+    data_cleaning = DataCleaning({'A': ErrorType.OUTLIERS})
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
-        .add_what_if_analysis(DataCleaning()) \
+        .add_what_if_analysis(data_cleaning) \
         .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
         .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
         .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[DataCleaning()]
-    assert report is None
+    report = analysis_result.analysis_to_result_reports[data_cleaning]
+    assert report.shape == (1, 4)

@@ -120,3 +120,62 @@ def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_nam
 
     # If no node changes the column, we can apply the corruption directly before the estimator
     return search_start_node
+
+
+def find_dag_location_for_data_patch(column, dag, test_not_train):
+    """Find out between which two nodes to apply the corruption"""
+    search_start_node = find_train_or_test_pipeline_part_end(dag, test_not_train)
+    first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, test_not_train)
+    operator_parent_nodes = get_sorted_parent_nodes(dag, first_op_requiring_corruption)
+    first_op_requiring_corruption, operator_to_apply_corruption_after = \
+        find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, operator_parent_nodes)
+    return operator_to_apply_corruption_after, first_op_requiring_corruption
+
+
+def find_train_or_test_pipeline_part_end(dag, test_not_train):
+    """We want to start at the end of the pipeline to find the relevant train or test operations"""
+    if test_not_train is True:
+        search_start_nodes = find_nodes_by_type(dag, OperatorType.PREDICT)
+        if len(search_start_nodes) != 1:
+            raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call "
+                            "for the test set!")
+
+        search_start_node = search_start_nodes[0]
+    else:
+        search_start_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
+        if len(search_start_nodes) != 1:
+            raise Exception("Currently, DataCorruption only supports pipelines with exactly one estimator!")
+        search_start_node = search_start_nodes[0]
+    return search_start_node
+
+
+def get_sorted_children_nodes(dag: networkx.DiGraph, first_op_requiring_corruption):
+    """Get the parent nodes of a node sorted by arg_index"""
+    operator_child_nodes = list(dag.successors(first_op_requiring_corruption))
+    sorted_operator_child_nodes = sorted(operator_child_nodes, key=lambda x: x.node_id)
+    return sorted_operator_child_nodes
+
+
+def find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, operator_parent_nodes):
+    """
+    We know which operator requires the corruption to be present already; now we need to decide between which
+    parent node and the current node we need to insert the corruption node.
+    """
+    if first_op_requiring_corruption.operator_info.operator == OperatorType.TRANSFORMER:
+        operator_to_apply_corruption_after = operator_parent_nodes[-1]
+    elif first_op_requiring_corruption.operator_info.operator == OperatorType.PREDICT:
+        operator_to_apply_corruption_after = operator_parent_nodes[1]
+    elif first_op_requiring_corruption.operator_info.operator == OperatorType.ESTIMATOR:
+        operator_to_apply_corruption_after = operator_parent_nodes[0]
+    elif first_op_requiring_corruption.operator_info.operator == OperatorType.PROJECTION_MODIFY:
+        project_modify_parent_a = operator_parent_nodes[0]
+        project_modify_parent_b = operator_parent_nodes[-1]
+        # We want to introduce the change before all subscript behavior
+        operator_to_apply_corruption_after = networkx.lowest_common_ancestor(dag, project_modify_parent_a,
+                                                                             project_modify_parent_b)
+        sorted_successors = get_sorted_children_nodes(dag, operator_to_apply_corruption_after)
+        first_op_requiring_corruption = sorted_successors[0]
+    else:
+        raise Exception("Either a column was changed by a transformer or project_modify or we can apply"
+                        "the corruption right before the estimator operation!")
+    return first_op_requiring_corruption, operator_to_apply_corruption_after

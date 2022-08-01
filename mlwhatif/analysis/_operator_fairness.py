@@ -12,7 +12,7 @@ from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, add_intermediate_extraction_after_node, \
-    replace_node, get_sorted_parent_nodes
+    replace_node, get_sorted_parent_nodes, find_train_or_test_pipeline_part_end
 from mlwhatif.analysis._data_corruption import DataCorruption
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
@@ -213,7 +213,7 @@ class OperatorFairness(WhatIfAnalysis):
         This is because for transformers it is easy to find the corresponding test set operation and for the
         selection we do not need to worry about finding corresponding test set operations.
         """
-        search_start_node = DataCorruption.find_train_or_test_pipeline_part_end(dag, False)
+        search_start_node = find_train_or_test_pipeline_part_end(dag, False)
         nodes_to_search = set(networkx.ancestors(dag, search_start_node))
         all_nodes_to_test = []
         if self._test_transformers is True:
