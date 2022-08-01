@@ -1,15 +1,22 @@
+"""
+Cleaning functions for the DataCleaning What-if Analysis
+"""
 import sys
 
 import pandas
 
 
 class MissingValueCleaner:
+    """
+    Missing value ErrorType
+    """
     @staticmethod
-    def drop_missing(df, column):
-        return df.dropna(subset=[column])
+    def drop_missing(input_df, column):
+        return input_df.dropna(subset=[column])
 
 
 class MVCleaner(object):
+    # pylint: disable-all
     def __init__(self, method='delete', **kwargs):
         self.method = method
         self.kwargs = kwargs

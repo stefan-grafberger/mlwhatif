@@ -11,8 +11,8 @@ import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, \
-    find_first_op_modifying_a_column, add_new_node_between_nodes, add_intermediate_extraction_after_node, \
-    get_sorted_parent_nodes, get_sorted_children_nodes, find_dag_location_for_first_op_modifying_column
+    add_new_node_between_nodes, add_intermediate_extraction_after_node, \
+    find_dag_location_for_first_op_modifying_column
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
 

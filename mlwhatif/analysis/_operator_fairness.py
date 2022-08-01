@@ -13,7 +13,6 @@ from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, add_intermediate_extraction_after_node, \
     replace_node, get_sorted_parent_nodes, find_train_or_test_pipeline_part_end
-from mlwhatif.analysis._data_corruption import DataCorruption
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import wrap_in_mlinspect_array_if_necessary

@@ -132,12 +132,11 @@ def find_first_op_where_column_present(dag, search_start_node: DagNode, column_n
 
     matches = [node for node in nodes_to_search
                if column_name in node.details.columns]
-
-    if len(matches) >= 1:
-        sorted_matches = sorted(matches, key=lambda dag_node: dag_node.node_id)
-        return sorted_matches[0]
-    else:
+    if len(matches) == 0:
         raise Exception(f"Column {column_name} not found in DAG!")
+
+    sorted_matches = sorted(matches, key=lambda dag_node: dag_node.node_id)
+    return sorted_matches[0]
 
 
 def find_dag_location_for_first_op_modifying_column(column, dag, test_not_train):
