@@ -12,7 +12,7 @@ import pandas
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, \
     find_first_op_modifying_a_column, add_new_node_between_nodes, add_intermediate_extraction_after_node, \
-    get_sorted_parent_nodes, get_sorted_children_nodes, find_dag_location_for_data_patch
+    get_sorted_parent_nodes, get_sorted_children_nodes, find_dag_location_for_first_op_modifying_column
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
@@ -57,8 +57,8 @@ class DataCorruption(WhatIfAnalysis):
         corruption_dags = []
         for corruption_percentage in self.corruption_percentages:
             for (column, corruption_function) in self.column_to_corruption:
-                train_corruption_location = find_dag_location_for_data_patch(column, dag, True)
-                test_corruption_location = find_dag_location_for_data_patch(column, dag, False)
+                train_corruption_location = find_dag_location_for_first_op_modifying_column(column, dag, True)
+                test_corruption_location = find_dag_location_for_first_op_modifying_column(column, dag, False)
 
                 # Test set corruption
                 test_corruption_result_label = f"data-corruption-test-{column}-{corruption_percentage}"

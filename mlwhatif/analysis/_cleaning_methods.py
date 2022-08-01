@@ -3,6 +3,12 @@ import sys
 import pandas
 
 
+class MissingValueCleaner:
+    @staticmethod
+    def drop_missing(df, column):
+        return df.dropna(subset=[column])
+
+
 class MVCleaner(object):
     def __init__(self, method='delete', **kwargs):
         self.method = method

@@ -81,11 +81,11 @@ def add_new_node_between_nodes(dag: networkx.DiGraph, new_node: DagNode, dag_loc
 def filter_estimator_transformer_edges(parent, child):
     """Filter edges that are not relevant to the actual data flow but only to estimator/transformer state"""
     is_transformer_edge = ((parent.operator_info.operator == OperatorType.TRANSFORMER
-                           and ": fit_transform" in parent.details.description
-                           and child.operator_info.operator == OperatorType.TRANSFORMER
-                           and ": transform" in child.details.description) or
+                            and ": fit_transform" in parent.details.description
+                            and child.operator_info.operator == OperatorType.TRANSFORMER
+                            and ": transform" in child.details.description) or
                            (parent.operator_info.operator == OperatorType.ESTIMATOR
-                           and child.operator_info.operator == OperatorType.PREDICT))
+                            and child.operator_info.operator == OperatorType.PREDICT))
     return not is_transformer_edge
 
 
@@ -122,7 +122,25 @@ def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_nam
     return search_start_node
 
 
-def find_dag_location_for_data_patch(column, dag, test_not_train):
+def find_first_op_where_column_present(dag, search_start_node: DagNode, column_name: str, test_not_train: bool):
+    """Find DagNodes in the DAG by OperatorType"""
+    if test_not_train is True:
+        dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
+    else:
+        dag_to_consider = dag
+    nodes_to_search = list(networkx.ancestors(dag_to_consider, search_start_node))
+
+    matches = [node for node in nodes_to_search
+               if column_name in node.details.columns]
+
+    if len(matches) >= 1:
+        sorted_matches = sorted(matches, key=lambda dag_node: dag_node.node_id)
+        return sorted_matches[0]
+    else:
+        raise Exception(f"Column {column_name} not found in DAG!")
+
+
+def find_dag_location_for_first_op_modifying_column(column, dag, test_not_train):
     """Find out between which two nodes to apply the corruption"""
     search_start_node = find_train_or_test_pipeline_part_end(dag, test_not_train)
     first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, test_not_train)
@@ -130,6 +148,13 @@ def find_dag_location_for_data_patch(column, dag, test_not_train):
     first_op_requiring_corruption, operator_to_apply_corruption_after = \
         find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, operator_parent_nodes)
     return operator_to_apply_corruption_after, first_op_requiring_corruption
+
+
+def find_dag_location_for_data_patch(column, dag, test_not_train):
+    """Find out between which two nodes to apply the corruption"""
+    search_start_node = find_train_or_test_pipeline_part_end(dag, test_not_train)
+    first_op_requiring_corruption = find_first_op_where_column_present(dag, search_start_node, column, test_not_train)
+    return first_op_requiring_corruption
 
 
 def find_train_or_test_pipeline_part_end(dag, test_not_train):

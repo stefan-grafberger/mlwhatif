@@ -3,14 +3,17 @@ The Data Cleaning What-If Analysis
 """
 import dataclasses
 from enum import Enum
+from functools import partial
 from typing import Iterable, Dict, Callable
 
 import networkx
 import pandas
 
-from mlwhatif import OperatorType
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type, find_dag_location_for_data_patch, \
-    add_intermediate_extraction_after_node
+from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, find_dag_location_for_first_op_modifying_column, \
+    add_intermediate_extraction_after_node, add_new_node_between_nodes, find_dag_location_for_data_patch, \
+    add_new_node_after_node
+from mlwhatif.analysis._cleaning_methods import MissingValueCleaner
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
@@ -43,6 +46,7 @@ class CleaningMethod:
 
 CLEANING_METHODS_FOR_ERROR_TYPE = {
     ErrorType.MISSING_VALUES: [
+        CleaningMethod("delete", True, filter_func=MissingValueCleaner.drop_missing),
         CleaningMethod("impute_mean_mode", False,
                        transformer_fit_transform_func=None,  # TODO: MVCleaner("impute", num="mean", cat="mode")...
                        transformer_transform_func=None)
@@ -92,28 +96,45 @@ class DataCleaning(WhatIfAnalysis):
                             "be uniquely identified by the line number in the code!")
         cleaning_dags = []
         for column, error in self._columns_with_error:
+            train_first_node_with_column = find_dag_location_for_data_patch(column, dag, True)
+            test_first_node_with_column = find_dag_location_for_data_patch(column, dag, False)
             for cleaning_method in CLEANING_METHODS_FOR_ERROR_TYPE[error]:
-                train_corruption_location = find_dag_location_for_data_patch(column, dag, True)
-                test_corruption_location = find_dag_location_for_data_patch(column, dag, False)
-
                 cleaning_result_label = f"data-cleaning-{column}-{cleaning_method.method_name}"
                 cleaning_dag = dag.copy()
                 self.add_intermediate_extraction_after_score_nodes(cleaning_dag, cleaning_result_label)
-                # TODO: add transformer node
-                # self.add_cleaning_in_location(column, cleaning_dag, cleaning_method,
-                #                                 train_corruption_location)
-                # self.add_cleaning_in_location(column, cleaning_dag, cleaning_method,
-                #                                 test_corruption_location)
+                if cleaning_method.is_filter_not_project is True:
+                    filter_func = partial(cleaning_method.filter_func, column=column)
+
+                    new_train_cleaning_node = DagNode(singleton.get_next_op_id(),
+                                                      train_first_node_with_column.code_location,
+                                                      OperatorContext(OperatorType.SELECTION, None),
+                                                      DagNodeDetails(
+                                                          f"Cleaning: {cleaning_method.method_name}",
+                                                          train_first_node_with_column.details.columns),
+                                                      None,
+                                                      filter_func)
+                    add_new_node_after_node(cleaning_dag, new_train_cleaning_node, train_first_node_with_column)
+                    # Is this second step really necessary? Is modifying the test set a good idea?
+                    if test_first_node_with_column != train_first_node_with_column:
+                        new_test_cleaning_node = DagNode(singleton.get_next_op_id(),
+                                                         test_first_node_with_column.code_location,
+                                                         OperatorContext(OperatorType.SELECTION, None),
+                                                         DagNodeDetails(
+                                                             f"Cleaning: {cleaning_method.method_name}",
+                                                             train_first_node_with_column.details.columns),
+                                                         None,
+                                                         filter_func)
+                        add_new_node_after_node(cleaning_dag, new_test_cleaning_node, test_first_node_with_column)
+                else:
+                    fit_transform = cleaning_method.transformer_fit_transform_func
+                    transform = cleaning_method.transformer_transform_func
+                    # TODO: add transformer node
+                    # self.add_cleaning_in_location(column, cleaning_dag, cleaning_method,
+                    #                                 train_corruption_location)
+                    # self.add_cleaning_in_location(column, cleaning_dag, cleaning_method,
+                    #                                 test_corruption_location)
                 cleaning_dags.append(cleaning_dag)
         return cleaning_dags
-
-    # def add_cleaning_in_location(self, column, cleaning_dag, cleaning_method, corruption_location,):
-    #     # pylint: disable=too-many-arguments
-    #     """We now know where to apply the corruption, and use this function to actually apply it."""
-    #     new_corruption_node = self.create_cleaning_node(column, corruption_function,
-    #                                                       corruption_percentage,
-    #                                                       corruption_location)
-    #     add_new_node_between_nodes(cleaning_dag, new_corruption_node, corruption_location)
 
     def add_intermediate_extraction_after_score_nodes(self, dag: networkx.DiGraph, label: str):
         """Add a new node behind some given node to extract the intermediate result of that given node"""
