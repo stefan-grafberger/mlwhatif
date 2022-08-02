@@ -22,7 +22,8 @@ class ErrorType(Enum):
     """
     The different error types supported by the data cleaning what-if analysis
     """
-    MISSING_VALUES = "missing values"
+    NUM_MISSING_VALUES = "numerical missing values"
+    CAT_MISSING_VALUES = "categorical missing values"
     OUTLIERS = "outliers"
     DUPLICATES = "duplicates"
     MISLABEL = "mislabel"
@@ -47,39 +48,36 @@ class CleaningMethod:
 
 
 CLEANING_METHODS_FOR_ERROR_TYPE = {
-    ErrorType.MISSING_VALUES: [
+    ErrorType.NUM_MISSING_VALUES: [
         CleaningMethod("delete", True, filter_func=MissingValueCleaner.drop_missing),
-        CleaningMethod("impute_mean_mode", False,
-                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                              num_strategy='mean',
-                                                              cat_strategy='mode'),
-                       transformer_transform_func=MissingValueCleaner.transform_all),
-        CleaningMethod("impute_mean_dummy", False,
-                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                              num_strategy='mean',
-                                                              cat_strategy='dummy'),
-                       transformer_transform_func=MissingValueCleaner.transform_all),
-        CleaningMethod("impute_median_mode", False,
+        CleaningMethod("impute_num_median", False,
                        transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
                                                               num_strategy='median',
                                                               cat_strategy='mode'),
                        transformer_transform_func=MissingValueCleaner.transform_all),
-        CleaningMethod("impute_median_dummy", False,
+        CleaningMethod("impute_num_mean", False,
                        transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                              num_strategy='median',
+                                                              num_strategy='mean',
                                                               cat_strategy='dummy'),
                        transformer_transform_func=MissingValueCleaner.transform_all),
-        CleaningMethod("impute_mode_mode", False,
+        CleaningMethod("impute_num_mode", False,
                        transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
                                                               num_strategy='mode',
                                                               cat_strategy='mode'),
-                       transformer_transform_func=MissingValueCleaner.transform_all),
-        CleaningMethod("impute_mode_dummy", False,
-                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                              num_strategy='mode',
-                                                              cat_strategy='dummy'),
                        transformer_transform_func=MissingValueCleaner.transform_all)
     ],
+    ErrorType.CAT_MISSING_VALUES: [
+        CleaningMethod("delete", True, filter_func=MissingValueCleaner.drop_missing),
+        CleaningMethod("impute_cat_mode", False,
+                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
+                                                              num_strategy='mean',
+                                                              cat_strategy='mode'),
+                       transformer_transform_func=MissingValueCleaner.transform_all),
+        CleaningMethod("impute_cat_dummy", False,
+                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
+                                                              num_strategy='mean',
+                                                              cat_strategy='dummy'),
+                       transformer_transform_func=MissingValueCleaner.transform_all)],
     ErrorType.OUTLIERS: [
         CleaningMethod("clean_SD_impute_mean_dummy", False,
                        transformer_fit_transform_func=None,  # TODO: MVCleaner("impute", num="mean", cat="mode")...
