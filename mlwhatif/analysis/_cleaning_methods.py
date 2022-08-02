@@ -221,10 +221,7 @@ class MislabelCleaner:
     @staticmethod
     def fit_cleanlab(train_data, train_labels, make_classifier_func):
         estimator = cleanlab.classification.CleanLearning(make_classifier_func())
+        if isinstance(train_labels, pandas.Series):
+            train_labels = train_labels.to_numpy()
         estimator.fit(train_data, train_labels)
         return estimator
-
-    @staticmethod
-    def predict_cleanlab(estimator, test_data):
-        predictions = estimator.predict(test_data)
-        return predictions

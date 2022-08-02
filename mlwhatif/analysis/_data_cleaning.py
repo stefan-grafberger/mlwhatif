@@ -12,8 +12,8 @@ import pandas
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, add_intermediate_extraction_after_node, \
     find_dag_location_for_data_patch, \
-    add_new_node_after_node
-from mlwhatif.analysis._cleaning_methods import MissingValueCleaner, DuplicateCleaner, OutlierCleaner
+    add_new_node_after_node, replace_node
+from mlwhatif.analysis._cleaning_methods import MissingValueCleaner, DuplicateCleaner, OutlierCleaner, MislabelCleaner
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
@@ -60,16 +60,13 @@ CLEANING_METHODS_FOR_ERROR_TYPE = {
     ErrorType.NUM_MISSING_VALUES: [
         CleaningMethod("delete", PatchType.DATA_FILTER_PATCH, filter_func=MissingValueCleaner.drop_missing),
         CleaningMethod("impute_num_median", PatchType.DATA_TRANSFORMER_PATCH,
-                       fit_or_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                         strategy='median'),
+                       fit_or_fit_transform_func=partial(MissingValueCleaner.fit_transform_all, strategy='median'),
                        predict_or_fit_func=MissingValueCleaner.transform_all),
         CleaningMethod("impute_num_mean", PatchType.DATA_TRANSFORMER_PATCH,
-                       fit_or_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                         strategy='mean'),
+                       fit_or_fit_transform_func=partial(MissingValueCleaner.fit_transform_all, strategy='mean'),
                        predict_or_fit_func=MissingValueCleaner.transform_all),
         CleaningMethod("impute_num_mode", PatchType.DATA_TRANSFORMER_PATCH,
-                       fit_or_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                         strategy='mode'),
+                       fit_or_fit_transform_func=partial(MissingValueCleaner.fit_transform_all, strategy='mode'),
                        predict_or_fit_func=MissingValueCleaner.transform_all)
     ],
     ErrorType.CAT_MISSING_VALUES: [
@@ -125,10 +122,7 @@ CLEANING_METHODS_FOR_ERROR_TYPE = {
         CleaningMethod("delete", PatchType.DATA_FILTER_PATCH, filter_func=DuplicateCleaner.drop_duplicates)
     ],
     ErrorType.MISLABEL: [
-        CleaningMethod("cleanlab", PatchType.ESTIMATOR_PATCH,
-                       fit_or_fit_transform_func=None,
-                       # TODO: MVCleaner("impute", num="mean", cat="mode")...
-                       predict_or_fit_func=None)
+        CleaningMethod("cleanlab", PatchType.ESTIMATOR_PATCH, fit_or_fit_transform_func=MislabelCleaner.fit_cleanlab)
     ]
 }
 
@@ -222,8 +216,21 @@ class DataCleaning(WhatIfAnalysis):
                                                 arg_index=1)
                         cleaning_dag.add_edge(new_train_cleaning_node, new_test_cleaning_node, arg_index=0)
                 elif cleaning_method.patch_type == PatchType.ESTIMATOR_PATCH:
-                    print("todo")
-                    # TODO
+                    estimator_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
+                    if len(estimator_nodes) != 1:
+                        raise Exception(
+                            "Currently, DataCorruption only supports pipelines with exactly one estimator!")
+                    estimator_node = estimator_nodes[0]
+                    new_processing_func = partial(cleaning_method.fit_or_fit_transform_func,
+                                                  make_classifier_func=estimator_node.make_classifier_func)
+                    new_description = f"Cleanlab patched {estimator_node.details.description}"
+                    new_estimator_node = DagNode(singleton.get_next_op_id(),
+                                                 estimator_node.code_location,
+                                                 estimator_node.operator_info,
+                                                 DagNodeDetails(new_description, estimator_node.details.columns),
+                                                 estimator_node.optional_code_info,
+                                                 new_processing_func)
+                    replace_node(cleaning_dag, estimator_node, new_estimator_node)
                 else:
                     raise Exception(f"Unknown patch type: {cleaning_method.patch_type}!")
                 cleaning_dags.append(cleaning_dag)
