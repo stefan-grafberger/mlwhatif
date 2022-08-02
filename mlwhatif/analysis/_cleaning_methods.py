@@ -20,33 +20,23 @@ class MissingValueCleaner:
         return input_df.dropna(subset=[column])
 
     @staticmethod
-    def fit_transform_all(input_df, column, cat_strategy, num_strategy):
-        if num_strategy == 'mode':
-            num_strategy = 'most_frequent'
-        if cat_strategy == 'mode':
-            cat_strategy = 'most_frequent'
+    def fit_transform_all(input_df, column, strategy):
+        if strategy == 'mode':
+            strategy = 'most_frequent'
+        elif strategy == 'dummy':
+            strategy = 'constant'
         if isinstance(input_df, DataFrame):
+            transformer = SimpleImputer(strategy=strategy)
             if is_numeric_dtype(input_df[column]):
-                transformer = SimpleImputer(strategy=num_strategy)
-                input_df[[column]] = transformer.fit_transform(input_df[[column]])
-                transformed_data = wrap_in_mlinspect_array_if_necessary(input_df)
-                transformed_data._mlinspect_annotation = transformer
-            else:
-                transformer = SimpleImputer(strategy=cat_strategy)
-                input_df[[column]] = transformer.fit_transform(input_df[[column]])
-                transformed_data = wrap_in_mlinspect_array_if_necessary(input_df)
-                transformed_data._mlinspect_annotation = transformer
+                input_df[column] = input_df[column].astype(str)
+            input_df[[column]] = transformer.fit_transform(input_df[[column]])
+            transformed_data = wrap_in_mlinspect_array_if_necessary(input_df)
+            transformed_data._mlinspect_annotation = transformer
         else:
-            if is_numeric_dtype(input_df):
-                transformer = SimpleImputer(strategy=num_strategy)
-                input_df = transformer.fit_transform(input_df)
-                transformed_data = wrap_in_mlinspect_array_if_necessary(input_df)
-                transformed_data._mlinspect_annotation = transformer
-            else:
-                transformer = SimpleImputer(strategy=cat_strategy)
-                input_df = transformer.fit_transform(input_df)
-                transformed_data = wrap_in_mlinspect_array_if_necessary(input_df)
-                transformed_data._mlinspect_annotation = transformer
+            transformer = SimpleImputer(strategy=strategy)
+            input_df = transformer.fit_transform(input_df)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(input_df)
+            transformed_data._mlinspect_annotation = transformer
         return transformed_data
 
     @staticmethod
