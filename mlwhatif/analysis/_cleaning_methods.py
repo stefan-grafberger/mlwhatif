@@ -21,8 +21,8 @@ class MissingValueCleaner:
 
     @staticmethod
     def fit_transform_all(input_df, column, cat_strategy, num_strategy):
-        if num_strategy == 'mean':
-            num_strategy = 'mean'
+        if num_strategy == 'mode':
+            num_strategy = 'most_frequent'
         if cat_strategy == 'mode':
             cat_strategy = 'most_frequent'
         if isinstance(input_df, DataFrame):

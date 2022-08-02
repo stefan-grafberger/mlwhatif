@@ -53,6 +53,31 @@ CLEANING_METHODS_FOR_ERROR_TYPE = {
                        transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
                                                               num_strategy='mean',
                                                               cat_strategy='mode'),
+                       transformer_transform_func=MissingValueCleaner.transform_all),
+        CleaningMethod("impute_mean_dummy", False,
+                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
+                                                              num_strategy='mean',
+                                                              cat_strategy='dummy'),
+                       transformer_transform_func=MissingValueCleaner.transform_all),
+        CleaningMethod("impute_median_mode", False,
+                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
+                                                              num_strategy='median',
+                                                              cat_strategy='mode'),
+                       transformer_transform_func=MissingValueCleaner.transform_all),
+        CleaningMethod("impute_median_dummy", False,
+                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
+                                                              num_strategy='median',
+                                                              cat_strategy='dummy'),
+                       transformer_transform_func=MissingValueCleaner.transform_all),
+        CleaningMethod("impute_mode_mode", False,
+                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
+                                                              num_strategy='mode',
+                                                              cat_strategy='mode'),
+                       transformer_transform_func=MissingValueCleaner.transform_all),
+        CleaningMethod("impute_mode_dummy", False,
+                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
+                                                              num_strategy='mode',
+                                                              cat_strategy='dummy'),
                        transformer_transform_func=MissingValueCleaner.transform_all)
     ],
     ErrorType.OUTLIERS: [
@@ -155,8 +180,6 @@ class DataCleaning(WhatIfAnalysis):
                                                          transform)
                         add_new_node_after_node(cleaning_dag, new_test_cleaning_node, test_first_node_with_column,
                                                 arg_index=1)
-                        # TODO: It would be cleaner to increase the other arg_index numbers by 1 instead
-                        #  of using -1 here to substitute 0
                         cleaning_dag.add_edge(new_train_cleaning_node, new_test_cleaning_node, arg_index=0)
                 cleaning_dags.append(cleaning_dag)
         return cleaning_dags
