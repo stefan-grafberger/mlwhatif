@@ -1124,6 +1124,7 @@ class SklearnDecisionTreePatching:
                     estimator = tree.DecisionTreeClassifier(**self.mlinspect_non_data_func_args)
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
+                create_func = partial(tree.DecisionTreeClassifier, **self.mlinspect_non_data_func_args)
                 param_search_runtime = 0
             else:
                 def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
@@ -1131,6 +1132,11 @@ class SklearnDecisionTreePatching:
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
+
+                def create_func_with_grid_search(make_grid_search_func):
+                    return make_grid_search_func(tree.DecisionTreeClassifier(**self.mlinspect_non_data_func_args))
+                create_func = partial(create_func_with_grid_search, call_info_singleton.make_grid_search_func)
+
                 call_info_singleton.make_grid_search_func = None
                 param_search_runtime = call_info_singleton.param_search_duration
                 call_info_singleton.param_search_duration = 0
@@ -1150,7 +1156,8 @@ class SklearnDecisionTreePatching:
                                DagNodeDetails("Decision Tree", [], optimizer_info_with_search),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
-                               processing_func)
+                               processing_func,
+                               create_func)
             function_call_result = FunctionCallResult(None)
             add_dag_node(dag_node, [train_data_node, train_labels_node], function_call_result)
         else:
@@ -1338,12 +1345,18 @@ class SklearnSGDClassifierPatching:
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
                 param_search_runtime = 0
+                create_func = partial(linear_model.SGDClassifier, **self.mlinspect_non_data_func_args)
             else:
                 def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
                     estimator = make_grid_search_func(linear_model.SGDClassifier(**self.mlinspect_non_data_func_args))
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
+
+                def create_func_with_grid_search(make_grid_search_func):
+                    return make_grid_search_func(linear_model.SGDClassifier(**self.mlinspect_non_data_func_args))
+                create_func = partial(create_func_with_grid_search, call_info_singleton.make_grid_search_func)
+
                 call_info_singleton.make_grid_search_func = None
                 param_search_runtime = call_info_singleton.param_search_duration
                 call_info_singleton.param_search_duration = 0
@@ -1362,7 +1375,8 @@ class SklearnSGDClassifierPatching:
                                DagNodeDetails("SGD Classifier", [], optimizer_info_with_search),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
-                               processing_func)
+                               processing_func,
+                               create_func)
             function_call_result = FunctionCallResult(None)
             add_dag_node(dag_node, [train_data_node, train_labels_node], function_call_result)
         else:
@@ -1548,6 +1562,7 @@ class SklearnLogisticRegressionPatching:
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
                 param_search_runtime = 0
+                create_func = partial(linear_model.LogisticRegression, **self.mlinspect_non_data_func_args)
             else:
                 def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
                     estimator = make_grid_search_func(linear_model.LogisticRegression(
@@ -1555,6 +1570,11 @@ class SklearnLogisticRegressionPatching:
                     fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return fitted_estimator
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
+
+                def create_func_with_grid_search(make_grid_search_func):
+                    return make_grid_search_func(linear_model.LogisticRegression(**self.mlinspect_non_data_func_args))
+                create_func = partial(create_func_with_grid_search, call_info_singleton.make_grid_search_func)
+
                 call_info_singleton.make_grid_search_func = None
                 param_search_runtime = call_info_singleton.param_search_duration
                 call_info_singleton.param_search_duration = 0
@@ -1573,7 +1593,8 @@ class SklearnLogisticRegressionPatching:
                                DagNodeDetails("Logistic Regression", [], optimizer_info_with_search),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
-                               processing_func)
+                               processing_func,
+                               create_func)
             function_call_result = FunctionCallResult(None)
             add_dag_node(dag_node, [train_data_node, train_labels_node], function_call_result)
         else:
@@ -1751,6 +1772,8 @@ class SklearnKerasClassifierPatching:
                     estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return estimator
                 param_search_runtime = 0
+                create_func = partial(tensorflow.keras.wrappers.scikit_learn.KerasClassifier,
+                                      **self.mlinspect_non_data_func_args)
             else:
                 def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
                     estimator = make_grid_search_func(tensorflow.keras.wrappers.scikit_learn.KerasClassifier(
@@ -1759,6 +1782,12 @@ class SklearnKerasClassifierPatching:
                     estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return estimator
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
+
+                def create_func_with_grid_search(make_grid_search_func):
+                    return make_grid_search_func(tensorflow.keras.wrappers.scikit_learn.
+                                                 KerasClassifier(**self.mlinspect_non_data_func_args))
+                create_func = partial(create_func_with_grid_search, call_info_singleton.make_grid_search_func)
+
                 call_info_singleton.make_grid_search_func = None
                 param_search_runtime = call_info_singleton.param_search_duration
                 call_info_singleton.param_search_duration = 0
@@ -1779,7 +1808,8 @@ class SklearnKerasClassifierPatching:
                                DagNodeDetails("Neural Network", [], optimizer_info_with_search),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
-                               processing_func)
+                               processing_func,
+                               create_func)
             function_call_result = FunctionCallResult(None)
             add_dag_node(dag_node, [train_data_dag_node, train_labels_dag_node], function_call_result)
         else:

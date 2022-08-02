@@ -1292,7 +1292,8 @@ def test_decision_tree():
                                      DagNodeDetails('Decision Tree', [], OptimizerInfo(RangeComparison(0, 1000), None,
                                                                                        RangeComparison(0, 10000))),
                                      OptionalCodeInfo(CodeReference(11, 6, 11, 30), 'DecisionTreeClassifier()'),
-                                     Comparison(FunctionType))
+                                     Comparison(FunctionType),
+                                     Comparison(partial))
     expected_dag.add_edge(expected_train_data, expected_decision_tree, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_decision_tree, arg_index=1)
 
@@ -1307,6 +1308,7 @@ def test_decision_tree():
     train_labels = train_label_node.processing_func(train_labels)
     fitted_estimator = fit_node.processing_func(train_data, train_labels)
     assert isinstance(fitted_estimator, DecisionTreeClassifier)
+    assert isinstance(fit_node.make_classifier_func(), DecisionTreeClassifier)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
@@ -1391,7 +1393,8 @@ def test_decision_tree_score():
                                                                                     RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 30),
                                                    'DecisionTreeClassifier()'),
-                                  Comparison(FunctionType))
+                                  Comparison(FunctionType),
+                                  Comparison(partial))
     expected_predict = DagNode(14,
                                BasicCodeLocation("<string-source>", 16),
                                OperatorContext(OperatorType.PREDICT,
@@ -1427,6 +1430,7 @@ def test_decision_tree_score():
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
     assert isinstance(fitted_estimator, DecisionTreeClassifier)
+    assert isinstance(fit_node.make_classifier_func(), DecisionTreeClassifier)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
@@ -1493,7 +1497,8 @@ def test_decision_tree_predict():
                                                                                     RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 30),
                                                    'DecisionTreeClassifier()'),
-                                  Comparison(FunctionType))
+                                  Comparison(FunctionType),
+                                  Comparison(partial))
     expected_predict = DagNode(11,
                                BasicCodeLocation("<string-source>", 15),
                                OperatorContext(OperatorType.PREDICT,
@@ -1516,6 +1521,7 @@ def test_decision_tree_predict():
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
     assert isinstance(fitted_estimator, DecisionTreeClassifier)
+    assert isinstance(fit_node.make_classifier_func(), DecisionTreeClassifier)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
@@ -1601,7 +1607,8 @@ def test_sgd_classifier():
                                                                                      RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
                                                    "SGDClassifier(loss='log', random_state=42)"),
-                                  Comparison(FunctionType))
+                                  Comparison(FunctionType),
+                                  Comparison(partial))
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
 
@@ -1616,6 +1623,7 @@ def test_sgd_classifier():
     train_labels = train_label_node.processing_func(train_labels)
     fitted_estimator = fit_node.processing_func(train_data, train_labels)
     assert isinstance(fitted_estimator, SGDClassifier)
+    assert isinstance(fit_node.make_classifier_func(), SGDClassifier)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
@@ -1713,7 +1721,8 @@ def test_sgd_classifier_score():
                                                                                      RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
                                                    "SGDClassifier(loss='log', random_state=42)"),
-                                  Comparison(FunctionType))
+                                  Comparison(FunctionType),
+                                  Comparison(partial))
     expected_predict = DagNode(14,
                                BasicCodeLocation("<string-source>", 16),
                                OperatorContext(OperatorType.PREDICT,
@@ -1751,6 +1760,7 @@ def test_sgd_classifier_score():
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
     assert isinstance(fitted_estimator, SGDClassifier)
+    assert isinstance(fit_node.make_classifier_func(), SGDClassifier)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
@@ -1818,7 +1828,8 @@ def test_sgd_classifier_predict():
                                                                                      RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 48),
                                                    "SGDClassifier(loss='log', random_state=42)"),
-                                  Comparison(FunctionType))
+                                  Comparison(FunctionType),
+                                  Comparison(partial))
     expected_predict = DagNode(11,
                                BasicCodeLocation("<string-source>", 15),
                                OperatorContext(OperatorType.PREDICT,
@@ -1841,6 +1852,7 @@ def test_sgd_classifier_predict():
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
     assert isinstance(fitted_estimator, SGDClassifier)
+    assert isinstance(fit_node.make_classifier_func(), SGDClassifier)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
@@ -1958,7 +1970,8 @@ def test_logistic_regression():
                                                 OptimizerInfo(RangeComparison(0, 1000), None,
                                                               RangeComparison(0, 10000))),
                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'LogisticRegression()'),
-                                 Comparison(FunctionType))
+                                 Comparison(FunctionType),
+                                 Comparison(partial))
     expected_dag.add_edge(expected_train_data, expected_estimator, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_estimator, arg_index=1)
 
@@ -1973,6 +1986,7 @@ def test_logistic_regression():
     train_labels = train_label_node.processing_func(train_labels)
     fitted_estimator = fit_node.processing_func(train_data, train_labels)
     assert isinstance(fitted_estimator, LogisticRegression)
+    assert isinstance(fit_node.make_classifier_func(), LogisticRegression)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
@@ -2059,7 +2073,8 @@ def test_logistic_regression_score():
                                                                RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 26),
                                                    'LogisticRegression()'),
-                                  Comparison(FunctionType))
+                                  Comparison(FunctionType),
+                                  Comparison(partial))
     expected_predict = DagNode(14,
                                BasicCodeLocation("<string-source>", 16),
                                OperatorContext(OperatorType.PREDICT,
@@ -2097,6 +2112,7 @@ def test_logistic_regression_score():
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
     assert isinstance(fitted_estimator, LogisticRegression)
+    assert isinstance(fit_node.make_classifier_func(), LogisticRegression)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
@@ -2164,7 +2180,8 @@ def test_logistic_regression_predict():
                                                                RangeComparison(0, 10000))),
                                   OptionalCodeInfo(CodeReference(11, 6, 11, 26),
                                                    'LogisticRegression()'),
-                                  Comparison(FunctionType))
+                                  Comparison(FunctionType),
+                                  Comparison(partial))
     expected_predict = DagNode(11,
                                BasicCodeLocation("<string-source>", 15),
                                OperatorContext(OperatorType.PREDICT,
@@ -2187,6 +2204,7 @@ def test_logistic_regression_predict():
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
     assert isinstance(fitted_estimator, LogisticRegression)
+    assert isinstance(fit_node.make_classifier_func(), LogisticRegression)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
@@ -2319,7 +2337,8 @@ def test_keras_wrapper():
                                   OptionalCodeInfo(CodeReference(22, 6, 22, 92),
                                                    'KerasClassifier(build_fn=create_model, epochs=2, '
                                                    'batch_size=1, verbose=0, input_dim=2)'),
-                                  Comparison(FunctionType))
+                                  Comparison(FunctionType),
+                                  Comparison(partial))
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
 
@@ -2334,6 +2353,7 @@ def test_keras_wrapper():
     train_labels = train_label_node.processing_func(train_labels)
     fitted_estimator = fit_node.processing_func(train_data, train_labels)
     assert isinstance(fitted_estimator, KerasClassifier)
+    assert isinstance(fit_node.make_classifier_func(), KerasClassifier)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_labels = OneHotEncoder(sparse=False).fit_transform(test_df[['target']])
@@ -2435,7 +2455,8 @@ def test_keras_wrapper_score():
                                   OptionalCodeInfo(CodeReference(25, 6, 25, 93),
                                                    'KerasClassifier(build_fn=create_model, epochs=15, batch_size=1, '
                                                    'verbose=0, input_dim=2)'),
-                                  Comparison(FunctionType))
+                                  Comparison(FunctionType),
+                                  Comparison(partial))
     expected_predict = DagNode(14,
                                BasicCodeLocation("<string-source>", 30),
                                OperatorContext(OperatorType.PREDICT,
@@ -2473,6 +2494,7 @@ def test_keras_wrapper_score():
     train_labels = OneHotEncoder(sparse=False).fit_transform(train_df[['target']])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
     assert isinstance(fitted_estimator, KerasClassifier)
+    assert isinstance(fit_node.make_classifier_func(), KerasClassifier)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
@@ -2556,7 +2578,8 @@ def test_keras_wrapper_predict():
                                   OptionalCodeInfo(CodeReference(25, 6, 25, 93),
                                                    'KerasClassifier(build_fn=create_model, epochs=15, batch_size=1, '
                                                    'verbose=0, input_dim=2)'),
-                                  Comparison(FunctionType))
+                                  Comparison(FunctionType),
+                                  Comparison(partial))
     expected_predict = DagNode(11,
                                BasicCodeLocation("<string-source>", 29),
                                OperatorContext(OperatorType.PREDICT,
@@ -2578,6 +2601,7 @@ def test_keras_wrapper_predict():
     train_labels = OneHotEncoder(sparse=False).fit_transform(train_df[['target']])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
     assert isinstance(fitted_estimator, KerasClassifier)
+    assert isinstance(fit_node.make_classifier_func(), KerasClassifier)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
@@ -2739,6 +2763,7 @@ def test_grid_search_cv_sgd_classifier():
                                                                RangeComparison(0, 5000))),
                                   OptionalCodeInfo(CodeReference(16, 19, 16, 61),
                                                    "SGDClassifier(loss='log', random_state=42)"),
+                                  Comparison(partial),
                                   Comparison(partial))
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
@@ -2755,6 +2780,9 @@ def test_grid_search_cv_sgd_classifier():
     fitted_estimator = fit_node.processing_func(train_data, train_labels)
     assert isinstance(fitted_estimator, GridSearchCV)
     assert isinstance(fitted_estimator.estimator, SGDClassifier)
+    classifier = fit_node.make_classifier_func()
+    assert isinstance(classifier, GridSearchCV)
+    assert isinstance(classifier.estimator, SGDClassifier)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
@@ -2847,6 +2875,7 @@ def test_grid_search_cv_decision_tree():
                                                                RangeComparison(0, 5000))),
                                   OptionalCodeInfo(CodeReference(16, 19, 16, 43),
                                                    "DecisionTreeClassifier()"),
+                                  Comparison(partial),
                                   Comparison(partial))
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
@@ -2863,6 +2892,9 @@ def test_grid_search_cv_decision_tree():
     fitted_estimator = fit_node.processing_func(train_data, train_labels)
     assert isinstance(fitted_estimator, GridSearchCV)
     assert isinstance(fitted_estimator.estimator, DecisionTreeClassifier)
+    classifier = fit_node.make_classifier_func()
+    assert isinstance(classifier, GridSearchCV)
+    assert isinstance(classifier.estimator, DecisionTreeClassifier)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
@@ -2955,6 +2987,7 @@ def test_grid_search_cv_logistic_regression():
                                                                RangeComparison(0, 5000))),
                                   OptionalCodeInfo(CodeReference(16, 19, 16, 39),
                                                    "LogisticRegression()"),
+                                  Comparison(partial),
                                   Comparison(partial))
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
@@ -2971,6 +3004,9 @@ def test_grid_search_cv_logistic_regression():
     fitted_estimator = fit_node.processing_func(train_data, train_labels)
     assert isinstance(fitted_estimator, GridSearchCV)
     assert isinstance(fitted_estimator.estimator, LogisticRegression)
+    classifier = fit_node.make_classifier_func()
+    assert isinstance(classifier, GridSearchCV)
+    assert isinstance(classifier.estimator, LogisticRegression)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
@@ -3083,6 +3119,7 @@ def test_grid_search_cv_keras_wrapper():
                                   OptionalCodeInfo(CodeReference(27, 4, 27, 87),
                                                    'clf.compile(loss=\'categorical_crossentropy\', '
                                                    'optimizer=SGD(), metrics=["accuracy"])'),
+                                  Comparison(partial),
                                   Comparison(partial))
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
@@ -3099,6 +3136,9 @@ def test_grid_search_cv_keras_wrapper():
     fitted_estimator = fit_node.processing_func(train_data, train_labels)
     assert isinstance(fitted_estimator, GridSearchCV)
     assert isinstance(fitted_estimator.estimator, KerasClassifier)
+    classifier = fit_node.make_classifier_func()
+    assert isinstance(classifier, GridSearchCV)
+    assert isinstance(classifier.estimator, KerasClassifier)
 
     test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
     test_labels = OneHotEncoder(sparse=False).fit_transform(test_df[['target']])
