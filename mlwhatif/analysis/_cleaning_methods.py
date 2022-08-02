@@ -3,6 +3,7 @@ Cleaning functions for the DataCleaning What-if Analysis
 """
 import sys
 
+import cleanlab
 import numpy
 import pandas
 from pandas import DataFrame
@@ -210,3 +211,20 @@ class MVCleaner(object):
         mv_mat = self.detect(df)
         df_clean = self.repair(df)
         return df_clean, mv_mat
+
+
+class MislabelCleaner:
+    """
+    Mislabel ErrorType
+    """
+
+    @staticmethod
+    def fit_cleanlab(train_data, train_labels, make_classifier_func):
+        estimator = cleanlab.classification.CleanLearning(make_classifier_func())
+        estimator.fit(train_data, train_labels)
+        return estimator
+
+    @staticmethod
+    def predict_cleanlab(estimator, test_data):
+        predictions = estimator.predict(test_data)
+        return predictions

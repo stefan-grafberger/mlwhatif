@@ -29,6 +29,15 @@ class ErrorType(Enum):
     MISLABEL = "mislabel"
 
 
+class PatchType(Enum):
+    """
+    The different patch types
+    """
+    DATA_FILTER_PATCH = "data filter patch"
+    DATA_TRANSFORMER_PATCH = "transformer patch"
+    ESTIMATOR_PATCH = "estimator patch"
+
+
 @dataclasses.dataclass
 class CleaningMethod:
     """
@@ -36,10 +45,10 @@ class CleaningMethod:
     """
 
     method_name: str
-    is_filter_not_project: bool
+    patch_type: PatchType
     filter_func: Callable or None = None
-    transformer_fit_transform_func: Callable or None = None
-    transformer_transform_func: Callable or None = None
+    fit_or_fit_transform_func: Callable or None = None
+    predict_or_fit_func: Callable or None = None
     numeric_only: bool = False
     categorical_only: bool = False
 
@@ -49,75 +58,77 @@ class CleaningMethod:
 
 CLEANING_METHODS_FOR_ERROR_TYPE = {
     ErrorType.NUM_MISSING_VALUES: [
-        CleaningMethod("delete", True, filter_func=MissingValueCleaner.drop_missing),
-        CleaningMethod("impute_num_median", False,
-                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                              strategy='median'),
-                       transformer_transform_func=MissingValueCleaner.transform_all),
-        CleaningMethod("impute_num_mean", False,
-                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                              strategy='mean'),
-                       transformer_transform_func=MissingValueCleaner.transform_all),
-        CleaningMethod("impute_num_mode", False,
-                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                              strategy='mode'),
-                       transformer_transform_func=MissingValueCleaner.transform_all)
+        CleaningMethod("delete", PatchType.DATA_FILTER_PATCH, filter_func=MissingValueCleaner.drop_missing),
+        CleaningMethod("impute_num_median", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
+                                                         strategy='median'),
+                       predict_or_fit_func=MissingValueCleaner.transform_all),
+        CleaningMethod("impute_num_mean", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
+                                                         strategy='mean'),
+                       predict_or_fit_func=MissingValueCleaner.transform_all),
+        CleaningMethod("impute_num_mode", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
+                                                         strategy='mode'),
+                       predict_or_fit_func=MissingValueCleaner.transform_all)
     ],
     ErrorType.CAT_MISSING_VALUES: [
-        CleaningMethod("delete", True, filter_func=MissingValueCleaner.drop_missing),
-        CleaningMethod("impute_cat_mode", False,
-                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                              strategy='mode', cat=True),
-                       transformer_transform_func=partial(MissingValueCleaner.transform_all, cat=True)),
-        CleaningMethod("impute_cat_dummy", False,
-                       transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                              strategy='dummy', cat=True),
-                       transformer_transform_func=partial(MissingValueCleaner.transform_all, cat=True))],
+        CleaningMethod("delete", PatchType.DATA_FILTER_PATCH, filter_func=MissingValueCleaner.drop_missing),
+        CleaningMethod("impute_cat_mode", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
+                                                         strategy='mode', cat=True),
+                       predict_or_fit_func=partial(MissingValueCleaner.transform_all, cat=True)),
+        CleaningMethod("impute_cat_dummy", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
+                                                         strategy='dummy', cat=True),
+                       predict_or_fit_func=partial(MissingValueCleaner.transform_all, cat=True))],
     ErrorType.OUTLIERS: [
-        CleaningMethod("clean_SD_impute_mean", False,
-                       transformer_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
-                                                              detection_strategy='SD', repair_strategy='mean'),
-                       transformer_transform_func=OutlierCleaner.transform_all),
-        CleaningMethod("clean_SD_impute_median", False,
-                       transformer_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
-                                                              detection_strategy='SD', repair_strategy='median'),
-                       transformer_transform_func=OutlierCleaner.transform_all),
-        CleaningMethod("clean_SD_impute_mode", False,
-                       transformer_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
-                                                              detection_strategy='SD', repair_strategy='mode'),
-                       transformer_transform_func=OutlierCleaner.transform_all),
-        CleaningMethod("clean_IQR_impute_mean", False,
-                       transformer_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
-                                                              detection_strategy='IQR', repair_strategy='mean'),
-                       transformer_transform_func=OutlierCleaner.transform_all),
-        CleaningMethod("clean_IQR_impute_median", False,
-                       transformer_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
-                                                              detection_strategy='IQR', repair_strategy='median'),
-                       transformer_transform_func=OutlierCleaner.transform_all),
-        CleaningMethod("clean_IQR_impute_mode", False,
-                       transformer_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
-                                                              detection_strategy='IQR', repair_strategy='mode'),
-                       transformer_transform_func=OutlierCleaner.transform_all),
-        CleaningMethod("clean_IF_impute_mean", False,
-                       transformer_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
-                                                              detection_strategy='IF', repair_strategy='mean'),
-                       transformer_transform_func=OutlierCleaner.transform_all),
-        CleaningMethod("clean_IF_impute_median", False,
-                       transformer_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
-                                                              detection_strategy='IF', repair_strategy='median'),
-                       transformer_transform_func=OutlierCleaner.transform_all),
-        CleaningMethod("clean_IF_impute_mode", False,
-                       transformer_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
-                                                              detection_strategy='IF', repair_strategy='mode'),
-                       transformer_transform_func=OutlierCleaner.transform_all)
+        CleaningMethod("clean_SD_impute_mean", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
+                                                         detection_strategy='SD', repair_strategy='mean'),
+                       predict_or_fit_func=OutlierCleaner.transform_all),
+        CleaningMethod("clean_SD_impute_median", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
+                                                         detection_strategy='SD', repair_strategy='median'),
+                       predict_or_fit_func=OutlierCleaner.transform_all),
+        CleaningMethod("clean_SD_impute_mode", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
+                                                         detection_strategy='SD', repair_strategy='mode'),
+                       predict_or_fit_func=OutlierCleaner.transform_all),
+        CleaningMethod("clean_IQR_impute_mean", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
+                                                         detection_strategy='IQR', repair_strategy='mean'),
+                       predict_or_fit_func=OutlierCleaner.transform_all),
+        CleaningMethod("clean_IQR_impute_median", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
+                                                         detection_strategy='IQR',
+                                                         repair_strategy='median'),
+                       predict_or_fit_func=OutlierCleaner.transform_all),
+        CleaningMethod("clean_IQR_impute_mode", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
+                                                         detection_strategy='IQR', repair_strategy='mode'),
+                       predict_or_fit_func=OutlierCleaner.transform_all),
+        CleaningMethod("clean_IF_impute_mean", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
+                                                         detection_strategy='IF', repair_strategy='mean'),
+                       predict_or_fit_func=OutlierCleaner.transform_all),
+        CleaningMethod("clean_IF_impute_median", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
+                                                         detection_strategy='IF', repair_strategy='median'),
+                       predict_or_fit_func=OutlierCleaner.transform_all),
+        CleaningMethod("clean_IF_impute_mode", PatchType.DATA_TRANSFORMER_PATCH,
+                       fit_or_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
+                                                         detection_strategy='IF', repair_strategy='mode'),
+                       predict_or_fit_func=OutlierCleaner.transform_all)
     ],
     ErrorType.DUPLICATES: [
-        CleaningMethod("delete", True, filter_func=DuplicateCleaner.drop_duplicates)
+        CleaningMethod("delete", PatchType.DATA_FILTER_PATCH, filter_func=DuplicateCleaner.drop_duplicates)
     ],
     ErrorType.MISLABEL: [
-        CleaningMethod("cleanlab", False,
-                       transformer_fit_transform_func=None,  # TODO: MVCleaner("impute", num="mean", cat="mode")...
-                       transformer_transform_func=None)
+        CleaningMethod("cleanlab", PatchType.ESTIMATOR_PATCH,
+                       fit_or_fit_transform_func=None,
+                       # TODO: MVCleaner("impute", num="mean", cat="mode")...
+                       predict_or_fit_func=None)
     ]
 }
 
@@ -150,13 +161,14 @@ class DataCleaning(WhatIfAnalysis):
                             "be uniquely identified by the line number in the code!")
         cleaning_dags = []
         for column, error in self._columns_with_error:
-            train_first_node_with_column = find_dag_location_for_data_patch(column, dag, True)
-            test_first_node_with_column = find_dag_location_for_data_patch(column, dag, False)
             for cleaning_method in CLEANING_METHODS_FOR_ERROR_TYPE[error]:
                 cleaning_result_label = f"data-cleaning-{column}-{cleaning_method.method_name}"
                 cleaning_dag = dag.copy()
                 self.add_intermediate_extraction_after_score_nodes(cleaning_dag, cleaning_result_label)
-                if cleaning_method.is_filter_not_project is True:
+                if cleaning_method.patch_type == PatchType.DATA_FILTER_PATCH:
+                    train_first_node_with_column = find_dag_location_for_data_patch(column, dag, True)
+                    test_first_node_with_column = find_dag_location_for_data_patch(column, dag, False)
+
                     filter_func = partial(cleaning_method.filter_func, column=column)
 
                     new_train_cleaning_node = DagNode(singleton.get_next_op_id(),
@@ -179,10 +191,12 @@ class DataCleaning(WhatIfAnalysis):
                                                          None,
                                                          filter_func)
                         add_new_node_after_node(cleaning_dag, new_test_cleaning_node, test_first_node_with_column)
-                else:
-                    # TODO: Get first node after train test split instead
-                    fit_transform = partial(cleaning_method.transformer_fit_transform_func, column=column)
-                    transform = partial(cleaning_method.transformer_transform_func, column=column)
+                elif cleaning_method.patch_type == PatchType.DATA_TRANSFORMER_PATCH:
+                    train_first_node_with_column = find_dag_location_for_data_patch(column, dag, True)
+                    test_first_node_with_column = find_dag_location_for_data_patch(column, dag, False)
+
+                    fit_transform = partial(cleaning_method.fit_or_fit_transform_func, column=column)
+                    transform = partial(cleaning_method.predict_or_fit_func, column=column)
                     new_train_cleaning_node = DagNode(singleton.get_next_op_id(),
                                                       train_first_node_with_column.code_location,
                                                       OperatorContext(OperatorType.TRANSFORMER, None),
@@ -207,6 +221,11 @@ class DataCleaning(WhatIfAnalysis):
                         add_new_node_after_node(cleaning_dag, new_test_cleaning_node, test_first_node_with_column,
                                                 arg_index=1)
                         cleaning_dag.add_edge(new_train_cleaning_node, new_test_cleaning_node, arg_index=0)
+                elif cleaning_method.patch_type == PatchType.ESTIMATOR_PATCH:
+                    print("todo")
+                    # TODO
+                else:
+                    raise Exception(f"Unknown patch type: {cleaning_method.patch_type}!")
                 cleaning_dags.append(cleaning_dag)
         return cleaning_dags
 

@@ -188,7 +188,8 @@ def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with
                                                               RangeComparison(0, 30000000))),
                                  OptionalCodeInfo(CodeReference(26 + line_offset, 19, 26 + line_offset, 48),
                                                   'tree.DecisionTreeClassifier()'),
-                                 Comparison(FunctionType))
+                                 Comparison(FunctionType),
+                                 Comparison(partial))
     expected_graph.add_edge(expected_train_data, expected_estimator, arg_index=0)
     expected_graph.add_edge(expected_train_labels, expected_estimator, arg_index=1)
 
