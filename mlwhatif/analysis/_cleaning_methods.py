@@ -40,8 +40,12 @@ def detect_outlier_isolation_forest(x, contamination=0.01, fitted_detector=None)
     # Isolation Forest (Univariate)
     if fitted_detector is None:
         isolation_forest = IsolationForest(contamination=contamination)
-        isolation_forest.fit(x.reshape(-1, 1))
-    return lambda y: (isolation_forest.predict(y.reshape(-1, 1)) == -1), fitted_detector
+        if not isinstance(x, DataFrame):
+            x = x.reshape(-1, 1)
+        isolation_forest.fit(x)
+        fitted_detector = isolation_forest
+    result = fitted_detector.predict(x) == -1
+    return result, fitted_detector
 
 
 class OutlierCleaner:
