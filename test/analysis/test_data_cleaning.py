@@ -79,4 +79,4 @@ def test_data_cleaning_healthcare():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
-    assert report.shape == (18, 6)
+    assert report.shape == (19, 6)
