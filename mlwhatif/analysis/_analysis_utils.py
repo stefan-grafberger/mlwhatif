@@ -1,6 +1,7 @@
 """
 Util functions to make writing What-If Analyses easier
 """
+import logging
 from typing import Tuple
 
 import networkx
@@ -8,6 +9,9 @@ import networkx
 from mlwhatif import OperatorContext, OperatorType
 from mlwhatif.instrumentation._dag_node import DagNode, DagNodeDetails
 from mlwhatif.instrumentation._pipeline_executor import singleton
+
+
+logger = logging.getLogger(__name__)
 
 
 def find_nodes_by_type(new_dag: networkx.DiGraph, operator_type: OperatorType):
@@ -31,7 +35,7 @@ def add_intermediate_extraction_after_node(dag: networkx.DiGraph, dag_node: DagN
     add_new_node_after_node(dag, new_extraction_node, dag_node)
 
 
-def add_new_node_after_node(dag: networkx.DiGraph, new_node: DagNode, dag_node: DagNode):
+def add_new_node_after_node(dag: networkx.DiGraph, new_node: DagNode, dag_node: DagNode, arg_index=0):
     """Add a new node behind some given node to extract the intermediate result of that given node"""
     dag.add_node(new_node)
     children_before_modifications = list(dag.successors(dag_node))
@@ -39,7 +43,7 @@ def add_new_node_after_node(dag: networkx.DiGraph, new_node: DagNode, dag_node: 
         edge_data = dag.get_edge_data(dag_node, child_node)
         dag.add_edge(new_node, child_node, **edge_data)
         dag.remove_edge(dag_node, child_node)
-    dag.add_edge(dag_node, new_node)
+    dag.add_edge(dag_node, new_node, arg_index=arg_index)
 
 
 def get_sorted_parent_nodes(dag: networkx.DiGraph, first_op_requiring_corruption):
@@ -122,23 +126,6 @@ def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_nam
     return search_start_node
 
 
-def find_first_op_where_column_present(dag, search_start_node: DagNode, column_name: str, test_not_train: bool):
-    """Find DagNodes in the DAG by OperatorType"""
-    if test_not_train is True:
-        dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
-    else:
-        dag_to_consider = dag
-    nodes_to_search = list(networkx.ancestors(dag_to_consider, search_start_node))
-
-    matches = [node for node in nodes_to_search
-               if column_name in node.details.columns]
-    if len(matches) == 0:
-        raise Exception(f"Column {column_name} not found in DAG!")
-
-    sorted_matches = sorted(matches, key=lambda dag_node: dag_node.node_id)
-    return sorted_matches[0]
-
-
 def find_dag_location_for_first_op_modifying_column(column, dag, test_not_train):
     """Find out between which two nodes to apply the corruption"""
     search_start_node = find_train_or_test_pipeline_part_end(dag, test_not_train)
@@ -149,10 +136,38 @@ def find_dag_location_for_first_op_modifying_column(column, dag, test_not_train)
     return operator_to_apply_corruption_after, first_op_requiring_corruption
 
 
-def find_dag_location_for_data_patch(column, dag, test_not_train):
+def find_dag_location_for_data_patch(column, dag, train_not_test):
     """Find out between which two nodes to apply the corruption"""
-    search_start_node = find_train_or_test_pipeline_part_end(dag, test_not_train)
-    first_op_requiring_corruption = find_first_op_where_column_present(dag, search_start_node, column, test_not_train)
+    train_search_start_node = find_train_or_test_pipeline_part_end(dag, False)
+    test_search_start_node = find_train_or_test_pipeline_part_end(dag, True)
+    dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
+
+    train_nodes_to_search = set(networkx.ancestors(dag_to_consider, train_search_start_node))
+    test_nodes_to_search = set(networkx.ancestors(dag_to_consider, test_search_start_node))
+
+    if train_not_test is True:
+        nodes_to_search = train_nodes_to_search.difference(test_nodes_to_search)
+    else:
+        nodes_to_search = test_nodes_to_search.difference(train_nodes_to_search)
+
+    matches = [node for node in nodes_to_search
+               if column in node.details.columns]
+
+    if len(matches) == 0:
+        dag_part_name = "train" if train_not_test is True else "test"
+        logger.warning(f"Column {column} not present in {dag_part_name} DAG after the train test split!")
+        logger.warning(f"Looking for it before the split now!")
+        logger.warning(f"This could hint at data leakage!")
+
+        nodes_to_search = train_nodes_to_search.intersection(test_nodes_to_search)
+        matches = [node for node in nodes_to_search
+                   if column in node.details.columns]
+
+        if len(matches) == 0:
+            raise Exception(f"Column {column} not present in DAG!")
+
+    sorted_matches = sorted(matches, key=lambda dag_node: dag_node.node_id)
+    first_op_requiring_corruption = sorted_matches[0]
     return first_op_requiring_corruption
 
 

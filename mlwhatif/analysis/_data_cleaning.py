@@ -136,25 +136,28 @@ class DataCleaning(WhatIfAnalysis):
                                                       train_first_node_with_column.code_location,
                                                       OperatorContext(OperatorType.TRANSFORMER, None),
                                                       DagNodeDetails(
-                                                          f"Clean {column}: {cleaning_method.method_name}",
+                                                          f"Clean {column}: {cleaning_method.method_name} "
+                                                          f"fit_transform",
                                                           train_first_node_with_column.details.columns),
                                                       None,
                                                       fit_transform)
-                    add_new_node_after_node(cleaning_dag, new_train_cleaning_node, test_first_node_with_column)
+                    add_new_node_after_node(cleaning_dag, new_train_cleaning_node, train_first_node_with_column)
 
                     if test_first_node_with_column != train_first_node_with_column:
                         new_test_cleaning_node = DagNode(singleton.get_next_op_id(),
                                                          test_first_node_with_column.code_location,
-                                                         OperatorContext(OperatorType.SELECTION, None),
+                                                         OperatorContext(OperatorType.TRANSFORMER, None),
                                                          DagNodeDetails(
-                                                             f"Clean {column}: {cleaning_method.method_name}",
+                                                             f"Clean {column}: {cleaning_method.method_name} "
+                                                             f"transform",
                                                              train_first_node_with_column.details.columns),
                                                          None,
                                                          transform)
-                        add_new_node_after_node(cleaning_dag, new_test_cleaning_node, test_first_node_with_column)
+                        add_new_node_after_node(cleaning_dag, new_test_cleaning_node, test_first_node_with_column,
+                                                arg_index=1)
                         # TODO: It would be cleaner to increase the other arg_index numbers by 1 instead
                         #  of using -1 here to substitute 0
-                        cleaning_dag.add_edge(new_train_cleaning_node, new_test_cleaning_node, arg_index=-1)
+                        cleaning_dag.add_edge(new_train_cleaning_node, new_test_cleaning_node, arg_index=0)
                 cleaning_dags.append(cleaning_dag)
         return cleaning_dags
 

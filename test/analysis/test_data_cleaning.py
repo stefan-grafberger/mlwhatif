@@ -45,7 +45,7 @@ def test_data_cleaning_mini_example_with_transformer_processing_multiple_columns
         assert test_score == 1.0
         """)
 
-    data_cleaning = DataCleaning({'A': ErrorType.OUTLIERS})
+    data_cleaning = DataCleaning({'B': ErrorType.DUPLICATES})
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .add_what_if_analysis(data_cleaning) \
