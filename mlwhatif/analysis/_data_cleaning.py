@@ -13,7 +13,7 @@ from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, add_intermediate_extraction_after_node, \
     find_dag_location_for_data_patch, \
     add_new_node_after_node
-from mlwhatif.analysis._cleaning_methods import MissingValueCleaner, DuplicateCleaner
+from mlwhatif.analysis._cleaning_methods import MissingValueCleaner, DuplicateCleaner, OutlierCleaner
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
@@ -67,16 +67,17 @@ CLEANING_METHODS_FOR_ERROR_TYPE = {
         CleaningMethod("delete", True, filter_func=MissingValueCleaner.drop_missing),
         CleaningMethod("impute_cat_mode", False,
                        transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                              strategy='mode'),
-                       transformer_transform_func=MissingValueCleaner.transform_all),
+                                                              strategy='mode', cat=True),
+                       transformer_transform_func=partial(MissingValueCleaner.transform_all, cat=True)),
         CleaningMethod("impute_cat_dummy", False,
                        transformer_fit_transform_func=partial(MissingValueCleaner.fit_transform_all,
-                                                              strategy='dummy'),
-                       transformer_transform_func=MissingValueCleaner.transform_all)],
+                                                              strategy='dummy', cat=True),
+                       transformer_transform_func=partial(MissingValueCleaner.transform_all, cat=True))],
     ErrorType.OUTLIERS: [
-        CleaningMethod("clean_SD_impute_mean_dummy", False,
-                       transformer_fit_transform_func=None,  # TODO: MVCleaner("impute", num="mean", cat="mode")...
-                       transformer_transform_func=None)
+        CleaningMethod("clean_SD_impute_mean", False,
+                       transformer_fit_transform_func=partial(OutlierCleaner.fit_transform_all,
+                                                              detection_strategy='SD', repair_strategy='mean'),
+                       transformer_transform_func=OutlierCleaner.transform_all)
     ],
     ErrorType.DUPLICATES: [
         CleaningMethod("delete", True, filter_func=DuplicateCleaner.drop_duplicates)

@@ -64,6 +64,7 @@ def test_data_cleaning_healthcare():
     """
     data_cleaning = DataCleaning({'smoker': ErrorType.CAT_MISSING_VALUES,
                                   'num_children': ErrorType.NUM_MISSING_VALUES,
+                                  'income': ErrorType.OUTLIERS,
                                   'ssn': ErrorType.DUPLICATES})
 
     analysis_result = PipelineAnalyzer \
@@ -77,4 +78,4 @@ def test_data_cleaning_healthcare():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
-    assert report.shape == (8, 6)
+    assert report.shape == (9, 6)
