@@ -41,12 +41,20 @@ class MultiQueryOptimizer:
             for patch in patch_set:
                 if isinstance(patch, DataPatch):
                     if isinstance(patch, DataFiltering):
-                        location = find_dag_location_for_data_patch([patch.only_reads_column], what_if_dag,
-                                                                    patch.train_not_test)
-                        add_new_node_after_node(what_if_dag, patch.filter_operator, location)
+                        location, is_before_slit = find_dag_location_for_data_patch([patch.only_reads_column],
+                                                                                    what_if_dag, patch.train_not_test)
+                        if is_before_slit is False:
+                            add_new_node_after_node(what_if_dag, patch.filter_operator, location)
+                        elif patch.train_not_test is True:
+                            dag_part_name = "train" if patch.train_not_test is True else "test"
+                            logger.warning(
+                                f"Columns {patch.only_reads_column} not present in {dag_part_name} DAG after the train "
+                                f"test split, only before!")
+                            logger.warning(f"This could hint at data leakage!")
+                            add_new_node_after_node(what_if_dag, patch.filter_operator, location)
                     elif isinstance(patch, DataTransformer):
-                        train_location = find_dag_location_for_data_patch([patch.modifies_column], what_if_dag, True)
-                        test_location = find_dag_location_for_data_patch([patch.modifies_column], what_if_dag, False)
+                        train_location, _ = find_dag_location_for_data_patch([patch.modifies_column], what_if_dag, True)
+                        test_location, _ = find_dag_location_for_data_patch([patch.modifies_column], what_if_dag, False)
                         add_new_node_after_node(what_if_dag, patch.fit_transform_operator, train_location)
                         if train_location != test_location:
                             add_new_node_after_node(what_if_dag, patch.transform_operator, test_location, arg_index=1)
@@ -69,35 +77,40 @@ class MultiQueryOptimizer:
                     raise Exception(f"Unknown patch type: {type(patch).__name__}!")
             what_if_dags.append(what_if_dag)
 
-        self.make_nodes_depending_on_changed_nodes_unique(original_dag, what_if_dags)
+        if skip_optimizer is False:
+            self.make_nodes_depending_on_changed_nodes_unique(original_dag, what_if_dags)
+        else:
+            self.make_all_nodes_unique(what_if_dags)
+
+        for dag_index, what_if_dag in enumerate(what_if_dags):
+            if prefix_analysis_dags is not None:
+                save_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-{dag_index}.png")
 
         combined_estimated_runtimes = sum([self._estimate_runtime_of_dag(dag) for dag in what_if_dags])
         logger.info(f"Estimated unoptimized what-if runtime is {combined_estimated_runtimes}ms")
 
+        multi_query_optimization_start = time.time()
         if skip_optimizer is False:
             logger.info(f"Performing Multi-Query Optimization")
-            multi_query_optimization_start = time.time()
-
-            # Actual code
+            # TODO: More optimizations, maybe create some optimization rule interface that what-if analyses can use
+            #  to specify analysis-specific optimizations
             big_execution_dag = networkx.compose_all(what_if_dags)
-
-            estimate_optimised_runtime = self._estimate_runtime_of_dag(big_execution_dag)
-            logger.info(f"Estimated optimised what-if runtime is {estimate_optimised_runtime}ms")
-
-            estimated_saving = combined_estimated_runtimes - estimate_optimised_runtime
-            logger.info(f"Estimated optimisation runtime saving is {estimated_saving}ms")
-
-            multi_query_optimization_duration = time.time() - multi_query_optimization_start
-            logger.info(f'---RUNTIME: Multi-Query Optimization took {multi_query_optimization_duration * 1000} ms')
-            logger.info(f"Executing generated plan")
-            if prefix_optimised_analysis_dag is not None:
-                save_fig_to_path(big_execution_dag, f"{prefix_optimised_analysis_dag}.png")
         else:
-            logger.warning("Skipping Multi-Query Optimization")
-            big_execution_dag = networkx.disjoint_union_all(what_if_dags)  # TODO: Does this work?
+            logger.warning("Skipping Multi-Query Optimization (instead, only combine execution DAGs)")
+            big_execution_dag = networkx.compose_all(what_if_dags)
+        multi_query_optimization_duration = time.time() - multi_query_optimization_start
 
-        # TODO: More optimizations, maybe create some optimization rule interface that what-if analyses can use
-        #  to specify analysis-specific optimizations
+        if prefix_optimised_analysis_dag is not None:
+            save_fig_to_path(big_execution_dag, f"{prefix_optimised_analysis_dag}.png")
+
+        estimate_optimised_runtime = self._estimate_runtime_of_dag(big_execution_dag)
+        logger.info(f"Estimated optimised what-if runtime is {estimate_optimised_runtime}ms")
+
+        estimated_saving = combined_estimated_runtimes - estimate_optimised_runtime
+        logger.info(f"Estimated optimisation runtime saving is {estimated_saving}ms")
+        logger.info(f'---RUNTIME: Multi-Query Optimization took {multi_query_optimization_duration * 1000} ms')
+        logger.info(f"Executing generated plan")
+
         return big_execution_dag
 
     def make_nodes_depending_on_changed_nodes_unique(self, original_dag, what_if_dags):
@@ -118,6 +131,11 @@ class MultiQueryOptimizer:
                 all_nodes_needing_recomputation.update(original_nodes_needing_recomputation)
 
             self.generate_unique_ids_for_selected_nodes(dag, all_nodes_needing_recomputation)
+
+    def make_all_nodes_unique(self, what_if_dags):
+        """We need to give all nodes new ids to combine DAGs without reusing results."""
+        for dag in what_if_dags:
+            self.generate_unique_ids_for_selected_nodes(dag, dag.nodes)
 
     def generate_unique_ids_for_selected_nodes(self, dag: networkx.DiGraph, nodes_to_recompute: Iterable[DagNode]):
         """ This gives new node_ids to all reachable nodes given some input node """

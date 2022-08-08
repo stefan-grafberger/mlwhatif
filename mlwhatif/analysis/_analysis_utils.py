@@ -138,7 +138,7 @@ def find_dag_location_for_first_op_modifying_column(column, dag, test_not_train)
     return operator_to_apply_corruption_after, first_op_requiring_corruption
 
 
-def find_dag_location_for_data_patch(columns, dag, train_not_test):
+def find_dag_location_for_data_patch(columns, dag, train_not_test) -> tuple[any, bool]:
     """Find out between which two nodes to apply the corruption"""
     train_search_start_node = find_train_or_test_pipeline_part_end(dag, False)
     test_search_start_node = find_train_or_test_pipeline_part_end(dag, True)
@@ -155,11 +155,9 @@ def find_dag_location_for_data_patch(columns, dag, train_not_test):
     columns = set(columns)
     matches = [node for node in nodes_to_search if columns.issubset(set(node.details.columns))]
 
+    is_before_split = False
     if len(matches) == 0:
-        dag_part_name = "train" if train_not_test is True else "test"
-        logger.warning(f"Columns {columns} not present in {dag_part_name} DAG after the train test split!")
-        logger.warning(f"Looking for it before the split now!")
-        logger.warning(f"This could hint at data leakage!")
+        is_before_split = True
 
         nodes_to_search = train_nodes_to_search.intersection(test_nodes_to_search)
         matches = [node for node in nodes_to_search
@@ -170,7 +168,7 @@ def find_dag_location_for_data_patch(columns, dag, train_not_test):
 
     sorted_matches = sorted(matches, key=lambda dag_node: dag_node.node_id)
     first_op_requiring_corruption = sorted_matches[0]
-    return first_op_requiring_corruption
+    return first_op_requiring_corruption, is_before_split
 
 
 def find_train_or_test_pipeline_part_end(dag, test_not_train):
