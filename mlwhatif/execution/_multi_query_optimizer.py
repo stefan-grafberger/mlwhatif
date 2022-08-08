@@ -9,9 +9,9 @@ import networkx
 
 from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_data_patch, add_new_node_after_node, \
-    find_nodes_by_type, replace_node
+    find_nodes_by_type, replace_node, get_sorted_parent_nodes, remove_node
 from mlwhatif.execution._patches import Patch, DataPatch, ModelPatch, PipelinePatch, DataFiltering, DataTransformer, \
-    AppendNodeAfterOperator, DataProjection
+    AppendNodeAfterOperator, DataProjection, OperatorReplacement, OperatorRemoval
 from mlwhatif.instrumentation._dag_node import DagNode
 from mlwhatif.visualisation import save_fig_to_path
 
@@ -83,6 +83,10 @@ class MultiQueryOptimizer:
                 elif isinstance(patch, PipelinePatch):
                     if isinstance(patch, AppendNodeAfterOperator):
                         add_new_node_after_node(what_if_dag, patch.operator_to_add_node_after, patch.node_to_insert)
+                    elif isinstance(patch, OperatorReplacement):
+                        replace_node(what_if_dag, patch.operator_to_replace, patch.replacement_operator)
+                    elif isinstance(patch, OperatorRemoval):
+                        remove_node(what_if_dag, patch.operator_to_remove)
                     else:
                         raise Exception(f"Unknown PipelinePatch type: {type(patch).__name__}!")
                 else:

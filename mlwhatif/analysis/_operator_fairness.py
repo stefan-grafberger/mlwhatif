@@ -11,9 +11,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_intermediate_extraction_patch_after_node, \
-    replace_node, get_sorted_parent_nodes, find_train_or_test_pipeline_part_end
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_sorted_parent_nodes, \
+    find_train_or_test_pipeline_part_end, \
+    get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.execution._patches import Patch, OperatorReplacement, OperatorRemoval
 from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import wrap_in_mlinspect_array_if_necessary
 
@@ -35,8 +37,7 @@ class OperatorFairness(WhatIfAnalysis):
     def analysis_id(self):
         return self._analysis_id
 
-    def generate_plans_to_try(self, dag: networkx.DiGraph) \
-            -> Iterable[networkx.DiGraph]:
+    def generate_plans_to_try(self, dag: networkx.DiGraph) -> Iterable[Iterable[Patch]]:
         predict_operators = find_nodes_by_type(dag, OperatorType.PREDICT)
         if len(predict_operators) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call which "
@@ -47,29 +48,33 @@ class OperatorFairness(WhatIfAnalysis):
             raise Exception("Currently, DataCorruption only supports pipelines where different score operations can "
                             "be uniquely identified by the line number in the code!")
         self._operators_to_test = self.get_operators_to_test(dag)
-        result_dags = []
+        fairness_patch_sets = []
         for operator_to_replace in self._operators_to_test:
-            modified_dag = dag.copy()
+            patches_for_variant = []
             result_label = self.get_label_for_operator(operator_to_replace)
-            self.add_intermediate_extraction_after_score_nodes(modified_dag, result_label)
-            # TODO: Replace operator, two operator types exist here currently: transformers and selections
+            extraction_nodes = get_intermediate_extraction_patch_after_score_nodes(singleton, self,
+                                                                                   result_label,
+                                                                                   self._score_nodes_and_linenos)
+            patches_for_variant.extend(extraction_nodes)
 
             # This is the passthrough transformer the sklearn ColumnTransformer uses internally, a FunctionTransformer
             #  that uses the identity function
             if operator_to_replace.operator_info.operator == OperatorType.TRANSFORMER:
                 replacement_node = self.get_transformer_replacement_node(operator_to_replace)
-                replace_node(modified_dag, operator_to_replace, replacement_node)
+                patch = OperatorReplacement(singleton.get_next_patch_id(), self, True, operator_to_replace,
+                                            replacement_node)
+                patches_for_variant.append(patch)
             elif operator_to_replace.operator_info.operator == OperatorType.SELECTION:
-                self.remove_nodes_associated_with_selection(modified_dag, operator_to_replace)
+                removal_patches = self.get_removal_patches_for_selection_nodes(dag, operator_to_replace)
+                patches_for_variant.extend(removal_patches)
             else:
                 raise Exception(f"Replacing operator type {operator_to_replace.operator_info.operator.value} is "
                                 f"not supported yet!")
 
-            result_dags.append(modified_dag)
-        return result_dags
+            fairness_patch_sets.append(patches_for_variant)
+        return fairness_patch_sets
 
-    @staticmethod
-    def remove_nodes_associated_with_selection(modified_dag, operator_to_replace):
+    def get_removal_patches_for_selection_nodes(self, modified_dag, operator_to_replace):
         """Removes the selection node as well as nodes that are there for the selection condition"""
         # TODO: This code assumes a selection based on a simple condition like in our example pipelines for now.
         operator_parent_nodes = get_sorted_parent_nodes(modified_dag, operator_to_replace)
@@ -83,16 +88,16 @@ class OperatorFairness(WhatIfAnalysis):
                                                             target=operator_to_replace)
         nodes_between_set = {node for path in paths_between_generator for node in path}
         nodes_between_set.remove(operator_after_which_cutoff_required)
-        children_before_modifications = list(modified_dag.successors(operator_to_replace))
-        for child_node in children_before_modifications:
-            edge_data = modified_dag.get_edge_data(operator_to_replace, child_node)
-            modified_dag.add_edge(operator_after_which_cutoff_required, child_node, **edge_data)
-        modified_dag.remove_node(operator_to_replace)
-        modified_dag.remove_nodes_from(nodes_between_set)
+        removal_patches = []
+        for node_to_remove in nodes_between_set:
+            removal_patch = OperatorRemoval(singleton.get_next_patch_id(), self, True, node_to_remove)
+            removal_patches.append(removal_patch)
+        return removal_patches
 
     @staticmethod
     def get_transformer_replacement_node(operator_to_replace):
         """Replace a transformer with an alternative that does nothing."""
+
         def onehot_transformer_processing_func(input_df):
             transformer = OneHotEncoder(sparse=False, handle_unknown='ignore')
             transformed_data = transformer.fit_transform(input_df)
@@ -196,15 +201,6 @@ class OperatorFairness(WhatIfAnalysis):
             raise Exception(f"Replacing operator type {operator_to_replace.operator_info.operator.value} is "
                             f"not supported yet!")
         return replacement_description
-
-    def add_intermediate_extraction_after_score_nodes(self, dag: networkx.DiGraph, label: str):
-        """Add a new node behind some given node to extract the intermediate result of that given node"""
-        node_linenos = []
-        for node, lineno in self._score_nodes_and_linenos:
-            node_linenos.append(lineno)
-            node_label = f"{label}_L{lineno}"
-            get_intermediate_extraction_patch_after_node(dag, node, node_label)
-        return node_linenos
 
     def get_operators_to_test(self, dag):
         """

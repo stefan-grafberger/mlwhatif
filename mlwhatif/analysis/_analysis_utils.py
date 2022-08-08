@@ -74,6 +74,17 @@ def replace_node(dag: networkx.DiGraph, dag_node_to_be_replaced: DagNode, new_no
     dag.remove_node(dag_node_to_be_replaced)
 
 
+def remove_node(dag: networkx.DiGraph, operator_to_remove: DagNode):
+    """Replace a node from a given DAG"""
+    # TODO: Not totally sure yet if this work as intended and if this parent is the right node always
+    parent = get_sorted_parent_nodes(dag, operator_to_remove)[0]
+    children_before_modifications = list(dag.successors(operator_to_remove))
+    for child_node in children_before_modifications:
+        edge_data = dag.get_edge_data(operator_to_remove, child_node)
+        dag.add_edge(parent, child_node, **edge_data)
+    dag.remove_node(operator_to_remove)
+
+
 def add_new_node_between_nodes(dag: networkx.DiGraph, new_node: DagNode, dag_location: Tuple[DagNode, DagNode]):
     """Add a new node between two chosen nodes"""
     parent, child = dag_location
