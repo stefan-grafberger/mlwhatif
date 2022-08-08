@@ -9,7 +9,7 @@ import networkx
 
 from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_data_patch, add_new_node_after_node, \
-    find_nodes_by_type, replace_node, get_sorted_parent_nodes, remove_node
+    find_nodes_by_type, replace_node, remove_node
 from mlwhatif.execution._patches import Patch, DataPatch, ModelPatch, PipelinePatch, DataFiltering, DataTransformer, \
     AppendNodeAfterOperator, DataProjection, OperatorReplacement, OperatorRemoval
 from mlwhatif.instrumentation._dag_node import DagNode
@@ -31,6 +31,9 @@ class MultiQueryOptimizer:
                               skip_optimizer=False) -> \
             networkx.DiGraph:
         """ Optimize and combine multiple given input DAGs """
+        # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+        # TODO: Polish this and make the pylint disables obsolete
+
         # TODO: In the future, we will need to update this once we have more sophisticated optimisations
         estimate_original_runtime = self._estimate_runtime_of_dag(original_dag)
         logger.info(f"Estimated runtime of original DAG is {estimate_original_runtime}ms")

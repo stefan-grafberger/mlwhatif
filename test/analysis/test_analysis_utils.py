@@ -63,7 +63,8 @@ def test_add_intermediate_extraction_after_node_intermediate_df():
     intermediate_pdf_result_value = find_nodes_by_type(dag, OperatorType.SELECTION)[0]
     label = "util-test"
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH)
-    get_intermediate_extraction_patch_after_node(dag, intermediate_pdf_result_value, label)
+    get_intermediate_extraction_patch_after_node(singleton, None, dag, intermediate_pdf_result_value, label)
+    # TODO: Fix these tests... Maybe by introducing an apply function for each patch?
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_AFTER_PATH)
     DagExecutor().execute(dag)
     extracted_value = singleton.labels_to_extracted_plan_results[label]
