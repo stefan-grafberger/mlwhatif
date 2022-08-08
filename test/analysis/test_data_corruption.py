@@ -100,9 +100,13 @@ def test_data_corruption_mini_example_with_projection_modify():
         pandas_df['B'] = 0
         return pandas_df
 
+    def custom_index_selection_func(pandas_df):
+        return pandas_df['B'] >= 3
+
     data_corruption = DataCorruption({'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df),
                                       'B': corruption},
-                                     also_corrupt_train=True)
+                                     also_corrupt_train=True,
+                                     corruption_percentages=[0.2, custom_index_selection_func])
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -113,7 +117,7 @@ def test_data_corruption_mini_example_with_projection_modify():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (6, 4)
+    assert report.shape == (4, 4)
 
 
 def test_data_corruption_mini_example_only_train_test_split():

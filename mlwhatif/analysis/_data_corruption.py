@@ -1,9 +1,9 @@
 """
 The Data Corruption What-If Analysis
 """
-import functools
+from functools import partial
 from types import FunctionType
-from typing import Iterable, Dict
+from typing import Iterable, Dict, Callable, Union
 
 import networkx
 import numpy
@@ -24,7 +24,7 @@ class DataCorruption(WhatIfAnalysis):
 
     def __init__(self,
                  column_to_corruption: Dict[str, FunctionType],
-                 corruption_percentages: Iterable[float] or None = None,
+                 corruption_percentages: Iterable[Union[float, Callable]] or None = None,
                  also_corrupt_train: bool = False):
         self.column_to_corruption = list(column_to_corruption.items())
         self.also_corrupt_train = also_corrupt_train
@@ -101,33 +101,46 @@ class DataCorruption(WhatIfAnalysis):
         return node_linenos
 
     @staticmethod
-    def create_corruption_node(column, corruption_function, corruption_percentage, corruption_location):
+    def create_corruption_node(column, corruption_function, corruption_percentage_or_selection_function,
+                               corruption_location):
         """Create the node that applies the specified corruption"""
         operator_to_apply_corruption_after, first_op_requiring_corruption = corruption_location
 
-        def corrupt_df(pandas_df, corruption_percentage, corruption_function, column):
+        def corruption_index_selection(pandas_df, corruption_percentage):
+            corrupt_count = int(len(pandas_df) * corruption_percentage)
+            indexes_to_corrupt = numpy.random.permutation(pandas_df.index)[:corrupt_count]
+            return indexes_to_corrupt
+
+        def corrupt_df(pandas_df, corruption_index_selection_func, corruption_function, column):
             # TODO: If we model this as 3 operations instead of one, optimization should be easy
             # TODO: Think about when we actually want to be defensive and call copy and when not
             # TODO: Think about datatypes. corruption_function currently assumes pandas DataFrames.
             #  We may want to automatically convert data formats as needed, here and in other places.
             completely_corrupted_df = pandas_df.copy()
             completely_corrupted_df = corruption_function(completely_corrupted_df)
-            corrupt_count = int(len(pandas_df) * corruption_percentage)
-            indexes_to_corrupt = numpy.random.permutation(pandas_df.index)[:corrupt_count]
+            indexes_to_corrupt = corruption_index_selection_func(pandas_df)
             return_df = pandas_df.copy()
             return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[indexes_to_corrupt, column]
             return return_df
 
         # We need to use partial here to avoid problems with late bindings, see
         #  https://stackoverflow.com/questions/3431676/creating-functions-in-a-loop
-        corrupt_df_with_proper_bindings = functools.partial(corrupt_df,
-                                                            corruption_percentage=corruption_percentage,
-                                                            corruption_function=corruption_function,
-                                                            column=column)
+        if isinstance(corruption_percentage_or_selection_function, float):
+            index_selection_with_proper_bindings = partial(corruption_index_selection,
+                                                           corruption_percentage=
+                                                           corruption_percentage_or_selection_function)
+            description = f"Corrupt {corruption_percentage_or_selection_function * 100}% of '{column}'"
+        else:
+            index_selection_with_proper_bindings = corruption_percentage_or_selection_function
+            description = f"Corrupt '{column}' with custom corruption index selection"
+        corrupt_df_with_proper_bindings = partial(corrupt_df,
+                                                  corruption_index_selection_func=index_selection_with_proper_bindings,
+                                                  corruption_function=corruption_function,
+                                                  column=column)
         new_corruption_node = DagNode(singleton.get_next_op_id(),
                                       first_op_requiring_corruption.code_location,
                                       OperatorContext(OperatorType.PROJECTION_MODIFY, None),
-                                      DagNodeDetails(f"Corrupt {corruption_percentage * 100}% of '{column}'",
+                                      DagNodeDetails(description,
                                                      operator_to_apply_corruption_after.details.columns),
                                       None,
                                       corrupt_df_with_proper_bindings)
@@ -142,7 +155,13 @@ class DataCorruption(WhatIfAnalysis):
         for (column, _) in self.column_to_corruption:
             for corruption_percentage in self.corruption_percentages:
                 result_df_columns.append(column)
-                result_df_percentages.append(corruption_percentage)
+
+                if isinstance(corruption_percentage, float):
+                    sanitized_corruption_percentage = corruption_percentage
+                else:
+                    sanitized_corruption_percentage = corruption_percentage.__name__
+                result_df_percentages.append(sanitized_corruption_percentage)
+
                 for lineno in score_linenos:
                     test_label = f"data-corruption-test-{column}-{corruption_percentage}_L{lineno}"
                     test_result_column_name = f"metric_corrupt_test_only_L{lineno}"
