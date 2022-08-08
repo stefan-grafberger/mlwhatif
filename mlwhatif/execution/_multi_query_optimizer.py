@@ -127,6 +127,7 @@ class MultiQueryOptimizer:
 
     def make_nodes_depending_on_changed_nodes_unique(self, original_dag, what_if_dags):
         """We need to give new ids to all nodes that require recomputation because some parent node changed."""
+        # TODO: This should use the patch attribute requires recomputation instead
         original_ids = set(node.node_id for node in list(original_dag.nodes))
         for dag in what_if_dags:
             all_nodes_needing_recomputation = set()
