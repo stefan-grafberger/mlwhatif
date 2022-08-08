@@ -79,7 +79,7 @@ def test_data_cleaning_healthcare():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
-    assert report.shape == (14, 4)
+    assert report.shape == (19, 6)
 
 
 def test_data_cleaning_compas():
@@ -100,7 +100,7 @@ def test_data_cleaning_compas():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
-    assert report.shape == (6, 3)
+    assert report.shape == (14, 4)
 
 
 def test_data_cleaning_adult_complex():
