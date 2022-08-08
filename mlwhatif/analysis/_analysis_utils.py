@@ -163,7 +163,7 @@ def find_dag_location_for_data_patch(columns, dag, train_not_test):
 
         nodes_to_search = train_nodes_to_search.intersection(test_nodes_to_search)
         matches = [node for node in nodes_to_search
-                   if columns.issubset(set(node.details.columns))]
+                   if node.details.columns and columns.issubset(set(node.details.columns))]
 
         if len(matches) == 0:
             raise Exception(f"Columns {columns} not present in DAG!")

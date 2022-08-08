@@ -233,7 +233,8 @@ class DataCleaning(WhatIfAnalysis):
         patches = []
         for node, lineno in self._score_nodes_and_linenos:
             node_label = f"{label}_L{lineno}"
-            get_intermediate_extraction_patch_after_node(singleton, self, node, node_label)
+            patch = get_intermediate_extraction_patch_after_node(singleton, self, node, node_label)
+            patches.append(patch)
         return patches
 
     def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:

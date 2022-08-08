@@ -41,15 +41,15 @@ class MultiQueryOptimizer:
             for patch in patch_set:
                 if isinstance(patch, DataPatch):
                     if isinstance(patch, DataFiltering):
-                        location = find_dag_location_for_data_patch(patch.only_reads_column, what_if_dag,
+                        location = find_dag_location_for_data_patch([patch.only_reads_column], what_if_dag,
                                                                     patch.train_not_test)
                         add_new_node_after_node(what_if_dag, patch.filter_operator, location)
                     elif isinstance(patch, DataTransformer):
                         train_location = find_dag_location_for_data_patch([patch.modifies_column], what_if_dag, True)
-                        test_location = find_dag_location_for_data_patch([patch.modifies_column], what_if_dag, True)
+                        test_location = find_dag_location_for_data_patch([patch.modifies_column], what_if_dag, False)
                         add_new_node_after_node(what_if_dag, patch.fit_transform_operator, train_location)
                         if train_location != test_location:
-                            add_new_node_after_node(what_if_dag, patch.transform_operator, test_location)
+                            add_new_node_after_node(what_if_dag, patch.transform_operator, test_location, arg_index=1)
                             what_if_dag.add_edge(patch.fit_transform_operator, patch.transform_operator, arg_index=0)
                     else:
                         raise Exception(f"Unknown DataPatch type: {type(patch).__name__}!")
