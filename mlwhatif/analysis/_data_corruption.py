@@ -26,6 +26,7 @@ class DataCorruption(WhatIfAnalysis):
                  column_to_corruption: Dict[str, FunctionType],
                  corruption_percentages: Iterable[Union[float, Callable]] or None = None,
                  also_corrupt_train: bool = False):
+        # pylint: disable=unsubscriptable-object
         self.column_to_corruption = list(column_to_corruption.items())
         self.also_corrupt_train = also_corrupt_train
         if corruption_percentages is None:
@@ -159,7 +160,7 @@ class DataCorruption(WhatIfAnalysis):
                 if isinstance(corruption_percentage, float):
                     sanitized_corruption_percentage = corruption_percentage
                 else:
-                    sanitized_corruption_percentage = corruption_percentage.__name__
+                    sanitized_corruption_percentage = corruption_percentage.__name__  # pylint: disable=no-member
                 result_df_percentages.append(sanitized_corruption_percentage)
 
                 for lineno in score_linenos:

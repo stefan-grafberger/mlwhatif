@@ -1,7 +1,6 @@
 """ Contains all the different patch-related classes """
 import dataclasses
-from collections import Callable
-from typing import List
+from typing import List, Callable
 
 from mlwhatif.instrumentation._dag_node import DagNode
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
