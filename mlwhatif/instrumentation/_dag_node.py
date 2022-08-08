@@ -70,6 +70,7 @@ class DagNode:
     details: DagNodeDetails
     optional_code_info: OptionalCodeInfo or None = None
     processing_func: Callable or None = None
+    make_classifier_func: Callable or None = None
 
     def __hash__(self):
         return hash(self.node_id)

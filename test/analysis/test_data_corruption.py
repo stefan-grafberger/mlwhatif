@@ -13,11 +13,11 @@ from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._data_corruption import DataCorruption
 from mlwhatif.utils import get_project_root
 
-INTERMEDIATE_EXTRACTION_ORIG_PATH = os.path.join(str(get_project_root()), "test", "analysis",
+INTERMEDIATE_EXTRACTION_ORIG_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
                                                  "data_corruption-orig")
-INTERMEDIATE_EXTRACTION_GENERATED_PATH = os.path.join(str(get_project_root()), "test", "analysis",
+INTERMEDIATE_EXTRACTION_GENERATED_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
                                                       "data_corruption-what-if")
-INTERMEDIATE_EXTRACTION_OPTIMISED_PATH = os.path.join(str(get_project_root()), "test", "analysis",
+INTERMEDIATE_EXTRACTION_OPTIMISED_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
                                                       "data_corruption-what-if-optimised")
 
 

@@ -1,6 +1,7 @@
 """
 Util functions to make writing What-If Analyses easier
 """
+import logging
 from typing import Tuple
 
 import networkx
@@ -8,6 +9,9 @@ import networkx
 from mlwhatif import OperatorContext, OperatorType
 from mlwhatif.instrumentation._dag_node import DagNode, DagNodeDetails
 from mlwhatif.instrumentation._pipeline_executor import singleton
+
+
+logger = logging.getLogger(__name__)
 
 
 def find_nodes_by_type(new_dag: networkx.DiGraph, operator_type: OperatorType):
@@ -31,7 +35,7 @@ def add_intermediate_extraction_after_node(dag: networkx.DiGraph, dag_node: DagN
     add_new_node_after_node(dag, new_extraction_node, dag_node)
 
 
-def add_new_node_after_node(dag: networkx.DiGraph, new_node: DagNode, dag_node: DagNode):
+def add_new_node_after_node(dag: networkx.DiGraph, new_node: DagNode, dag_node: DagNode, arg_index=0):
     """Add a new node behind some given node to extract the intermediate result of that given node"""
     dag.add_node(new_node)
     children_before_modifications = list(dag.successors(dag_node))
@@ -39,7 +43,7 @@ def add_new_node_after_node(dag: networkx.DiGraph, new_node: DagNode, dag_node: 
         edge_data = dag.get_edge_data(dag_node, child_node)
         dag.add_edge(new_node, child_node, **edge_data)
         dag.remove_edge(dag_node, child_node)
-    dag.add_edge(dag_node, new_node)
+    dag.add_edge(dag_node, new_node, arg_index=arg_index)
 
 
 def get_sorted_parent_nodes(dag: networkx.DiGraph, first_op_requiring_corruption):
@@ -81,11 +85,11 @@ def add_new_node_between_nodes(dag: networkx.DiGraph, new_node: DagNode, dag_loc
 def filter_estimator_transformer_edges(parent, child):
     """Filter edges that are not relevant to the actual data flow but only to estimator/transformer state"""
     is_transformer_edge = ((parent.operator_info.operator == OperatorType.TRANSFORMER
-                           and ": fit_transform" in parent.details.description
-                           and child.operator_info.operator == OperatorType.TRANSFORMER
-                           and ": transform" in child.details.description) or
+                            and ": fit_transform" in parent.details.description
+                            and child.operator_info.operator == OperatorType.TRANSFORMER
+                            and ": transform" in child.details.description) or
                            (parent.operator_info.operator == OperatorType.ESTIMATOR
-                           and child.operator_info.operator == OperatorType.PREDICT))
+                            and child.operator_info.operator == OperatorType.PREDICT))
     return not is_transformer_edge
 
 
@@ -120,3 +124,97 @@ def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_nam
 
     # If no node changes the column, we can apply the corruption directly before the estimator
     return search_start_node
+
+
+def find_dag_location_for_first_op_modifying_column(column, dag, test_not_train):
+    """Find out between which two nodes to apply the corruption"""
+    search_start_node = find_train_or_test_pipeline_part_end(dag, test_not_train)
+    first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, test_not_train)
+    operator_parent_nodes = get_sorted_parent_nodes(dag, first_op_requiring_corruption)
+    first_op_requiring_corruption, operator_to_apply_corruption_after = \
+        find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, operator_parent_nodes)
+    return operator_to_apply_corruption_after, first_op_requiring_corruption
+
+
+def find_dag_location_for_data_patch(column, dag, train_not_test):
+    """Find out between which two nodes to apply the corruption"""
+    train_search_start_node = find_train_or_test_pipeline_part_end(dag, False)
+    test_search_start_node = find_train_or_test_pipeline_part_end(dag, True)
+    dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
+
+    train_nodes_to_search = set(networkx.ancestors(dag_to_consider, train_search_start_node))
+    test_nodes_to_search = set(networkx.ancestors(dag_to_consider, test_search_start_node))
+
+    if train_not_test is True:
+        nodes_to_search = train_nodes_to_search.difference(test_nodes_to_search)
+    else:
+        nodes_to_search = test_nodes_to_search.difference(train_nodes_to_search)
+
+    matches = [node for node in nodes_to_search
+               if column in node.details.columns]
+
+    if len(matches) == 0:
+        dag_part_name = "train" if train_not_test is True else "test"
+        logger.warning(f"Column {column} not present in {dag_part_name} DAG after the train test split!")
+        logger.warning(f"Looking for it before the split now!")
+        logger.warning(f"This could hint at data leakage!")
+
+        nodes_to_search = train_nodes_to_search.intersection(test_nodes_to_search)
+        matches = [node for node in nodes_to_search
+                   if column in node.details.columns]
+
+        if len(matches) == 0:
+            raise Exception(f"Column {column} not present in DAG!")
+
+    sorted_matches = sorted(matches, key=lambda dag_node: dag_node.node_id)
+    first_op_requiring_corruption = sorted_matches[0]
+    return first_op_requiring_corruption
+
+
+def find_train_or_test_pipeline_part_end(dag, test_not_train):
+    """We want to start at the end of the pipeline to find the relevant train or test operations"""
+    if test_not_train is True:
+        search_start_nodes = find_nodes_by_type(dag, OperatorType.PREDICT)
+        if len(search_start_nodes) != 1:
+            raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call "
+                            "for the test set!")
+
+        search_start_node = search_start_nodes[0]
+    else:
+        search_start_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
+        if len(search_start_nodes) != 1:
+            raise Exception("Currently, DataCorruption only supports pipelines with exactly one estimator!")
+        search_start_node = search_start_nodes[0]
+    return search_start_node
+
+
+def get_sorted_children_nodes(dag: networkx.DiGraph, first_op_requiring_corruption):
+    """Get the parent nodes of a node sorted by arg_index"""
+    operator_child_nodes = list(dag.successors(first_op_requiring_corruption))
+    sorted_operator_child_nodes = sorted(operator_child_nodes, key=lambda x: x.node_id)
+    return sorted_operator_child_nodes
+
+
+def find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, operator_parent_nodes):
+    """
+    We know which operator requires the corruption to be present already; now we need to decide between which
+    parent node and the current node we need to insert the corruption node.
+    """
+    if first_op_requiring_corruption.operator_info.operator == OperatorType.TRANSFORMER:
+        operator_to_apply_corruption_after = operator_parent_nodes[-1]
+    elif first_op_requiring_corruption.operator_info.operator == OperatorType.PREDICT:
+        operator_to_apply_corruption_after = operator_parent_nodes[1]
+    elif first_op_requiring_corruption.operator_info.operator == OperatorType.ESTIMATOR:
+        operator_to_apply_corruption_after = operator_parent_nodes[0]
+    elif first_op_requiring_corruption.operator_info.operator == OperatorType.PROJECTION_MODIFY:
+        project_modify_parent_a = operator_parent_nodes[0]
+        project_modify_parent_b = operator_parent_nodes[-1]
+        # We want to introduce the change before all subscript behavior
+        operator_to_apply_corruption_after = networkx.lowest_common_ancestor(dag, project_modify_parent_a,
+                                                                             project_modify_parent_b)
+        sorted_successors = get_sorted_children_nodes(dag, operator_to_apply_corruption_after)
+        first_op_requiring_corruption = sorted_successors[0]
+    else:
+        raise Exception("Either a column was changed by a transformer or project_modify or we can apply"
+                        "the corruption right before the estimator operation!")
+    return first_op_requiring_corruption, operator_to_apply_corruption_after

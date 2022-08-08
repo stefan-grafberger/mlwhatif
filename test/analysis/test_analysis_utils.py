@@ -14,9 +14,9 @@ from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.utils import get_project_root
 from mlwhatif.visualisation import save_fig_to_path
 
-INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH = os.path.join(str(get_project_root()), "test", "analysis",
+INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
                                                        "test_add_intermediate_extraction_before.png")
-INTERMEDIATE_EXTRACTION_ADD_AFTER_PATH = os.path.join(str(get_project_root()), "test", "analysis",
+INTERMEDIATE_EXTRACTION_ADD_AFTER_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
                                                       "test_add_intermediate_extraction_after.png")
 
 
