@@ -218,14 +218,14 @@ class DataCleaning(WhatIfAnalysis):
                                                 arg_index=1)
                         cleaning_dag.add_edge(new_train_cleaning_node, new_test_cleaning_node, arg_index=0)
                 elif cleaning_method.patch_type == PatchType.ESTIMATOR_PATCH:
-                    estimator_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
+                    estimator_nodes = find_nodes_by_type(cleaning_dag, OperatorType.ESTIMATOR)
                     if len(estimator_nodes) != 1:
                         raise Exception(
                             "Currently, DataCorruption only supports pipelines with exactly one estimator!")
                     estimator_node = estimator_nodes[0]
                     new_processing_func = partial(cleaning_method.fit_or_fit_transform_func,
                                                   make_classifier_func=estimator_node.make_classifier_func)
-                    new_description = f"Cleanlab patched {estimator_node.details.description}"
+                    new_description = f"{cleaning_method.method_name} patched {estimator_node.details.description}"
                     new_estimator_node = DagNode(singleton.get_next_op_id(),
                                                  estimator_node.code_location,
                                                  estimator_node.operator_info,

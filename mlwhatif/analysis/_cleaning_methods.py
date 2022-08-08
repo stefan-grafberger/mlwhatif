@@ -182,13 +182,19 @@ class MislabelCleaner:
         estimator = cleanlab.classification.CleanLearning(make_classifier_func())
         if isinstance(train_labels, pandas.Series):
             train_labels = train_labels.to_numpy()
+        elif isinstance(train_labels, numpy.ndarray) and train_labels.ndim > 1:
+            if train_labels.shape[1] != 1:
+                raise Exception("TODO: Think about this edge case! "
+                                "Cleanlab documentation: 'labels must be integers in 0, 1, …, K-1, where K is "
+                                "the total number of classes'.")
+            train_labels = train_labels.squeeze()
         estimator.fit(train_data, train_labels)
         return estimator
 
     @staticmethod
     def fit_shapley_cleaning(train_data, train_labels, make_classifier_func):
         """See https://arxiv.org/abs/2204.11131"""
-        estimator = cleanlab.classification.CleanLearning(make_classifier_func())
+        estimator = make_classifier_func()
         if isinstance(train_labels, pandas.Series):
             train_labels = train_labels.to_numpy()
         k = 10
