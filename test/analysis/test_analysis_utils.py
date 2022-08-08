@@ -7,7 +7,7 @@ from inspect import cleandoc
 import pandas
 
 from mlwhatif import PipelineAnalyzer, OperatorType
-from mlwhatif.analysis._analysis_utils import add_intermediate_extraction_after_node, find_nodes_by_type
+from mlwhatif.analysis._analysis_utils import get_intermediate_extraction_patch_after_node, find_nodes_by_type
 from mlwhatif.execution._dag_executor import DagExecutor
 
 from mlwhatif.instrumentation._pipeline_executor import singleton
@@ -63,7 +63,7 @@ def test_add_intermediate_extraction_after_node_intermediate_df():
     intermediate_pdf_result_value = find_nodes_by_type(dag, OperatorType.SELECTION)[0]
     label = "util-test"
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH)
-    add_intermediate_extraction_after_node(dag, intermediate_pdf_result_value, label)
+    get_intermediate_extraction_patch_after_node(dag, intermediate_pdf_result_value, label)
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_AFTER_PATH)
     DagExecutor().execute(dag)
     extracted_value = singleton.labels_to_extracted_plan_results[label]
@@ -103,7 +103,7 @@ def test_add_intermediate_extraction_after_node_final_score():
     final_result_value = find_nodes_by_type(dag, OperatorType.SCORE)[0]
     label = "util-test"
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH)
-    add_intermediate_extraction_after_node(dag, final_result_value, label)
+    get_intermediate_extraction_patch_after_node(dag, final_result_value, label)
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_AFTER_PATH)
     DagExecutor().execute(dag)
     extracted_value = singleton.labels_to_extracted_plan_results[label]

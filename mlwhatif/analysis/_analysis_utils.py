@@ -6,9 +6,11 @@ from typing import Tuple
 
 import networkx
 
-from mlwhatif import OperatorContext, OperatorType
+from mlwhatif.instrumentation._operator_types import OperatorType
+from mlwhatif.instrumentation._dag_node import OperatorContext
+from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.execution._patches import AppendNodeAfterOperator
 from mlwhatif.instrumentation._dag_node import DagNode, DagNodeDetails
-from mlwhatif.instrumentation._pipeline_executor import singleton
 
 
 logger = logging.getLogger(__name__)
@@ -19,7 +21,7 @@ def find_nodes_by_type(new_dag: networkx.DiGraph, operator_type: OperatorType):
     return [node for node in new_dag.nodes if node.operator_info.operator == operator_type]
 
 
-def add_intermediate_extraction_after_node(dag: networkx.DiGraph, dag_node: DagNode, label: str):
+def get_intermediate_extraction_patch_after_node(singleton, analysis: WhatIfAnalysis, dag_node: DagNode, label: str):
     """Add a new node behind some given node to extract the intermediate result of that given node"""
 
     def extract_intermediate(intermediate_value):
@@ -32,7 +34,7 @@ def add_intermediate_extraction_after_node(dag: networkx.DiGraph, dag_node: DagN
                                   DagNodeDetails(None, dag_node.details.columns),
                                   None,
                                   extract_intermediate)
-    add_new_node_after_node(dag, new_extraction_node, dag_node)
+    return AppendNodeAfterOperator(singleton.get_next_patch_id(), analysis, False, new_extraction_node, dag_node)
 
 
 def add_new_node_after_node(dag: networkx.DiGraph, new_node: DagNode, dag_node: DagNode, arg_index=0):
@@ -136,7 +138,7 @@ def find_dag_location_for_first_op_modifying_column(column, dag, test_not_train)
     return operator_to_apply_corruption_after, first_op_requiring_corruption
 
 
-def find_dag_location_for_data_patch(column, dag, train_not_test):
+def find_dag_location_for_data_patch(columns, dag, train_not_test):
     """Find out between which two nodes to apply the corruption"""
     train_search_start_node = find_train_or_test_pipeline_part_end(dag, False)
     test_search_start_node = find_train_or_test_pipeline_part_end(dag, True)
@@ -150,21 +152,21 @@ def find_dag_location_for_data_patch(column, dag, train_not_test):
     else:
         nodes_to_search = test_nodes_to_search.difference(train_nodes_to_search)
 
-    matches = [node for node in nodes_to_search
-               if column in node.details.columns]
+    columns = set(columns)
+    matches = [node for node in nodes_to_search if columns.issubset(set(node.details.columns))]
 
     if len(matches) == 0:
         dag_part_name = "train" if train_not_test is True else "test"
-        logger.warning(f"Column {column} not present in {dag_part_name} DAG after the train test split!")
+        logger.warning(f"Columns {columns} not present in {dag_part_name} DAG after the train test split!")
         logger.warning(f"Looking for it before the split now!")
         logger.warning(f"This could hint at data leakage!")
 
         nodes_to_search = train_nodes_to_search.intersection(test_nodes_to_search)
         matches = [node for node in nodes_to_search
-                   if column in node.details.columns]
+                   if columns.issubset(set(node.details.columns))]
 
         if len(matches) == 0:
-            raise Exception(f"Column {column} not present in DAG!")
+            raise Exception(f"Columns {columns} not present in DAG!")
 
     sorted_matches = sorted(matches, key=lambda dag_node: dag_node.node_id)
     first_op_requiring_corruption = sorted_matches[0]

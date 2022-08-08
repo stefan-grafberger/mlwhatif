@@ -6,6 +6,8 @@ from typing import Iterable, Dict
 
 import networkx
 
+from mlwhatif.execution._patches import Patch
+
 
 class WhatIfAnalysis(metaclass=abc.ABCMeta):
     """
@@ -18,8 +20,7 @@ class WhatIfAnalysis(metaclass=abc.ABCMeta):
         return None
 
     @abc.abstractmethod
-    def generate_plans_to_try(self, dag: networkx.DiGraph)\
-            -> Iterable[networkx.DiGraph]:
+    def generate_plans_to_try(self, dag: networkx.DiGraph) -> Iterable[Iterable[Patch]]:
         """Generate the pipeline variants to try out"""
         raise NotImplementedError
 

@@ -11,7 +11,7 @@ import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, \
-    add_new_node_between_nodes, add_intermediate_extraction_after_node, \
+    add_new_node_between_nodes, get_intermediate_extraction_patch_after_node, \
     find_dag_location_for_first_op_modifying_column
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.instrumentation._pipeline_executor import singleton
@@ -98,7 +98,7 @@ class DataCorruption(WhatIfAnalysis):
         for node, lineno in self._score_nodes_and_linenos:
             node_linenos.append(lineno)
             node_label = f"{label}_L{lineno}"
-            add_intermediate_extraction_after_node(dag, node, node_label)
+            get_intermediate_extraction_patch_after_node(dag, node, node_label)
         return node_linenos
 
     @staticmethod

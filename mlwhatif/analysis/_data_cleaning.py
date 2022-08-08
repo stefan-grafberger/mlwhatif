@@ -9,12 +9,11 @@ from typing import Iterable, Dict, Callable
 import networkx
 import pandas
 
-from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type, add_intermediate_extraction_after_node, \
-    find_dag_location_for_data_patch, \
-    add_new_node_after_node, replace_node
+from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_intermediate_extraction_patch_after_node
 from mlwhatif.analysis._cleaning_methods import MissingValueCleaner, DuplicateCleaner, OutlierCleaner, MislabelCleaner
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.execution._patches import DataFiltering, DataTransformer, ModelPatch, Patch
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
 
@@ -143,8 +142,7 @@ class DataCleaning(WhatIfAnalysis):
     def analysis_id(self):
         return self._analysis_id
 
-    def generate_plans_to_try(self, dag: networkx.DiGraph) \
-            -> Iterable[networkx.DiGraph]:
+    def generate_plans_to_try(self, dag: networkx.DiGraph) -> Iterable[Iterable[Patch]]:
         # pylint: disable=too-many-locals
         predict_operators = find_nodes_by_type(dag, OperatorType.PREDICT)
         if len(predict_operators) != 1:
@@ -155,70 +153,61 @@ class DataCleaning(WhatIfAnalysis):
         if len(self._score_nodes_and_linenos) != len(set(self._score_nodes_and_linenos)):
             raise Exception("Currently, DataCorruption only supports pipelines where different score operations can "
                             "be uniquely identified by the line number in the code!")
-        cleaning_dags = []
+        cleaning_patch_sets = []
         for column, error in self._columns_with_error:
             for cleaning_method in CLEANING_METHODS_FOR_ERROR_TYPE[error]:
                 cleaning_result_label = f"data-cleaning-{column}-{cleaning_method.method_name}"
-                cleaning_dag = dag.copy()
-                self.add_intermediate_extraction_after_score_nodes(cleaning_dag, cleaning_result_label)
+                patches_for_variant = []
+                extraction_nodes = self.get_intermediate_extraction_patch_after_score_nodes(singleton, cleaning_result_label)
+                patches_for_variant.extend(extraction_nodes)
                 if cleaning_method.patch_type == PatchType.DATA_FILTER_PATCH:
-                    train_first_node_with_column = find_dag_location_for_data_patch(column, dag, True)
-                    test_first_node_with_column = find_dag_location_for_data_patch(column, dag, False)
-
                     filter_func = partial(cleaning_method.filter_func, column=column)
 
                     new_train_cleaning_node = DagNode(singleton.get_next_op_id(),
-                                                      train_first_node_with_column.code_location,
+                                                      BasicCodeLocation("Data Cleaning", None),
                                                       OperatorContext(OperatorType.SELECTION, None),
                                                       DagNodeDetails(
-                                                          f"Clean {column}: {cleaning_method.method_name}",
-                                                          train_first_node_with_column.details.columns),
+                                                          f"Clean {column}: {cleaning_method.method_name}", None),
                                                       None,
                                                       filter_func)
-                    add_new_node_after_node(cleaning_dag, new_train_cleaning_node, train_first_node_with_column)
-                    # Is this second step really necessary? Is modifying the test set a good idea?
-                    if test_first_node_with_column != train_first_node_with_column:
-                        new_test_cleaning_node = DagNode(singleton.get_next_op_id(),
-                                                         test_first_node_with_column.code_location,
-                                                         OperatorContext(OperatorType.SELECTION, None),
-                                                         DagNodeDetails(
-                                                             f"Clean {column}: {cleaning_method.method_name}",
-                                                             train_first_node_with_column.details.columns),
-                                                         None,
-                                                         filter_func)
-                        add_new_node_after_node(cleaning_dag, new_test_cleaning_node, test_first_node_with_column)
-                elif cleaning_method.patch_type == PatchType.DATA_TRANSFORMER_PATCH:
-                    train_first_node_with_column = find_dag_location_for_data_patch(column, dag, True)
-                    test_first_node_with_column = find_dag_location_for_data_patch(column, dag, False)
+                    filter_patch_train = DataFiltering(singleton.get_next_patch_id(), self, True,
+                                                       new_train_cleaning_node, True, column)
+                    patches_for_variant.append(filter_patch_train)
 
+                    new_test_cleaning_node = DagNode(singleton.get_next_op_id(),
+                                                     BasicCodeLocation("Data Cleaning", None),
+                                                     OperatorContext(OperatorType.SELECTION, None),
+                                                     DagNodeDetails(
+                                                         f"Clean {column}: {cleaning_method.method_name}", None),
+                                                     None,
+                                                     filter_func)
+                    filter_patch_test = DataFiltering(singleton.get_next_patch_id(), self, True,
+                                                      new_test_cleaning_node, False, column)
+                    patches_for_variant.append(filter_patch_test)
+                elif cleaning_method.patch_type == PatchType.DATA_TRANSFORMER_PATCH:
                     fit_transform = partial(cleaning_method.fit_or_fit_transform_func, column=column)
                     transform = partial(cleaning_method.predict_or_fit_func, column=column)
                     new_train_cleaning_node = DagNode(singleton.get_next_op_id(),
-                                                      train_first_node_with_column.code_location,
+                                                      BasicCodeLocation("Data Cleaning", None),
                                                       OperatorContext(OperatorType.TRANSFORMER, None),
                                                       DagNodeDetails(
                                                           f"Clean {column}: {cleaning_method.method_name} "
-                                                          f"fit_transform",
-                                                          train_first_node_with_column.details.columns),
+                                                          f"fit_transform", None),
                                                       None,
                                                       fit_transform)
-                    add_new_node_after_node(cleaning_dag, new_train_cleaning_node, train_first_node_with_column)
-
-                    if test_first_node_with_column != train_first_node_with_column:
-                        new_test_cleaning_node = DagNode(singleton.get_next_op_id(),
-                                                         test_first_node_with_column.code_location,
-                                                         OperatorContext(OperatorType.TRANSFORMER, None),
-                                                         DagNodeDetails(
-                                                             f"Clean {column}: {cleaning_method.method_name} "
-                                                             f"transform",
-                                                             train_first_node_with_column.details.columns),
-                                                         None,
-                                                         transform)
-                        add_new_node_after_node(cleaning_dag, new_test_cleaning_node, test_first_node_with_column,
-                                                arg_index=1)
-                        cleaning_dag.add_edge(new_train_cleaning_node, new_test_cleaning_node, arg_index=0)
+                    new_test_cleaning_node = DagNode(singleton.get_next_op_id(),
+                                                     BasicCodeLocation("Data Cleaning", None),
+                                                     OperatorContext(OperatorType.TRANSFORMER, None),
+                                                     DagNodeDetails(
+                                                         f"Clean {column}: {cleaning_method.method_name} "
+                                                         f"transform", None),
+                                                     None,
+                                                     transform)
+                    transform_patch_train = DataTransformer(singleton.get_next_patch_id(), self, True,
+                                                            new_train_cleaning_node, new_test_cleaning_node, column)
+                    patches_for_variant.append(transform_patch_train)
                 elif cleaning_method.patch_type == PatchType.ESTIMATOR_PATCH:
-                    estimator_nodes = find_nodes_by_type(cleaning_dag, OperatorType.ESTIMATOR)
+                    estimator_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
                     if len(estimator_nodes) != 1:
                         raise Exception(
                             "Currently, DataCorruption only supports pipelines with exactly one estimator!")
@@ -232,20 +221,20 @@ class DataCleaning(WhatIfAnalysis):
                                                  DagNodeDetails(new_description, estimator_node.details.columns),
                                                  estimator_node.optional_code_info,
                                                  new_processing_func)
-                    replace_node(cleaning_dag, estimator_node, new_estimator_node)
+                    model_patch = ModelPatch(singleton.get_next_patch_id(), self, True, new_estimator_node)
+                    patches_for_variant.append(model_patch)
                 else:
                     raise Exception(f"Unknown patch type: {cleaning_method.patch_type}!")
-                cleaning_dags.append(cleaning_dag)
-        return cleaning_dags
+                cleaning_patch_sets.append(patches_for_variant)
+        return cleaning_patch_sets
 
-    def add_intermediate_extraction_after_score_nodes(self, dag: networkx.DiGraph, label: str):
+    def get_intermediate_extraction_patch_after_score_nodes(self, singleton, label: str):
         """Add a new node behind some given node to extract the intermediate result of that given node"""
-        node_linenos = []
+        patches = []
         for node, lineno in self._score_nodes_and_linenos:
-            node_linenos.append(lineno)
             node_label = f"{label}_L{lineno}"
-            add_intermediate_extraction_after_node(dag, node, node_label)
-        return node_linenos
+            get_intermediate_extraction_patch_after_node(singleton, self, node, node_label)
+        return patches
 
     def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:
         # pylint: disable=too-many-locals

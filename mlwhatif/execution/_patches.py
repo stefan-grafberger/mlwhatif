@@ -3,14 +3,13 @@ import dataclasses
 from typing import List, Callable
 
 from mlwhatif.instrumentation._dag_node import DagNode
-from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 
 
 @dataclasses.dataclass
 class Patch:
     """ Basic Patch class """
     patch_id: int
-    analysis: WhatIfAnalysis
+    analysis: any  # WhatIfAnalyis but this would be a circular import currently
     changes_following_results: bool
 
 
@@ -49,7 +48,7 @@ class DataFiltering(DataPatch):
     """ Filter the train or test side """
     filter_operator: DagNode
     train_not_test: bool
-    reads_column: List[str]
+    only_reads_column: List[str]
 
 
 @dataclasses.dataclass
@@ -58,7 +57,7 @@ class DataProjection(DataPatch):
     projection_operator: DagNode
     train_not_test: bool
     modifies_column: str
-    reads_column: List[str]
+    only_reads_column: List[str]
     index_selection_func: Callable or None = None  # A function that can be used to select which rows to modify
     # A function that can be combined with index_selection_func to replace the projection_operator processing_func
     projection_func_only: Callable or None = None
@@ -67,7 +66,8 @@ class DataProjection(DataPatch):
 @dataclasses.dataclass
 class DataTransformer(DataPatch):
     """ Fit a transformer on the train side and apply it to train and test side """
-    filter_operator: DagNode
+    fit_transform_operator: DagNode
+    transform_operator: DagNode
     modifies_column: str
 
 
