@@ -135,7 +135,7 @@ class MultiQueryOptimizer:
     def make_all_nodes_unique(self, what_if_dags):
         """We need to give all nodes new ids to combine DAGs without reusing results."""
         for dag in what_if_dags:
-            self.generate_unique_ids_for_selected_nodes(dag, dag.nodes)
+            self.generate_unique_ids_for_selected_nodes(dag, list(dag.nodes))
 
     def generate_unique_ids_for_selected_nodes(self, dag: networkx.DiGraph, nodes_to_recompute: Iterable[DagNode]):
         """ This gives new node_ids to all reachable nodes given some input node """
