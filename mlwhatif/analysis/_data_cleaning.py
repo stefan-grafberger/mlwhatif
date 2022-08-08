@@ -10,7 +10,7 @@ import networkx
 import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_intermediate_extraction_patch_after_node
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._cleaning_methods import MissingValueCleaner, DuplicateCleaner, OutlierCleaner, MislabelCleaner
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import DataFiltering, DataTransformer, ModelPatch, Patch
@@ -158,7 +158,9 @@ class DataCleaning(WhatIfAnalysis):
             for cleaning_method in CLEANING_METHODS_FOR_ERROR_TYPE[error]:
                 cleaning_result_label = f"data-cleaning-{column}-{cleaning_method.method_name}"
                 patches_for_variant = []
-                extraction_nodes = self.get_intermediate_extraction_patch_after_score_nodes(singleton, cleaning_result_label)
+                extraction_nodes = get_intermediate_extraction_patch_after_score_nodes(singleton, self,
+                                                                                       cleaning_result_label,
+                                                                                       self._score_nodes_and_linenos)
                 patches_for_variant.extend(extraction_nodes)
                 if cleaning_method.patch_type == PatchType.DATA_FILTER_PATCH:
                     filter_func = partial(cleaning_method.filter_func, column=column)
@@ -171,7 +173,7 @@ class DataCleaning(WhatIfAnalysis):
                                                       None,
                                                       filter_func)
                     filter_patch_train = DataFiltering(singleton.get_next_patch_id(), self, True,
-                                                       new_train_cleaning_node, True, column)
+                                                       new_train_cleaning_node, True, [column])
                     patches_for_variant.append(filter_patch_train)
 
                     new_test_cleaning_node = DagNode(singleton.get_next_op_id(),
@@ -182,7 +184,7 @@ class DataCleaning(WhatIfAnalysis):
                                                      None,
                                                      filter_func)
                     filter_patch_test = DataFiltering(singleton.get_next_patch_id(), self, True,
-                                                      new_test_cleaning_node, False, column)
+                                                      new_test_cleaning_node, False, [column])
                     patches_for_variant.append(filter_patch_test)
                 elif cleaning_method.patch_type == PatchType.DATA_TRANSFORMER_PATCH:
                     fit_transform = partial(cleaning_method.fit_or_fit_transform_func, column=column)
@@ -227,15 +229,6 @@ class DataCleaning(WhatIfAnalysis):
                     raise Exception(f"Unknown patch type: {cleaning_method.patch_type}!")
                 cleaning_patch_sets.append(patches_for_variant)
         return cleaning_patch_sets
-
-    def get_intermediate_extraction_patch_after_score_nodes(self, singleton, label: str):
-        """Add a new node behind some given node to extract the intermediate result of that given node"""
-        patches = []
-        for node, lineno in self._score_nodes_and_linenos:
-            node_label = f"{label}_L{lineno}"
-            patch = get_intermediate_extraction_patch_after_node(singleton, self, node, node_label)
-            patches.append(patch)
-        return patches
 
     def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:
         # pylint: disable=too-many-locals

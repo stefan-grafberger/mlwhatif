@@ -11,7 +11,7 @@ from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_data_patch, add_new_node_after_node, \
     find_nodes_by_type, replace_node
 from mlwhatif.execution._patches import Patch, DataPatch, ModelPatch, PipelinePatch, DataFiltering, DataTransformer, \
-    AppendNodeAfterOperator
+    AppendNodeAfterOperator, DataProjection
 from mlwhatif.instrumentation._dag_node import DagNode
 from mlwhatif.visualisation import save_fig_to_path
 
@@ -41,7 +41,7 @@ class MultiQueryOptimizer:
             for patch in patch_set:
                 if isinstance(patch, DataPatch):
                     if isinstance(patch, DataFiltering):
-                        location, is_before_slit = find_dag_location_for_data_patch([patch.only_reads_column],
+                        location, is_before_slit = find_dag_location_for_data_patch(patch.only_reads_column,
                                                                                     what_if_dag, patch.train_not_test)
                         if is_before_slit is False:
                             add_new_node_after_node(what_if_dag, patch.filter_operator, location)
@@ -59,6 +59,18 @@ class MultiQueryOptimizer:
                         if train_location != test_location:
                             add_new_node_after_node(what_if_dag, patch.transform_operator, test_location, arg_index=1)
                             what_if_dag.add_edge(patch.fit_transform_operator, patch.transform_operator, arg_index=0)
+                    elif isinstance(patch, DataProjection):
+                        location, is_before_slit = find_dag_location_for_data_patch(patch.only_reads_column,
+                                                                                    what_if_dag, patch.train_not_test)
+                        if is_before_slit is False:
+                            add_new_node_after_node(what_if_dag, patch.projection_operator, location)
+                        elif patch.train_not_test is True:
+                            dag_part_name = "train" if patch.train_not_test is True else "test"
+                            logger.warning(
+                                f"Columns {patch.only_reads_column} not present in {dag_part_name} DAG after the train "
+                                f"test split, only before!")
+                            logger.warning(f"This could hint at data leakage!")
+                            add_new_node_after_node(what_if_dag, patch.projection_operator, location)
                     else:
                         raise Exception(f"Unknown DataPatch type: {type(patch).__name__}!")
                 elif isinstance(patch, ModelPatch):

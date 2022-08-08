@@ -2,7 +2,7 @@
 Util functions to make writing What-If Analyses easier
 """
 import logging
-from typing import Tuple
+from typing import Tuple, Iterable
 
 import networkx
 
@@ -11,7 +11,6 @@ from mlwhatif.instrumentation._dag_node import OperatorContext
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import AppendNodeAfterOperator
 from mlwhatif.instrumentation._dag_node import DagNode, DagNodeDetails
-
 
 logger = logging.getLogger(__name__)
 
@@ -138,6 +137,17 @@ def find_dag_location_for_first_op_modifying_column(column, dag, test_not_train)
     return operator_to_apply_corruption_after, first_op_requiring_corruption
 
 
+def get_intermediate_extraction_patch_after_score_nodes(singleton, analysis: WhatIfAnalysis, label: str,
+                                                        score_nodes_and_linenos: Iterable[tuple[DagNode, int]]):
+    """Add a new node behind some given node to extract the intermediate result of that given node"""
+    patches = []
+    for node, lineno in score_nodes_and_linenos:
+        node_label = f"{label}_L{lineno}"
+        patch = get_intermediate_extraction_patch_after_node(singleton, analysis, node, node_label)
+        patches.append(patch)
+    return patches
+
+
 def find_dag_location_for_data_patch(columns, dag, train_not_test) -> tuple[any, bool]:
     """Find out between which two nodes to apply the corruption"""
     train_search_start_node = find_train_or_test_pipeline_part_end(dag, False)
@@ -153,7 +163,8 @@ def find_dag_location_for_data_patch(columns, dag, train_not_test) -> tuple[any,
         nodes_to_search = test_nodes_to_search.difference(train_nodes_to_search)
 
     columns = set(columns)
-    matches = [node for node in nodes_to_search if columns.issubset(set(node.details.columns))]
+    matches = [node for node in nodes_to_search if columns.issubset(set(node.details.columns)) and
+               node.operator_info.operator not in {OperatorType.PROJECTION, OperatorType.SUBSCRIPT}]
 
     is_before_split = False
     if len(matches) == 0:
@@ -161,7 +172,8 @@ def find_dag_location_for_data_patch(columns, dag, train_not_test) -> tuple[any,
 
         nodes_to_search = train_nodes_to_search.intersection(test_nodes_to_search)
         matches = [node for node in nodes_to_search
-                   if node.details.columns and columns.issubset(set(node.details.columns))]
+                   if node.details.columns and columns.issubset(set(node.details.columns))
+                   and node.operator_info.operator not in {OperatorType.PROJECTION, OperatorType.SUBSCRIPT}]
 
         if len(matches) == 0:
             raise Exception(f"Columns {columns} not present in DAG!")

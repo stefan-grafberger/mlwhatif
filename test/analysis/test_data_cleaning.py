@@ -70,7 +70,7 @@ def test_data_cleaning_healthcare():
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(HEALTHCARE_PY) \
-        .skip_multi_query_optimization(True) \
+        .skip_multi_query_optimization(False) \
         .add_custom_monkey_patching_module(custom_monkeypatching) \
         .add_what_if_analysis(data_cleaning) \
         .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \

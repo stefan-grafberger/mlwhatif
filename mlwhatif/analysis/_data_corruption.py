@@ -9,11 +9,11 @@ import networkx
 import numpy
 import pandas
 
-from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
+from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, \
-    add_new_node_between_nodes, get_intermediate_extraction_patch_after_node, \
-    find_dag_location_for_first_op_modifying_column
+    get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.execution._patches import DataProjection, Patch
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
 
@@ -41,7 +41,7 @@ class DataCorruption(WhatIfAnalysis):
         return self._analysis_id
 
     def generate_plans_to_try(self, dag: networkx.DiGraph) \
-            -> Iterable[networkx.DiGraph]:
+            -> Iterable[Iterable[Patch]]:
         predict_operators = find_nodes_by_type(dag, OperatorType.PREDICT)
         if len(predict_operators) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call which "
@@ -55,58 +55,48 @@ class DataCorruption(WhatIfAnalysis):
         #  For project_modify, we can think about a similar deduplication: splitting operations on multiple columns and
         #  then using a concat in the end.
 
-        corruption_dags = []
+        corruption_patch_sets = []
         for corruption_percentage in self.corruption_percentages:
             for (column, corruption_function) in self.column_to_corruption:
-                train_corruption_location = find_dag_location_for_first_op_modifying_column(column, dag, True)
-                test_corruption_location = find_dag_location_for_first_op_modifying_column(column, dag, False)
+                patches_for_variant = []
 
                 # Test set corruption
                 test_corruption_result_label = f"data-corruption-test-{column}-{corruption_percentage}"
-                corruption_dag = dag.copy()
-                self.add_intermediate_extraction_after_score_nodes(corruption_dag, test_corruption_result_label)
-
-                self.add_corruption_in_location(column, corruption_dag, corruption_function, train_corruption_location,
-                                                corruption_percentage)
-                corruption_dags.append(corruption_dag)
+                extraction_nodes = get_intermediate_extraction_patch_after_score_nodes(singleton, self,
+                                                                                       test_corruption_result_label,
+                                                                                       self._score_nodes_and_linenos)
+                patches_for_variant.extend(extraction_nodes)
+                corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
+                    column, corruption_function, corruption_percentage)
+                patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, True, column,
+                                       [column], index_selection_func, corrupt_func)
+                patches_for_variant.append(patch)
+                corruption_patch_sets.append(patches_for_variant)
 
                 # Train and test set corruption
                 if self.also_corrupt_train is True:
+                    patches_for_variant = []
                     test_corruption_result_label = f"data-corruption-train-{column}-{corruption_percentage}"
-                    corruption_dag = dag.copy()
-                    self.add_intermediate_extraction_after_score_nodes(corruption_dag, test_corruption_result_label)
-                    self.add_corruption_in_location(column, corruption_dag, corruption_function,
-                                                    train_corruption_location, corruption_percentage)
-                    self.add_corruption_in_location(column, corruption_dag, corruption_function,
-                                                    test_corruption_location, corruption_percentage)
-                    corruption_dags.append(corruption_dag)
+                    extraction_nodes = get_intermediate_extraction_patch_after_score_nodes(
+                        singleton, self, test_corruption_result_label, self._score_nodes_and_linenos)
+                    patches_for_variant.extend(extraction_nodes)
+                    corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
+                        column, corruption_function, corruption_percentage)
+                    patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, True, column,
+                                           [column], index_selection_func, corrupt_func)
+                    patches_for_variant.append(patch)
+                    corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
+                        column, corruption_function, corruption_percentage)
+                    patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
+                                           [column], index_selection_func, corrupt_func)
+                    patches_for_variant.append(patch)
+                    corruption_patch_sets.append(patches_for_variant)
 
-        return corruption_dags
-
-    def add_corruption_in_location(self, column, corruption_dag, corruption_function, corruption_location,
-                                   corruption_percentage):
-        # pylint: disable=too-many-arguments
-        """We now know where to apply the corruption, and use this function to actually apply it."""
-        new_corruption_node = self.create_corruption_node(column, corruption_function,
-                                                          corruption_percentage,
-                                                          corruption_location)
-        add_new_node_between_nodes(corruption_dag, new_corruption_node, corruption_location)
-
-    def add_intermediate_extraction_after_score_nodes(self, dag: networkx.DiGraph, label: str):
-        """Add a new node behind some given node to extract the intermediate result of that given node"""
-        node_linenos = []
-        for node, lineno in self._score_nodes_and_linenos:
-            node_linenos.append(lineno)
-            node_label = f"{label}_L{lineno}"
-            get_intermediate_extraction_patch_after_node(dag, node, node_label)
-        return node_linenos
+        return corruption_patch_sets
 
     @staticmethod
-    def create_corruption_node(column, corruption_function, corruption_percentage_or_selection_function,
-                               corruption_location):
+    def create_corruption_node(column, corruption_function, corruption_percentage_or_selection_function):
         """Create the node that applies the specified corruption"""
-        operator_to_apply_corruption_after, first_op_requiring_corruption = corruption_location
-
         def corruption_index_selection(pandas_df, corruption_percentage):
             corrupt_count = int(len(pandas_df) * corruption_percentage)
             indexes_to_corrupt = numpy.random.permutation(pandas_df.index)[:corrupt_count]
@@ -139,13 +129,12 @@ class DataCorruption(WhatIfAnalysis):
                                                   corruption_function=corruption_function,
                                                   column=column)
         new_corruption_node = DagNode(singleton.get_next_op_id(),
-                                      first_op_requiring_corruption.code_location,
+                                      BasicCodeLocation("DataCorruption", None),
                                       OperatorContext(OperatorType.PROJECTION_MODIFY, None),
-                                      DagNodeDetails(description,
-                                                     operator_to_apply_corruption_after.details.columns),
+                                      DagNodeDetails(description, None),
                                       None,
                                       corrupt_df_with_proper_bindings)
-        return new_corruption_node
+        return new_corruption_node, corruption_function, index_selection_with_proper_bindings
 
     def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:
         # pylint: disable=too-many-locals
