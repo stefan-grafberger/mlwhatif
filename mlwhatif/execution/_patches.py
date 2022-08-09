@@ -2,7 +2,7 @@
 import dataclasses
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Callable
+from typing import List, Callable, Iterable
 
 import networkx
 
@@ -27,6 +27,30 @@ class Patch(ABC):
         """Apply the patch to some DAG"""
         raise NotImplementedError
 
+    @abstractmethod
+    def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
+        """Get all nodes that need to be recomputed after patching the DAG"""
+        raise NotImplementedError
+
+    def _get_nodes_needing_recomputation(self,
+                                         old_dag: networkx.DiGraph,
+                                         new_dag: networkx.DiGraph,
+                                         removed_nodes: Iterable[DagNode],
+                                         added_nodes: Iterable[DagNode]):
+        """Get all nodes that need to be recomputed after patching the DAG"""
+        all_nodes_needing_recomputation = set()
+        if self.changes_following_results is True:
+            for added_node in added_nodes:
+                local_nodes_needing_recomputation = set(networkx.descendants(new_dag, added_node))
+                all_nodes_needing_recomputation.update(local_nodes_needing_recomputation)
+            for removed_node in removed_nodes:
+                original_nodes_needing_recomputation = set(networkx.descendants(old_dag, removed_node))
+                all_nodes_needing_recomputation.update(original_nodes_needing_recomputation)
+        return all_nodes_needing_recomputation
+
+
+# function for get nodes needing recomputation
+
 
 @dataclasses.dataclass
 class PipelinePatch(Patch, ABC):
@@ -44,6 +68,10 @@ class OperatorReplacement(PipelinePatch):
         replace_node(dag, self.operator_to_replace, self.replacement_operator)
         return dag
 
+    def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
+        return self._get_nodes_needing_recomputation(old_dag, new_dag, [self.operator_to_replace],
+                                                     [self.replacement_operator])
+
 
 @dataclasses.dataclass
 class OperatorRemoval(PipelinePatch):
@@ -53,6 +81,9 @@ class OperatorRemoval(PipelinePatch):
 
     def apply(self, dag: networkx.DiGraph):
         remove_node(dag, self.operator_to_remove)
+
+    def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
+        return self._get_nodes_needing_recomputation(old_dag, new_dag, [self.operator_to_remove], [])
 
 
 @dataclasses.dataclass
@@ -64,6 +95,9 @@ class AppendNodeAfterOperator(PipelinePatch):
 
     def apply(self, dag: networkx.DiGraph):
         add_new_node_after_node(dag, self.operator_to_add_node_after, self.node_to_insert)
+
+    def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
+        return self._get_nodes_needing_recomputation(old_dag, new_dag, [], [self.node_to_insert])
 
 
 @dataclasses.dataclass
@@ -91,6 +125,14 @@ class DataFiltering(DataPatch):
             logger.warning(f"This could hint at data leakage!")
             add_new_node_after_node(dag, self.filter_operator, location)
 
+    def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
+        _, is_before_slit = find_dag_location_for_data_patch(self.only_reads_column, old_dag, self.train_not_test)
+        if (is_before_slit is False) or (self.train_not_test is True):
+            added_operators = [self.filter_operator]
+        else:
+            added_operators = []
+        return self._get_nodes_needing_recomputation(old_dag, new_dag, [], added_operators)
+
 
 @dataclasses.dataclass
 class DataProjection(DataPatch):
@@ -117,6 +159,9 @@ class DataProjection(DataPatch):
             logger.warning(f"This could hint at data leakage!")
             add_new_node_after_node(dag, self.projection_operator, location)
 
+    def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
+        return self._get_nodes_needing_recomputation(old_dag, new_dag, [], [self.projection_operator])
+
 
 @dataclasses.dataclass
 class DataTransformer(DataPatch):
@@ -134,6 +179,10 @@ class DataTransformer(DataPatch):
             add_new_node_after_node(dag, self.transform_operator, test_location, arg_index=1)
             dag.add_edge(self.fit_transform_operator, self.transform_operator, arg_index=0)
 
+    def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
+        return self._get_nodes_needing_recomputation(old_dag, new_dag, [],
+                                                     [self.fit_transform_operator, self.transform_operator])
+
 
 @dataclasses.dataclass
 class ModelPatch(Patch):
@@ -147,3 +196,6 @@ class ModelPatch(Patch):
             raise Exception("Currently, ModelPatch only supports pipelines with exactly one estimator!")
         estimator_node = estimator_nodes[0]
         replace_node(dag, estimator_node, self.replace_with_node)
+
+    def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
+        return self._get_nodes_needing_recomputation(old_dag, new_dag, [], [self.replace_with_node])

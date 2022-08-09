@@ -130,8 +130,7 @@ class PipelineExecutor:
             if self.prefix_original_dag is not None:
                 save_fig_to_path(self.analysis_results.dag, f"{self.prefix_original_dag}.png")
 
-
-            big_execution_dag = MultiQueryOptimizer(self)\
+            big_execution_dag = MultiQueryOptimizer(self) \
                 .create_optimized_plan(self.analysis_results.dag, what_if_dags,
                                        self.prefix_analysis_dags,
                                        self.prefix_optimised_analysis_dag,
