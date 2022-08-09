@@ -208,7 +208,7 @@ class OperatorFairness(WhatIfAnalysis):
         This is because for transformers it is easy to find the corresponding test set operation and for the
         selection we do not need to worry about finding corresponding test set operations.
         """
-        search_start_node = find_train_or_test_pipeline_part_end(dag, False)
+        search_start_node = find_train_or_test_pipeline_part_end(dag, True)
         nodes_to_search = set(networkx.ancestors(dag, search_start_node))
         all_nodes_to_test = []
         if self._test_transformers is True:

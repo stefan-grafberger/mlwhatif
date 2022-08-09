@@ -68,8 +68,12 @@ class DataCorruption(WhatIfAnalysis):
                 patches_for_variant.extend(extraction_nodes)
                 corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
                     column, corruption_function, corruption_percentage)
-                patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, True, column,
-                                       [column], index_selection_func, corrupt_func)
+                if isinstance(corruption_percentage, float):
+                    only_reads_column = [column]
+                else:
+                    only_reads_column = None
+                patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
+                                       only_reads_column, index_selection_func, corrupt_func)
                 patches_for_variant.append(patch)
                 corruption_patch_sets.append(patches_for_variant)
 
@@ -82,13 +86,13 @@ class DataCorruption(WhatIfAnalysis):
                     patches_for_variant.extend(extraction_nodes)
                     corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
                         column, corruption_function, corruption_percentage)
-                    patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, True, column,
-                                           [column], index_selection_func, corrupt_func)
+                    patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
+                                           only_reads_column, index_selection_func, corrupt_func)
                     patches_for_variant.append(patch)
                     corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
                         column, corruption_function, corruption_percentage)
-                    patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
-                                           [column], index_selection_func, corrupt_func)
+                    patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, True, column,
+                                           only_reads_column, index_selection_func, corrupt_func)
                     patches_for_variant.append(patch)
                     corruption_patch_sets.append(patches_for_variant)
 

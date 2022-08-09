@@ -166,17 +166,17 @@ def find_dag_location_for_data_patch(columns, dag, train_not_test) -> tuple[any,
 
 def find_train_or_test_pipeline_part_end(dag, train_not_test):
     """We want to start at the end of the pipeline to find the relevant train or test operations"""
-    if train_not_test is False:
+    if train_not_test is True:
+        search_start_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
+        if len(search_start_nodes) != 1:
+            raise Exception("Currently, DataCorruption only supports pipelines with exactly one estimator!")
+        search_start_node = search_start_nodes[0]
+    else:
         search_start_nodes = find_nodes_by_type(dag, OperatorType.PREDICT)
         if len(search_start_nodes) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call "
                             "for the test set!")
 
-        search_start_node = search_start_nodes[0]
-    else:
-        search_start_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
-        if len(search_start_nodes) != 1:
-            raise Exception("Currently, DataCorruption only supports pipelines with exactly one estimator!")
         search_start_node = search_start_nodes[0]
     return search_start_node
 
