@@ -49,9 +49,6 @@ class Patch(ABC):
         return all_nodes_needing_recomputation
 
 
-# function for get nodes needing recomputation
-
-
 @dataclasses.dataclass
 class PipelinePatch(Patch, ABC):
     """ Parent class for pipeline patches """
