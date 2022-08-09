@@ -66,13 +66,13 @@ def remove_node(dag: networkx.DiGraph, operator_to_remove: DagNode):
     dag.remove_node(operator_to_remove)
 
 
-def add_new_node_between_nodes(dag: networkx.DiGraph, new_node: DagNode, dag_location: Tuple[DagNode, DagNode]):
+def add_new_node_between_nodes(dag: networkx.DiGraph, new_node: DagNode, dag_node_before: DagNode,
+                               dag_node_after: DagNode):
     """Add a new node between two chosen nodes"""
-    parent, child = dag_location
-    edge_data = dag.get_edge_data(parent, child)
-    dag.remove_edge(parent, child)
-    dag.add_edge(parent, new_node, arg_index=0)
-    dag.add_edge(new_node, child, **edge_data)
+    edge_data = dag.get_edge_data(dag_node_before, dag_node_after)
+    dag.remove_edge(dag_node_before, dag_node_after)
+    dag.add_edge(dag_node_before, new_node, arg_index=0)
+    dag.add_edge(new_node, dag_node_after, **edge_data)
 
 
 def filter_estimator_transformer_edges(parent, child):
@@ -86,9 +86,9 @@ def filter_estimator_transformer_edges(parent, child):
     return not is_transformer_edge
 
 
-def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_name: str, test_not_train: bool):
+def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_name: str, train_not_test: bool):
     """Find DagNodes in the DAG by OperatorType"""
-    if test_not_train is True:
+    if train_not_test is False:
         dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
     else:
         dag_to_consider = dag
@@ -100,7 +100,7 @@ def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_nam
     if len(project_modify_matches) != 0:
         sorted_matches = sorted(project_modify_matches, key=lambda dag_node: dag_node.node_id)
         return sorted_matches[0]
-    if test_not_train is True:
+    if train_not_test is False:
         transformer_matches = [node for node in nodes_to_search
                                if node.operator_info.operator == OperatorType.TRANSFORMER
                                and ": transform" in node.details.description
@@ -119,10 +119,10 @@ def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_nam
     return search_start_node
 
 
-def find_dag_location_for_first_op_modifying_column(column, dag, test_not_train):
+def find_dag_location_for_first_op_modifying_column(column, dag, train_not_test) -> tuple[any, any]:
     """Find out between which two nodes to apply the corruption"""
-    search_start_node = find_train_or_test_pipeline_part_end(dag, test_not_train)
-    first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, test_not_train)
+    search_start_node = find_train_or_test_pipeline_part_end(dag, train_not_test)
+    first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, train_not_test)
     operator_parent_nodes = get_sorted_parent_nodes(dag, first_op_requiring_corruption)
     first_op_requiring_corruption, operator_to_apply_corruption_after = \
         find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, operator_parent_nodes)
@@ -131,8 +131,8 @@ def find_dag_location_for_first_op_modifying_column(column, dag, test_not_train)
 
 def find_dag_location_for_data_patch(columns, dag, train_not_test) -> tuple[any, bool]:
     """Find out between which two nodes to apply the corruption"""
-    train_search_start_node = find_train_or_test_pipeline_part_end(dag, False)
-    test_search_start_node = find_train_or_test_pipeline_part_end(dag, True)
+    train_search_start_node = find_train_or_test_pipeline_part_end(dag, True)
+    test_search_start_node = find_train_or_test_pipeline_part_end(dag, False)
     dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
 
     train_nodes_to_search = set(networkx.ancestors(dag_to_consider, train_search_start_node))
@@ -164,9 +164,9 @@ def find_dag_location_for_data_patch(columns, dag, train_not_test) -> tuple[any,
     return first_op_requiring_corruption, is_before_split
 
 
-def find_train_or_test_pipeline_part_end(dag, test_not_train):
+def find_train_or_test_pipeline_part_end(dag, train_not_test):
     """We want to start at the end of the pipeline to find the relevant train or test operations"""
-    if test_not_train is True:
+    if train_not_test is False:
         search_start_nodes = find_nodes_by_type(dag, OperatorType.PREDICT)
         if len(search_start_nodes) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call "

@@ -8,7 +8,7 @@ import networkx
 
 from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_data_patch, add_new_node_after_node, \
-    find_nodes_by_type, replace_node, remove_node
+    find_nodes_by_type, replace_node, remove_node, add_new_node_between_nodes
 from mlwhatif.instrumentation._dag_node import DagNode
 
 
@@ -92,6 +92,22 @@ class AppendNodeAfterOperator(PipelinePatch):
 
     def apply(self, dag: networkx.DiGraph):
         add_new_node_after_node(dag, self.operator_to_add_node_after, self.node_to_insert)
+
+    def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
+        return self._get_nodes_needing_recomputation(old_dag, new_dag, [], [self.node_to_insert])
+
+
+@dataclasses.dataclass
+class AppendNodeBetweenOperators(PipelinePatch):
+    """ Remove a DAG node """
+
+    node_to_insert: DagNode
+    operator_to_add_node_after: DagNode
+    operator_to_add_node_before: DagNode
+
+    def apply(self, dag: networkx.DiGraph):
+        add_new_node_between_nodes(dag, self.node_to_insert, self.operator_to_add_node_after,
+                                   self.operator_to_add_node_before)
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
         return self._get_nodes_needing_recomputation(old_dag, new_dag, [], [self.node_to_insert])

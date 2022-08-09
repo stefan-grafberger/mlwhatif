@@ -129,7 +129,7 @@ class MissingValueCleaner:
         elif strategy == 'dummy':
             strategy = 'constant'
         if isinstance(input_df, DataFrame):
-            transformer = SimpleImputer(strategy=strategy)
+            transformer = SimpleImputer(strategy=strategy, copy=True)
             if cat is True:
                 input_df[column] = input_df[column].astype(str)
             input_df[[column]] = transformer.fit_transform(input_df[[column]])
