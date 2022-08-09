@@ -31,7 +31,7 @@ class MultiQueryOptimizer:
                               skip_optimizer=False) -> \
             networkx.DiGraph:
         """ Optimize and combine multiple given input DAGs """
-        # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-statements
+        # pylint: disable=too-many-arguments
         # TODO: Polish this and make the pylint disables obsolete
 
         # TODO: In the future, we will need to update this once we have more sophisticated optimisations
@@ -42,58 +42,7 @@ class MultiQueryOptimizer:
         for patch_set in patches:
             what_if_dag = original_dag.copy()
             for patch in patch_set:
-                if isinstance(patch, DataPatch):
-                    if isinstance(patch, DataFiltering):
-                        location, is_before_slit = find_dag_location_for_data_patch(patch.only_reads_column,
-                                                                                    what_if_dag, patch.train_not_test)
-                        if is_before_slit is False:
-                            add_new_node_after_node(what_if_dag, patch.filter_operator, location)
-                        elif patch.train_not_test is True:
-                            dag_part_name = "train" if patch.train_not_test is True else "test"
-                            logger.warning(
-                                f"Columns {patch.only_reads_column} not present in {dag_part_name} DAG after the train "
-                                f"test split, only before!")
-                            logger.warning(f"This could hint at data leakage!")
-                            add_new_node_after_node(what_if_dag, patch.filter_operator, location)
-                    elif isinstance(patch, DataTransformer):
-                        train_location, _ = find_dag_location_for_data_patch([patch.modifies_column], what_if_dag, True)
-                        test_location, _ = find_dag_location_for_data_patch([patch.modifies_column], what_if_dag, False)
-                        add_new_node_after_node(what_if_dag, patch.fit_transform_operator, train_location)
-                        if train_location != test_location:
-                            add_new_node_after_node(what_if_dag, patch.transform_operator, test_location, arg_index=1)
-                            what_if_dag.add_edge(patch.fit_transform_operator, patch.transform_operator, arg_index=0)
-                    elif isinstance(patch, DataProjection):
-                        location, is_before_slit = find_dag_location_for_data_patch(patch.only_reads_column,
-                                                                                    what_if_dag, patch.train_not_test)
-                        if is_before_slit is False:
-                            add_new_node_after_node(what_if_dag, patch.projection_operator, location)
-                        elif patch.train_not_test is True:
-                            dag_part_name = "train" if patch.train_not_test is True else "test"
-                            logger.warning(
-                                f"Columns {patch.only_reads_column} not present in {dag_part_name} DAG after the train "
-                                f"test split, only before!")
-                            logger.warning(f"This could hint at data leakage!")
-                            add_new_node_after_node(what_if_dag, patch.projection_operator, location)
-                    else:
-                        raise Exception(f"Unknown DataPatch type: {type(patch).__name__}!")
-                elif isinstance(patch, ModelPatch):
-                    estimator_nodes = find_nodes_by_type(what_if_dag, OperatorType.ESTIMATOR)
-                    if len(estimator_nodes) != 1:
-                        raise Exception(
-                            "Currently, DataCorruption only supports pipelines with exactly one estimator!")
-                    estimator_node = estimator_nodes[0]
-                    replace_node(what_if_dag, estimator_node, patch.replace_with_node)
-                elif isinstance(patch, PipelinePatch):
-                    if isinstance(patch, AppendNodeAfterOperator):
-                        add_new_node_after_node(what_if_dag, patch.operator_to_add_node_after, patch.node_to_insert)
-                    elif isinstance(patch, OperatorReplacement):
-                        replace_node(what_if_dag, patch.operator_to_replace, patch.replacement_operator)
-                    elif isinstance(patch, OperatorRemoval):
-                        remove_node(what_if_dag, patch.operator_to_remove)
-                    else:
-                        raise Exception(f"Unknown PipelinePatch type: {type(patch).__name__}!")
-                else:
-                    raise Exception(f"Unknown patch type: {type(patch).__name__}!")
+                what_if_dag = patch.apply(what_if_dag)
             what_if_dags.append(what_if_dag)
 
         if skip_optimizer is False:

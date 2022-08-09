@@ -12,8 +12,8 @@ from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_sorted_parent_nodes, \
-    find_train_or_test_pipeline_part_end, \
-    get_intermediate_extraction_patch_after_score_nodes
+    find_train_or_test_pipeline_part_end
+from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import Patch, OperatorReplacement, OperatorRemoval
 from mlwhatif.instrumentation._pipeline_executor import singleton

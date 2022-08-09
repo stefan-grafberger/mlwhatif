@@ -7,10 +7,7 @@ from typing import Tuple, Iterable
 import networkx
 
 from mlwhatif.instrumentation._operator_types import OperatorType
-from mlwhatif.instrumentation._dag_node import OperatorContext
-from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
-from mlwhatif.execution._patches import AppendNodeAfterOperator
-from mlwhatif.instrumentation._dag_node import DagNode, DagNodeDetails
+from mlwhatif.instrumentation._dag_node import DagNode
 
 logger = logging.getLogger(__name__)
 
@@ -18,22 +15,6 @@ logger = logging.getLogger(__name__)
 def find_nodes_by_type(new_dag: networkx.DiGraph, operator_type: OperatorType):
     """Find DagNodes in the DAG by OperatorType"""
     return [node for node in new_dag.nodes if node.operator_info.operator == operator_type]
-
-
-def get_intermediate_extraction_patch_after_node(singleton, analysis: WhatIfAnalysis, dag_node: DagNode, label: str):
-    """Add a new node behind some given node to extract the intermediate result of that given node"""
-
-    def extract_intermediate(intermediate_value):
-        singleton.labels_to_extracted_plan_results[label] = intermediate_value
-        return intermediate_value
-
-    new_extraction_node = DagNode(singleton.get_next_op_id(),
-                                  dag_node.code_location,
-                                  OperatorContext(OperatorType.EXTRACT_RESULT, None),
-                                  DagNodeDetails(None, dag_node.details.columns),
-                                  None,
-                                  extract_intermediate)
-    return AppendNodeAfterOperator(singleton.get_next_patch_id(), analysis, False, new_extraction_node, dag_node)
 
 
 def add_new_node_after_node(dag: networkx.DiGraph, new_node: DagNode, dag_node: DagNode, arg_index=0):
@@ -146,17 +127,6 @@ def find_dag_location_for_first_op_modifying_column(column, dag, test_not_train)
     first_op_requiring_corruption, operator_to_apply_corruption_after = \
         find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, operator_parent_nodes)
     return operator_to_apply_corruption_after, first_op_requiring_corruption
-
-
-def get_intermediate_extraction_patch_after_score_nodes(singleton, analysis: WhatIfAnalysis, label: str,
-                                                        score_nodes_and_linenos: Iterable[tuple[DagNode, int]]):
-    """Add a new node behind some given node to extract the intermediate result of that given node"""
-    patches = []
-    for node, lineno in score_nodes_and_linenos:
-        node_label = f"{label}_L{lineno}"
-        patch = get_intermediate_extraction_patch_after_node(singleton, analysis, node, node_label)
-        patches.append(patch)
-    return patches
 
 
 def find_dag_location_for_data_patch(columns, dag, train_not_test) -> tuple[any, bool]:

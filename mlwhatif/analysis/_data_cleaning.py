@@ -10,8 +10,9 @@ import networkx
 import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_intermediate_extraction_patch_after_score_nodes
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type
 from mlwhatif.analysis._cleaning_methods import MissingValueCleaner, DuplicateCleaner, OutlierCleaner, MislabelCleaner
+from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import DataFiltering, DataTransformer, ModelPatch, Patch
 from mlwhatif.instrumentation._pipeline_executor import singleton
