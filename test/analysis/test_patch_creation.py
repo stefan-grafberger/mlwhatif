@@ -43,7 +43,7 @@ def test_add_intermediate_extraction_after_node_intermediate_df():
     label = "util-test"
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH)
     patch = get_intermediate_extraction_patch_after_node(singleton, None, intermediate_pdf_result_value, label)
-    dag = patch.apply(dag)
+    patch.apply(dag)
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_AFTER_PATH)
     DagExecutor().execute(dag)
     extracted_value = singleton.labels_to_extracted_plan_results[label]
@@ -84,7 +84,7 @@ def test_add_intermediate_extraction_after_node_final_score():
     label = "util-test"
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH)
     patch = get_intermediate_extraction_patch_after_node(singleton, None, final_result_value, label)
-    dag = patch.apply(dag)
+    patch.apply(dag)
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_AFTER_PATH)
     DagExecutor().execute(dag)
     extracted_value = singleton.labels_to_extracted_plan_results[label]

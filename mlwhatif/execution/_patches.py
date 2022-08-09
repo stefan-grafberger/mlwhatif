@@ -23,7 +23,7 @@ class Patch(ABC):
     changes_following_results: bool
 
     @abstractmethod
-    def apply(self, dag: networkx.DiGraph) -> networkx.DiGraph:
+    def apply(self, dag: networkx.DiGraph):
         """Apply the patch to some DAG"""
         raise NotImplementedError
 
@@ -51,9 +51,8 @@ class OperatorRemoval(PipelinePatch):
 
     operator_to_remove: DagNode
 
-    def apply(self, dag: networkx.DiGraph) -> networkx.DiGraph:
+    def apply(self, dag: networkx.DiGraph):
         remove_node(dag, self.operator_to_remove)
-        return dag
 
 
 @dataclasses.dataclass
@@ -63,9 +62,8 @@ class AppendNodeAfterOperator(PipelinePatch):
     operator_to_add_node_after: DagNode
     node_to_insert: DagNode
 
-    def apply(self, dag: networkx.DiGraph) -> networkx.DiGraph:
+    def apply(self, dag: networkx.DiGraph):
         add_new_node_after_node(dag, self.operator_to_add_node_after, self.node_to_insert)
-        return dag
 
 
 @dataclasses.dataclass
@@ -81,7 +79,7 @@ class DataFiltering(DataPatch):
     train_not_test: bool
     only_reads_column: List[str]
 
-    def apply(self, dag: networkx.DiGraph) -> networkx.DiGraph:
+    def apply(self, dag: networkx.DiGraph):
         location, is_before_slit = find_dag_location_for_data_patch(self.only_reads_column, dag, self.train_not_test)
         if is_before_slit is False:
             add_new_node_after_node(dag, self.filter_operator, location)
@@ -92,7 +90,6 @@ class DataFiltering(DataPatch):
                 f"test split, only before!")
             logger.warning(f"This could hint at data leakage!")
             add_new_node_after_node(dag, self.filter_operator, location)
-        return dag
 
 
 @dataclasses.dataclass
@@ -107,7 +104,7 @@ class DataProjection(DataPatch):
     # A function that can be combined with index_selection_func to replace the projection_operator processing_func
     projection_func_only: Callable or None = None
 
-    def apply(self, dag: networkx.DiGraph) -> networkx.DiGraph:
+    def apply(self, dag: networkx.DiGraph):
         location, is_before_slit = find_dag_location_for_data_patch(self.only_reads_column,
                                                                     dag, self.train_not_test)
         if is_before_slit is False:
@@ -119,7 +116,6 @@ class DataProjection(DataPatch):
                 f"test split, only before!")
             logger.warning(f"This could hint at data leakage!")
             add_new_node_after_node(dag, self.projection_operator, location)
-        return dag
 
 
 @dataclasses.dataclass
@@ -130,14 +126,13 @@ class DataTransformer(DataPatch):
     transform_operator: DagNode
     modifies_column: str
 
-    def apply(self, dag: networkx.DiGraph) -> networkx.DiGraph:
+    def apply(self, dag: networkx.DiGraph):
         train_location, _ = find_dag_location_for_data_patch([self.modifies_column], dag, True)
         test_location, _ = find_dag_location_for_data_patch([self.modifies_column], dag, False)
         add_new_node_after_node(dag, self.fit_transform_operator, train_location)
         if train_location != test_location:
             add_new_node_after_node(dag, self.transform_operator, test_location, arg_index=1)
             dag.add_edge(self.fit_transform_operator, self.transform_operator, arg_index=0)
-        return dag
 
 
 @dataclasses.dataclass
@@ -146,10 +141,9 @@ class ModelPatch(Patch):
 
     replace_with_node: DagNode
 
-    def apply(self, dag: networkx.DiGraph) -> networkx.DiGraph:
+    def apply(self, dag: networkx.DiGraph):
         estimator_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
         if len(estimator_nodes) != 1:
             raise Exception("Currently, ModelPatch only supports pipelines with exactly one estimator!")
         estimator_node = estimator_nodes[0]
         replace_node(dag, estimator_node, self.replace_with_node)
-        return dag

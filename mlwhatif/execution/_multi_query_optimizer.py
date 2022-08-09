@@ -7,11 +7,7 @@ from typing import Iterable
 
 import networkx
 
-from mlwhatif.instrumentation._operator_types import OperatorType
-from mlwhatif.analysis._analysis_utils import find_dag_location_for_data_patch, add_new_node_after_node, \
-    find_nodes_by_type, replace_node, remove_node
-from mlwhatif.execution._patches import Patch, DataPatch, ModelPatch, PipelinePatch, DataFiltering, DataTransformer, \
-    AppendNodeAfterOperator, DataProjection, OperatorReplacement, OperatorRemoval
+from mlwhatif.execution._patches import Patch
 from mlwhatif.instrumentation._dag_node import DagNode
 from mlwhatif.visualisation import save_fig_to_path
 
@@ -20,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 class MultiQueryOptimizer:
     """ Combines multiple DAGs and optimizes the joint plan """
-    # pylint: disable=too-few-public-methods
+    # pylint: disable=too-few-public-methods,too-many-locals
 
     def __init__(self, pipeline_executor):
         self.pipeline_executor = pipeline_executor
@@ -32,9 +28,6 @@ class MultiQueryOptimizer:
             networkx.DiGraph:
         """ Optimize and combine multiple given input DAGs """
         # pylint: disable=too-many-arguments
-        # TODO: Polish this and make the pylint disables obsolete
-
-        # TODO: In the future, we will need to update this once we have more sophisticated optimisations
         estimate_original_runtime = self._estimate_runtime_of_dag(original_dag)
         logger.info(f"Estimated runtime of original DAG is {estimate_original_runtime}ms")
 
@@ -42,13 +35,8 @@ class MultiQueryOptimizer:
         for patch_set in patches:
             what_if_dag = original_dag.copy()
             for patch in patch_set:
-                what_if_dag = patch.apply(what_if_dag)
+                patch.apply(what_if_dag)
             what_if_dags.append(what_if_dag)
-
-        if skip_optimizer is False:
-            self.make_nodes_depending_on_changed_nodes_unique(original_dag, what_if_dags)
-        else:
-            self.make_all_nodes_unique(what_if_dags)
 
         for dag_index, what_if_dag in enumerate(what_if_dags):
             if prefix_analysis_dags is not None:
@@ -58,15 +46,9 @@ class MultiQueryOptimizer:
         logger.info(f"Estimated unoptimized what-if runtime is {combined_estimated_runtimes}ms")
 
         multi_query_optimization_start = time.time()
-        if skip_optimizer is False:
-            logger.info(f"Performing Multi-Query Optimization")
-            # TODO: More optimizations, maybe create some optimization rule interface that what-if analyses can use
-            #  to specify analysis-specific optimizations
-            big_execution_dag = networkx.compose_all(what_if_dags)
-        else:
-            logger.warning("Skipping Multi-Query Optimization (instead, only combine execution DAGs)")
-            big_execution_dag = networkx.compose_all(what_if_dags)
+        big_execution_dag = self.optimize_and_combine_dags(original_dag, skip_optimizer, what_if_dags)
         multi_query_optimization_duration = time.time() - multi_query_optimization_start
+        logger.info(f'---RUNTIME: Multi-Query Optimization took {multi_query_optimization_duration * 1000} ms')
 
         if prefix_optimised_analysis_dag is not None:
             save_fig_to_path(big_execution_dag, f"{prefix_optimised_analysis_dag}.png")
@@ -76,9 +58,23 @@ class MultiQueryOptimizer:
 
         estimated_saving = combined_estimated_runtimes - estimate_optimised_runtime
         logger.info(f"Estimated optimisation runtime saving is {estimated_saving}ms")
-        logger.info(f'---RUNTIME: Multi-Query Optimization took {multi_query_optimization_duration * 1000} ms')
+
         logger.info(f"Executing generated plan")
 
+        return big_execution_dag
+
+    def optimize_and_combine_dags(self, original_dag, skip_optimizer, what_if_dags):
+        """Here, the multi query optimization happens"""
+        if skip_optimizer is False:
+            logger.info(f"Performing Multi-Query Optimization")
+            # TODO: More optimizations, maybe create some optimization rule interface that what-if analyses can use
+            #  to specify analysis-specific optimizations
+            self.make_nodes_depending_on_changed_nodes_unique(original_dag, what_if_dags)
+            big_execution_dag = networkx.compose_all(what_if_dags)
+        else:
+            logger.warning("Skipping Multi-Query Optimization (instead, only combine execution DAGs)")
+            self.make_all_nodes_unique(what_if_dags)
+            big_execution_dag = networkx.compose_all(what_if_dags)
         return big_execution_dag
 
     def make_nodes_depending_on_changed_nodes_unique(self, original_dag, what_if_dags):
