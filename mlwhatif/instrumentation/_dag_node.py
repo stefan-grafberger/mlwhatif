@@ -36,7 +36,7 @@ class BasicCodeLocation:
     Basic information that can be collected even if `set_code_reference_tracking` is disabled
     """
     caller_filename: str
-    lineno: int
+    lineno: int or None
 
 
 @dataclasses.dataclass
@@ -54,7 +54,7 @@ class DagNodeDetails:
     Additional info about the DAG node
     """
     description: str or None = None
-    columns: List[str] = None
+    columns: List[str] or None = None
     optimizer_info: OptimizerInfo or None = None
 
 

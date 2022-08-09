@@ -100,9 +100,13 @@ def test_data_corruption_mini_example_with_projection_modify():
         pandas_df['B'] = 0
         return pandas_df
 
+    def custom_index_selection_func(pandas_df):
+        return pandas_df['B'] >= 3
+
     data_corruption = DataCorruption({'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df),
                                       'B': corruption},
-                                     also_corrupt_train=True)
+                                     also_corrupt_train=True,
+                                     corruption_percentages=[0.2, custom_index_selection_func])
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -113,7 +117,7 @@ def test_data_corruption_mini_example_with_projection_modify():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (6, 4)
+    assert report.shape == (4, 4)
 
 
 def test_data_corruption_mini_example_only_train_test_split():
@@ -154,6 +158,54 @@ def test_data_corruption_mini_example_only_train_test_split():
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .add_what_if_analysis(data_corruption) \
+        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
+        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
+        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
+        .execute()
+
+    report = analysis_result.analysis_to_result_reports[data_corruption]
+    assert report.shape == (6, 4)
+
+
+def test_data_corruption_mini_example_only_train_test_split_without_optimizer():
+    """
+    Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
+    """
+    test_code = cleandoc("""
+        import pandas as pd
+        from sklearn.preprocessing import label_binarize, StandardScaler
+        from sklearn.tree import DecisionTreeClassifier
+        import numpy as np
+        from sklearn.model_selection import train_test_split
+
+        pandas_df = pd.DataFrame({'A': [0, 0, 0, 0, 0, 0, 0, 0], 'B': [0, 1, 3, 4, 4, 3, 4, 3], 
+            'target': ['no', 'no', 'yes', 'yes', 'yes', 'yes', 'yes', 'yes']})
+        train_data, test_data = train_test_split(pandas_df, random_state=0)
+
+        target = label_binarize(train_data['target'], classes=['no', 'yes'])
+        train_data = train_data[['A', 'B']]
+
+        clf = DecisionTreeClassifier()
+        clf = clf.fit(train_data, target)
+
+        test_labels = label_binarize(test_data['target'], classes=['no', 'yes'])
+        test_data = test_data[['A', 'B']]
+        test_score = clf.score(test_data, test_labels)
+        assert test_score == 1.0
+        """)
+
+    def corruption(pandas_df):
+        pandas_df['B'] = 0
+        return pandas_df
+
+    data_corruption = DataCorruption({'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df),
+                                      'B': corruption},
+                                     also_corrupt_train=True)
+
+    analysis_result = PipelineAnalyzer \
+        .on_pipeline_from_string(test_code) \
+        .add_what_if_analysis(data_corruption) \
+        .skip_multi_query_optimization(True) \
         .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
         .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
         .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \

@@ -6,10 +6,8 @@ from typing import Tuple
 
 import networkx
 
-from mlwhatif import OperatorContext, OperatorType
-from mlwhatif.instrumentation._dag_node import DagNode, DagNodeDetails
-from mlwhatif.instrumentation._pipeline_executor import singleton
-
+from mlwhatif.instrumentation._operator_types import OperatorType
+from mlwhatif.instrumentation._dag_node import DagNode
 
 logger = logging.getLogger(__name__)
 
@@ -17,22 +15,6 @@ logger = logging.getLogger(__name__)
 def find_nodes_by_type(new_dag: networkx.DiGraph, operator_type: OperatorType):
     """Find DagNodes in the DAG by OperatorType"""
     return [node for node in new_dag.nodes if node.operator_info.operator == operator_type]
-
-
-def add_intermediate_extraction_after_node(dag: networkx.DiGraph, dag_node: DagNode, label: str):
-    """Add a new node behind some given node to extract the intermediate result of that given node"""
-
-    def extract_intermediate(intermediate_value):
-        singleton.labels_to_extracted_plan_results[label] = intermediate_value
-        return intermediate_value
-
-    new_extraction_node = DagNode(singleton.get_next_op_id(),
-                                  dag_node.code_location,
-                                  OperatorContext(OperatorType.EXTRACT_RESULT, None),
-                                  DagNodeDetails(None, dag_node.details.columns),
-                                  None,
-                                  extract_intermediate)
-    add_new_node_after_node(dag, new_extraction_node, dag_node)
 
 
 def add_new_node_after_node(dag: networkx.DiGraph, new_node: DagNode, dag_node: DagNode, arg_index=0):
@@ -71,6 +53,17 @@ def replace_node(dag: networkx.DiGraph, dag_node_to_be_replaced: DagNode, new_no
         dag.add_edge(parent_node, new_node, **edge_data)
 
     dag.remove_node(dag_node_to_be_replaced)
+
+
+def remove_node(dag: networkx.DiGraph, operator_to_remove: DagNode):
+    """Replace a node from a given DAG"""
+    # TODO: Not totally sure yet if this work as intended and if this parent is the right node always
+    parent = get_sorted_parent_nodes(dag, operator_to_remove)[0]
+    children_before_modifications = list(dag.successors(operator_to_remove))
+    for child_node in children_before_modifications:
+        edge_data = dag.get_edge_data(operator_to_remove, child_node)
+        dag.add_edge(parent, child_node, **edge_data)
+    dag.remove_node(operator_to_remove)
 
 
 def add_new_node_between_nodes(dag: networkx.DiGraph, new_node: DagNode, dag_location: Tuple[DagNode, DagNode]):
@@ -136,7 +129,7 @@ def find_dag_location_for_first_op_modifying_column(column, dag, test_not_train)
     return operator_to_apply_corruption_after, first_op_requiring_corruption
 
 
-def find_dag_location_for_data_patch(column, dag, train_not_test):
+def find_dag_location_for_data_patch(columns, dag, train_not_test) -> tuple[any, bool]:
     """Find out between which two nodes to apply the corruption"""
     train_search_start_node = find_train_or_test_pipeline_part_end(dag, False)
     test_search_start_node = find_train_or_test_pipeline_part_end(dag, True)
@@ -150,25 +143,25 @@ def find_dag_location_for_data_patch(column, dag, train_not_test):
     else:
         nodes_to_search = test_nodes_to_search.difference(train_nodes_to_search)
 
-    matches = [node for node in nodes_to_search
-               if column in node.details.columns]
+    columns = set(columns)
+    matches = [node for node in nodes_to_search if columns.issubset(set(node.details.columns)) and
+               node.operator_info.operator not in {OperatorType.PROJECTION, OperatorType.SUBSCRIPT}]
 
+    is_before_split = False
     if len(matches) == 0:
-        dag_part_name = "train" if train_not_test is True else "test"
-        logger.warning(f"Column {column} not present in {dag_part_name} DAG after the train test split!")
-        logger.warning(f"Looking for it before the split now!")
-        logger.warning(f"This could hint at data leakage!")
+        is_before_split = True
 
         nodes_to_search = train_nodes_to_search.intersection(test_nodes_to_search)
         matches = [node for node in nodes_to_search
-                   if column in node.details.columns]
+                   if node.details.columns and columns.issubset(set(node.details.columns))
+                   and node.operator_info.operator not in {OperatorType.PROJECTION, OperatorType.SUBSCRIPT}]
 
         if len(matches) == 0:
-            raise Exception(f"Column {column} not present in DAG!")
+            raise Exception(f"Columns {columns} not present in DAG!")
 
     sorted_matches = sorted(matches, key=lambda dag_node: dag_node.node_id)
     first_op_requiring_corruption = sorted_matches[0]
-    return first_op_requiring_corruption
+    return first_op_requiring_corruption, is_before_split
 
 
 def find_train_or_test_pipeline_part_end(dag, test_not_train):

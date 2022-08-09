@@ -45,6 +45,7 @@ class PipelineExecutor:
     end_lineno_next_call_or_subscript = -1
     end_col_offset_next_call_or_subscript = -1
     next_op_id = 0
+    next_patch_id = 0
     next_missing_op_id = -1
     track_code_references = True
     op_id_to_dag_node = dict()
@@ -117,41 +118,27 @@ class PipelineExecutor:
         """
         Execute the specified what-if analyses
         """
-        if self.prefix_original_dag is not None:
-            save_fig_to_path(self.analysis_results.dag, f"{self.prefix_original_dag}.png")
         for analysis in self.analyses:
             logger.info(f'Start plan generation for analysis {type(analysis).__name__}...')
             plan_generation_start = time.time()
             what_if_dags = analysis.generate_plans_to_try(self.analysis_results.dag)
             plan_generation_duration = time.time() - plan_generation_start
             logger.info(f'---RUNTIME: Plan generation took {plan_generation_duration * 1000} ms')
-            for dag_index, what_if_dag in enumerate(what_if_dags):
-                if self.prefix_analysis_dags is not None:
-                    save_fig_to_path(what_if_dag,
-                                     f"{self.prefix_analysis_dags}-{type(analysis).__name__}-{dag_index}.png")
 
             # TODO: Potentially, we might want to also combine multiple analyses to one joint execution plan
 
-            if self.skip_optimizer is False:
-                logger.info(f"Performing Multi-Query Optimization")
-                multi_query_optimization_start = time.time()
-                big_execution_dag = MultiQueryOptimizer(self)\
-                    .create_optimized_plan(self.analysis_results.dag, what_if_dags)
-                multi_query_optimization_duration = time.time() - multi_query_optimization_start
-                logger.info(f'---RUNTIME: Multi-Query Optimization took {multi_query_optimization_duration * 1000} ms')
-                logger.info(f"Executing generated plan")
-                if self.prefix_optimised_analysis_dag is not None:
-                    save_fig_to_path(big_execution_dag, f"{self.prefix_optimised_analysis_dag}.png")
+            if self.prefix_original_dag is not None:
+                save_fig_to_path(self.analysis_results.dag, f"{self.prefix_original_dag}.png")
 
-                execution_start = time.time()
-                DagExecutor().execute(big_execution_dag)
-            else:
-                logger.warning("Skipping Multi-Query Optimization")
-                logger.info(f"Executing generated plans")
-                execution_start = time.time()
-                for what_if_dag in what_if_dags:
-                    DagExecutor().execute(what_if_dag)
+            big_execution_dag = MultiQueryOptimizer(self) \
+                .create_optimized_plan(self.analysis_results.dag, what_if_dags,
+                                       self.prefix_analysis_dags,
+                                       self.prefix_optimised_analysis_dag,
+                                       self.skip_optimizer)
 
+            logger.info(f"Executing generated plans")
+            execution_start = time.time()
+            DagExecutor().execute(big_execution_dag)
             execution_duration = time.time() - execution_start
             logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
 
@@ -176,6 +163,14 @@ class PipelineExecutor:
         self.next_op_id += 1
         return current_op_id
 
+    def get_next_patch_id(self):
+        """
+        Each operator in the DAG gets a consecutive unique id
+        """
+        current_patch_id = self.next_patch_id
+        self.next_patch_id += 1
+        return current_patch_id
+
     def get_next_missing_op_id(self):
         """
         Each unknown operator in the DAG gets a consecutive unique negative id
@@ -196,6 +191,7 @@ class PipelineExecutor:
         self.end_lineno_next_call_or_subscript = -1
         self.end_col_offset_next_call_or_subscript = -1
         self.next_op_id = 0
+        self.next_patch_id = 0
         self.next_missing_op_id = -1
         self.track_code_references = True
         self.op_id_to_dag_node = dict()

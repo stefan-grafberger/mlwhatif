@@ -8,7 +8,7 @@ from sklearn.tree import DecisionTreeClassifier
 
 from example_pipelines import HEALTHCARE_PY, COMPAS_PY, ADULT_SIMPLE_PY, ADULT_COMPLEX_PY
 from example_pipelines.healthcare import custom_monkeypatching as healthcare_patching
-from mlwhatif.analysis._analysis_utils import add_intermediate_extraction_after_node
+from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_node
 from mlwhatif.execution._dag_executor import DagExecutor
 from mlwhatif.instrumentation import _pipeline_executor
 from mlwhatif.instrumentation._pipeline_executor import singleton
@@ -73,7 +73,8 @@ def execute_dag_and_get_final_pipeline_result(extracted_dag):
     """Utility function to extract the final result of a pipeline"""
     final_result_op = [node for node, out_degree in extracted_dag.out_degree() if out_degree == 0][0]
     label = "dag-exec-test"
-    add_intermediate_extraction_after_node(extracted_dag, final_result_op, label)
+    patch = get_intermediate_extraction_patch_after_node(singleton, None, final_result_op, label)
+    patch.apply(extracted_dag)
     DagExecutor().execute(extracted_dag)
     extracted_final_pipeline_result = singleton.labels_to_extracted_plan_results[label]
     return extracted_final_pipeline_result
