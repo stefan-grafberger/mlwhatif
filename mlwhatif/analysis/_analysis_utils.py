@@ -66,11 +66,11 @@ def remove_node(dag: networkx.DiGraph, operator_to_remove: DagNode):
 
 
 def add_new_node_between_nodes(dag: networkx.DiGraph, new_node: DagNode, dag_node_before: DagNode,
-                               dag_node_after: DagNode):
+                               dag_node_after: DagNode, arg_index=0):
     """Add a new node between two chosen nodes"""
     edge_data = dag.get_edge_data(dag_node_before, dag_node_after)
     dag.remove_edge(dag_node_before, dag_node_after)
-    dag.add_edge(dag_node_before, new_node, arg_index=0)
+    dag.add_edge(dag_node_before, new_node, arg_index=arg_index)
     dag.add_edge(new_node, dag_node_after, **edge_data)
 
 
