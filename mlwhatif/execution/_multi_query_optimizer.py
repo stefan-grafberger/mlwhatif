@@ -8,8 +8,8 @@ from typing import Iterable
 import networkx
 
 from mlwhatif.execution._patches import Patch
-from mlwhatif.execution._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
-from mlwhatif.execution._simple_projection_push_up import SimpleProjectionPushUp
+from mlwhatif.execution.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
+from mlwhatif.execution.optimization._simple_projection_push_up import SimpleProjectionPushUp
 from mlwhatif.instrumentation._dag_node import DagNode
 from mlwhatif.visualisation import save_fig_to_path
 

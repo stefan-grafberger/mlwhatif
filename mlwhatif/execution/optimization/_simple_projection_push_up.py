@@ -7,9 +7,10 @@ from typing import List
 import networkx
 
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_first_op_modifying_column
-from mlwhatif.execution._internal_optimization_patches import AppendNodeBetweenOperators, PipelineTransformerInsertion
+from mlwhatif.execution.optimization._internal_optimization_patches import AppendNodeBetweenOperators, \
+    PipelineTransformerInsertion
 from mlwhatif.execution._patches import Patch, DataProjection, DataTransformer
-from mlwhatif.execution._query_optimization_rules import QueryOptimizationRule
+from mlwhatif.execution.optimization._query_optimization_rules import QueryOptimizationRule
 
 
 class SimpleProjectionPushUp(QueryOptimizationRule):

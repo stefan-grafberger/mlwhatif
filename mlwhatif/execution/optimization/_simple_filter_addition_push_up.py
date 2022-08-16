@@ -8,7 +8,7 @@ import networkx
 
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_new_filter_on_column
 from mlwhatif.execution._patches import Patch, DataFiltering, AppendNodeAfterOperator
-from mlwhatif.execution._query_optimization_rules import QueryOptimizationRule
+from mlwhatif.execution.optimization._query_optimization_rules import QueryOptimizationRule
 
 
 class SimpleFilterAdditionPushUp(QueryOptimizationRule):

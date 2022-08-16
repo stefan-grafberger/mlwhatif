@@ -8,7 +8,7 @@ import networkx
 
 from mlwhatif import OperatorType
 from mlwhatif.execution._patches import Patch, OperatorRemoval
-from mlwhatif.execution._query_optimization_rules import QueryOptimizationRule
+from mlwhatif.execution.optimization._query_optimization_rules import QueryOptimizationRule
 
 
 class OperatorDeletionFilterPushUp(QueryOptimizationRule):
