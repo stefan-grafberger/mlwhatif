@@ -21,14 +21,14 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
     def __init__(self, pipeline_executor):
         self._pipeline_executor = pipeline_executor
 
-    def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
-        filters_to_push_up = set()
+    def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> networkx.DiGraph:
+        filters_to_push_up = []
 
         for pipeline_variant_patches in patches:
             for patch_index, patch in enumerate(pipeline_variant_patches):
                 if isinstance(patch, OperatorRemoval) and \
-                        patch.operator_to_remove.operator_info.operator == OperatorType.SELECTION:
-                    filters_to_push_up.add(patch)
+                        patch.main_operator.operator_info.operator == OperatorType.SELECTION:
+                    filters_to_push_up.append(patch)
 
         for filter_removal_patch in filters_to_push_up:
             using_columns_for_filter = self._get_columns_required_for_filter_eval(dag, filter_removal_patch)
@@ -44,7 +44,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
 
     def _get_columns_required_for_filter_eval(self, dag, filter_removal_patch):
         """Get all columns required to be in the df required for filter evaluation"""
-        operator_parent_nodes = get_sorted_parent_nodes(dag, filter_removal_patch.operator_to_remove)
+        operator_parent_nodes = get_sorted_parent_nodes(dag, filter_removal_patch.main_operator)
         selection_parent_a = operator_parent_nodes[0]
         selection_parent_b = operator_parent_nodes[-1]
         # We want to introduce the change before all subscript behavior

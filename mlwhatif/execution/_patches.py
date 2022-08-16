@@ -74,13 +74,23 @@ class OperatorReplacement(PipelinePatch):
 class OperatorRemoval(PipelinePatch):
     """ Remove a DAG node """
 
-    operator_to_remove: DagNode
+    # While operators to remove is a list, it should always be one main operator only, like a selection.
+    #  The other operators are then the projections and subscripts for the filter condition.
+    main_operator: DagNode
+    operators_to_remove: List[DagNode]
+    maybe_corresponding_test_set_operators: List[DagNode] or None
+    before_train_test_split: bool
 
     def apply(self, dag: networkx.DiGraph):
-        remove_node(dag, self.operator_to_remove)
+        for node in self.operators_to_remove:
+            remove_node(dag, node)
+        for node in self.maybe_corresponding_test_set_operators or []:
+            remove_node(dag, node)
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
-        return self._get_nodes_needing_recomputation(old_dag, new_dag, [self.operator_to_remove], [])
+        return self._get_nodes_needing_recomputation(old_dag, new_dag, [*self.operators_to_remove,
+                                                                        *(self.maybe_corresponding_test_set_operators
+                                                                          or [])], [])
 
 
 @dataclasses.dataclass

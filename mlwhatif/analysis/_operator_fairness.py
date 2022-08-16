@@ -1,6 +1,8 @@
 """
 The Operator Fairness What-If Analysis
 """
+from collections import defaultdict
+from functools import partial
 from typing import Iterable, Dict, List
 
 import networkx
@@ -12,7 +14,7 @@ from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_sorted_parent_nodes, \
-    find_train_or_test_pipeline_part_end
+    find_train_or_test_pipeline_part_end, filter_estimator_transformer_edges
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import Patch, OperatorReplacement, OperatorRemoval
@@ -30,7 +32,8 @@ class OperatorFairness(WhatIfAnalysis):
         self._test_selections = test_selections
         self._restrict_to_linenos = restrict_to_linenos
         self._analysis_id = (test_transformers, test_selections)
-        self._operators_to_test = []
+        self._transformer_operators_to_test = []
+        self._filter_operators_to_test = []
         self._score_nodes_and_linenos = []
 
     @property
@@ -47,11 +50,27 @@ class OperatorFairness(WhatIfAnalysis):
         if len(self._score_nodes_and_linenos) != len(set(self._score_nodes_and_linenos)):
             raise Exception("Currently, DataCorruption only supports pipelines where different score operations can "
                             "be uniquely identified by the line number in the code!")
-        self._operators_to_test = self.get_operators_to_test(dag)
+        self._transformer_operators_to_test = self._get_transformer_operators_to_test(dag)
+        self._filter_operators_to_test = self._get_filter_operators_to_test(dag)
         fairness_patch_sets = []
-        for operator_to_replace in self._operators_to_test:
+        for operator_to_replace in self._transformer_operators_to_test:
             patches_for_variant = []
             result_label = self.get_label_for_operator(operator_to_replace)
+            extraction_nodes = get_intermediate_extraction_patch_after_score_nodes(singleton, self,
+                                                                                   result_label,
+                                                                                   self._score_nodes_and_linenos)
+            patches_for_variant.extend(extraction_nodes)
+            # This is the passthrough transformer the sklearn ColumnTransformer uses internally, a FunctionTransformer
+            #  that uses the identity function
+            assert operator_to_replace.operator_info.operator == OperatorType.TRANSFORMER
+            replacement_node = self.get_transformer_replacement_node(operator_to_replace)
+            patch = OperatorReplacement(singleton.get_next_patch_id(), self, True, operator_to_replace,
+                                        replacement_node)
+            patches_for_variant.append(patch)
+            fairness_patch_sets.append(patches_for_variant)
+        for (operator_to_replace_train, operator_to_replace_test, before_split) in self._filter_operators_to_test:
+            patches_for_variant = []
+            result_label = self.get_label_for_operator(operator_to_replace_train)
             extraction_nodes = get_intermediate_extraction_patch_after_score_nodes(singleton, self,
                                                                                    result_label,
                                                                                    self._score_nodes_and_linenos)
@@ -59,40 +78,39 @@ class OperatorFairness(WhatIfAnalysis):
 
             # This is the passthrough transformer the sklearn ColumnTransformer uses internally, a FunctionTransformer
             #  that uses the identity function
-            if operator_to_replace.operator_info.operator == OperatorType.TRANSFORMER:
-                replacement_node = self.get_transformer_replacement_node(operator_to_replace)
-                patch = OperatorReplacement(singleton.get_next_patch_id(), self, True, operator_to_replace,
-                                            replacement_node)
-                patches_for_variant.append(patch)
-            elif operator_to_replace.operator_info.operator == OperatorType.SELECTION:
-                removal_patches = self.get_removal_patches_for_selection_nodes(dag, operator_to_replace)
-                patches_for_variant.extend(removal_patches)
-            else:
-                raise Exception(f"Replacing operator type {operator_to_replace.operator_info.operator.value} is "
-                                f"not supported yet!")
-
+            assert operator_to_replace_train.operator_info.operator == OperatorType.SELECTION
+            # Here we need to know if there are corresponding
+            removal_patch = self.get_removal_patches_for_selection_nodes(dag, operator_to_replace_train,
+                                                                         operator_to_replace_test, before_split)
+            patches_for_variant.append(removal_patch)
             fairness_patch_sets.append(patches_for_variant)
         return fairness_patch_sets
 
-    def get_removal_patches_for_selection_nodes(self, modified_dag, operator_to_replace):
+    def get_removal_patches_for_selection_nodes(self, modified_dag, operator_to_replace_train, operator_to_replace_test,
+                                                before_split):
         """Removes the selection node as well as nodes that are there for the selection condition"""
-        # TODO: This code assumes a selection based on a simple condition like in our example pipelines for now.
-        operator_parent_nodes = get_sorted_parent_nodes(modified_dag, operator_to_replace)
-        selection_parent_a = operator_parent_nodes[0]
-        selection_parent_b = operator_parent_nodes[-1]
-        # We want to introduce the change before all subscript behavior
-        operator_after_which_cutoff_required = networkx.lowest_common_ancestor(modified_dag, selection_parent_a,
-                                                                               selection_parent_b)
-        paths_between_generator = networkx.all_simple_paths(modified_dag,
-                                                            source=operator_after_which_cutoff_required,
-                                                            target=operator_to_replace)
-        nodes_between_set = {node for path in paths_between_generator for node in path}
-        nodes_between_set.remove(operator_after_which_cutoff_required)
-        removal_patches = []
-        for node_to_remove in nodes_between_set:
-            removal_patch = OperatorRemoval(singleton.get_next_patch_id(), self, True, node_to_remove)
-            removal_patches.append(removal_patch)
-        return removal_patches
+        sets_to_remove = []
+        for operator_to_replace in [operator_to_replace_train, operator_to_replace_test]:
+            if operator_to_replace is not None:
+                operator_parent_nodes = get_sorted_parent_nodes(modified_dag, operator_to_replace)
+                selection_parent_a = operator_parent_nodes[0]
+                selection_parent_b = operator_parent_nodes[-1]
+                # We want to introduce the change before all subscript behavior
+                operator_after_which_cutoff_required = networkx.lowest_common_ancestor(modified_dag, selection_parent_a,
+                                                                                       selection_parent_b)
+                paths_between_generator = networkx.all_simple_paths(modified_dag,
+                                                                    source=operator_after_which_cutoff_required,
+                                                                    target=operator_to_replace)
+                nodes_between_set = {node for path in paths_between_generator for node in path}
+                nodes_between_set.remove(operator_after_which_cutoff_required)
+                sets_to_remove.append(list(nodes_between_set))
+            else:
+                sets_to_remove.append(None)
+        removal_patch = OperatorRemoval(singleton.get_next_patch_id(), self, True,
+                                        operator_to_replace_train,
+                                        sets_to_remove[0],
+                                        sets_to_remove[1], before_split)
+        return removal_patch
 
     @staticmethod
     def get_transformer_replacement_node(operator_to_replace):
@@ -165,7 +183,7 @@ class OperatorFairness(WhatIfAnalysis):
         result_df_replacement_description = []
         result_df_metrics = {}
         score_linenos = [lineno for (_, lineno) in self._score_nodes_and_linenos]
-        for operator_to_replace in self._operators_to_test:
+        for operator_to_replace in self._transformer_operators_to_test:
             result_df_op_type.append(operator_to_replace.operator_info.operator.value)
             result_df_lineno.append(operator_to_replace.code_location.lineno)
             result_df_op_code.append(operator_to_replace.optional_code_info.source_code)
@@ -202,7 +220,7 @@ class OperatorFairness(WhatIfAnalysis):
                             f"not supported yet!")
         return replacement_description
 
-    def get_operators_to_test(self, dag):
+    def _get_transformer_operators_to_test(self, dag):
         """
         For now, we will ignore project modifies and focus on selections and transformers.
         This is because for transformers it is easy to find the corresponding test set operation and for the
@@ -217,6 +235,20 @@ class OperatorFairness(WhatIfAnalysis):
                                        and ": fit_transform" in node.details.description
                                        and "One-Hot" not in node.details.description]
             all_nodes_to_test.extend(transformers_to_replace)
+        if self._restrict_to_linenos is not None:
+            lineno_set = set(self._restrict_to_linenos)
+            all_nodes_to_test = set(node for node in all_nodes_to_test if node.code_location.lineno in lineno_set)
+        return all_nodes_to_test
+
+    def _get_filter_operators_to_test(self, dag):
+        """
+        For now, we will ignore project modifies and focus on selections and transformers.
+        This is because for transformers it is easy to find the corresponding test set operation and for the
+        selection we do not need to worry about finding corresponding test set operations.
+        """
+        search_start_node = find_train_or_test_pipeline_part_end(dag, True)
+        nodes_to_search = set(networkx.ancestors(dag, search_start_node))
+        all_nodes_to_test = []
         if self._test_selections is True:
             selections_to_replace = [node for node in nodes_to_search if
                                      node.operator_info.operator == OperatorType.SELECTION]
@@ -225,4 +257,25 @@ class OperatorFairness(WhatIfAnalysis):
         if self._restrict_to_linenos is not None:
             lineno_set = set(self._restrict_to_linenos)
             all_nodes_to_test = set(node for node in all_nodes_to_test if node.code_location.lineno in lineno_set)
-        return all_nodes_to_test
+
+        filter_pairs_to_consider = defaultdict(partial(list, [None, None, False]))
+
+        dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
+        train_search_start_node = find_train_or_test_pipeline_part_end(dag_to_consider, True)
+        train_nodes = set(networkx.ancestors(dag, train_search_start_node))
+        test_search_start_node = find_train_or_test_pipeline_part_end(dag_to_consider, False)
+        test_nodes = set(networkx.ancestors(dag, test_search_start_node))
+        for node in all_nodes_to_test:
+            filter_key = (node.details.description, tuple(node.details.columns))
+            if node in train_nodes and node in test_nodes:
+                filter_pairs_to_consider[filter_key][0] = node
+                filter_pairs_to_consider[filter_key][1] = None
+                filter_pairs_to_consider[filter_key][2] = True
+            elif node in train_nodes:
+                filter_pairs_to_consider[filter_key][0] = node
+            elif node in test_nodes:
+                filter_pairs_to_consider[filter_key][1] = node
+            else:
+                raise Exception("A node must be either in the train or test part of the pipeline")
+        return_value = list(filter_pairs_to_consider.values())
+        return return_value
