@@ -6,7 +6,7 @@ from typing import List
 
 import networkx
 
-from mlwhatif import OperatorType
+from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_new_filter_on_column, get_sorted_parent_nodes, \
     get_sorted_children_nodes
 from mlwhatif.execution._patches import Patch, OperatorRemoval
