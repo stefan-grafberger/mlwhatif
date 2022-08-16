@@ -6,15 +6,13 @@ from typing import List
 
 import networkx
 
-from mlwhatif.analysis._analysis_utils import find_dag_location_for_first_op_modifying_column, \
-    find_dag_location_for_new_filter_on_column
-from mlwhatif.execution._internal_optimization_patches import AppendNodeBetweenOperators, PipelineTransformerInsertion
-from mlwhatif.execution._patches import Patch, DataProjection, DataTransformer, DataFiltering, AppendNodeAfterOperator
+from mlwhatif.analysis._analysis_utils import find_dag_location_for_new_filter_on_column
+from mlwhatif.execution._patches import Patch, DataFiltering, AppendNodeAfterOperator
 from mlwhatif.execution._query_optimization_rules import QueryOptimizationRule
 
 
 class SimpleFilterAdditionPushUp(QueryOptimizationRule):
-    """ Combines multiple DAGs and optimizes the joint plan """
+    """ Push up a filter that is added as a DataFiltering Patch """
 
     # pylint: disable=too-few-public-methods
 

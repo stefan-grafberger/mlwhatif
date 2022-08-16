@@ -7,9 +7,7 @@ from typing import List
 import networkx
 
 from mlwhatif import OperatorType
-from mlwhatif.analysis._analysis_utils import find_dag_location_for_first_op_modifying_column
-from mlwhatif.execution._internal_optimization_patches import AppendNodeBetweenOperators, PipelineTransformerInsertion
-from mlwhatif.execution._patches import Patch, DataProjection, DataTransformer, OperatorRemoval
+from mlwhatif.execution._patches import Patch, OperatorRemoval
 from mlwhatif.execution._query_optimization_rules import QueryOptimizationRule
 
 
