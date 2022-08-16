@@ -14,7 +14,12 @@ class QueryOptimizationRule(metaclass=abc.ABCMeta):
     """
     The Interface for Query Optimization Rules
     """
-    # pylint: disable=too-few-public-methods
-    def optimize(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
+    def optimize_patches(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
         """Transform the patches into more efficient ones"""
-        raise NotImplementedError
+        # pylint: disable=unused-argument,no-self-use
+        return patches
+
+    def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> networkx.DiGraph:
+        """Transform the patches into more efficient ones"""
+        # pylint: disable=unused-argument,no-self-use
+        return dag

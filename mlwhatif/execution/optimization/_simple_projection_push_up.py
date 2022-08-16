@@ -21,7 +21,7 @@ class SimpleProjectionPushUp(QueryOptimizationRule):
     def __init__(self, pipeline_executor):
         self._pipeline_executor = pipeline_executor
 
-    def optimize(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
+    def optimize_patches(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
         updated_patches = []
         for pipeline_variant_patches in patches:
             updated_pipeline_variant_patches = []

@@ -2,6 +2,7 @@
 Util functions to make writing What-If Analyses easier
 """
 import logging
+from typing import List
 
 import networkx
 
@@ -85,7 +86,7 @@ def filter_estimator_transformer_edges(parent, child):
     return not is_transformer_edge
 
 
-def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_name: str, train_not_test: bool):
+def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_names: List[str], train_not_test: bool):
     """Find DagNodes in the DAG by OperatorType"""
     if train_not_test is False:
         dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
@@ -94,7 +95,7 @@ def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_nam
     nodes_to_search = list(networkx.ancestors(dag_to_consider, search_start_node))
     project_modify_matches = [node for node in nodes_to_search
                               if node.operator_info.operator == OperatorType.PROJECTION_MODIFY
-                              and node.details.description == f"modifies ['{column_name}']"]
+                              and node.details.description == f"modifies {column_names}"]
     # TODO: Using the description string is not very clean
     if len(project_modify_matches) != 0:
         sorted_matches = sorted(project_modify_matches, key=lambda dag_node: dag_node.node_id)
@@ -103,12 +104,12 @@ def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_nam
         transformer_matches = [node for node in nodes_to_search
                                if node.operator_info.operator == OperatorType.TRANSFORMER
                                and ": transform" in node.details.description
-                               and column_name in list(dag.predecessors(node))[1].details.columns]
+                               and not set(list(dag.predecessors(node))[1].details.columns).isdisjoint(column_names)]
     else:
         transformer_matches = [node for node in nodes_to_search
                                if node.operator_info.operator == OperatorType.TRANSFORMER
                                and ": fit_transform" in node.details.description
-                               and column_name in list(dag.predecessors(node))[0].details.columns]
+                               and not set(list(dag.predecessors(node))[0].details.columns).isdisjoint(column_names)]
     if len(transformer_matches) >= 1:
         # Can be two for example in the COMPAS pipeline when there is a SimpleImputer first
         sorted_transformer_matches = sorted(transformer_matches, key=lambda dag_node: dag_node.node_id)
@@ -121,21 +122,22 @@ def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_nam
 def find_dag_location_for_first_op_modifying_column(column, dag, train_not_test) -> tuple[any, any]:
     """Find out between which two nodes to apply the corruption"""
     search_start_node = find_train_or_test_pipeline_part_end(dag, train_not_test)
-    first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, train_not_test)
+    first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, [column], train_not_test)
     operator_parent_nodes = get_sorted_parent_nodes(dag, first_op_requiring_corruption)
     first_op_requiring_corruption, operator_to_apply_corruption_after = \
         find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, operator_parent_nodes)
     return operator_to_apply_corruption_after, first_op_requiring_corruption
 
 
-def find_dag_location_for_new_filter_on_column(column, dag, train_not_test) -> any:
+def find_dag_location_for_new_filter_on_column(columns, dag, train_not_test) -> any:
     """Find out between which two nodes to apply the corruption"""
     search_start_node = find_lowest_common_ancestor_for_data_and_labels(dag, train_not_test)
-    first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, train_not_test)
-    if column not in set(first_op_requiring_corruption.details.columns):
+    # This also is not very clean, maybe improve this at some point
+    first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, columns, train_not_test)
+    if not set(first_op_requiring_corruption.details.columns).issuperset(columns):
         ancestors = list(networkx.ancestors(dag, search_start_node))
         # This filter could also be done a bit cleaner to be more general
-        ancestor_matches = [ancestor for ancestor in ancestors if column in set(ancestor.details.columns)
+        ancestor_matches = [ancestor for ancestor in ancestors if set(ancestor.details.columns).issuperset(columns)
                             and ancestor.operator_info.operator != OperatorType.SUBSCRIPT
                             and list(dag.successors(ancestor))[0].operator_info.operator != OperatorType.SUBSCRIPT]
         sorted_ancestor_matches = sorted(ancestor_matches, key=lambda dag_node: dag_node.node_id)

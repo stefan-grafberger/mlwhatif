@@ -85,7 +85,9 @@ class MultiQueryOptimizer:
     def _optimize_and_combine_dags_with_optimization(self, original_dag, patches):
         """Here, the actual optimization happens"""
         for rule in self.all_optimization_rules:
-            patches = rule.optimize(original_dag, patches)
+            original_dag = rule.optimize_dag(original_dag, patches)
+        for rule in self.all_optimization_rules:
+            patches = rule.optimize_patches(original_dag, patches)
         what_if_dags = []
         for patch_set in patches:
             what_if_dag = original_dag.copy()

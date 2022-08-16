@@ -221,6 +221,7 @@ class OperatorFairness(WhatIfAnalysis):
             selections_to_replace = [node for node in nodes_to_search if
                                      node.operator_info.operator == OperatorType.SELECTION]
             all_nodes_to_test.extend(selections_to_replace)
+            # TODO: We need to process filters that are present on both test and train side at the same time
         if self._restrict_to_linenos is not None:
             lineno_set = set(self._restrict_to_linenos)
             all_nodes_to_test = set(node for node in all_nodes_to_test if node.code_location.lineno in lineno_set)

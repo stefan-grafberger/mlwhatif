@@ -7,6 +7,8 @@ from typing import List
 import networkx
 
 from mlwhatif import OperatorType
+from mlwhatif.analysis._analysis_utils import find_dag_location_for_new_filter_on_column, get_sorted_parent_nodes, \
+    get_sorted_children_nodes
 from mlwhatif.execution._patches import Patch, OperatorRemoval
 from mlwhatif.execution.optimization._query_optimization_rules import QueryOptimizationRule
 
@@ -19,27 +21,38 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
     def __init__(self, pipeline_executor):
         self._pipeline_executor = pipeline_executor
 
-    def optimize(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
-        pipeline_variants_with_selectivity = {}
-        # TODO: For now, only consider set of pipeline variants that only contain filter patches
+    def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
+        filters_to_push_up = set()
 
         for pipeline_variant_patches in patches:
             for patch_index, patch in enumerate(pipeline_variant_patches):
                 if isinstance(patch, OperatorRemoval) and \
                         patch.operator_to_remove.operator_info.operator == OperatorType.SELECTION:
-                    parent_row_count = dag.predecessors(patch.operator_to_remove)[0].details.optimizer_info.shape[1]
-                    current_row_count = patch.operator_to_remove.details.optimizer_info.shape[1]
-                    selectivity = current_row_count / parent_row_count
-                    pipeline_variants_with_selectivity[patch_index] = selectivity
+                    filters_to_push_up.add(patch)
 
-        # This assumes that selections are independent, not sure yet if that is an assumption we should make
-        percentage_of_data_processed_without_filter = sum(pipeline_variants_with_selectivity.values())
-        is_filter_removal_worth = percentage_of_data_processed_without_filter > 1.0
+        for filter_removal_patch in filters_to_push_up:
+            using_columns_for_filter = self._get_columns_required_for_filter_eval(dag, filter_removal_patch)
+
+            operator_to_add_node_after_train = find_dag_location_for_new_filter_on_column(
+                using_columns_for_filter, dag, True)
+
+            # Here, we should check if there is also a corresponding test node. This should be added to the filter patch
 
 
-        if is_filter_removal_worth:
-            # TODO
-            updated_patches = patches
-        else:
-            updated_patches = patches
-        return updated_patches
+
+        return dag
+
+    def _get_columns_required_for_filter_eval(self, dag, filter_removal_patch):
+        """Get all columns required to be in the df required for filter evaluation"""
+        operator_parent_nodes = get_sorted_parent_nodes(dag, filter_removal_patch.operator_to_remove)
+        selection_parent_a = operator_parent_nodes[0]
+        selection_parent_b = operator_parent_nodes[-1]
+        # We want to introduce the change before all subscript behavior
+        operator_to_apply_corruption_after = networkx.lowest_common_ancestor(dag, selection_parent_a,
+                                                                             selection_parent_b)
+        sorted_successors = get_sorted_children_nodes(dag, operator_to_apply_corruption_after)
+        using_columns_for_filter = set()
+        for child in sorted_successors:
+            if child.operator_info.operator == OperatorType.PROJECTION:
+                using_columns_for_filter.update(child.details.columns)
+        return using_columns_for_filter
