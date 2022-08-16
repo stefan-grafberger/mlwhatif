@@ -25,7 +25,7 @@ def get_intermediate_extraction_patch_after_node(singleton, analysis: any or Non
                                   DagNodeDetails(None, dag_node.details.columns),
                                   None,
                                   extract_intermediate)
-    return AppendNodeAfterOperator(singleton.get_next_patch_id(), analysis, False, new_extraction_node, dag_node)
+    return AppendNodeAfterOperator(singleton.get_next_patch_id(), analysis, False, dag_node, new_extraction_node)
 
 
 def get_intermediate_extraction_patch_after_score_nodes(singleton, analysis: any or None, label: str,

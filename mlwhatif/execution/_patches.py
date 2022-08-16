@@ -91,7 +91,7 @@ class AppendNodeAfterOperator(PipelinePatch):
     node_to_insert: DagNode
 
     def apply(self, dag: networkx.DiGraph):
-        add_new_node_after_node(dag, self.operator_to_add_node_after, self.node_to_insert)
+        add_new_node_after_node(dag, self.node_to_insert, self.operator_to_add_node_after)
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
         return self._get_nodes_needing_recomputation(old_dag, new_dag, [], [self.node_to_insert])

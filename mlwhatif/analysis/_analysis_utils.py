@@ -128,6 +128,21 @@ def find_dag_location_for_first_op_modifying_column(column, dag, train_not_test)
     return operator_to_apply_corruption_after, first_op_requiring_corruption
 
 
+def find_dag_location_for_new_filter_on_column(column, dag, train_not_test) -> any:
+    """Find out between which two nodes to apply the corruption"""
+    search_start_node = find_lowest_common_ancestor_for_data_and_labels(dag, train_not_test)
+    first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, train_not_test)
+    if column not in set(first_op_requiring_corruption.details.columns):
+        ancestors = list(networkx.ancestors(dag, search_start_node))
+        # This filter could also be done a bit cleaner to be more general
+        ancestor_matches = [ancestor for ancestor in ancestors if column in set(ancestor.details.columns)
+                            and ancestor.operator_info.operator != OperatorType.SUBSCRIPT
+                            and list(dag.successors(ancestor))[0].operator_info.operator != OperatorType.SUBSCRIPT]
+        sorted_ancestor_matches = sorted(ancestor_matches, key=lambda dag_node: dag_node.node_id)
+        first_op_requiring_corruption = sorted_ancestor_matches[0]
+    return first_op_requiring_corruption
+
+
 def find_dag_location_for_data_patch(columns, dag, train_not_test) -> tuple[any, bool]:
     """Find out between which two nodes to apply the corruption"""
     train_search_start_node = find_train_or_test_pipeline_part_end(dag, True)
@@ -177,6 +192,28 @@ def find_train_or_test_pipeline_part_end(dag, train_not_test):
                             "for the test set!")
 
         search_start_node = search_start_nodes[0]
+    return search_start_node
+
+
+def find_lowest_common_ancestor_for_data_and_labels(dag, train_not_test):
+    """We want to start at the end of the pipeline to find the relevant train or test operations"""
+    dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
+    if train_not_test is True:
+        search_start_nodes_data = find_nodes_by_type(dag, OperatorType.TRAIN_DATA)
+        search_start_nodes_labels = find_nodes_by_type(dag, OperatorType.TRAIN_LABELS)
+        if len(search_start_nodes_data) != 1 or len(search_start_nodes_labels) == 0:
+            raise Exception("Currently, DataCorruption only supports pipelines with exactly one estimator!")
+
+    else:
+        search_start_nodes_data = find_nodes_by_type(dag, OperatorType.TEST_DATA)
+        search_start_nodes_labels = find_nodes_by_type(dag, OperatorType.TEST_LABELS)
+        if len(search_start_nodes_data) != 1 or len(search_start_nodes_labels) == 0:
+            raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call "
+                            "for the test set and at least one score call!")
+    # TODO: In some pipelines where the labels are in a seperate file and there is no join or concat between the two
+    #  sides this will fail. Finding a workaround would be possible but skipping it now for the sake of time.
+    search_start_node = networkx.lowest_common_ancestor(dag_to_consider, search_start_nodes_data[0],
+                                                        search_start_nodes_labels[0])
     return search_start_node
 
 
