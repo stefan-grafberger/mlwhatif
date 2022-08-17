@@ -22,23 +22,30 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
         self._pipeline_executor = pipeline_executor
 
     def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> networkx.DiGraph:
-        filters_to_push_up = []
+        selectivity_and_filters_to_push_up = []
 
         for pipeline_variant_patches in patches:
             for patch_index, patch in enumerate(pipeline_variant_patches):
                 if isinstance(patch, OperatorRemoval) and \
                         patch.operator_to_remove.operator_info.operator == OperatorType.SELECTION:
-                    filters_to_push_up.append(patch)
+                    parent = list(dag.predecessors(patch.operator_to_remove))[0]
+                    parent_row_count = parent.details.optimizer_info.shape[1]
+                    current_row_count = patch.operator_to_remove.details.optimizer_info.shape[1]
+                    selectivity = current_row_count / parent_row_count
+                    selectivity_and_filters_to_push_up.append((selectivity, patch))
+                    # calculate selectivities
 
-        for filter_removal_patch in filters_to_push_up:
+        # Sort filters by selectivity, the ones with the highest selectivity should be moved up first
+        selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0])
+
+        for _, filter_removal_patch in selectivity_and_filters_to_push_up:
             using_columns_for_filter = self._get_columns_required_for_filter_eval(dag, filter_removal_patch)
 
             operator_to_add_node_after_train = find_dag_location_for_new_filter_on_column(
                 using_columns_for_filter, dag, True)
 
-            # Here, we should check if there is also a corresponding test node. This should be added to the filter patch
-
-
+            # TODO: Move the filter up (on both train and test set if required, maybe even duplicate filter if before
+            #  train_test_split)
 
         return dag
 
