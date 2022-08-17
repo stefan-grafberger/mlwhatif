@@ -95,7 +95,8 @@ class OperatorRemoval(PipelinePatch):
         all_nodes_being_removed = nodes_being_removed_train.union(nodes_being_removed_test)
         return self._get_nodes_needing_recomputation(old_dag, new_dag, all_nodes_being_removed, [])
 
-    def _get_all_operators_associated_with_filter(self, modified_dag, operator_to_replace) -> set[DagNode]:
+    def _get_all_operators_associated_with_filter(self, modified_dag, operator_to_replace, keep_root=False) \
+            -> set[DagNode]:
         """Get all ops associated with a filter, like subscripts and projections for the filter condition"""
         if operator_to_replace is None or operator_to_replace.operator_info.operator != OperatorType.SELECTION:
             return set()
@@ -105,10 +106,11 @@ class OperatorRemoval(PipelinePatch):
                                                             source=operator_after_which_cutoff_required,
                                                             target=operator_to_replace)
         associated_operators = {node for path in paths_between_generator for node in path}
-        associated_operators.remove(operator_after_which_cutoff_required)
+        if keep_root is False:
+            associated_operators.remove(operator_after_which_cutoff_required)
         return associated_operators
 
-    def _filter_get_operator_after_which_cutoff_required(self, modified_dag, operator_to_replace):
+    def _filter_get_operator_after_which_cutoff_required(self, modified_dag, operator_to_replace) -> DagNode:
         """Get the operator after which the filter code starts with the filter condition eval etc."""
         if operator_to_replace.operator_info.operator != OperatorType.SELECTION:
             return operator_to_replace

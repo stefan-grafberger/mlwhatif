@@ -4,7 +4,8 @@ import logging
 
 import networkx
 
-from mlwhatif.analysis._analysis_utils import add_new_node_between_nodes
+from mlwhatif.instrumentation._operator_types import OperatorType
+from mlwhatif.analysis._analysis_utils import add_new_node_between_nodes, get_sorted_parent_nodes
 from mlwhatif.execution._patches import PipelinePatch
 from mlwhatif.instrumentation._dag_node import DagNode
 

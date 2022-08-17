@@ -239,7 +239,7 @@ class OperatorFairness(WhatIfAnalysis):
         train_search_start_node = find_train_or_test_pipeline_part_end(dag_to_consider, True)
         train_nodes = set(networkx.ancestors(dag, train_search_start_node))
         test_search_start_node = find_train_or_test_pipeline_part_end(dag_to_consider, False)
-        test_nodes = set(networkx.ancestors(dag, test_search_start_node))
+        test_nodes = set(networkx.ancestors(dag_to_consider, test_search_start_node))
         for node in all_nodes_to_test:
             filter_key = (node.details.description, tuple(node.details.columns))
             if node in train_nodes and node in test_nodes:
