@@ -183,6 +183,7 @@ class OperatorFairness(WhatIfAnalysis):
         result_df_replacement_description = []
         result_df_metrics = {}
         score_linenos = [lineno for (_, lineno) in self._score_nodes_and_linenos]
+        # Maybe the strategy_description should also contain if we found and dropped a corresponding test set filter
         main_filter_ops = [train_op for (train_op, _, _) in self._filter_operators_to_test]
         for operator_to_replace in [*self._transformer_operators_to_test, *main_filter_ops]:
             result_df_op_type.append(operator_to_replace.operator_info.operator.value)

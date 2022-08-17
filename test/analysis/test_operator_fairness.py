@@ -72,7 +72,7 @@ def test_operator_fairness_healthcare():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
-    assert report.shape == (4, 7)  # TODO: Maybe we need to also update the output due to the new changes
+    assert report.shape == (4, 7)
 
 
 def test_operator_fairness_compas():
