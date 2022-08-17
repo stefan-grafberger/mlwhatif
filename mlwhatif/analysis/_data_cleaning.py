@@ -237,13 +237,14 @@ class DataCleaning(WhatIfAnalysis):
         result_df_errors = []
         result_df_cleaning_methods = []
         result_df_metrics = {}
-        score_linenos = [lineno for (_, lineno) in self._score_nodes_and_linenos]
+        score_description_and_linenos = [(score_node.details.description, lineno)
+                                         for (score_node, lineno) in self._score_nodes_and_linenos]
         for (column, error_type) in self._columns_with_error:
             for cleaning_method in CLEANING_METHODS_FOR_ERROR_TYPE[error_type]:
                 result_df_columns.append(column)
                 result_df_errors.append(error_type.value)
                 result_df_cleaning_methods.append(cleaning_method.method_name)
-                for lineno in score_linenos:
+                for (score_description, lineno) in score_description_and_linenos:
                     cleaning_result_label = f"data-cleaning-{column}-{cleaning_method.method_name}_L{lineno}"
                     test_result_column_name = f"metric_L{lineno}"
                     test_column_values = result_df_metrics.get(test_result_column_name, [])

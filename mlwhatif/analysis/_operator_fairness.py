@@ -182,7 +182,8 @@ class OperatorFairness(WhatIfAnalysis):
         result_df_op_code = []
         result_df_replacement_description = []
         result_df_metrics = {}
-        score_linenos = [lineno for (_, lineno) in self._score_nodes_and_linenos]
+        score_description_and_linenos = [(score_node.details.description, lineno)
+                                         for (score_node, lineno) in self._score_nodes_and_linenos]
         # Maybe the strategy_description should also contain if we found and dropped a corresponding test set filter
         main_filter_ops = [train_op for (train_op, _, _) in self._filter_operators_to_test]
         for operator_to_replace in [*self._transformer_operators_to_test, *main_filter_ops]:
@@ -192,9 +193,10 @@ class OperatorFairness(WhatIfAnalysis):
             replacement_description = self.get_op_replacement_description(operator_to_replace)
             result_df_replacement_description.append(replacement_description)
             label_for_operator = self.get_label_for_operator(operator_to_replace)
-            for lineno in score_linenos:
+            # TODO: instead of score, also include the metric description
+            for (score_description, lineno) in score_description_and_linenos:
                 test_label = f"{label_for_operator}_L{lineno}"
-                test_result_column_name = f"score_L{lineno}"
+                test_result_column_name = f"{score_description}_L{lineno}"
                 test_column_values = result_df_metrics.get(test_result_column_name, [])
                 test_column_values.append(singleton.labels_to_extracted_plan_results[test_label])
                 result_df_metrics[test_result_column_name] = test_column_values

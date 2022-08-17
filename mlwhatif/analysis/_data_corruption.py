@@ -145,7 +145,8 @@ class DataCorruption(WhatIfAnalysis):
         result_df_columns = []
         result_df_percentages = []
         result_df_metrics = {}
-        score_linenos = [lineno for (_, lineno) in self._score_nodes_and_linenos]
+        score_description_and_linenos = [(score_node.details.description, lineno)
+                                         for (score_node, lineno) in self._score_nodes_and_linenos]
         for (column, _) in self.column_to_corruption:
             for corruption_percentage in self.corruption_percentages:
                 result_df_columns.append(column)
@@ -156,18 +157,18 @@ class DataCorruption(WhatIfAnalysis):
                     sanitized_corruption_percentage = corruption_percentage.__name__  # pylint: disable=no-member
                 result_df_percentages.append(sanitized_corruption_percentage)
 
-                for lineno in score_linenos:
+                for (score_description, lineno) in score_description_and_linenos:
                     test_label = f"data-corruption-test-{column}-{corruption_percentage}_L{lineno}"
-                    test_result_column_name = f"metric_corrupt_test_only_L{lineno}"
+                    test_result_column_name = f"{score_description}_corrupt_test_only_L{lineno}"
                     test_column_values = result_df_metrics.get(test_result_column_name, [])
                     test_column_values.append(singleton.labels_to_extracted_plan_results[test_label])
                     result_df_metrics[test_result_column_name] = test_column_values
 
-                for lineno in score_linenos:
+                for (score_description, lineno) in score_description_and_linenos:
                     train_label = f"data-corruption-train-{column}-{corruption_percentage}_L{lineno}"
                     if train_label in singleton.labels_to_extracted_plan_results:
                         train_and_test_metric = singleton.labels_to_extracted_plan_results[train_label]
-                        train_result_column_name = f"metric_corrupt_train_and_test_L{lineno}"
+                        train_result_column_name = f"{score_description}_corrupt_train_and_test_L{lineno}"
                         train_column_values = result_df_metrics.get(train_result_column_name, [])
                         train_column_values.append(train_and_test_metric)
                         result_df_metrics[train_result_column_name] = train_column_values
