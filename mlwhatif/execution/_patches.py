@@ -8,7 +8,7 @@ import networkx
 
 from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_data_patch, add_new_node_after_node, \
-    find_nodes_by_type, replace_node, remove_node
+    find_nodes_by_type, replace_node, remove_node, get_sorted_parent_nodes
 from mlwhatif.instrumentation._dag_node import DagNode
 
 
@@ -76,21 +76,49 @@ class OperatorRemoval(PipelinePatch):
 
     # While operators to remove is a list, it should always be one main operator only, like a selection.
     #  The other operators are then the projections and subscripts for the filter condition.
-    main_operator: DagNode
-    operators_to_remove: List[DagNode]
-    maybe_corresponding_test_set_operators: List[DagNode] or None
+    operator_to_remove: DagNode
+    maybe_corresponding_test_set_operator: DagNode or None
     before_train_test_split: bool
 
     def apply(self, dag: networkx.DiGraph):
-        for node in self.operators_to_remove:
+        for node in self._get_all_operators_associated_with_filter(dag, self.operator_to_remove):
             remove_node(dag, node)
-        for node in self.maybe_corresponding_test_set_operators or []:
+        operators_to_remove = self._get_all_operators_associated_with_filter(
+            dag, self.maybe_corresponding_test_set_operator)
+        for node in operators_to_remove:
             remove_node(dag, node)
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
-        return self._get_nodes_needing_recomputation(old_dag, new_dag, [*self.operators_to_remove,
-                                                                        *(self.maybe_corresponding_test_set_operators
-                                                                          or [])], [])
+        nodes_being_removed_train = self._get_all_operators_associated_with_filter(old_dag, self.operator_to_remove)
+        nodes_being_removed_test = self._get_all_operators_associated_with_filter(
+            old_dag, self.maybe_corresponding_test_set_operator)
+        all_nodes_being_removed = nodes_being_removed_train.union(nodes_being_removed_test)
+        return self._get_nodes_needing_recomputation(old_dag, new_dag, all_nodes_being_removed, [])
+
+    def _get_all_operators_associated_with_filter(self, modified_dag, operator_to_replace) -> set[DagNode]:
+        """Get all ops associated with a filter, like subscripts and projections for the filter condition"""
+        if operator_to_replace is None or operator_to_replace.operator_info.operator != OperatorType.SELECTION:
+            return set()
+        operator_after_which_cutoff_required = self._filter_get_operator_after_which_cutoff_required(
+            modified_dag, operator_to_replace)
+        paths_between_generator = networkx.all_simple_paths(modified_dag,
+                                                            source=operator_after_which_cutoff_required,
+                                                            target=operator_to_replace)
+        associated_operators = {node for path in paths_between_generator for node in path}
+        associated_operators.remove(operator_after_which_cutoff_required)
+        return associated_operators
+
+    def _filter_get_operator_after_which_cutoff_required(self, modified_dag, operator_to_replace):
+        """Get the operator after which the filter code starts with the filter condition eval etc."""
+        if operator_to_replace.operator_info.operator != OperatorType.SELECTION:
+            return operator_to_replace
+        operator_parent_nodes = get_sorted_parent_nodes(modified_dag, operator_to_replace)
+        selection_parent_a = operator_parent_nodes[0]
+        selection_parent_b = operator_parent_nodes[-1]
+        # We want to introduce the change before all subscript behavior
+        operator_after_which_cutoff_required = networkx.lowest_common_ancestor(modified_dag, selection_parent_a,
+                                                                               selection_parent_b)
+        return operator_after_which_cutoff_required
 
 
 @dataclasses.dataclass

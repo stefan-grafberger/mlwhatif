@@ -27,7 +27,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
         for pipeline_variant_patches in patches:
             for patch_index, patch in enumerate(pipeline_variant_patches):
                 if isinstance(patch, OperatorRemoval) and \
-                        patch.main_operator.operator_info.operator == OperatorType.SELECTION:
+                        patch.operator_to_remove.operator_info.operator == OperatorType.SELECTION:
                     filters_to_push_up.append(patch)
 
         for filter_removal_patch in filters_to_push_up:
@@ -44,7 +44,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
 
     def _get_columns_required_for_filter_eval(self, dag, filter_removal_patch):
         """Get all columns required to be in the df required for filter evaluation"""
-        operator_parent_nodes = get_sorted_parent_nodes(dag, filter_removal_patch.main_operator)
+        operator_parent_nodes = get_sorted_parent_nodes(dag, filter_removal_patch.operator_to_remove)
         selection_parent_a = operator_parent_nodes[0]
         selection_parent_b = operator_parent_nodes[-1]
         # We want to introduce the change before all subscript behavior

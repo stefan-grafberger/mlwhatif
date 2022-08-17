@@ -60,8 +60,6 @@ class OperatorFairness(WhatIfAnalysis):
                                                                                    result_label,
                                                                                    self._score_nodes_and_linenos)
             patches_for_variant.extend(extraction_nodes)
-            # This is the passthrough transformer the sklearn ColumnTransformer uses internally, a FunctionTransformer
-            #  that uses the identity function
             assert operator_to_replace.operator_info.operator == OperatorType.TRANSFORMER
             replacement_node = self.get_transformer_replacement_node(operator_to_replace)
             patch = OperatorReplacement(singleton.get_next_patch_id(), self, True, operator_to_replace,
@@ -76,41 +74,12 @@ class OperatorFairness(WhatIfAnalysis):
                                                                                    self._score_nodes_and_linenos)
             patches_for_variant.extend(extraction_nodes)
 
-            # This is the passthrough transformer the sklearn ColumnTransformer uses internally, a FunctionTransformer
-            #  that uses the identity function
             assert operator_to_replace_train.operator_info.operator == OperatorType.SELECTION
-            # Here we need to know if there are corresponding
-            removal_patch = self.get_removal_patches_for_selection_nodes(dag, operator_to_replace_train,
-                                                                         operator_to_replace_test, before_split)
+            removal_patch = OperatorRemoval(singleton.get_next_patch_id(), self, True,
+                                            operator_to_replace_train, operator_to_replace_test, before_split)
             patches_for_variant.append(removal_patch)
             fairness_patch_sets.append(patches_for_variant)
         return fairness_patch_sets
-
-    def get_removal_patches_for_selection_nodes(self, modified_dag, operator_to_replace_train, operator_to_replace_test,
-                                                before_split):
-        """Removes the selection node as well as nodes that are there for the selection condition"""
-        sets_to_remove = []
-        for operator_to_replace in [operator_to_replace_train, operator_to_replace_test]:
-            if operator_to_replace is not None:
-                operator_parent_nodes = get_sorted_parent_nodes(modified_dag, operator_to_replace)
-                selection_parent_a = operator_parent_nodes[0]
-                selection_parent_b = operator_parent_nodes[-1]
-                # We want to introduce the change before all subscript behavior
-                operator_after_which_cutoff_required = networkx.lowest_common_ancestor(modified_dag, selection_parent_a,
-                                                                                       selection_parent_b)
-                paths_between_generator = networkx.all_simple_paths(modified_dag,
-                                                                    source=operator_after_which_cutoff_required,
-                                                                    target=operator_to_replace)
-                nodes_between_set = {node for path in paths_between_generator for node in path}
-                nodes_between_set.remove(operator_after_which_cutoff_required)
-                sets_to_remove.append(list(nodes_between_set))
-            else:
-                sets_to_remove.append(None)
-        removal_patch = OperatorRemoval(singleton.get_next_patch_id(), self, True,
-                                        operator_to_replace_train,
-                                        sets_to_remove[0],
-                                        sets_to_remove[1], before_split)
-        return removal_patch
 
     @staticmethod
     def get_transformer_replacement_node(operator_to_replace):
@@ -124,6 +93,8 @@ class OperatorFairness(WhatIfAnalysis):
             return transformed_data
 
         def passthrough_transformer_processing_func(input_df):
+            # This is the passthrough transformer the sklearn ColumnTransformer uses internally, a FunctionTransformer
+            #  that uses the identity function
             transformer = FunctionTransformer(accept_sparse=True, check_inverse=False)
             transformed_data = transformer.fit_transform(input_df)
             transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
