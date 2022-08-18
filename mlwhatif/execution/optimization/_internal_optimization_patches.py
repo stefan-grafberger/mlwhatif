@@ -19,6 +19,7 @@ class AppendNodeBetweenOperators(PipelinePatch):
     operator_to_add_node_after: DagNode
     operator_to_add_node_before: DagNode
     maybe_udf_split_info: UdfSplitInfo
+    train_not_test: bool
 
     def apply(self, dag: networkx.DiGraph):
         add_new_node_between_nodes(dag, self.node_to_insert, self.operator_to_add_node_after,
@@ -40,10 +41,12 @@ class UdfSplitAndReuseAppendNodeBetweenOperators(PipelinePatch):
     corruption_node: DagNode
     index_selection_node: DagNode
     apply_corruption_to_fraction_node: DagNode
+    train_not_test: bool
 
     def apply(self, dag: networkx.DiGraph):
         add_new_node_between_nodes(dag, self.apply_corruption_to_fraction_node, self.operator_to_add_node_after,
                                    self.operator_to_add_node_before)
+        dag.add_edge(self.operator_to_add_node_after, self.index_selection_node, arg_index=0)
         dag.add_edge(self.operator_to_add_node_after, self.corruption_node, arg_index=0)
         dag.add_edge(self.corruption_node, self.apply_corruption_to_fraction_node, arg_index=1)
         dag.add_edge(self.index_selection_node, self.apply_corruption_to_fraction_node, arg_index=2)

@@ -27,7 +27,8 @@ class UdfSplitAndReuse(QueryOptimizationRule):
     def optimize_patches(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
         id_to_index_selection = dict()
         id_to_projection_func = dict()
-        selectivities_per_projection_func_id = defaultdict(list)
+        # If we allow multiple corruption funcs per column at some point, this would need to change
+        selectivities_per_column = defaultdict(list)
         column_to_index_selection_ids = defaultdict(list)
         column_to_projection_func_ids = defaultdict(list)
 
@@ -38,16 +39,16 @@ class UdfSplitAndReuse(QueryOptimizationRule):
                         patch.maybe_udf_split_info.projection_func_only
                     id_to_index_selection[patch.maybe_udf_split_info.index_selection_func_id] = \
                         patch.maybe_udf_split_info.index_selection_func
-                    selectivities_per_projection_func_id[patch.maybe_udf_split_info.projection_func_only_id].append(
+                    selectivities_per_column[patch.maybe_udf_split_info.column_name_to_corrupt].append(
                         patch.maybe_udf_split_info.maybe_selectivity_info)
                     column_to_index_selection_ids[patch.maybe_udf_split_info.column_name_to_corrupt].append(
                         patch.maybe_udf_split_info.index_selection_func_id)
-                    column_to_projection_func_ids[patch.maybe_udf_split_info.column_name_to_corrupt].append(
-                        patch.maybe_udf_split_info.projection_func_only_id)
+                    column_to_projection_func_ids[patch.maybe_udf_split_info.column_name_to_corrupt]\
+                        .append(patch.maybe_udf_split_info.projection_func_only_id)
 
 
         columns_worth_fully_corrupting = set()
-        for column, selectivity_list in selectivities_per_projection_func_id.items():
+        for column, selectivity_list in selectivities_per_column.items():
             total_corruption_fraction = sum(filter(None, selectivity_list))
             if total_corruption_fraction > 1.0:
                 columns_worth_fully_corrupting.add(column)
@@ -60,12 +61,17 @@ class UdfSplitAndReuse(QueryOptimizationRule):
             for projection_id in projection_func_ids:
                 if projection_id not in corruption_func_id_to_dag_node:
                     projection_func = id_to_projection_func[projection_id]
-                    corruption_func_id_to_dag_node[projection_id] = self.create_projection_func_dag_node(
+                    corruption_func_id_to_dag_node[(True, projection_id)] = self.create_projection_func_dag_node(
+                        projection_func, column)
+                    corruption_func_id_to_dag_node[(False, projection_id)] = self.create_projection_func_dag_node(
                         projection_func, column)
             for index_id in index_selection_ids:
                 if index_id not in index_selection_func_id_to_dag_node:
                     index_func = id_to_index_selection[index_id]
-                    index_selection_func_id_to_dag_node[index_id] = self.create_index_selection_func_dag_node(index_func)
+                    index_selection_func_id_to_dag_node[(True, index_id)] = \
+                        self.create_index_selection_func_dag_node(index_func)
+                    index_selection_func_id_to_dag_node[(False, index_id)] = \
+                        self.create_index_selection_func_dag_node(index_func)
 
         # TODO: Determine for which projection funcs the total selectivity is greater than 1
         #  For other patches, leave them unchanged.
@@ -79,9 +85,9 @@ class UdfSplitAndReuse(QueryOptimizationRule):
                 if isinstance(patch, AppendNodeBetweenOperators) and patch.maybe_udf_split_info is not None and \
                         patch.maybe_udf_split_info.column_name_to_corrupt in columns_worth_fully_corrupting:
                     corruption_dag_node = corruption_func_id_to_dag_node[
-                        patch.maybe_udf_split_info.projection_func_only_id]
+                        (patch.train_not_test, patch.maybe_udf_split_info.projection_func_only_id)]
                     index_selection_node = index_selection_func_id_to_dag_node[
-                        patch.maybe_udf_split_info.index_selection_func_id]
+                        (patch.train_not_test, patch.maybe_udf_split_info.index_selection_func_id)]
                     apply_corruption_to_fraction_node = self.create_apply_corruption_to_fraction_node(patch)
                     updated_patch = UdfSplitAndReuseAppendNodeBetweenOperators(
                         patch.patch_id,
@@ -91,7 +97,8 @@ class UdfSplitAndReuse(QueryOptimizationRule):
                         patch.operator_to_add_node_before,
                         corruption_dag_node,
                         index_selection_node,
-                        apply_corruption_to_fraction_node
+                        apply_corruption_to_fraction_node,
+                        patch.train_not_test
                     )
                 else:
                     updated_patch = patch
@@ -101,7 +108,7 @@ class UdfSplitAndReuse(QueryOptimizationRule):
         return updated_patches
 
     def create_projection_func_dag_node(self, projection_func, column_name) -> DagNode:
-        def corrupt_df(pandas_df, corruption_function):
+        def corrupt_full_df(pandas_df, corruption_function):
             # TODO: If we model this as 3 operations instead of one, optimization should be easy
             # TODO: Think about when we actually want to be defensive and call copy and when not
             # TODO: Think about datatypes. corruption_function currently assumes pandas DataFrames.
@@ -110,7 +117,7 @@ class UdfSplitAndReuse(QueryOptimizationRule):
             completely_corrupted_df = corruption_function(completely_corrupted_df)
             return completely_corrupted_df
 
-        corrupt_df_with_proper_bindings = partial(corrupt_df, corruption_function=projection_func)
+        corrupt_df_with_proper_bindings = partial(corrupt_full_df, corruption_function=projection_func)
 
         description = f"Corrupt 100% of '{column_name}'"
         new_corruption_node = DagNode(self._pipeline_executor.get_next_op_id(),
@@ -137,7 +144,7 @@ class UdfSplitAndReuse(QueryOptimizationRule):
             return return_df
 
         corrupt_df_with_proper_bindings = partial(corrupt_df,
-                                                  previous_patch.maybe_udf_split_info.column_name_to_corrupt)
+                                                  column=previous_patch.maybe_udf_split_info.column_name_to_corrupt)
         new_corruption_node = DagNode(self._pipeline_executor.get_next_op_id(),
                                       previous_patch.node_to_insert.code_location,
                                       OperatorContext(OperatorType.PROJECTION_MODIFY, None),
