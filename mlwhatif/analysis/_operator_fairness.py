@@ -13,8 +13,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_sorted_parent_nodes, \
-    find_train_or_test_pipeline_part_end, filter_estimator_transformer_edges
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, find_train_or_test_pipeline_part_end, \
+    filter_estimator_transformer_edges
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import Patch, OperatorReplacement, OperatorRemoval
@@ -233,8 +233,14 @@ class OperatorFairness(WhatIfAnalysis):
             lineno_set = set(self._restrict_to_linenos)
             all_nodes_to_test = set(node for node in all_nodes_to_test if node.code_location.lineno in lineno_set)
 
-        filter_pairs_to_consider = defaultdict(partial(list, [None, None, False]))
+        return_value = self._detect_if_filters_shared_between_train_test_or_duplicated(all_nodes_to_test, dag)
+        return return_value
 
+    @staticmethod
+    def _detect_if_filters_shared_between_train_test_or_duplicated(all_nodes_to_test, dag):
+        """Detect if a filter is on the train or test side only, if it is shared between the two sides, or if there are
+        similar filters on both sides."""
+        filter_pairs_to_consider = defaultdict(partial(list, [None, None, False]))
         dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
         train_search_start_node = find_train_or_test_pipeline_part_end(dag_to_consider, True)
         train_nodes = set(networkx.ancestors(dag, train_search_start_node))

@@ -246,7 +246,7 @@ class DataCleaning(WhatIfAnalysis):
                 result_df_cleaning_methods.append(cleaning_method.method_name)
                 for (score_description, lineno) in score_description_and_linenos:
                     cleaning_result_label = f"data-cleaning-{column}-{cleaning_method.method_name}_L{lineno}"
-                    test_result_column_name = f"metric_L{lineno}"
+                    test_result_column_name = f"{score_description}_L{lineno}"
                     test_column_values = result_df_metrics.get(test_result_column_name, [])
                     test_column_values.append(singleton.labels_to_extracted_plan_results[cleaning_result_label])
                     result_df_metrics[test_result_column_name] = test_column_values

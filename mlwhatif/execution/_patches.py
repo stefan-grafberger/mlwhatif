@@ -81,26 +81,26 @@ class OperatorRemoval(PipelinePatch):
     before_train_test_split: bool
 
     def apply(self, dag: networkx.DiGraph):
-        for node in self._get_all_operators_associated_with_filter(dag, self.operator_to_remove):
+        for node in self.get_all_operators_associated_with_filter(dag, self.operator_to_remove):
             remove_node(dag, node)
-        operators_to_remove = self._get_all_operators_associated_with_filter(
+        operators_to_remove = self.get_all_operators_associated_with_filter(
             dag, self.maybe_corresponding_test_set_operator)
         for node in operators_to_remove:
             remove_node(dag, node)
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
-        nodes_being_removed_train = self._get_all_operators_associated_with_filter(old_dag, self.operator_to_remove)
-        nodes_being_removed_test = self._get_all_operators_associated_with_filter(
+        nodes_being_removed_train = self.get_all_operators_associated_with_filter(old_dag, self.operator_to_remove)
+        nodes_being_removed_test = self.get_all_operators_associated_with_filter(
             old_dag, self.maybe_corresponding_test_set_operator)
         all_nodes_being_removed = nodes_being_removed_train.union(nodes_being_removed_test)
         return self._get_nodes_needing_recomputation(old_dag, new_dag, all_nodes_being_removed, [])
 
-    def _get_all_operators_associated_with_filter(self, modified_dag, operator_to_replace, keep_root=False) \
+    def get_all_operators_associated_with_filter(self, modified_dag, operator_to_replace, keep_root=False) \
             -> set[DagNode]:
         """Get all ops associated with a filter, like subscripts and projections for the filter condition"""
         if operator_to_replace is None or operator_to_replace.operator_info.operator != OperatorType.SELECTION:
             return set()
-        operator_after_which_cutoff_required = self._filter_get_operator_after_which_cutoff_required(
+        operator_after_which_cutoff_required = self.filter_get_operator_after_which_cutoff_required(
             modified_dag, operator_to_replace)
         paths_between_generator = networkx.all_simple_paths(modified_dag,
                                                             source=operator_after_which_cutoff_required,
@@ -110,7 +110,8 @@ class OperatorRemoval(PipelinePatch):
             associated_operators.remove(operator_after_which_cutoff_required)
         return associated_operators
 
-    def _filter_get_operator_after_which_cutoff_required(self, modified_dag, operator_to_replace) -> DagNode:
+    @staticmethod
+    def filter_get_operator_after_which_cutoff_required(modified_dag, operator_to_replace) -> DagNode:
         """Get the operator after which the filter code starts with the filter condition eval etc."""
         if operator_to_replace.operator_info.operator != OperatorType.SELECTION:
             return operator_to_replace
