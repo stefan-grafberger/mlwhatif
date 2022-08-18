@@ -14,12 +14,14 @@ class QueryOptimizationRule(metaclass=abc.ABCMeta):
     """
     The Interface for Query Optimization Rules
     """
+    def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> \
+            tuple[networkx.DiGraph, List[List[Patch]]]:
+        """Transform the original DAG into something that is better for optimizations without changing the
+        final result"""
+        # pylint: disable=unused-argument,no-self-use
+        return dag, patches
+
     def optimize_patches(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
         """Transform the patches into more efficient ones"""
         # pylint: disable=unused-argument,no-self-use
         return patches
-
-    def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> networkx.DiGraph:
-        """Transform the patches into more efficient ones"""
-        # pylint: disable=unused-argument,no-self-use
-        return dag

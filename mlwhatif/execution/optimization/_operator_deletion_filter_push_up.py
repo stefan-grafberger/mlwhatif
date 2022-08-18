@@ -22,7 +22,8 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
     def __init__(self, pipeline_executor):
         self._pipeline_executor = pipeline_executor
 
-    def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> networkx.DiGraph:
+    def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> \
+            tuple[networkx.DiGraph, List[List[Patch]]]:
         selectivity_and_filters_to_push_up = []
 
         for pipeline_variant_patches in patches:
@@ -50,7 +51,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
             dag = self._move_filters_and_duplicate_if_required(dag, filter_removal_patch,
                                                                operator_to_add_node_after_test,
                                                                operator_to_add_node_after_train)
-        return dag
+        return dag, patches
 
     def _move_filters_and_duplicate_if_required(self, dag, filter_removal_patch, operator_to_add_node_after_test,
                                                 operator_to_add_node_after_train):
