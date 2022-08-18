@@ -35,7 +35,8 @@ class SimpleProjectionPushUp(QueryOptimizationRule):
                                                                    patch.changes_following_results,
                                                                    patch.projection_operator,
                                                                    operator_to_add_node_after,
-                                                                   operator_to_add_node_before)
+                                                                   operator_to_add_node_before,
+                                                                   patch.maybe_udf_split_info)
                         updated_pipeline_variant_patches.append(updated_patch)
                     else:
                         # TODO: This can be done too but probably a waste of time at this point to look at edge cases

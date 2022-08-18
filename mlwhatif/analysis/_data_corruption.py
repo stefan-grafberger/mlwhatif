@@ -13,7 +13,7 @@ from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, Bas
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
-from mlwhatif.execution._patches import DataProjection, Patch
+from mlwhatif.execution._patches import DataProjection, Patch, UdfSplitInfo
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
 
@@ -75,8 +75,10 @@ class DataCorruption(WhatIfAnalysis):
                     only_reads_column = None  # TODO: Support this case properly in optimizations
                     maybe_selectivity_info = None
                 patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
-                                       only_reads_column, index_selection_func, corruption_percentage_index,
-                                       corrupt_func, column_corruption_tuple_index, maybe_selectivity_info)
+                                       only_reads_column,
+                                       UdfSplitInfo(corruption_percentage_index, index_selection_func,
+                                                    column_corruption_tuple_index, corrupt_func, column,
+                                                    maybe_selectivity_info))
                 patches_for_variant.append(patch)
                 corruption_patch_sets.append(patches_for_variant)
 
@@ -90,14 +92,18 @@ class DataCorruption(WhatIfAnalysis):
                     corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
                         column, corruption_function, corruption_percentage)
                     patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
-                                           only_reads_column, index_selection_func, corruption_percentage_index,
-                                           corrupt_func, column_corruption_tuple_index, maybe_selectivity_info)
+                                           only_reads_column,
+                                           UdfSplitInfo(corruption_percentage_index, index_selection_func,
+                                                        column_corruption_tuple_index, corrupt_func, column,
+                                                        maybe_selectivity_info))
                     patches_for_variant.append(patch)
                     corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
                         column, corruption_function, corruption_percentage)
                     patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, True, column,
-                                           only_reads_column, index_selection_func, corruption_percentage_index,
-                                           corrupt_func, column_corruption_tuple_index, maybe_selectivity_info)
+                                           only_reads_column,
+                                           UdfSplitInfo(corruption_percentage_index, index_selection_func,
+                                                        column_corruption_tuple_index, corrupt_func, column,
+                                                        maybe_selectivity_info))
                     patches_for_variant.append(patch)
                     corruption_patch_sets.append(patches_for_variant)
 

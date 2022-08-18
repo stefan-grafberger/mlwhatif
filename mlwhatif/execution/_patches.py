@@ -173,6 +173,17 @@ class DataFiltering(DataPatch):
 
 
 @dataclasses.dataclass
+class UdfSplitInfo:
+    index_selection_func_id: int
+    index_selection_func: Callable  # A function that can be used to select which rows to modify
+    # A function that can be combined with index_selection_func to replace the projection_operator processing_func
+    projection_func_only_id: int
+    projection_func_only: Callable
+    column_name_to_corrupt: str
+    maybe_selectivity_info: float or None = None
+
+
+@dataclasses.dataclass
 class DataProjection(DataPatch):
     """ Apply some map-like operation without fitting on the train or test side"""
     # pylint: disable=too-many-instance-attributes
@@ -181,12 +192,8 @@ class DataProjection(DataPatch):
     train_not_test: bool
     modifies_column: str
     only_reads_column: List[str]
-    index_selection_func: Callable or None = None  # A function that can be used to select which rows to modify
-    index_selection_func_id: int or None = None
-    # A function that can be combined with index_selection_func to replace the projection_operator processing_func
-    projection_func_only: Callable or None = None
-    projection_func_only_id: int or None = None
-    maybe_selectivity_info: float or None = None
+    maybe_udf_split_info: UdfSplitInfo
+
 
     def apply(self, dag: networkx.DiGraph):
 

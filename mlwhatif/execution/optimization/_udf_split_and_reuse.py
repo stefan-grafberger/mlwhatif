@@ -7,7 +7,8 @@ from typing import List
 
 import networkx
 
-from mlwhatif.execution._patches import Patch, DataProjection
+from mlwhatif.execution._patches import Patch
+from mlwhatif.execution.optimization._internal_optimization_patches import AppendNodeBetweenOperators
 from mlwhatif.execution.optimization._query_optimization_rules import QueryOptimizationRule
 
 
@@ -19,26 +20,30 @@ class UdfSplitAndReuse(QueryOptimizationRule):
     def __init__(self, pipeline_executor):
         self._pipeline_executor = pipeline_executor
 
-    def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> \
-            tuple[networkx.DiGraph, List[List[Patch]]]:
+    def optimize_patches(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
         selectivity_and_filters_to_push_up = []
 
-        index_selection_ids = set()
-        projection_func_ids = set()
+        id_to_index_selection = dict()
+        id_to_projection_func = dict()
         splittable_patches = []
         selectivities_per_projection_func_id = defaultdict(list)
 
         for pipeline_variant_patches in patches:
             for patch in pipeline_variant_patches:
-                if isinstance(patch, DataProjection) and patch.projection_func_only_id is not None \
-                        and patch.index_selection_func_id is not None:
+                if isinstance(patch, AppendNodeBetweenOperators) and patch.maybe_udf_split_info is not None:
                     splittable_patches.append(patch)
-                    projection_func_ids.add(patch.projection_func_only_id)
-                    index_selection_ids.add(patch.index_selection_func_id)
-                    selectivities_per_projection_func_id[patch.projection_func_only_id].append(
-                        patch.maybe_selectivity_info)
+                    id_to_projection_func[patch.maybe_udf_split_info.projection_func_only_id] = \
+                        patch.maybe_udf_split_info.projection_func_only
+                    id_to_index_selection[patch.maybe_udf_split_info.index_selection_func_id] = \
+                        patch.maybe_udf_split_info.index_selection_func
+                    selectivities_per_projection_func_id[patch.maybe_udf_split_info.projection_func_only_id].append(
+                        patch.maybe_udf_split_info.maybe_selectivity_info)
 
-        # TODO
+        # TODO: Determine for which projection funcs the total selectivity is greater than 1
+        #  For other patches, leave them unchanged.
+        #  For these patches, generate a projection node for each projection func id
+        #  and an index selection func for each index selection func id
+        #  Then iterate through all patches again, and get the nodes from the maps and generate a new DagNode
         for _, _ in selectivity_and_filters_to_push_up:
             pass
-        return dag, patches
+        return patches
