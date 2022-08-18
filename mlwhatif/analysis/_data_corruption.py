@@ -119,15 +119,11 @@ class DataCorruption(WhatIfAnalysis):
             return indexes_to_corrupt
 
         def corrupt_df(pandas_df, corruption_index_selection_func, corruption_function, column):
-            # TODO: If we model this as 3 operations instead of one, optimization should be easy
-            # TODO: Think about when we actually want to be defensive and call copy and when not
-            # TODO: Think about datatypes. corruption_function currently assumes pandas DataFrames.
-            #  We may want to automatically convert data formats as needed, here and in other places.
-            completely_corrupted_df = pandas_df.copy()
-            completely_corrupted_df = corruption_function(completely_corrupted_df)
             indexes_to_corrupt = corruption_index_selection_func(pandas_df)
             return_df = pandas_df.copy()
-            return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[indexes_to_corrupt, column]
+            corrupted_df = return_df.loc[indexes_to_corrupt, :]
+            completely_corrupted_df = corruption_function(corrupted_df)
+            return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[:, column]
             return return_df
 
         # We need to use partial here to avoid problems with late bindings, see
