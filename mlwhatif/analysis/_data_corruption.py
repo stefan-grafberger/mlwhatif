@@ -56,8 +56,8 @@ class DataCorruption(WhatIfAnalysis):
         #  then using a concat in the end.
 
         corruption_patch_sets = []
-        for corruption_percentage in self.corruption_percentages:
-            for (column, corruption_function) in self.column_to_corruption:
+        for corruption_percentage_index, corruption_percentage in enumerate(self.corruption_percentages):
+            for (column_corruption_tuple_index, (column, corruption_function)) in enumerate(self.column_to_corruption):
                 patches_for_variant = []
 
                 # Test set corruption
@@ -70,10 +70,13 @@ class DataCorruption(WhatIfAnalysis):
                     column, corruption_function, corruption_percentage)
                 if isinstance(corruption_percentage, float):
                     only_reads_column = [column]
+                    maybe_selectivity_info = corruption_percentage
                 else:
-                    only_reads_column = None
+                    only_reads_column = None  # TODO: Support this case properly in optimizations
+                    maybe_selectivity_info = None
                 patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
-                                       only_reads_column, index_selection_func, corrupt_func)
+                                       only_reads_column, index_selection_func, corruption_percentage_index,
+                                       corrupt_func, column_corruption_tuple_index, maybe_selectivity_info)
                 patches_for_variant.append(patch)
                 corruption_patch_sets.append(patches_for_variant)
 
@@ -87,12 +90,14 @@ class DataCorruption(WhatIfAnalysis):
                     corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
                         column, corruption_function, corruption_percentage)
                     patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
-                                           only_reads_column, index_selection_func, corrupt_func)
+                                           only_reads_column, index_selection_func, corruption_percentage_index,
+                                           corrupt_func, column_corruption_tuple_index, maybe_selectivity_info)
                     patches_for_variant.append(patch)
                     corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
                         column, corruption_function, corruption_percentage)
                     patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, True, column,
-                                           only_reads_column, index_selection_func, corrupt_func)
+                                           only_reads_column, index_selection_func, corruption_percentage_index,
+                                           corrupt_func, column_corruption_tuple_index, maybe_selectivity_info)
                     patches_for_variant.append(patch)
                     corruption_patch_sets.append(patches_for_variant)
 
@@ -101,6 +106,7 @@ class DataCorruption(WhatIfAnalysis):
     @staticmethod
     def create_corruption_node(column, corruption_function, corruption_percentage_or_selection_function):
         """Create the node that applies the specified corruption"""
+
         def corruption_index_selection(pandas_df, corruption_percentage):
             corrupt_count = int(len(pandas_df) * corruption_percentage)
             indexes_to_corrupt = numpy.random.permutation(pandas_df.index)[:corrupt_count]

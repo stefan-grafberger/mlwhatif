@@ -11,11 +11,11 @@ from mlwhatif.execution._patches import Patch
 from mlwhatif.execution.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
 from mlwhatif.execution.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
 from mlwhatif.execution.optimization._simple_projection_push_up import SimpleProjectionPushUp
+from mlwhatif.execution.optimization._udf_split_and_reuse import UdfSplitAndReuse
 from mlwhatif.instrumentation._dag_node import DagNode
 from mlwhatif.visualisation import save_fig_to_path
 
 logger = logging.getLogger(__name__)
-
 
 
 class MultiQueryOptimizer:
@@ -26,7 +26,8 @@ class MultiQueryOptimizer:
         self.pipeline_executor = pipeline_executor
         self.all_optimization_rules = [SimpleProjectionPushUp(pipeline_executor),
                                        SimpleFilterAdditionPushUp(pipeline_executor),
-                                       OperatorDeletionFilterPushUp(pipeline_executor)]
+                                       OperatorDeletionFilterPushUp(pipeline_executor),
+                                       UdfSplitAndReuse(pipeline_executor)]
 
     def create_optimized_plan(self, original_dag: networkx.DiGraph, patches: Iterable[Iterable[Patch]],
                               prefix_analysis_dags: str or None = None,
