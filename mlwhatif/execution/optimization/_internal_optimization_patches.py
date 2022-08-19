@@ -42,11 +42,14 @@ class UdfSplitAndReuseAppendNodeBetweenOperators(PipelinePatch):
     index_selection_node: DagNode
     apply_corruption_to_fraction_node: DagNode
     train_not_test: bool
+    first_index_function_occurrence: bool
 
     def apply(self, dag: networkx.DiGraph):
         add_new_node_between_nodes(dag, self.apply_corruption_to_fraction_node, self.operator_to_add_node_after,
                                    self.operator_to_add_node_before)
-        dag.add_edge(self.operator_to_add_node_after, self.index_selection_node, arg_index=0)
+        if self.first_index_function_occurrence is True:
+            # We need to get the data frame len once only to create the index selection mask
+            dag.add_edge(self.operator_to_add_node_after, self.index_selection_node, arg_index=0)
         dag.add_edge(self.operator_to_add_node_after, self.corruption_node, arg_index=0)
         dag.add_edge(self.corruption_node, self.apply_corruption_to_fraction_node, arg_index=1)
         dag.add_edge(self.index_selection_node, self.apply_corruption_to_fraction_node, arg_index=2)

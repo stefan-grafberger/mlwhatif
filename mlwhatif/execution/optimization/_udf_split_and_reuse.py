@@ -43,9 +43,8 @@ class UdfSplitAndReuse(QueryOptimizationRule):
                         patch.maybe_udf_split_info.maybe_selectivity_info)
                     column_to_index_selection_ids[patch.maybe_udf_split_info.column_name_to_corrupt].append(
                         patch.maybe_udf_split_info.index_selection_func_id)
-                    column_to_projection_func_ids[patch.maybe_udf_split_info.column_name_to_corrupt]\
+                    column_to_projection_func_ids[patch.maybe_udf_split_info.column_name_to_corrupt] \
                         .append(patch.maybe_udf_split_info.projection_func_only_id)
-
 
         columns_worth_fully_corrupting = set()
         for column, selectivity_list in selectivities_per_column.items():
@@ -55,6 +54,7 @@ class UdfSplitAndReuse(QueryOptimizationRule):
 
         corruption_func_id_to_dag_node = dict()
         index_selection_func_id_to_dag_node = dict()
+        index_selection_func_requires_input = set()
         for column in columns_worth_fully_corrupting:
             projection_func_ids = column_to_projection_func_ids[column]
             index_selection_ids = column_to_index_selection_ids[column]
@@ -72,6 +72,8 @@ class UdfSplitAndReuse(QueryOptimizationRule):
                         self.create_index_selection_func_dag_node(index_func)
                     index_selection_func_id_to_dag_node[(False, index_id)] = \
                         self.create_index_selection_func_dag_node(index_func)
+                    index_selection_func_requires_input.add((True, index_id))
+                    index_selection_func_requires_input.add((False, index_id))
 
         # TODO: Determine for which projection funcs the total selectivity is greater than 1
         #  For other patches, leave them unchanged.
@@ -86,9 +88,12 @@ class UdfSplitAndReuse(QueryOptimizationRule):
                         patch.maybe_udf_split_info.column_name_to_corrupt in columns_worth_fully_corrupting:
                     corruption_dag_node = corruption_func_id_to_dag_node[
                         (patch.train_not_test, patch.maybe_udf_split_info.projection_func_only_id)]
-                    index_selection_node = index_selection_func_id_to_dag_node[
-                        (patch.train_not_test, patch.maybe_udf_split_info.index_selection_func_id)]
+                    index_selection_lookup_key = (patch.train_not_test,
+                                                  patch.maybe_udf_split_info.index_selection_func_id)
+                    index_selection_node = index_selection_func_id_to_dag_node[index_selection_lookup_key]
                     apply_corruption_to_fraction_node = self.create_apply_corruption_to_fraction_node(patch)
+                    first_index_function_occurrence = index_selection_lookup_key in index_selection_func_requires_input
+                    index_selection_func_requires_input.discard(index_selection_lookup_key)
                     updated_patch = UdfSplitAndReuseAppendNodeBetweenOperators(
                         patch.patch_id,
                         patch.analysis,
@@ -98,7 +103,8 @@ class UdfSplitAndReuse(QueryOptimizationRule):
                         corruption_dag_node,
                         index_selection_node,
                         apply_corruption_to_fraction_node,
-                        patch.train_not_test
+                        patch.train_not_test,
+                        first_index_function_occurrence
                     )
                 else:
                     updated_patch = patch
