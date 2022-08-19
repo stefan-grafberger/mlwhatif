@@ -16,11 +16,11 @@ from mlwhatif.analysis._data_corruption_with_model_variants import DataCorruptio
 from mlwhatif.utils import get_project_root
 
 INTERMEDIATE_EXTRACTION_ORIG_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
-                                                 "data_corruption-orig")
+                                                 "data_corruption_model_variants-orig")
 INTERMEDIATE_EXTRACTION_GENERATED_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
-                                                      "data_corruption-what-if")
+                                                      "data_corruption_model_variants-what-if")
 INTERMEDIATE_EXTRACTION_OPTIMISED_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
-                                                      "data_corruption-what-if-optimised")
+                                                      "data_corruption_model_variants-what-if-optimised")
 
 
 def test_data_corruption_mini_example_with_transformer_processing_multiple_columns():
