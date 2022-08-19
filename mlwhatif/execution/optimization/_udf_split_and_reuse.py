@@ -46,11 +46,7 @@ class UdfSplitAndReuse(QueryOptimizationRule):
                     column_to_projection_func_ids[patch.maybe_udf_split_info.column_name_to_corrupt] \
                         .append(patch.maybe_udf_split_info.projection_func_only_id)
 
-        columns_worth_fully_corrupting = set()
-        for column, selectivity_list in selectivities_per_column.items():
-            total_corruption_fraction = sum(filter(None, selectivity_list))
-            if total_corruption_fraction > 1.0:
-                columns_worth_fully_corrupting.add(column)
+        columns_worth_fully_corrupting = self._get_columns_worth_fully_corrupting(selectivities_per_column)
 
         corruption_func_id_to_dag_node = dict()
         index_selection_func_id_to_dag_node = dict()
@@ -113,7 +109,17 @@ class UdfSplitAndReuse(QueryOptimizationRule):
 
         return updated_patches
 
+    def _get_columns_worth_fully_corrupting(self, selectivities_per_column):
+        """Get columns where, in total, different corruptions corrupt more than 100% of the data"""
+        columns_worth_fully_corrupting = set()
+        for column, selectivity_list in selectivities_per_column.items():
+            total_corruption_fraction = sum(filter(None, selectivity_list))
+            if total_corruption_fraction > 1.0:
+                columns_worth_fully_corrupting.add(column)
+        return columns_worth_fully_corrupting
+
     def create_projection_func_dag_node(self, projection_func, column_name) -> DagNode:
+        """Create the DAG node that corrupts the whole df at once"""
         def corrupt_full_df(pandas_df, corruption_function):
             # TODO: If we model this as 3 operations instead of one, optimization should be easy
             # TODO: Think about when we actually want to be defensive and call copy and when not
@@ -135,6 +141,7 @@ class UdfSplitAndReuse(QueryOptimizationRule):
         return new_corruption_node
 
     def create_index_selection_func_dag_node(self, index_selection_func) -> DagNode:
+        """Create the DAG node that creates the sampling index array to sample from the corrupted df"""
         new_corruption_node = DagNode(self._pipeline_executor.get_next_op_id(),
                                       BasicCodeLocation("UdfSplitAndReuse", None),
                                       OperatorContext(OperatorType.SUBSCRIPT, None),
@@ -144,6 +151,10 @@ class UdfSplitAndReuse(QueryOptimizationRule):
         return new_corruption_node
 
     def create_apply_corruption_to_fraction_node(self, previous_patch: AppendNodeBetweenOperators) -> DagNode:
+        """
+        Create the DAG node that applies the sampling index array to sample from the corrupted data to
+        corrupt certain rows
+        """
         def corrupt_df(pandas_df, completely_corrupted_df, indexes_to_corrupt, column):
             return_df = pandas_df.copy()
             return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[indexes_to_corrupt, column]

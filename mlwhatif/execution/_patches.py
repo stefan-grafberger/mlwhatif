@@ -174,6 +174,11 @@ class DataFiltering(DataPatch):
 
 @dataclasses.dataclass
 class UdfSplitInfo:
+    """
+    Info required to split up expensive udf projections that only repeatedly modify subsets of rows into
+    two parts: corrupting all rows once, and then only sampling from the corrupted variants, isntead of calling the
+    expensive udf repeatedly
+    """
     index_selection_func_id: int
     index_selection_func: Callable  # A function that can be used to select which rows to modify
     # A function that can be combined with index_selection_func to replace the projection_operator processing_func
