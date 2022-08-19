@@ -1,5 +1,5 @@
 """
-Tests whether the Data Corruption analysis works
+Tests whether the Data Corruption with Model Variants analysis works
 """
 import os
 from functools import partial
@@ -23,7 +23,7 @@ INTERMEDIATE_EXTRACTION_OPTIMISED_PATH = os.path.join(str(get_project_root()), "
                                                       "data_corruption_model_variants-what-if-optimised")
 
 
-def test_data_corruption_mini_example_with_transformer_processing_multiple_columns():
+def test_data_corruption_model_variants_mini_example_with_transformer_processing_multiple_columns():
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -70,7 +70,7 @@ def test_data_corruption_mini_example_with_transformer_processing_multiple_colum
     assert report.shape == (12, 5)
 
 
-def test_data_corruption_mini_example_with_projection_modify():
+def test_data_corruption_model_variants_mini_example_with_projection_modify():
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -124,7 +124,7 @@ def test_data_corruption_mini_example_with_projection_modify():
     assert report.shape == (8, 5)
 
 
-def test_data_corruption_mini_example_only_train_test_split():
+def test_data_corruption_model_variants_mini_example_only_train_test_split():
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -172,7 +172,7 @@ def test_data_corruption_mini_example_only_train_test_split():
     assert report.shape == (12, 5)
 
 
-def test_data_corruption_mini_example_only_train_test_split_without_optimizer():
+def test_data_corruption_model_variants_mini_example_only_train_test_split_without_optimizer():
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -221,7 +221,7 @@ def test_data_corruption_mini_example_only_train_test_split_without_optimizer():
     assert report.shape == (12, 5)
 
 
-def test_data_corruption_mini_example_manual_split():
+def test_data_corruption_model_variants_mini_example_manual_split():
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -270,7 +270,7 @@ def test_data_corruption_mini_example_manual_split():
     assert report.shape == (12, 5)
 
 
-def test_data_corruption_healthcare():
+def test_data_corruption_model_variants_healthcare():
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -300,7 +300,7 @@ def test_data_corruption_healthcare():
     assert report.shape == (8, 9)
 
 
-def test_data_corruption_compas():
+def test_data_corruption_model_variants_compas():
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -327,7 +327,7 @@ def test_data_corruption_compas():
     assert report.shape == (12, 4)
 
 
-def test_data_corruption_adult_complex():
+def test_data_corruption_model_variants_adult_complex():
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """

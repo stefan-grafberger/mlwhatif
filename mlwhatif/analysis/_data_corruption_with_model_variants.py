@@ -1,5 +1,6 @@
 """
-The Data Corruption What-If Analysis
+The Data Corruption with Model Variants What-If Analysis, an example for a analysis that uses multiple patches
+per model variant
 """
 from functools import partial
 from types import FunctionType
@@ -19,7 +20,7 @@ from mlwhatif.instrumentation._pipeline_executor import singleton
 
 class DataCorruptionWithModelVariants(WhatIfAnalysis):
     """
-    The Data Corruption What-If Analysis
+    The Data Corruption with Model Variants What-If Analysis
     """
 
     def __init__(self,
