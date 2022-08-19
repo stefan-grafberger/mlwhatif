@@ -18,90 +18,30 @@ from mlwhatif.execution.optimization._query_optimization_rules import QueryOptim
 
 class UdfSplitAndReuse(QueryOptimizationRule):
     """ Combines multiple DAGs and optimizes the joint plan """
-
     # pylint: disable=too-few-public-methods
 
     def __init__(self, pipeline_executor):
         self._pipeline_executor = pipeline_executor
 
     def optimize_patches(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
-        id_to_index_selection = dict()
-        id_to_projection_func = dict()
-        # If we allow multiple corruption funcs per column at some point, this would need to change
-        selectivities_per_column = defaultdict(list)
-        column_to_index_selection_ids = defaultdict(list)
-        column_to_projection_func_ids = defaultdict(list)
+        columns_worth_fully_corrupting = self._get_columns_worth_fully_corrupting(patches)
 
-        for pipeline_variant_patches in patches:
-            for patch in pipeline_variant_patches:
-                if isinstance(patch, AppendNodeBetweenOperators) and patch.maybe_udf_split_info is not None:
-                    id_to_projection_func[patch.maybe_udf_split_info.projection_func_only_id] = \
-                        patch.maybe_udf_split_info.projection_func_only
-                    id_to_index_selection[patch.maybe_udf_split_info.index_selection_func_id] = \
-                        patch.maybe_udf_split_info.index_selection_func
-                    selectivities_per_column[patch.maybe_udf_split_info.column_name_to_corrupt].append(
-                        patch.maybe_udf_split_info.maybe_selectivity_info)
-                    column_to_index_selection_ids[patch.maybe_udf_split_info.column_name_to_corrupt].append(
-                        patch.maybe_udf_split_info.index_selection_func_id)
-                    column_to_projection_func_ids[patch.maybe_udf_split_info.column_name_to_corrupt] \
-                        .append(patch.maybe_udf_split_info.projection_func_only_id)
+        corruption_func_id_to_dag_node, index_selection_func_id_to_dag_node, index_selection_func_requires_input = \
+            self._get_split_and_reuse_dag_node_mapping(patches, columns_worth_fully_corrupting)
 
-        columns_worth_fully_corrupting = self._get_columns_worth_fully_corrupting(selectivities_per_column)
-
-        corruption_func_id_to_dag_node = dict()
-        index_selection_func_id_to_dag_node = dict()
-        index_selection_func_requires_input = set()
-        for column in columns_worth_fully_corrupting:
-            projection_func_ids = column_to_projection_func_ids[column]
-            index_selection_ids = column_to_index_selection_ids[column]
-            for projection_id in projection_func_ids:
-                if projection_id not in corruption_func_id_to_dag_node:
-                    projection_func = id_to_projection_func[projection_id]
-                    corruption_func_id_to_dag_node[(True, projection_id)] = self.create_projection_func_dag_node(
-                        projection_func, column)
-                    corruption_func_id_to_dag_node[(False, projection_id)] = self.create_projection_func_dag_node(
-                        projection_func, column)
-            for index_id in index_selection_ids:
-                if index_id not in index_selection_func_id_to_dag_node:
-                    index_func = id_to_index_selection[index_id]
-                    index_selection_func_id_to_dag_node[(True, index_id)] = \
-                        self.create_index_selection_func_dag_node(index_func)
-                    index_selection_func_id_to_dag_node[(False, index_id)] = \
-                        self.create_index_selection_func_dag_node(index_func)
-                    index_selection_func_requires_input.add((True, index_id))
-                    index_selection_func_requires_input.add((False, index_id))
-
-        # TODO: Determine for which projection funcs the total selectivity is greater than 1
-        #  For other patches, leave them unchanged.
-        #  For these patches, generate a projection node for each projection func id
-        #  and an index selection func for each index selection func id
-        #  Then iterate through all patches again, and get the nodes from the maps and generate a new DagNode
         updated_patches = []
         for pipeline_variant_patches in patches:
             updated_pipeline_variant_patches = []
             for patch in pipeline_variant_patches:
                 if isinstance(patch, AppendNodeBetweenOperators) and patch.maybe_udf_split_info is not None and \
                         patch.maybe_udf_split_info.column_name_to_corrupt in columns_worth_fully_corrupting:
-                    corruption_dag_node = corruption_func_id_to_dag_node[
-                        (patch.train_not_test, patch.maybe_udf_split_info.projection_func_only_id)]
-                    index_selection_lookup_key = (patch.train_not_test,
-                                                  patch.maybe_udf_split_info.index_selection_func_id)
-                    index_selection_node = index_selection_func_id_to_dag_node[index_selection_lookup_key]
-                    apply_corruption_to_fraction_node = self.create_apply_corruption_to_fraction_node(patch)
-                    first_index_function_occurrence = index_selection_lookup_key in index_selection_func_requires_input
-                    index_selection_func_requires_input.discard(index_selection_lookup_key)
-                    updated_patch = UdfSplitAndReuseAppendNodeBetweenOperators(
-                        patch.patch_id,
-                        patch.analysis,
-                        patch.changes_following_results,
-                        patch.operator_to_add_node_after,
-                        patch.operator_to_add_node_before,
-                        corruption_dag_node,
-                        index_selection_node,
-                        apply_corruption_to_fraction_node,
-                        patch.train_not_test,
-                        first_index_function_occurrence
-                    )
+
+                    corruption_dag_node, first_index_function_occurrence, index_selection_node = \
+                        self._get_udf_split_reuse_patch_arguments(patch, corruption_func_id_to_dag_node,
+                                                                  index_selection_func_id_to_dag_node,
+                                                                  index_selection_func_requires_input)
+                    updated_patch = self._create_udf_split_reuse_patch(corruption_dag_node, index_selection_node,
+                                                                       first_index_function_occurrence, patch)
                 else:
                     updated_patch = patch
                 updated_pipeline_variant_patches.append(updated_patch)
@@ -109,8 +49,128 @@ class UdfSplitAndReuse(QueryOptimizationRule):
 
         return updated_patches
 
-    def _get_columns_worth_fully_corrupting(self, selectivities_per_column):
+    @staticmethod
+    def _get_udf_split_reuse_patch_arguments(patch, corruption_func_id_to_dag_node,
+                                             index_selection_func_id_to_dag_node, index_selection_func_requires_input):
+        """
+        Lookup the corresponding DAG nodes for the current patch and if the index selection func DAG node
+        still needs an edge to look at the input shape
+        """
+        corruption_lookup_key = (patch.train_not_test, patch.maybe_udf_split_info.projection_func_only_id)
+        index_selection_lookup_key = (patch.train_not_test,
+                                      patch.maybe_udf_split_info.index_selection_func_id)
+
+        corruption_dag_node = corruption_func_id_to_dag_node[corruption_lookup_key]
+        index_selection_node = index_selection_func_id_to_dag_node[index_selection_lookup_key]
+
+        first_index_function_occurrence = index_selection_lookup_key in index_selection_func_requires_input
+        index_selection_func_requires_input.discard(index_selection_lookup_key)
+        return corruption_dag_node, first_index_function_occurrence, index_selection_node
+
+    @staticmethod
+    def _get_column_to_index_func_and_to_corruption_func_maps(patches):
+        # If we allow multiple corruption funcs per column at some point, this would need to change
+        column_to_index_selection_ids = defaultdict(list)
+        column_to_projection_func_ids = defaultdict(list)
+        for pipeline_variant_patches in patches:
+            for patch in pipeline_variant_patches:
+                if isinstance(patch, AppendNodeBetweenOperators) and patch.maybe_udf_split_info is not None:
+                    column_to_index_selection_ids[patch.maybe_udf_split_info.column_name_to_corrupt].append(
+                        patch.maybe_udf_split_info.index_selection_func_id)
+                    column_to_projection_func_ids[patch.maybe_udf_split_info.column_name_to_corrupt] \
+                        .append(patch.maybe_udf_split_info.projection_func_only_id)
+        return column_to_index_selection_ids, column_to_projection_func_ids
+
+    @staticmethod
+    def get_index_id_to_func_and_corruption_id_to_func_maps(patches):
+        """Create DAG nodes and get maps from index selection/coruption id to the corresponding node"""
+        id_to_index_selection = dict()
+        id_to_projection_func = dict()
+        for pipeline_variant_patches in patches:
+            for patch in pipeline_variant_patches:
+                if isinstance(patch, AppendNodeBetweenOperators) and patch.maybe_udf_split_info is not None:
+                    id_to_projection_func[patch.maybe_udf_split_info.projection_func_only_id] = \
+                        patch.maybe_udf_split_info.projection_func_only
+                    id_to_index_selection[patch.maybe_udf_split_info.index_selection_func_id] = \
+                        patch.maybe_udf_split_info.index_selection_func
+        return id_to_index_selection, id_to_projection_func
+
+    def _get_split_and_reuse_dag_node_mapping(self, patches, columns_worth_fully_corrupting):
+        """Create DAG nodes for corruption and index selection funcs that we want to split and reuse"""
+        id_to_index_selection, id_to_projection_func = self.get_index_id_to_func_and_corruption_id_to_func_maps(patches)
+        column_to_index_selection_ids, column_to_projection_func_ids = self \
+            ._get_column_to_index_func_and_to_corruption_func_maps(patches)
+
+        corruption_func_id_to_dag_node = self._create_corruption_id_to_dag_nodes_map(column_to_projection_func_ids,
+                                                                                     columns_worth_fully_corrupting,
+                                                                                     id_to_projection_func)
+        index_selection_func_id_to_dag_node, index_selection_func_requires_input = \
+            self._create_index_selection_id_to_dag_nodes_map(column_to_index_selection_ids,
+                                                             columns_worth_fully_corrupting, id_to_index_selection)
+        return corruption_func_id_to_dag_node, index_selection_func_id_to_dag_node, index_selection_func_requires_input
+
+    def _create_index_selection_id_to_dag_nodes_map(self, column_to_index_selection_ids, columns_worth_fully_corrupting,
+                                                    id_to_index_selection):
+        """Create DAG nodes for index selection funcs that we want to split and reuse"""
+        index_selection_func_id_to_dag_node = dict()
+        index_selection_func_requires_input = set()
+        for column in columns_worth_fully_corrupting:
+            index_selection_ids = column_to_index_selection_ids[column]
+            for index_id in index_selection_ids:
+                if index_id not in index_selection_func_id_to_dag_node:
+                    index_func = id_to_index_selection[index_id]
+                    index_selection_func_id_to_dag_node[(True, index_id)] = \
+                        self._create_index_selection_func_dag_node(index_func)
+                    index_selection_func_id_to_dag_node[(False, index_id)] = \
+                        self._create_index_selection_func_dag_node(index_func)
+                    index_selection_func_requires_input.add((True, index_id))
+                    index_selection_func_requires_input.add((False, index_id))
+        return index_selection_func_id_to_dag_node, index_selection_func_requires_input
+
+    def _create_corruption_id_to_dag_nodes_map(self, column_to_projection_func_ids, columns_worth_fully_corrupting,
+                                               id_to_projection_func):
+        """Create DAG nodes for corruption funcs that we want to split and reuse"""
+        corruption_func_id_to_dag_node = dict()
+        for column in columns_worth_fully_corrupting:
+            projection_func_ids = column_to_projection_func_ids[column]
+            for projection_id in projection_func_ids:
+                if projection_id not in corruption_func_id_to_dag_node:
+                    projection_func = id_to_projection_func[projection_id]
+                    corruption_func_id_to_dag_node[(True, projection_id)] = self._create_projection_func_dag_node(
+                        projection_func, column)
+                    corruption_func_id_to_dag_node[(False, projection_id)] = self._create_projection_func_dag_node(
+                        projection_func, column)
+        return corruption_func_id_to_dag_node
+
+    def _create_udf_split_reuse_patch(self, corruption_dag_node, index_selection_node, first_index_function_occurrence,
+                                      patch):
+        """Create the patch that applies the optimized corruption"""
+        apply_corruption_to_fraction_node = self._create_apply_corruption_to_fraction_node(patch)
+        updated_patch = UdfSplitAndReuseAppendNodeBetweenOperators(
+            patch.patch_id,
+            patch.analysis,
+            patch.changes_following_results,
+            patch.operator_to_add_node_after,
+            patch.operator_to_add_node_before,
+            corruption_dag_node,
+            index_selection_node,
+            apply_corruption_to_fraction_node,
+            patch.train_not_test,
+            first_index_function_occurrence
+        )
+        return updated_patch
+
+    @staticmethod
+    def _get_columns_worth_fully_corrupting(patches):
         """Get columns where, in total, different corruptions corrupt more than 100% of the data"""
+        selectivities_per_column = defaultdict(list)
+
+        for pipeline_variant_patches in patches:
+            for patch in pipeline_variant_patches:
+                if isinstance(patch, AppendNodeBetweenOperators) and patch.maybe_udf_split_info is not None:
+                    selectivities_per_column[patch.maybe_udf_split_info.column_name_to_corrupt].append(
+                        patch.maybe_udf_split_info.maybe_selectivity_info)
+
         columns_worth_fully_corrupting = set()
         for column, selectivity_list in selectivities_per_column.items():
             total_corruption_fraction = sum(filter(None, selectivity_list))
@@ -118,13 +178,10 @@ class UdfSplitAndReuse(QueryOptimizationRule):
                 columns_worth_fully_corrupting.add(column)
         return columns_worth_fully_corrupting
 
-    def create_projection_func_dag_node(self, projection_func, column_name) -> DagNode:
+    def _create_projection_func_dag_node(self, projection_func, column_name) -> DagNode:
         """Create the DAG node that corrupts the whole df at once"""
+
         def corrupt_full_df(pandas_df, corruption_function):
-            # TODO: If we model this as 3 operations instead of one, optimization should be easy
-            # TODO: Think about when we actually want to be defensive and call copy and when not
-            # TODO: Think about datatypes. corruption_function currently assumes pandas DataFrames.
-            #  We may want to automatically convert data formats as needed, here and in other places.
             completely_corrupted_df = pandas_df.copy()
             completely_corrupted_df = corruption_function(completely_corrupted_df)
             return completely_corrupted_df
@@ -140,7 +197,7 @@ class UdfSplitAndReuse(QueryOptimizationRule):
                                       corrupt_df_with_proper_bindings)
         return new_corruption_node
 
-    def create_index_selection_func_dag_node(self, index_selection_func) -> DagNode:
+    def _create_index_selection_func_dag_node(self, index_selection_func) -> DagNode:
         """Create the DAG node that creates the sampling index array to sample from the corrupted df"""
         new_corruption_node = DagNode(self._pipeline_executor.get_next_op_id(),
                                       BasicCodeLocation("UdfSplitAndReuse", None),
@@ -150,11 +207,12 @@ class UdfSplitAndReuse(QueryOptimizationRule):
                                       index_selection_func)
         return new_corruption_node
 
-    def create_apply_corruption_to_fraction_node(self, previous_patch: AppendNodeBetweenOperators) -> DagNode:
+    def _create_apply_corruption_to_fraction_node(self, previous_patch: AppendNodeBetweenOperators) -> DagNode:
         """
         Create the DAG node that applies the sampling index array to sample from the corrupted data to
         corrupt certain rows
         """
+
         def corrupt_df(pandas_df, completely_corrupted_df, indexes_to_corrupt, column):
             return_df = pandas_df.copy()
             return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[indexes_to_corrupt, column]
