@@ -5,14 +5,14 @@ import logging
 import networkx
 
 from mlwhatif.analysis._analysis_utils import add_new_node_between_nodes
-from mlwhatif.execution._patches import PipelinePatch, UdfSplitInfo
+from mlwhatif.execution._patches import OperatorPatch, UdfSplitInfo
 from mlwhatif.instrumentation._dag_node import DagNode
 
 logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
-class AppendNodeBetweenOperators(PipelinePatch):
+class AppendNodeBetweenOperators(OperatorPatch):
     """ Remove a DAG node """
 
     node_to_insert: DagNode
@@ -33,7 +33,7 @@ class AppendNodeBetweenOperators(PipelinePatch):
 
 
 @dataclasses.dataclass
-class UdfSplitAndReuseAppendNodeBetweenOperators(PipelinePatch):
+class UdfSplitAndReuseAppendNodeBetweenOperators(OperatorPatch):
     """ Remove a DAG node """
 
     operator_to_add_node_after: DagNode
@@ -59,7 +59,7 @@ class UdfSplitAndReuseAppendNodeBetweenOperators(PipelinePatch):
 
 
 @dataclasses.dataclass
-class PipelineTransformerInsertion(PipelinePatch):
+class OperatorTransformerInsertion(OperatorPatch):
     """ Remove a DAG node """
 
     fit_transform_node_to_insert: DagNode

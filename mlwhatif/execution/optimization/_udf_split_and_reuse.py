@@ -10,7 +10,7 @@ import networkx
 
 from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, OperatorContext, DagNodeDetails
 from mlwhatif.instrumentation._operator_types import OperatorType
-from mlwhatif.execution._patches import Patch
+from mlwhatif.execution._patches import PipelinePatch
 from mlwhatif.execution.optimization._internal_optimization_patches import AppendNodeBetweenOperators, \
     UdfSplitAndReuseAppendNodeBetweenOperators
 from mlwhatif.execution.optimization._query_optimization_rules import QueryOptimizationRule
@@ -23,7 +23,7 @@ class UdfSplitAndReuse(QueryOptimizationRule):
     def __init__(self, pipeline_executor):
         self._pipeline_executor = pipeline_executor
 
-    def optimize_patches(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
+    def optimize_patches(self, dag: networkx.DiGraph, patches: List[List[PipelinePatch]]) -> List[List[PipelinePatch]]:
         columns_worth_fully_corrupting = self._get_columns_worth_fully_corrupting(patches)
 
         corruption_func_id_to_dag_node, index_selection_func_id_to_dag_node, index_selection_func_requires_input = \

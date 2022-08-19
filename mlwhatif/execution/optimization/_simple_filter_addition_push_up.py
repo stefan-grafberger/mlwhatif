@@ -7,7 +7,7 @@ from typing import List
 import networkx
 
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_new_filter_on_column
-from mlwhatif.execution._patches import Patch, DataFiltering, AppendNodeAfterOperator
+from mlwhatif.execution._patches import PipelinePatch, DataFiltering, AppendNodeAfterOperator
 from mlwhatif.execution.optimization._query_optimization_rules import QueryOptimizationRule
 
 
@@ -19,7 +19,7 @@ class SimpleFilterAdditionPushUp(QueryOptimizationRule):
     def __init__(self, pipeline_executor):
         self._pipeline_executor = pipeline_executor
 
-    def optimize_patches(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
+    def optimize_patches(self, dag: networkx.DiGraph, patches: List[List[PipelinePatch]]) -> List[List[PipelinePatch]]:
         updated_patches = []
         for pipeline_variant_patches in patches:
             updated_pipeline_variant_patches = []

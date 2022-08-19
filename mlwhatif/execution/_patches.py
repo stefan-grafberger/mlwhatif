@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
-class Patch(ABC):
+class PipelinePatch(ABC):
     """ Basic Patch class """
     patch_id: int
     analysis: any  # WhatIfAnalyis but this would be a circular import currently
@@ -50,12 +50,12 @@ class Patch(ABC):
 
 
 @dataclasses.dataclass
-class PipelinePatch(Patch, ABC):
+class OperatorPatch(PipelinePatch, ABC):
     """ Parent class for pipeline patches """
 
 
 @dataclasses.dataclass
-class OperatorReplacement(PipelinePatch):
+class OperatorReplacement(OperatorPatch):
     """ Replace a DAG node with another one """
 
     operator_to_replace: DagNode
@@ -71,7 +71,7 @@ class OperatorReplacement(PipelinePatch):
 
 
 @dataclasses.dataclass
-class OperatorRemoval(PipelinePatch):
+class OperatorRemoval(OperatorPatch):
     """ Remove a DAG node """
 
     # While operators to remove is a list, it should always be one main operator only, like a selection.
@@ -125,7 +125,7 @@ class OperatorRemoval(PipelinePatch):
 
 
 @dataclasses.dataclass
-class AppendNodeAfterOperator(PipelinePatch):
+class AppendNodeAfterOperator(OperatorPatch):
     """ Remove a DAG node """
 
     operator_to_add_node_after: DagNode
@@ -139,7 +139,7 @@ class AppendNodeAfterOperator(PipelinePatch):
 
 
 @dataclasses.dataclass
-class DataPatch(Patch, ABC):
+class DataPatch(PipelinePatch, ABC):
     """ Parent class for data patches """
 
 
@@ -245,7 +245,7 @@ class DataTransformer(DataPatch):
 
 
 @dataclasses.dataclass
-class ModelPatch(Patch):
+class ModelPatch(PipelinePatch):
     """ Patch the model node by replacing with with another node """
 
     replace_with_node: DagNode

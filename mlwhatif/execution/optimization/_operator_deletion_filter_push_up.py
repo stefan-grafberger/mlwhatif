@@ -10,7 +10,7 @@ from mlwhatif.instrumentation._dag_node import DagNode
 from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_new_filter_on_column, get_sorted_parent_nodes, \
     get_sorted_children_nodes
-from mlwhatif.execution._patches import Patch, OperatorRemoval
+from mlwhatif.execution._patches import PipelinePatch, OperatorRemoval
 from mlwhatif.execution.optimization._query_optimization_rules import QueryOptimizationRule
 
 
@@ -22,8 +22,8 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
     def __init__(self, pipeline_executor):
         self._pipeline_executor = pipeline_executor
 
-    def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> \
-            tuple[networkx.DiGraph, List[List[Patch]]]:
+    def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[PipelinePatch]]) -> \
+            tuple[networkx.DiGraph, List[List[PipelinePatch]]]:
         selectivity_and_filters_to_push_up = []
 
         for pipeline_variant_patches in patches:

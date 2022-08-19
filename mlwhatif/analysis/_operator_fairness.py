@@ -17,7 +17,7 @@ from mlwhatif.analysis._analysis_utils import find_nodes_by_type, find_train_or_
     filter_estimator_transformer_edges
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
-from mlwhatif.execution._patches import Patch, OperatorReplacement, OperatorRemoval
+from mlwhatif.execution._patches import PipelinePatch, OperatorReplacement, OperatorRemoval
 from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import wrap_in_mlinspect_array_if_necessary
 
@@ -40,7 +40,7 @@ class OperatorFairness(WhatIfAnalysis):
     def analysis_id(self):
         return self._analysis_id
 
-    def generate_plans_to_try(self, dag: networkx.DiGraph) -> Iterable[Iterable[Patch]]:
+    def generate_plans_to_try(self, dag: networkx.DiGraph) -> Iterable[Iterable[PipelinePatch]]:
         predict_operators = find_nodes_by_type(dag, OperatorType.PREDICT)
         if len(predict_operators) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call which "

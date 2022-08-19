@@ -8,8 +8,8 @@ import networkx
 
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_first_op_modifying_column
 from mlwhatif.execution.optimization._internal_optimization_patches import AppendNodeBetweenOperators, \
-    PipelineTransformerInsertion
-from mlwhatif.execution._patches import Patch, DataProjection, DataTransformer
+    OperatorTransformerInsertion
+from mlwhatif.execution._patches import PipelinePatch, DataProjection, DataTransformer
 from mlwhatif.execution.optimization._query_optimization_rules import QueryOptimizationRule
 
 
@@ -21,7 +21,7 @@ class SimpleProjectionPushUp(QueryOptimizationRule):
     def __init__(self, pipeline_executor):
         self._pipeline_executor = pipeline_executor
 
-    def optimize_patches(self, dag: networkx.DiGraph, patches: List[List[Patch]]) -> List[List[Patch]]:
+    def optimize_patches(self, dag: networkx.DiGraph, patches: List[List[PipelinePatch]]) -> List[List[PipelinePatch]]:
         updated_patches = []
         for pipeline_variant_patches in patches:
             updated_pipeline_variant_patches = []
@@ -48,7 +48,7 @@ class SimpleProjectionPushUp(QueryOptimizationRule):
                         find_dag_location_for_first_op_modifying_column(patch.modifies_column, dag, True)
                     transform_operator_to_add_node_after, transform_operator_to_add_node_before = \
                         find_dag_location_for_first_op_modifying_column(patch.modifies_column, dag, False)
-                    updated_patch = PipelineTransformerInsertion(patch.patch_id, patch.analysis,
+                    updated_patch = OperatorTransformerInsertion(patch.patch_id, patch.analysis,
                                                                  patch.changes_following_results,
                                                                  patch.fit_transform_operator,
                                                                  fit_transform_operator_to_add_node_after,

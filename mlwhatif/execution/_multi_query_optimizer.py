@@ -7,7 +7,7 @@ from typing import Iterable
 
 import networkx
 
-from mlwhatif.execution._patches import Patch
+from mlwhatif.execution._patches import PipelinePatch
 from mlwhatif.execution.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
 from mlwhatif.execution.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
 from mlwhatif.execution.optimization._simple_projection_push_up import SimpleProjectionPushUp
@@ -29,7 +29,7 @@ class MultiQueryOptimizer:
                                        OperatorDeletionFilterPushUp(pipeline_executor),
                                        UdfSplitAndReuse(pipeline_executor)]
 
-    def create_optimized_plan(self, original_dag: networkx.DiGraph, patches: Iterable[Iterable[Patch]],
+    def create_optimized_plan(self, original_dag: networkx.DiGraph, patches: Iterable[Iterable[PipelinePatch]],
                               prefix_analysis_dags: str or None = None,
                               prefix_optimised_analysis_dag: str or None = None,
                               skip_optimizer=False) -> \
