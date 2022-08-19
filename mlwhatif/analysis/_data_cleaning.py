@@ -14,7 +14,7 @@ from mlwhatif.analysis._analysis_utils import find_nodes_by_type
 from mlwhatif.analysis._cleaning_methods import MissingValueCleaner, DuplicateCleaner, OutlierCleaner, MislabelCleaner
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
-from mlwhatif.execution._patches import DataFiltering, DataTransformer, ModelPatch, Patch
+from mlwhatif.execution._patches import DataFiltering, DataTransformer, ModelPatch, PipelinePatch
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
 
@@ -143,7 +143,7 @@ class DataCleaning(WhatIfAnalysis):
     def analysis_id(self):
         return self._analysis_id
 
-    def generate_plans_to_try(self, dag: networkx.DiGraph) -> Iterable[Iterable[Patch]]:
+    def generate_plans_to_try(self, dag: networkx.DiGraph) -> Iterable[Iterable[PipelinePatch]]:
         # pylint: disable=too-many-locals
         predict_operators = find_nodes_by_type(dag, OperatorType.PREDICT)
         if len(predict_operators) != 1:
@@ -237,15 +237,16 @@ class DataCleaning(WhatIfAnalysis):
         result_df_errors = []
         result_df_cleaning_methods = []
         result_df_metrics = {}
-        score_linenos = [lineno for (_, lineno) in self._score_nodes_and_linenos]
+        score_description_and_linenos = [(score_node.details.description, lineno)
+                                         for (score_node, lineno) in self._score_nodes_and_linenos]
         for (column, error_type) in self._columns_with_error:
             for cleaning_method in CLEANING_METHODS_FOR_ERROR_TYPE[error_type]:
                 result_df_columns.append(column)
                 result_df_errors.append(error_type.value)
                 result_df_cleaning_methods.append(cleaning_method.method_name)
-                for lineno in score_linenos:
+                for (score_description, lineno) in score_description_and_linenos:
                     cleaning_result_label = f"data-cleaning-{column}-{cleaning_method.method_name}_L{lineno}"
-                    test_result_column_name = f"metric_L{lineno}"
+                    test_result_column_name = f"{score_description}_L{lineno}"
                     test_column_values = result_df_metrics.get(test_result_column_name, [])
                     test_column_values.append(singleton.labels_to_extracted_plan_results[cleaning_result_label])
                     result_df_metrics[test_result_column_name] = test_column_values

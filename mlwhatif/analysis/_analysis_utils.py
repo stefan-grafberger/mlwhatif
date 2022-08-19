@@ -2,7 +2,7 @@
 Util functions to make writing What-If Analyses easier
 """
 import logging
-from typing import Tuple
+from typing import List
 
 import networkx
 
@@ -66,13 +66,13 @@ def remove_node(dag: networkx.DiGraph, operator_to_remove: DagNode):
     dag.remove_node(operator_to_remove)
 
 
-def add_new_node_between_nodes(dag: networkx.DiGraph, new_node: DagNode, dag_location: Tuple[DagNode, DagNode]):
+def add_new_node_between_nodes(dag: networkx.DiGraph, new_node: DagNode, dag_node_before: DagNode,
+                               dag_node_after: DagNode, arg_index=0):
     """Add a new node between two chosen nodes"""
-    parent, child = dag_location
-    edge_data = dag.get_edge_data(parent, child)
-    dag.remove_edge(parent, child)
-    dag.add_edge(parent, new_node, arg_index=0)
-    dag.add_edge(new_node, child, **edge_data)
+    edge_data = dag.get_edge_data(dag_node_before, dag_node_after)
+    dag.remove_edge(dag_node_before, dag_node_after)
+    dag.add_edge(dag_node_before, new_node, arg_index=arg_index)
+    dag.add_edge(new_node, dag_node_after, **edge_data)
 
 
 def filter_estimator_transformer_edges(parent, child):
@@ -86,30 +86,30 @@ def filter_estimator_transformer_edges(parent, child):
     return not is_transformer_edge
 
 
-def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_name: str, test_not_train: bool):
+def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_names: List[str], train_not_test: bool):
     """Find DagNodes in the DAG by OperatorType"""
-    if test_not_train is True:
+    if train_not_test is False:
         dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
     else:
         dag_to_consider = dag
     nodes_to_search = list(networkx.ancestors(dag_to_consider, search_start_node))
     project_modify_matches = [node for node in nodes_to_search
                               if node.operator_info.operator == OperatorType.PROJECTION_MODIFY
-                              and node.details.description == f"modifies ['{column_name}']"]
+                              and node.details.description == f"modifies {column_names}"]
     # TODO: Using the description string is not very clean
     if len(project_modify_matches) != 0:
         sorted_matches = sorted(project_modify_matches, key=lambda dag_node: dag_node.node_id)
         return sorted_matches[0]
-    if test_not_train is True:
+    if train_not_test is False:
         transformer_matches = [node for node in nodes_to_search
                                if node.operator_info.operator == OperatorType.TRANSFORMER
                                and ": transform" in node.details.description
-                               and column_name in list(dag.predecessors(node))[1].details.columns]
+                               and not set(list(dag.predecessors(node))[1].details.columns).isdisjoint(column_names)]
     else:
         transformer_matches = [node for node in nodes_to_search
                                if node.operator_info.operator == OperatorType.TRANSFORMER
                                and ": fit_transform" in node.details.description
-                               and column_name in list(dag.predecessors(node))[0].details.columns]
+                               and not set(list(dag.predecessors(node))[0].details.columns).isdisjoint(column_names)]
     if len(transformer_matches) >= 1:
         # Can be two for example in the COMPAS pipeline when there is a SimpleImputer first
         sorted_transformer_matches = sorted(transformer_matches, key=lambda dag_node: dag_node.node_id)
@@ -119,20 +119,36 @@ def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_nam
     return search_start_node
 
 
-def find_dag_location_for_first_op_modifying_column(column, dag, test_not_train):
+def find_dag_location_for_first_op_modifying_column(column, dag, train_not_test) -> tuple[any, any]:
     """Find out between which two nodes to apply the corruption"""
-    search_start_node = find_train_or_test_pipeline_part_end(dag, test_not_train)
-    first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, column, test_not_train)
+    search_start_node = find_train_or_test_pipeline_part_end(dag, train_not_test)
+    first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, [column], train_not_test)
     operator_parent_nodes = get_sorted_parent_nodes(dag, first_op_requiring_corruption)
     first_op_requiring_corruption, operator_to_apply_corruption_after = \
         find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, operator_parent_nodes)
     return operator_to_apply_corruption_after, first_op_requiring_corruption
 
 
+def find_dag_location_for_new_filter_on_column(columns, dag, train_not_test) -> any:
+    """Find out between which two nodes to apply the corruption"""
+    search_start_node = find_lowest_common_ancestor_for_data_and_labels(dag, train_not_test)
+    # This also is not very clean, maybe improve this at some point
+    first_op_requiring_corruption = find_first_op_modifying_a_column(dag, search_start_node, columns, train_not_test)
+    if not set(first_op_requiring_corruption.details.columns).issuperset(columns):
+        ancestors = list(networkx.ancestors(dag, search_start_node))
+        # This filter could also be done a bit cleaner to be more general
+        ancestor_matches = [ancestor for ancestor in ancestors if set(ancestor.details.columns).issuperset(columns)
+                            and ancestor.operator_info.operator != OperatorType.SUBSCRIPT
+                            and list(dag.successors(ancestor))[0].operator_info.operator != OperatorType.SUBSCRIPT]
+        sorted_ancestor_matches = sorted(ancestor_matches, key=lambda dag_node: dag_node.node_id)
+        first_op_requiring_corruption = sorted_ancestor_matches[0]
+    return first_op_requiring_corruption
+
+
 def find_dag_location_for_data_patch(columns, dag, train_not_test) -> tuple[any, bool]:
     """Find out between which two nodes to apply the corruption"""
-    train_search_start_node = find_train_or_test_pipeline_part_end(dag, False)
-    test_search_start_node = find_train_or_test_pipeline_part_end(dag, True)
+    train_search_start_node = find_train_or_test_pipeline_part_end(dag, True)
+    test_search_start_node = find_train_or_test_pipeline_part_end(dag, False)
     dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
 
     train_nodes_to_search = set(networkx.ancestors(dag_to_consider, train_search_start_node))
@@ -164,20 +180,42 @@ def find_dag_location_for_data_patch(columns, dag, train_not_test) -> tuple[any,
     return first_op_requiring_corruption, is_before_split
 
 
-def find_train_or_test_pipeline_part_end(dag, test_not_train):
+def find_train_or_test_pipeline_part_end(dag, train_not_test):
     """We want to start at the end of the pipeline to find the relevant train or test operations"""
-    if test_not_train is True:
+    if train_not_test is True:
+        search_start_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
+        if len(search_start_nodes) != 1:
+            raise Exception("Currently, DataCorruption only supports pipelines with exactly one estimator!")
+        search_start_node = search_start_nodes[0]
+    else:
         search_start_nodes = find_nodes_by_type(dag, OperatorType.PREDICT)
         if len(search_start_nodes) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call "
                             "for the test set!")
 
         search_start_node = search_start_nodes[0]
-    else:
-        search_start_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
-        if len(search_start_nodes) != 1:
+    return search_start_node
+
+
+def find_lowest_common_ancestor_for_data_and_labels(dag, train_not_test):
+    """We want to start at the end of the pipeline to find the relevant train or test operations"""
+    dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
+    if train_not_test is True:
+        search_start_nodes_data = find_nodes_by_type(dag, OperatorType.TRAIN_DATA)
+        search_start_nodes_labels = find_nodes_by_type(dag, OperatorType.TRAIN_LABELS)
+        if len(search_start_nodes_data) != 1 or len(search_start_nodes_labels) == 0:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one estimator!")
-        search_start_node = search_start_nodes[0]
+
+    else:
+        search_start_nodes_data = find_nodes_by_type(dag, OperatorType.TEST_DATA)
+        search_start_nodes_labels = find_nodes_by_type(dag, OperatorType.TEST_LABELS)
+        if len(search_start_nodes_data) != 1 or len(search_start_nodes_labels) == 0:
+            raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call "
+                            "for the test set and at least one score call!")
+    # TODO: In some pipelines where the labels are in a seperate file and there is no join or concat between the two
+    #  sides this will fail. Finding a workaround would be possible but skipping it now for the sake of time.
+    search_start_node = networkx.lowest_common_ancestor(dag_to_consider, search_start_nodes_data[0],
+                                                        search_start_nodes_labels[0])
     return search_start_node
 
 

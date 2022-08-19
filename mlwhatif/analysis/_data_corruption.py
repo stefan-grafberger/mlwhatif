@@ -13,7 +13,7 @@ from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, Bas
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
-from mlwhatif.execution._patches import DataProjection, Patch
+from mlwhatif.execution._patches import DataProjection, PipelinePatch, UdfSplitInfo
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
 
@@ -40,8 +40,8 @@ class DataCorruption(WhatIfAnalysis):
     def analysis_id(self):
         return self._analysis_id
 
-    def generate_plans_to_try(self, dag: networkx.DiGraph) \
-            -> Iterable[Iterable[Patch]]:
+    def generate_plans_to_try(self, dag: networkx.DiGraph) -> Iterable[Iterable[PipelinePatch]]:
+        # pylint: disable=too-many-locals
         predict_operators = find_nodes_by_type(dag, OperatorType.PREDICT)
         if len(predict_operators) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call which "
@@ -56,8 +56,8 @@ class DataCorruption(WhatIfAnalysis):
         #  then using a concat in the end.
 
         corruption_patch_sets = []
-        for corruption_percentage in self.corruption_percentages:
-            for (column, corruption_function) in self.column_to_corruption:
+        for corruption_percentage_index, corruption_percentage in enumerate(self.corruption_percentages):
+            for (column_corruption_tuple_index, (column, corruption_function)) in enumerate(self.column_to_corruption):
                 patches_for_variant = []
 
                 # Test set corruption
@@ -68,8 +68,17 @@ class DataCorruption(WhatIfAnalysis):
                 patches_for_variant.extend(extraction_nodes)
                 corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
                     column, corruption_function, corruption_percentage)
-                patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, True, column,
-                                       [column], index_selection_func, corrupt_func)
+                if isinstance(corruption_percentage, float):
+                    only_reads_column = [column]
+                    maybe_selectivity_info = corruption_percentage
+                else:
+                    only_reads_column = None  # TODO: Support this case properly in optimizations
+                    maybe_selectivity_info = None
+                patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
+                                       only_reads_column,
+                                       UdfSplitInfo(corruption_percentage_index, index_selection_func,
+                                                    column_corruption_tuple_index, corrupt_func, column,
+                                                    maybe_selectivity_info))
                 patches_for_variant.append(patch)
                 corruption_patch_sets.append(patches_for_variant)
 
@@ -82,13 +91,19 @@ class DataCorruption(WhatIfAnalysis):
                     patches_for_variant.extend(extraction_nodes)
                     corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
                         column, corruption_function, corruption_percentage)
-                    patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, True, column,
-                                           [column], index_selection_func, corrupt_func)
+                    patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
+                                           only_reads_column,
+                                           UdfSplitInfo(corruption_percentage_index, index_selection_func,
+                                                        column_corruption_tuple_index, corrupt_func, column,
+                                                        maybe_selectivity_info))
                     patches_for_variant.append(patch)
                     corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
                         column, corruption_function, corruption_percentage)
-                    patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
-                                           [column], index_selection_func, corrupt_func)
+                    patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, True, column,
+                                           only_reads_column,
+                                           UdfSplitInfo(corruption_percentage_index, index_selection_func,
+                                                        column_corruption_tuple_index, corrupt_func, column,
+                                                        maybe_selectivity_info))
                     patches_for_variant.append(patch)
                     corruption_patch_sets.append(patches_for_variant)
 
@@ -97,21 +112,18 @@ class DataCorruption(WhatIfAnalysis):
     @staticmethod
     def create_corruption_node(column, corruption_function, corruption_percentage_or_selection_function):
         """Create the node that applies the specified corruption"""
+
         def corruption_index_selection(pandas_df, corruption_percentage):
             corrupt_count = int(len(pandas_df) * corruption_percentage)
             indexes_to_corrupt = numpy.random.permutation(pandas_df.index)[:corrupt_count]
             return indexes_to_corrupt
 
         def corrupt_df(pandas_df, corruption_index_selection_func, corruption_function, column):
-            # TODO: If we model this as 3 operations instead of one, optimization should be easy
-            # TODO: Think about when we actually want to be defensive and call copy and when not
-            # TODO: Think about datatypes. corruption_function currently assumes pandas DataFrames.
-            #  We may want to automatically convert data formats as needed, here and in other places.
-            completely_corrupted_df = pandas_df.copy()
-            completely_corrupted_df = corruption_function(completely_corrupted_df)
             indexes_to_corrupt = corruption_index_selection_func(pandas_df)
             return_df = pandas_df.copy()
-            return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[indexes_to_corrupt, column]
+            corrupted_df = return_df.loc[indexes_to_corrupt, :]
+            completely_corrupted_df = corruption_function(corrupted_df)
+            return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[:, column]
             return return_df
 
         # We need to use partial here to avoid problems with late bindings, see
@@ -141,7 +153,8 @@ class DataCorruption(WhatIfAnalysis):
         result_df_columns = []
         result_df_percentages = []
         result_df_metrics = {}
-        score_linenos = [lineno for (_, lineno) in self._score_nodes_and_linenos]
+        score_description_and_linenos = [(score_node.details.description, lineno)
+                                         for (score_node, lineno) in self._score_nodes_and_linenos]
         for (column, _) in self.column_to_corruption:
             for corruption_percentage in self.corruption_percentages:
                 result_df_columns.append(column)
@@ -152,18 +165,18 @@ class DataCorruption(WhatIfAnalysis):
                     sanitized_corruption_percentage = corruption_percentage.__name__  # pylint: disable=no-member
                 result_df_percentages.append(sanitized_corruption_percentage)
 
-                for lineno in score_linenos:
+                for (score_description, lineno) in score_description_and_linenos:
                     test_label = f"data-corruption-test-{column}-{corruption_percentage}_L{lineno}"
-                    test_result_column_name = f"metric_corrupt_test_only_L{lineno}"
+                    test_result_column_name = f"{score_description}_corrupt_test_only_L{lineno}"
                     test_column_values = result_df_metrics.get(test_result_column_name, [])
                     test_column_values.append(singleton.labels_to_extracted_plan_results[test_label])
                     result_df_metrics[test_result_column_name] = test_column_values
 
-                for lineno in score_linenos:
+                for (score_description, lineno) in score_description_and_linenos:
                     train_label = f"data-corruption-train-{column}-{corruption_percentage}_L{lineno}"
                     if train_label in singleton.labels_to_extracted_plan_results:
                         train_and_test_metric = singleton.labels_to_extracted_plan_results[train_label]
-                        train_result_column_name = f"metric_corrupt_train_and_test_L{lineno}"
+                        train_result_column_name = f"{score_description}_corrupt_train_and_test_L{lineno}"
                         train_column_values = result_df_metrics.get(train_result_column_name, [])
                         train_column_values.append(train_and_test_metric)
                         result_df_metrics[train_result_column_name] = train_column_values

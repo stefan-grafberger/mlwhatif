@@ -8,7 +8,7 @@ import networkx
 
 from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_data_patch, add_new_node_after_node, \
-    find_nodes_by_type, replace_node, remove_node
+    find_nodes_by_type, replace_node, remove_node, get_sorted_parent_nodes
 from mlwhatif.instrumentation._dag_node import DagNode
 
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
-class Patch(ABC):
+class PipelinePatch(ABC):
     """ Basic Patch class """
     patch_id: int
     analysis: any  # WhatIfAnalyis but this would be a circular import currently
@@ -50,12 +50,12 @@ class Patch(ABC):
 
 
 @dataclasses.dataclass
-class PipelinePatch(Patch, ABC):
+class OperatorPatch(PipelinePatch, ABC):
     """ Parent class for pipeline patches """
 
 
 @dataclasses.dataclass
-class OperatorReplacement(PipelinePatch):
+class OperatorReplacement(OperatorPatch):
     """ Replace a DAG node with another one """
 
     operator_to_replace: DagNode
@@ -71,34 +71,75 @@ class OperatorReplacement(PipelinePatch):
 
 
 @dataclasses.dataclass
-class OperatorRemoval(PipelinePatch):
+class OperatorRemoval(OperatorPatch):
     """ Remove a DAG node """
 
+    # While operators to remove is a list, it should always be one main operator only, like a selection.
+    #  The other operators are then the projections and subscripts for the filter condition.
     operator_to_remove: DagNode
+    maybe_corresponding_test_set_operator: DagNode or None
+    before_train_test_split: bool
 
     def apply(self, dag: networkx.DiGraph):
-        remove_node(dag, self.operator_to_remove)
+        for node in self.get_all_operators_associated_with_filter(dag, self.operator_to_remove):
+            remove_node(dag, node)
+        operators_to_remove = self.get_all_operators_associated_with_filter(
+            dag, self.maybe_corresponding_test_set_operator)
+        for node in operators_to_remove:
+            remove_node(dag, node)
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
-        return self._get_nodes_needing_recomputation(old_dag, new_dag, [self.operator_to_remove], [])
+        nodes_being_removed_train = self.get_all_operators_associated_with_filter(old_dag, self.operator_to_remove)
+        nodes_being_removed_test = self.get_all_operators_associated_with_filter(
+            old_dag, self.maybe_corresponding_test_set_operator)
+        all_nodes_being_removed = nodes_being_removed_train.union(nodes_being_removed_test)
+        return self._get_nodes_needing_recomputation(old_dag, new_dag, all_nodes_being_removed, [])
+
+    def get_all_operators_associated_with_filter(self, modified_dag, operator_to_replace, keep_root=False) \
+            -> set[DagNode]:
+        """Get all ops associated with a filter, like subscripts and projections for the filter condition"""
+        if operator_to_replace is None or operator_to_replace.operator_info.operator != OperatorType.SELECTION:
+            return set()
+        operator_after_which_cutoff_required = self.filter_get_operator_after_which_cutoff_required(
+            modified_dag, operator_to_replace)
+        paths_between_generator = networkx.all_simple_paths(modified_dag,
+                                                            source=operator_after_which_cutoff_required,
+                                                            target=operator_to_replace)
+        associated_operators = {node for path in paths_between_generator for node in path}
+        if keep_root is False:
+            associated_operators.remove(operator_after_which_cutoff_required)
+        return associated_operators
+
+    @staticmethod
+    def filter_get_operator_after_which_cutoff_required(modified_dag, operator_to_replace) -> DagNode:
+        """Get the operator after which the filter code starts with the filter condition eval etc."""
+        if operator_to_replace.operator_info.operator != OperatorType.SELECTION:
+            return operator_to_replace
+        operator_parent_nodes = get_sorted_parent_nodes(modified_dag, operator_to_replace)
+        selection_parent_a = operator_parent_nodes[0]
+        selection_parent_b = operator_parent_nodes[-1]
+        # We want to introduce the change before all subscript behavior
+        operator_after_which_cutoff_required = networkx.lowest_common_ancestor(modified_dag, selection_parent_a,
+                                                                               selection_parent_b)
+        return operator_after_which_cutoff_required
 
 
 @dataclasses.dataclass
-class AppendNodeAfterOperator(PipelinePatch):
+class AppendNodeAfterOperator(OperatorPatch):
     """ Remove a DAG node """
 
     operator_to_add_node_after: DagNode
     node_to_insert: DagNode
 
     def apply(self, dag: networkx.DiGraph):
-        add_new_node_after_node(dag, self.operator_to_add_node_after, self.node_to_insert)
+        add_new_node_after_node(dag, self.node_to_insert, self.operator_to_add_node_after)
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
         return self._get_nodes_needing_recomputation(old_dag, new_dag, [], [self.node_to_insert])
 
 
 @dataclasses.dataclass
-class DataPatch(Patch, ABC):
+class DataPatch(PipelinePatch, ABC):
     """ Parent class for data patches """
 
 
@@ -132,20 +173,42 @@ class DataFiltering(DataPatch):
 
 
 @dataclasses.dataclass
+class UdfSplitInfo:
+    """
+    Info required to split up expensive udf projections that only repeatedly modify subsets of rows into
+    two parts: corrupting all rows once, and then only sampling from the corrupted variants, isntead of calling the
+    expensive udf repeatedly
+    """
+    index_selection_func_id: int
+    index_selection_func: Callable  # A function that can be used to select which rows to modify
+    # A function that can be combined with index_selection_func to replace the projection_operator processing_func
+    projection_func_only_id: int
+    projection_func_only: Callable
+    column_name_to_corrupt: str
+    maybe_selectivity_info: float or None = None
+
+
+@dataclasses.dataclass
 class DataProjection(DataPatch):
     """ Apply some map-like operation without fitting on the train or test side"""
+    # pylint: disable=too-many-instance-attributes
 
     projection_operator: DagNode
     train_not_test: bool
     modifies_column: str
     only_reads_column: List[str]
-    index_selection_func: Callable or None = None  # A function that can be used to select which rows to modify
-    # A function that can be combined with index_selection_func to replace the projection_operator processing_func
-    projection_func_only: Callable or None = None
+    maybe_udf_split_info: UdfSplitInfo
+
 
     def apply(self, dag: networkx.DiGraph):
-        location, is_before_slit = find_dag_location_for_data_patch(self.only_reads_column,
-                                                                    dag, self.train_not_test)
+
+        columns_required = set()
+        if self.only_reads_column is not None:
+            columns_required.update(columns_required)
+        columns_required.add(self.modifies_column)
+        # This columns_required approach is not totally robust yet for user defined functions, will need to make the
+        #  interface more explicit at some point.
+        location, is_before_slit = find_dag_location_for_data_patch(columns_required, dag, self.train_not_test)
         if is_before_slit is False:
             add_new_node_after_node(dag, self.projection_operator, location)
         elif self.train_not_test is True:
@@ -182,7 +245,7 @@ class DataTransformer(DataPatch):
 
 
 @dataclasses.dataclass
-class ModelPatch(Patch):
+class ModelPatch(PipelinePatch):
     """ Patch the model node by replacing with with another node """
 
     replace_with_node: DagNode

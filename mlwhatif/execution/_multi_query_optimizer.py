@@ -7,7 +7,11 @@ from typing import Iterable
 
 import networkx
 
-from mlwhatif.execution._patches import Patch
+from mlwhatif.execution._patches import PipelinePatch
+from mlwhatif.execution.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
+from mlwhatif.execution.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
+from mlwhatif.execution.optimization._simple_projection_push_up import SimpleProjectionPushUp
+from mlwhatif.execution.optimization._udf_split_and_reuse import UdfSplitAndReuse
 from mlwhatif.instrumentation._dag_node import DagNode
 from mlwhatif.visualisation import save_fig_to_path
 
@@ -20,8 +24,12 @@ class MultiQueryOptimizer:
 
     def __init__(self, pipeline_executor):
         self.pipeline_executor = pipeline_executor
+        self.all_optimization_rules = [SimpleProjectionPushUp(pipeline_executor),
+                                       SimpleFilterAdditionPushUp(pipeline_executor),
+                                       OperatorDeletionFilterPushUp(pipeline_executor),
+                                       UdfSplitAndReuse(pipeline_executor)]
 
-    def create_optimized_plan(self, original_dag: networkx.DiGraph, patches: Iterable[Iterable[Patch]],
+    def create_optimized_plan(self, original_dag: networkx.DiGraph, patches: Iterable[Iterable[PipelinePatch]],
                               prefix_analysis_dags: str or None = None,
                               prefix_optimised_analysis_dag: str or None = None,
                               skip_optimizer=False) -> \
@@ -79,6 +87,10 @@ class MultiQueryOptimizer:
 
     def _optimize_and_combine_dags_with_optimization(self, original_dag, patches):
         """Here, the actual optimization happens"""
+        for rule in self.all_optimization_rules:
+            original_dag, patches = rule.optimize_dag(original_dag, patches)
+        for rule in self.all_optimization_rules:
+            patches = rule.optimize_patches(original_dag, patches)
         what_if_dags = []
         for patch_set in patches:
             what_if_dag = original_dag.copy()
