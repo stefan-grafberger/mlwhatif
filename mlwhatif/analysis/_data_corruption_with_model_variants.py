@@ -13,7 +13,7 @@ from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, Bas
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
-from mlwhatif.execution._patches import DataProjection, PipelinePatch, UdfSplitInfo
+from mlwhatif.execution._patches import DataProjection, PipelinePatch, UdfSplitInfo, ModelPatch
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
 
@@ -30,7 +30,7 @@ class DataCorruptionWithModelVariants(WhatIfAnalysis):
         # pylint: disable=unsubscriptable-object
         self.column_to_corruption = list(column_to_corruption.items())
         self.also_corrupt_train = also_corrupt_train
-        self.named_model_variants = named_model_variants
+        self.named_model_variants = [("original", None), *named_model_variants]
         if corruption_percentages is None:
             self.corruption_percentages = [0.2, 0.5, 0.9]
         else:
@@ -61,48 +61,30 @@ class DataCorruptionWithModelVariants(WhatIfAnalysis):
         corruption_patch_sets = []
         for corruption_percentage_index, corruption_percentage in enumerate(self.corruption_percentages):
             for (column_corruption_tuple_index, (column, corruption_function)) in enumerate(self.column_to_corruption):
-                patches_for_variant = []
-
-                # Test set corruption
-                test_corruption_result_label = f"data-corruption-test-{column}-{corruption_percentage}"
-                extraction_nodes = get_intermediate_extraction_patch_after_score_nodes(singleton, self,
-                                                                                       test_corruption_result_label,
-                                                                                       self._score_nodes_and_linenos)
-                patches_for_variant.extend(extraction_nodes)
-                corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
-                    column, corruption_function, corruption_percentage)
-                if isinstance(corruption_percentage, float):
-                    only_reads_column = [column]
-                    maybe_selectivity_info = corruption_percentage
-                else:
-                    only_reads_column = None  # TODO: Support this case properly in optimizations
-                    maybe_selectivity_info = None
-                patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
-                                       only_reads_column,
-                                       UdfSplitInfo(corruption_percentage_index, index_selection_func,
-                                                    column_corruption_tuple_index, corrupt_func, column,
-                                                    maybe_selectivity_info))
-                patches_for_variant.append(patch)
-                corruption_patch_sets.append(patches_for_variant)
-
-                # Train and test set corruption
-                if self.also_corrupt_train is True:
+                for (model_description, model_function) in self.named_model_variants:
                     patches_for_variant = []
-                    test_corruption_result_label = f"data-corruption-train-{column}-{corruption_percentage}"
-                    extraction_nodes = get_intermediate_extraction_patch_after_score_nodes(
-                        singleton, self, test_corruption_result_label, self._score_nodes_and_linenos)
+
+                    # Test set corruption
+                    test_corruption_result_label = f"data-corruption-model-variant-{model_description}-test-{column}-" \
+                                                   f"{corruption_percentage}"
+                    extraction_nodes = get_intermediate_extraction_patch_after_score_nodes(singleton, self,
+                                                                                           test_corruption_result_label,
+                                                                                           self._score_nodes_and_linenos)
                     patches_for_variant.extend(extraction_nodes)
+
+                    if model_description != "original":
+                        model_patch = self._get_model_patch(dag, model_description, model_function)
+                        patches_for_variant.append(model_patch)
+
                     corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
                         column, corruption_function, corruption_percentage)
+                    if isinstance(corruption_percentage, float):
+                        only_reads_column = [column]
+                        maybe_selectivity_info = corruption_percentage
+                    else:
+                        only_reads_column = None  # TODO: Support this case properly in optimizations
+                        maybe_selectivity_info = None
                     patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
-                                           only_reads_column,
-                                           UdfSplitInfo(corruption_percentage_index, index_selection_func,
-                                                        column_corruption_tuple_index, corrupt_func, column,
-                                                        maybe_selectivity_info))
-                    patches_for_variant.append(patch)
-                    corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
-                        column, corruption_function, corruption_percentage)
-                    patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, True, column,
                                            only_reads_column,
                                            UdfSplitInfo(corruption_percentage_index, index_selection_func,
                                                         column_corruption_tuple_index, corrupt_func, column,
@@ -110,7 +92,50 @@ class DataCorruptionWithModelVariants(WhatIfAnalysis):
                     patches_for_variant.append(patch)
                     corruption_patch_sets.append(patches_for_variant)
 
+                    # Train and test set corruption
+                    if self.also_corrupt_train is True:
+                        patches_for_variant = []
+                        test_corruption_result_label = f"data-corruption-model-variant-{model_description}" \
+                                                       f"-train-{column}-{corruption_percentage}"
+                        extraction_nodes = get_intermediate_extraction_patch_after_score_nodes(
+                            singleton, self, test_corruption_result_label, self._score_nodes_and_linenos)
+                        patches_for_variant.extend(extraction_nodes)
+                        corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
+                            column, corruption_function, corruption_percentage)
+                        patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, False, column,
+                                               only_reads_column,
+                                               UdfSplitInfo(corruption_percentage_index, index_selection_func,
+                                                            column_corruption_tuple_index, corrupt_func, column,
+                                                            maybe_selectivity_info))
+                        patches_for_variant.append(patch)
+                        corruption_node, corrupt_func, index_selection_func = self.create_corruption_node(
+                            column, corruption_function, corruption_percentage)
+                        patch = DataProjection(singleton.get_next_patch_id(), self, True, corruption_node, True, column,
+                                               only_reads_column,
+                                               UdfSplitInfo(corruption_percentage_index, index_selection_func,
+                                                            column_corruption_tuple_index, corrupt_func, column,
+                                                            maybe_selectivity_info))
+                        patches_for_variant.append(patch)
+                        corruption_patch_sets.append(patches_for_variant)
+
         return corruption_patch_sets
+
+    def _get_model_patch(self, dag, model_description, model_function):
+        estimator_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
+        if len(estimator_nodes) != 1:
+            raise Exception(
+                "Currently, DataCorruption only supports pipelines with exactly one estimator!")
+        estimator_node = estimator_nodes[0]
+        new_processing_func = partial(self.fit_model_variant, make_classifier_func=model_function)
+        new_description = f"Model Variant: {model_description}"
+        new_estimator_node = DagNode(singleton.get_next_op_id(),
+                                     estimator_node.code_location,
+                                     estimator_node.operator_info,
+                                     DagNodeDetails(new_description, estimator_node.details.columns),
+                                     estimator_node.optional_code_info,
+                                     new_processing_func)
+        model_patch = ModelPatch(singleton.get_next_patch_id(), self, True, new_estimator_node)
+        return model_patch
 
     @staticmethod
     def create_corruption_node(column, corruption_function, corruption_percentage_or_selection_function):
@@ -155,35 +180,49 @@ class DataCorruptionWithModelVariants(WhatIfAnalysis):
         # pylint: disable=too-many-locals
         result_df_columns = []
         result_df_percentages = []
+        result_df_model_variants = []
         result_df_metrics = {}
         score_description_and_linenos = [(score_node.details.description, lineno)
                                          for (score_node, lineno) in self._score_nodes_and_linenos]
         for (column, _) in self.column_to_corruption:
             for corruption_percentage in self.corruption_percentages:
-                result_df_columns.append(column)
+                for (model_description, _) in self.named_model_variants:
+                    result_df_columns.append(column)
 
-                if isinstance(corruption_percentage, float):
-                    sanitized_corruption_percentage = corruption_percentage
-                else:
-                    sanitized_corruption_percentage = corruption_percentage.__name__  # pylint: disable=no-member
-                result_df_percentages.append(sanitized_corruption_percentage)
+                    if isinstance(corruption_percentage, float):
+                        sanitized_corruption_percentage = corruption_percentage
+                    else:
+                        sanitized_corruption_percentage = corruption_percentage.__name__  # pylint: disable=no-member
+                    result_df_percentages.append(sanitized_corruption_percentage)
 
-                for (score_description, lineno) in score_description_and_linenos:
-                    test_label = f"data-corruption-test-{column}-{corruption_percentage}_L{lineno}"
-                    test_result_column_name = f"{score_description}_corrupt_test_only_L{lineno}"
-                    test_column_values = result_df_metrics.get(test_result_column_name, [])
-                    test_column_values.append(singleton.labels_to_extracted_plan_results[test_label])
-                    result_df_metrics[test_result_column_name] = test_column_values
+                    result_df_model_variants.append(model_description)
 
-                for (score_description, lineno) in score_description_and_linenos:
-                    train_label = f"data-corruption-train-{column}-{corruption_percentage}_L{lineno}"
-                    if train_label in singleton.labels_to_extracted_plan_results:
-                        train_and_test_metric = singleton.labels_to_extracted_plan_results[train_label]
-                        train_result_column_name = f"{score_description}_corrupt_train_and_test_L{lineno}"
-                        train_column_values = result_df_metrics.get(train_result_column_name, [])
-                        train_column_values.append(train_and_test_metric)
-                        result_df_metrics[train_result_column_name] = train_column_values
+                    for (score_description, lineno) in score_description_and_linenos:
+                        test_label = f"data-corruption-model-variant-{model_description}-" \
+                                     f"test-{column}-{corruption_percentage}_L{lineno}"
+                        test_result_column_name = f"{score_description}_corrupt_test_only_L{lineno}"
+                        test_column_values = result_df_metrics.get(test_result_column_name, [])
+                        test_column_values.append(singleton.labels_to_extracted_plan_results[test_label])
+                        result_df_metrics[test_result_column_name] = test_column_values
+
+                    for (score_description, lineno) in score_description_and_linenos:
+                        train_label = f"data-corruption-model-variant-{model_description}-" \
+                                      f"train-{column}-{corruption_percentage}_L{lineno}"
+                        if train_label in singleton.labels_to_extracted_plan_results:
+                            train_and_test_metric = singleton.labels_to_extracted_plan_results[train_label]
+                            train_result_column_name = f"{score_description}_corrupt_train_and_test_L{lineno}"
+                            train_column_values = result_df_metrics.get(train_result_column_name, [])
+                            train_column_values.append(train_and_test_metric)
+                            result_df_metrics[train_result_column_name] = train_column_values
         result_df = pandas.DataFrame({'column': result_df_columns,
                                       'corruption_percentage': result_df_percentages,
+                                      'model_variant': result_df_model_variants,
                                       **result_df_metrics})
         return result_df
+
+    @staticmethod
+    def fit_model_variant(train_data, train_labels, make_classifier_func):
+        """Create the classifier and fit it"""
+        estimator = make_classifier_func()
+        estimator.fit(train_data, train_labels)
+        return estimator

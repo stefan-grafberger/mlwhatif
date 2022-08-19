@@ -67,7 +67,7 @@ def test_data_corruption_mini_example_with_transformer_processing_multiple_colum
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (6, 4)
+    assert report.shape == (12, 5)
 
 
 def test_data_corruption_mini_example_with_projection_modify():
@@ -121,7 +121,7 @@ def test_data_corruption_mini_example_with_projection_modify():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (4, 4)
+    assert report.shape == (8, 5)
 
 
 def test_data_corruption_mini_example_only_train_test_split():
@@ -169,7 +169,7 @@ def test_data_corruption_mini_example_only_train_test_split():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (6, 4)
+    assert report.shape == (12, 5)
 
 
 def test_data_corruption_mini_example_only_train_test_split_without_optimizer():
@@ -218,7 +218,7 @@ def test_data_corruption_mini_example_only_train_test_split_without_optimizer():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (6, 4)
+    assert report.shape == (12, 5)
 
 
 def test_data_corruption_mini_example_manual_split():
@@ -267,7 +267,7 @@ def test_data_corruption_mini_example_manual_split():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (6, 4)
+    assert report.shape == (12, 5)
 
 
 def test_data_corruption_healthcare():
@@ -297,7 +297,7 @@ def test_data_corruption_healthcare():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (4, 8)
+    assert report.shape == (8, 9)
 
 
 def test_data_corruption_compas():
@@ -324,7 +324,7 @@ def test_data_corruption_compas():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (6, 3)
+    assert report.shape == (12, 4)
 
 
 def test_data_corruption_adult_complex():
@@ -340,7 +340,7 @@ def test_data_corruption_adult_complex():
         {'education': lambda pandas_df: CategoricalShift('education', 1.).transform(pandas_df),
          'workclass': lambda pandas_df: CategoricalShift('workclass', 1.).transform(pandas_df),
          'hours-per-week': corruption},
-        [('logistic_regression', partial(LogisticRegression))],
+        [('logistic_regression', partial(LogisticRegression, solver='saga'))],
         corruption_percentages=[0.25, 0.5, 0.75, 1.0],
         also_corrupt_train=True)
 
@@ -350,4 +350,4 @@ def test_data_corruption_adult_complex():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (12, 4)
+    assert report.shape == (24, 5)
