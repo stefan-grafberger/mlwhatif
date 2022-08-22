@@ -17,7 +17,7 @@ from nbconvert import PythonExporter
 
 from ._call_capture_transformer import CallCaptureTransformer
 from .. import monkeypatching
-from .._analysis_results import AnalysisResults
+from .._analysis_results import AnalysisResults, RuntimeInfo
 from ..analysis._what_if_analysis import WhatIfAnalysis
 from ..execution._dag_executor import DagExecutor
 from ..execution._multi_query_optimizer import MultiQueryOptimizer
@@ -51,7 +51,8 @@ class PipelineExecutor:
     custom_monkey_patching = []
     # TODO: Do we want to add the analysis to the key next to label to isolate analyses and avoid name clashes?
     labels_to_extracted_plan_results = dict()
-    analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph())
+    analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
+                                       RuntimeInfo(0, 0, 0, 0, 0, 0, 0, 0, 0))
     monkey_patch_duration = 0
     skip_optimizer = False
 
@@ -94,6 +95,7 @@ class PipelineExecutor:
         #  Maybe this gets relevant once we add the DAG as input to mlwhat in case there are multiple executions
         # captured_output = stdout_output.getvalue()
         orig_instrumented_exec_duration = time.time() - orig_instrumented_exec_start - singleton.monkey_patch_duration
+        self.analysis_results.runtime_info.original_pipeline_without_importing_and_monkeypatching = orig_instrumented_exec_duration * 1000
         logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms '
                     f'(excluding imports and monkey-patching)')
 
@@ -114,6 +116,7 @@ class PipelineExecutor:
                 self.analysis_results.what_if_dags.append((patches, networkx.DiGraph()))
             plan_generation_duration = time.time() - plan_generation_start
             logger.info(f'---RUNTIME: Plan generation took {plan_generation_duration * 1000} ms')
+            self.analysis_results.runtime_info.what_if_plan_generation = plan_generation_duration * 1000
 
         MultiQueryOptimizer(self).create_optimized_plan(self.analysis_results, self.skip_optimizer)
 
@@ -122,6 +125,7 @@ class PipelineExecutor:
         DagExecutor().execute(self.analysis_results.combined_optimized_dag)
         execution_duration = time.time() - execution_start
         logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
+        self.analysis_results.runtime_info.what_if_execution = execution_duration * 1000
 
         for analysis in self.analyses:
             report = analysis.generate_final_report(self.labels_to_extracted_plan_results)
@@ -177,7 +181,8 @@ class PipelineExecutor:
         self.next_missing_op_id = -1
         self.track_code_references = True
         self.op_id_to_dag_node = dict()
-        self.analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph())
+        self.analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
+                                                RuntimeInfo(0, 0, 0, 0, 0, 0, 0, 0, 0))
         self.analyses = []
         self.labels_to_extracted_plan_results = dict()
         self.custom_monkey_patching = []
@@ -292,6 +297,7 @@ def monkey_patch():
         gorilla.apply(patch)
     singleton.monkey_patch_duration = time.time() - monkey_patch_start
     logger.info(f'---RUNTIME: Importing and monkey-patching took {singleton.monkey_patch_duration * 1000} ms')
+    singleton.analysis_results.runtime_info.original_pipeline_importing_and_monkeypatching = singleton.monkey_patch_duration * 1000
 
 
 def undo_monkey_patch():

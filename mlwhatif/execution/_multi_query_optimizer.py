@@ -34,11 +34,13 @@ class MultiQueryOptimizer:
         # pylint: disable=too-many-arguments
         estimate_original_runtime = self._estimate_runtime_of_dag(analysis_results.original_dag)
         logger.info(f"Estimated runtime of original DAG is {estimate_original_runtime}ms")
+        analysis_results.runtime_info.original_pipeline_estimated = estimate_original_runtime
 
         multi_query_optimization_start = time.time()
         analysis_results = self._optimize_and_combine_dags(analysis_results, skip_optimizer)
         multi_query_optimization_duration = time.time() - multi_query_optimization_start
         logger.info(f'---RUNTIME: Multi-Query Optimization took {multi_query_optimization_duration * 1000} ms')
+        analysis_results.runtime_info.what_if_query_optimization_duration = multi_query_optimization_duration * 1000
 
         return analysis_results
 
@@ -53,17 +55,23 @@ class MultiQueryOptimizer:
 
             combined_estimated_runtimes = sum([self._estimate_runtime_of_dag(dag) for dag in what_if_dags])
             logger.info(f"Estimated unoptimized what-if runtime is {combined_estimated_runtimes}ms")
+            analysis_results.runtime_info.what_if_unoptimized_estimated = combined_estimated_runtimes
 
             estimate_optimised_runtime = self._estimate_runtime_of_dag(big_execution_dag)
             logger.info(f"Estimated optimised what-if runtime is {estimate_optimised_runtime}ms")
+            analysis_results.runtime_info.what_if_optimized_estimated = estimate_optimised_runtime
 
             estimated_saving = combined_estimated_runtimes - estimate_optimised_runtime
             logger.info(f"Estimated optimisation runtime saving is {estimated_saving}ms")
+            analysis_results.runtime_info.what_if_optimization_saving_estimated = estimated_saving
         else:
             patches = [patches for patches, _ in analysis_results.what_if_dags]
             logger.warning("Skipping Multi-Query Optimization (instead, only combine execution DAGs)")
             big_execution_dag, what_if_dags = self._optimize_and_combine_dags_without_optimization(
                 analysis_results.original_dag, patches)
+            estimate_combined_runtime = self._estimate_runtime_of_dag(big_execution_dag)
+            logger.info(f"Estimated unoptimised what-if runtime is {estimate_combined_runtime}ms")
+            analysis_results.runtime_info.what_if_unoptimized_estimated = estimate_combined_runtime
 
         analysis_results.combined_optimized_dag = big_execution_dag
         analysis_results.what_if_dags = list(zip(patches, what_if_dags))

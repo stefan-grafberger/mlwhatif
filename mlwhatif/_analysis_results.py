@@ -11,6 +11,22 @@ from mlwhatif.visualisation import save_fig_to_path
 
 
 @dataclasses.dataclass
+class RuntimeInfo:
+    """
+    The info that also gets logged during execution
+    """
+    original_pipeline_importing_and_monkeypatching: int
+    original_pipeline_without_importing_and_monkeypatching: int
+    original_pipeline_estimated: int
+    what_if_plan_generation: int
+    what_if_unoptimized_estimated: int
+    what_if_optimized_estimated: int
+    what_if_optimization_saving_estimated: int
+    what_if_query_optimization_duration: int
+    what_if_execution: int
+
+
+@dataclasses.dataclass
 class AnalysisResults:
     """
     The class the PipelineExecutor returns
@@ -19,6 +35,7 @@ class AnalysisResults:
     original_dag: networkx.DiGraph
     what_if_dags: List[tuple[List[PipelinePatch], networkx.DiGraph]]
     combined_optimized_dag: networkx.DiGraph
+    runtime_info: RuntimeInfo
 
     def save_original_dag_to_path(self, prefix_original_dag: str):
         """
