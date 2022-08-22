@@ -15,6 +15,7 @@ class RuntimeInfo:
     """
     The info that also gets logged during execution
     """
+    # pylint: disable=too-many-instance-attributes
     original_pipeline_importing_and_monkeypatching: int
     original_pipeline_without_importing_and_monkeypatching: int
     original_pipeline_estimated: int
