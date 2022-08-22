@@ -31,7 +31,7 @@ def test_read_csv():
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
 
-    extracted_node: DagNode = list(inspector_result.dag.nodes)[0]
+    extracted_node: DagNode = list(inspector_result.original_dag.nodes)[0]
     expected_node = DagNode(0,
                             BasicCodeLocation("<string-source>", 6),
                             OperatorContext(OperatorType.DATA_SOURCE, FunctionInfo('pandas.io.parsers', 'read_csv')),
@@ -62,7 +62,7 @@ def test_frame__init__():
         """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    extracted_node: DagNode = list(inspector_result.dag.nodes)[0]
+    extracted_node: DagNode = list(inspector_result.original_dag.nodes)[0]
 
     expected_node = DagNode(0,
                             BasicCodeLocation("<string-source>", 3),
@@ -110,9 +110,9 @@ def test_frame_dropna():
                               OptionalCodeInfo(CodeReference(5, 5, 5, 16), 'df.dropna()'),
                               Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_select, arg_index=0)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_dropna = list(inspector_result.dag.nodes)[1]
+    extracted_dropna = list(inspector_result.original_dag.nodes)[1]
     pandas_df = pandas.DataFrame([0, 2, None, None, 4, None], columns=['A'])
     filtered_df = extracted_dropna.processing_func(pandas_df)
     assert len(filtered_df) == 3
@@ -130,7 +130,7 @@ def test_frame__getitem__series():
             pd.testing.assert_series_equal(a, pd.Series([0, 2, 4, 8, None], name='A'))
             """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[2])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[2])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -151,9 +151,9 @@ def test_frame__getitem__series():
                                OptionalCodeInfo(CodeReference(4, 4, 4, 11), "df['A']"),
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_getitem = list(inspector_result.dag.nodes)[1]
+    extracted_getitem = list(inspector_result.original_dag.nodes)[1]
     pandas_df = pandas.DataFrame({'A': [0, 2, 5], 'B': [1, 3, 5]})
     projected_df = extracted_getitem.processing_func(pandas_df)
     pandas.testing.assert_series_equal(projected_df, pandas.Series([0, 2, 5], name='A'))
@@ -173,7 +173,7 @@ def test_frame__getitem__frame():
                 pd.testing.assert_frame_equal(df_projection, df_expected)
                 """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[2])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[2])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -197,9 +197,9 @@ def test_frame__getitem__frame():
                                OptionalCodeInfo(CodeReference(5, 16, 5, 30), "df[['A', 'C']]"),
                                Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_getitem = list(inspector_result.dag.nodes)[1]
+    extracted_getitem = list(inspector_result.original_dag.nodes)[1]
     pandas_df = pandas.DataFrame({'A': [0, 2, 5, 7, 1], 'B': [0, 2, 5, 1, 1], 'C': [1, 3, 5, None, None]})
     projected_df = extracted_getitem.processing_func(pandas_df)
     df_expected = pandas.DataFrame({'A': [0, 2, 5, 7, 1], 'C': [1, 3, 5, None, None]})
@@ -219,7 +219,7 @@ def test_frame__getitem__selection():
                 pd.testing.assert_frame_equal(df_selection.reset_index(drop=True), df_expected.reset_index(drop=True))
                 """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[4])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[4])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -261,9 +261,9 @@ def test_frame__getitem__selection():
     expected_dag.add_edge(expected_data_source, expected_selection, arg_index=0)
     expected_dag.add_edge(expected_subscript, expected_selection, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_getitem = list(inspector_result.dag.nodes)[3]
+    extracted_getitem = list(inspector_result.original_dag.nodes)[3]
     pandas_df = pandas.DataFrame({'col_a': [0, 2, 4, 8, 5], 'col_b': [1, 5, 4, 11, None]})
     df_selection = pandas_df['col_b'] > 1
     filtered_df = extracted_getitem.processing_func(pandas_df, df_selection)
@@ -290,7 +290,7 @@ def test_frame__setitem__():
                 pd.testing.assert_frame_equal(pandas_df, df_expected)
                 """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[4])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[4])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -339,9 +339,9 @@ def test_frame__setitem__():
     expected_dag.add_edge(expected_data_source, expected_project_modify, arg_index=0)
     expected_dag.add_edge(expected_subscript, expected_project_modify, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_setitem = list(inspector_result.dag.nodes)[3]
+    extracted_setitem = list(inspector_result.original_dag.nodes)[3]
     pandas_df = pandas.DataFrame({'foo': ['one', 'two', 'two', 'two', 'two', 'two'],
                                   'bar': ['A', 'B', 'C', 'A', 'B', 'C'],
                                   'baz': [1, 2, 3, 4, 5, 6],
@@ -368,7 +368,7 @@ def test_frame_replace():
         pd.testing.assert_frame_equal(df_replace.reset_index(drop=True), df_expected.reset_index(drop=True))
         """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[2])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[2])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -391,9 +391,9 @@ def test_frame_replace():
                               OptionalCodeInfo(CodeReference(4, 13, 4, 40), "df.replace('Medium', 'Low')"),
                               Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_modify, arg_index=0)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_replace = list(inspector_result.dag.nodes)[1]
+    extracted_replace = list(inspector_result.original_dag.nodes)[1]
     pandas_df = pandas.DataFrame(['Medium', 'High', 'Medium', 'Low', None], columns=['C'])
     df_replace = extracted_replace.processing_func(pandas_df)
     df_expected = pandas.DataFrame(['Low', 'High', 'Low', 'Low', None], columns=['C'])
@@ -414,7 +414,7 @@ def test_frame_merge_on():
         pd.testing.assert_frame_equal(df_merged.reset_index(drop=True), df_expected.reset_index(drop=True))
         """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[3])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[3])
 
     expected_dag = networkx.DiGraph()
     expected_a = DagNode(0,
@@ -442,9 +442,9 @@ def test_frame_merge_on():
                             Comparison(FunctionType))
     expected_dag.add_edge(expected_a, expected_join, arg_index=0)
     expected_dag.add_edge(expected_b, expected_join, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_merge = list(inspector_result.dag.nodes)[2]
+    extracted_merge = list(inspector_result.original_dag.nodes)[2]
     df_a = pandas.DataFrame({'col_a': [0, 20, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})
     df_b = pandas.DataFrame({'B': [10, 2, 30, 4, 5], 'col_c': [10, 5, 4, 11, None]})
     df_merged = extracted_merge.processing_func(df_a, df_b)
@@ -466,7 +466,7 @@ def test_frame_merge_left_right_on():
         pd.testing.assert_frame_equal(df_merged.reset_index(drop=True), df_expected.reset_index(drop=True))
         """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[3])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[3])
 
     expected_dag = networkx.DiGraph()
     expected_a = DagNode(0,
@@ -496,9 +496,9 @@ def test_frame_merge_left_right_on():
                             Comparison(FunctionType))
     expected_dag.add_edge(expected_a, expected_join, arg_index=0)
     expected_dag.add_edge(expected_b, expected_join, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_merge = list(inspector_result.dag.nodes)[2]
+    extracted_merge = list(inspector_result.original_dag.nodes)[2]
     df_a = pandas.DataFrame({'col_a': [0, 20, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})
     df_b = pandas.DataFrame({'C': [10, 2, 30, 4, 5], 'col_d': [10, 5, 4, 11, None]})
     df_merged = extracted_merge.processing_func(df_a, df_b)
@@ -521,7 +521,7 @@ def test_frame_merge_index():
         pd.testing.assert_frame_equal(df_merged.reset_index(drop=True), df_expected.reset_index(drop=True))
         """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[3])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[3])
 
     expected_dag = networkx.DiGraph()
     expected_a = DagNode(0,
@@ -551,9 +551,9 @@ def test_frame_merge_index():
                             Comparison(FunctionType))
     expected_dag.add_edge(expected_a, expected_join, arg_index=0)
     expected_dag.add_edge(expected_b, expected_join, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_merge = list(inspector_result.dag.nodes)[2]
+    extracted_merge = list(inspector_result.original_dag.nodes)[2]
     df_a = pandas.DataFrame({'col_a': [10, 2, 4, 8, 5], 'col_b': [1, 2, 4, 5, 7]})
     df_b = pandas.DataFrame({'col_c': [1, 2, 3, 4], 'col_d': [1, 5, 4, 11]})
     df_merged = extracted_merge.processing_func(df_a, df_b)
@@ -577,7 +577,7 @@ def test_frame_merge_sorted():
         pd.testing.assert_frame_equal(df_merged, df_expected)
         """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[3])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[3])
 
     expected_dag = networkx.DiGraph()
     expected_a = DagNode(0,
@@ -605,9 +605,9 @@ def test_frame_merge_sorted():
                             Comparison(FunctionType))
     expected_dag.add_edge(expected_a, expected_join, arg_index=0)
     expected_dag.add_edge(expected_b, expected_join, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_merge = list(inspector_result.dag.nodes)[2]
+    extracted_merge = list(inspector_result.original_dag.nodes)[2]
     df_a = pandas.DataFrame({'col_a': [0, 20, 4, 8, 5], 'B': [1, 2, 4, 5, 7]})
     df_b = pandas.DataFrame({'B': [10, 2, 30, 5, 4], 'col_c': [10, 5, 4, 11, None]})
     df_merged = extracted_merge.processing_func(df_a, df_b)
@@ -630,7 +630,7 @@ def test_groupby_agg():
         pd.testing.assert_frame_equal(df_groupby_agg.reset_index(drop=False), df_expected.reset_index(drop=True))
         """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[2])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[2])
 
     expected_dag = networkx.DiGraph()
     expected_data = DagNode(0,
@@ -654,10 +654,10 @@ def test_groupby_agg():
                                                     "df.groupby('group').agg(mean_value=('value', 'mean'))"),
                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data, expected_groupby_agg, arg_index=0)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
     pandas_df = pandas.DataFrame({'group': ['A', 'B', 'A', 'B'], 'value': [1, 2, 7, 4]})
-    extracted_node_groupby_agg = list(inspector_result.dag.nodes)[1]
+    extracted_node_groupby_agg = list(inspector_result.original_dag.nodes)[1]
     df_groupby_agg = extracted_node_groupby_agg.processing_func(pandas_df)
     df_expected = pandas.DataFrame({'group': ['A', 'B'], 'mean_value': [4, 3]})
     pandas.testing.assert_frame_equal(df_groupby_agg.reset_index(drop=False), df_expected.reset_index(drop=True))
@@ -674,7 +674,7 @@ def test_series__init__():
         assert len(pd_series) == 4
         """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    extracted_node: DagNode = list(inspector_result.dag.nodes)[0]
+    extracted_node: DagNode = list(inspector_result.original_dag.nodes)[0]
 
     expected_node = DagNode(0,
                             BasicCodeLocation("<string-source>", 3),
@@ -704,7 +704,7 @@ def test_series_isin():
         """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
 
-    extracted_dag = inspector_result.dag
+    extracted_dag = inspector_result.original_dag
     extracted_dag.remove_node(list(extracted_dag.nodes)[2])
 
     expected_dag = networkx.DiGraph()
@@ -751,7 +751,7 @@ def test_series_astype():
         """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
 
-    extracted_dag = inspector_result.dag
+    extracted_dag = inspector_result.original_dag
     extracted_dag.remove_node(list(extracted_dag.nodes)[2])
 
     expected_dag = networkx.DiGraph()
@@ -796,7 +796,7 @@ def test_series__cmp_method():
                 pd.testing.assert_series_equal(mask, pd.Series([False, False, True, False], name='A'))
                 """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[2])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[2])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -818,9 +818,9 @@ def test_series__cmp_method():
                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_node = list(inspector_result.dag.nodes)[1]
+    extracted_node = list(inspector_result.original_dag.nodes)[1]
     pd_series = pandas.Series([4, 2, 4, None], name='B')
     extracted_func_result = extracted_node.processing_func(pd_series)
     expected = pandas.Series([True, False, True, False], name='B')
@@ -838,7 +838,7 @@ def test_series__arith_method():
                 pd.testing.assert_series_equal(pd_series, pd.Series([2, 4, 6, None], name='A'))
                 """)
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[2])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[2])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -860,9 +860,9 @@ def test_series__arith_method():
                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_projection, arg_index=0)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_node = list(inspector_result.dag.nodes)[1]
+    extracted_node = list(inspector_result.original_dag.nodes)[1]
     pd_series = pandas.Series([0, 2, 8, None], name='B')
     extracted_func_result = extracted_node.processing_func(pd_series)
     expected = pandas.Series([2, 4, 10, None], name='B')
@@ -882,7 +882,7 @@ def test_series__logical_method():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[3])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[3])
 
     expected_dag = networkx.DiGraph()
     expected_data_source1 = DagNode(0,
@@ -914,9 +914,9 @@ def test_series__logical_method():
     expected_dag.add_edge(expected_data_source1, expected_subscript, arg_index=0)
     expected_dag.add_edge(expected_data_source2, expected_subscript, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_node = list(inspector_result.dag.nodes)[2]
+    extracted_node = list(inspector_result.original_dag.nodes)[2]
     pd_series1 = pandas.Series([True, False, True, True], name='C')
     pd_series2 = pandas.Series([False, False, False, True], name='D')
     extracted_func_result = extracted_node.processing_func(pd_series1, pd_series2)

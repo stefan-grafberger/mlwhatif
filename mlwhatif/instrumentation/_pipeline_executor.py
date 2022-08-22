@@ -16,13 +16,11 @@ from astmonkey.transformers import ParentChildNodeTransformer
 from nbconvert import PythonExporter
 
 from ._call_capture_transformer import CallCaptureTransformer
-from ._dag_node import AnalysisResult
 from .. import monkeypatching
 from .._inspector_result import AnalysisResults
 from ..analysis._what_if_analysis import WhatIfAnalysis
 from ..execution._dag_executor import DagExecutor
 from ..execution._multi_query_optimizer import MultiQueryOptimizer
-from ..visualisation import save_fig_to_path
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 for _ in ("gensim", "tensorflow", "h5py"):
@@ -53,10 +51,7 @@ class PipelineExecutor:
     custom_monkey_patching = []
     # TODO: Do we want to add the analysis to the key next to label to isolate analyses and avoid name clashes?
     labels_to_extracted_plan_results = dict()
-    analysis_results = AnalysisResult(networkx.DiGraph(), dict())
-    prefix_original_dag = None
-    prefix_analysis_dags = None
-    prefix_optimised_analysis_dag = None
+    analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph())
     monkey_patch_duration = 0
     skip_optimizer = False
 
@@ -68,9 +63,6 @@ class PipelineExecutor:
             reset_state: bool = True,
             track_code_references: bool = True,
             custom_monkey_patching: List[any] = None,
-            prefix_original_dag: str or None = None,
-            prefix_analysis_dags: str or None = None,
-            prefix_optimised_analysis_dag: str or None = None,
             skip_optimizer=False
             ) -> AnalysisResults:
         """
@@ -90,9 +82,6 @@ class PipelineExecutor:
         self.track_code_references = track_code_references
         self.custom_monkey_patching = custom_monkey_patching
         self.analyses = analyses
-        self.prefix_original_dag = prefix_original_dag
-        self.prefix_analysis_dags = prefix_analysis_dags
-        self.prefix_optimised_analysis_dag = prefix_optimised_analysis_dag
         self.skip_optimizer = skip_optimizer
 
         logger.info(f'Running instrumented original pipeline...')
@@ -112,7 +101,7 @@ class PipelineExecutor:
         self.run_what_if_analyses()
 
         logger.info(f'Done!')
-        return AnalysisResults(self.analysis_results.dag, self.analysis_results.analysis_to_result_reports)
+        return self.analysis_results
 
     def run_what_if_analyses(self):
         """
@@ -121,27 +110,20 @@ class PipelineExecutor:
         for analysis in self.analyses:
             logger.info(f'Start plan generation for analysis {type(analysis).__name__}...')
             plan_generation_start = time.time()
-            what_if_dags = analysis.generate_plans_to_try(self.analysis_results.dag)
+            for patches in analysis.generate_plans_to_try(self.analysis_results.original_dag):
+                self.analysis_results.what_if_dags.append((patches, networkx.DiGraph()))
             plan_generation_duration = time.time() - plan_generation_start
             logger.info(f'---RUNTIME: Plan generation took {plan_generation_duration * 1000} ms')
 
-            # TODO: Potentially, we might want to also combine multiple analyses to one joint execution plan
+        MultiQueryOptimizer(self).create_optimized_plan(self.analysis_results, self.skip_optimizer)
 
-            if self.prefix_original_dag is not None:
-                save_fig_to_path(self.analysis_results.dag, f"{self.prefix_original_dag}.png")
+        logger.info(f"Executing generated plans")
+        execution_start = time.time()
+        DagExecutor().execute(self.analysis_results.combined_optimized_dag)
+        execution_duration = time.time() - execution_start
+        logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
 
-            big_execution_dag = MultiQueryOptimizer(self) \
-                .create_optimized_plan(self.analysis_results.dag, what_if_dags,
-                                       self.prefix_analysis_dags,
-                                       self.prefix_optimised_analysis_dag,
-                                       self.skip_optimizer)
-
-            logger.info(f"Executing generated plans")
-            execution_start = time.time()
-            DagExecutor().execute(big_execution_dag)
-            execution_duration = time.time() - execution_start
-            logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
-
+        for analysis in self.analyses:
             report = analysis.generate_final_report(self.labels_to_extracted_plan_results)
             self.analysis_results.analysis_to_result_reports[analysis] = report
 
@@ -195,13 +177,10 @@ class PipelineExecutor:
         self.next_missing_op_id = -1
         self.track_code_references = True
         self.op_id_to_dag_node = dict()
-        self.analysis_results = AnalysisResult(networkx.DiGraph(), dict())
+        self.analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph())
         self.analyses = []
         self.labels_to_extracted_plan_results = dict()
         self.custom_monkey_patching = []
-        self.prefix_original_dag = None
-        self.prefix_analysis_dags = None
-        self.prefix_optimised_analysis_dag = None
         self.monkey_patch_duration = 0
         self.skip_optimizer = False
 

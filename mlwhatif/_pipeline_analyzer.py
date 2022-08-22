@@ -44,27 +44,6 @@ class PipelineInspectorBuilder:
         self._analyses.extend(analyses)
         return self
 
-    def save_original_dag_to_path(self, path: str):
-        """
-        Save the extracted original DAG to a file
-        """
-        self._prefix_original_dag = path
-        return self
-
-    def save_what_if_dags_to_path(self, prefix_analysis_dags: str):
-        """
-        Save the generated What-If DAGs to a file
-        """
-        self._prefix_analysis_dags = prefix_analysis_dags
-        return self
-
-    def save_optimised_what_if_dags_to_path(self, prefix_optimised_analysis_dag: str):
-        """
-        Save the extracted original DAG to a file
-        """
-        self._prefix_optimised_analysis_dag = prefix_optimised_analysis_dag
-        return self
-
     def set_code_reference_tracking(self, track_code_references: bool):
         """
         Set whether to track code references. The default is tracking them.
@@ -103,9 +82,6 @@ class PipelineInspectorBuilder:
                              python_code=self._python_code,
                              analyses=self._analyses,
                              custom_monkey_patching=self._monkey_patching_modules,
-                             prefix_original_dag=self._prefix_original_dag,
-                             prefix_analysis_dags=self._prefix_analysis_dags,
-                             prefix_optimised_analysis_dag=self._prefix_optimised_analysis_dag,
                              skip_optimizer=self._skip_optimizer)
 
 

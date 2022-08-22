@@ -257,9 +257,9 @@ def add_dag_node(dag_node: DagNode, dag_node_parents: List[DagNode], function_ca
         function_call_result.function_result._mlinspect_dag_node = dag_node.node_id
     if dag_node_parents:
         for parent_index, parent in enumerate(dag_node_parents):
-            singleton.analysis_results.dag.add_edge(parent, dag_node, arg_index=parent_index)
+            singleton.analysis_results.original_dag.add_edge(parent, dag_node, arg_index=parent_index)
     else:
-        singleton.analysis_results.dag.add_node(dag_node)
+        singleton.analysis_results.original_dag.add_node(dag_node)
     singleton.op_id_to_dag_node[dag_node.node_id] = dag_node
     # if function_call_result.other is not None:
     # singleton.inspection_results.dag_node_to_inspection_results[dag_node] = backend_result.dag_node_annotation

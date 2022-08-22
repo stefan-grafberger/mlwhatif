@@ -24,7 +24,7 @@ def test_numpy_random():
         """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    extracted_node: DagNode = list(inspector_result.dag.nodes)[0]
+    extracted_node: DagNode = list(inspector_result.original_dag.nodes)[0]
 
     expected_node = DagNode(0,
                             BasicCodeLocation("<string-source>", 3),

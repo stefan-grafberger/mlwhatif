@@ -99,9 +99,9 @@ def test_metric_frame___init__():
     expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
     expected_dag.add_edge(expected_data_source3, expected_score, arg_index=2)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_node = list(inspector_result.dag.nodes)[4]
+    extracted_node = list(inspector_result.original_dag.nodes)[4]
     pd_series1 = pandas.Series([True, False, True, True], name='C')
     pd_series2 = pandas.Series([False, False, False, True], name='D')
     pd_series3 = pandas.Series(['cat_a', 'cat_a', 'cat_a', 'cat_c'], name='sensitive')
@@ -190,9 +190,9 @@ def test_equalized_odds_difference():
     expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
     expected_dag.add_edge(expected_data_source3, expected_score, arg_index=2)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_node = list(inspector_result.dag.nodes)[4]
+    extracted_node = list(inspector_result.original_dag.nodes)[4]
     pd_series1 = pandas.Series([True, False, True, True], name='C')
     pd_series2 = pandas.Series([False, False, False, True], name='D')
     pd_series3 = pandas.Series(['cat_a', 'cat_a', 'cat_a', 'cat_c'], name='sensitive')

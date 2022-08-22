@@ -24,7 +24,7 @@ def test_func_defs_and_loops():
     """
     test_code = get_test_code_with_function_def_and_for_loop()
 
-    extracted_dag = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True).dag
+    extracted_dag = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True).original_dag
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -60,7 +60,7 @@ def test_func_defs_and_loops_without_code_reference_tracking():
     """
     test_code = get_test_code_with_function_def_and_for_loop()
 
-    extracted_dag = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=False).dag
+    extracted_dag = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=False).original_dag
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -113,7 +113,7 @@ def test_black_box_operation():
         print("df")
         """)
 
-    extracted_dag = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True).dag
+    extracted_dag = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True).original_dag
 
     expected_dag = networkx.DiGraph()
     expected_missing_op = DagNode(-1,

@@ -18,7 +18,7 @@ def test_inspector_adult_easy_py_pipeline():
     inspector_result = PipelineAnalyzer\
         .on_pipeline_from_py_file(ADULT_SIMPLE_PY)\
         .execute()
-    extracted_dag = inspector_result.dag
+    extracted_dag = inspector_result.original_dag
     expected_dag = get_expected_dag_adult_easy(ADULT_SIMPLE_PY)
     compare(networkx.to_dict_of_dicts(extracted_dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -30,7 +30,7 @@ def test_inspector_adult_easy_py_pipeline_without_inspections():
     inspector_result = PipelineAnalyzer\
         .on_pipeline_from_py_file(ADULT_SIMPLE_PY)\
         .execute()
-    extracted_dag = inspector_result.dag
+    extracted_dag = inspector_result.original_dag
     expected_dag = get_expected_dag_adult_easy(ADULT_SIMPLE_PY)
     compare(networkx.to_dict_of_dicts(extracted_dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -42,7 +42,7 @@ def test_inspector_adult_easy_ipynb_pipeline():
     inspector_result = PipelineAnalyzer\
         .on_pipeline_from_ipynb_file(ADULT_SIMPLE_IPYNB)\
         .execute()
-    extracted_dag = inspector_result.dag
+    extracted_dag = inspector_result.original_dag
     expected_dag = get_expected_dag_adult_easy(ADULT_SIMPLE_IPYNB, 6)
     compare(networkx.to_dict_of_dicts(extracted_dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -57,7 +57,7 @@ def test_inspector_adult_easy_str_pipeline():
         inspector_result = PipelineAnalyzer\
             .on_pipeline_from_string(code)\
             .execute()
-        extracted_dag = inspector_result.dag
+        extracted_dag = inspector_result.original_dag
         expected_dag = get_expected_dag_adult_easy("<string-source>")
         compare(networkx.to_dict_of_dicts(extracted_dag), networkx.to_dict_of_dicts(expected_dag))
 
@@ -90,4 +90,4 @@ def assert_healthcare_pipeline_output_complete(inspector_result):
     """ Assert that the healthcare DAG was extracted completely """
     for dag_node, _ in inspector_result.analysis_to_result_reports.items():
         assert dag_node.operator_info.operator != OperatorType.MISSING_OP
-    assert len(inspector_result.dag) == 52
+    assert len(inspector_result.original_dag) == 52

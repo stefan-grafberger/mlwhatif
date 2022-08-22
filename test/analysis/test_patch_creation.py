@@ -38,7 +38,7 @@ def test_add_intermediate_extraction_after_node_intermediate_df():
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .execute()
-    dag = analysis_result.dag
+    dag = analysis_result.original_dag
     intermediate_pdf_result_value = find_nodes_by_type(dag, OperatorType.SELECTION)[0]
     label = "util-test"
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH)
@@ -79,7 +79,7 @@ def test_add_intermediate_extraction_after_node_final_score():
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .execute()
-    dag = analysis_result.dag
+    dag = analysis_result.original_dag
     final_result_value = find_nodes_by_type(dag, OperatorType.SCORE)[0]
     label = "util-test"
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH)

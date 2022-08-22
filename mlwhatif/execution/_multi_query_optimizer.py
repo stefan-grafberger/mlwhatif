@@ -7,13 +7,12 @@ from typing import Iterable
 
 import networkx
 
-from mlwhatif.execution._patches import PipelinePatch
+from mlwhatif import AnalysisResults
 from mlwhatif.execution.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
 from mlwhatif.execution.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
 from mlwhatif.execution.optimization._simple_projection_push_up import SimpleProjectionPushUp
 from mlwhatif.execution.optimization._udf_split_and_reuse import UdfSplitAndReuse
 from mlwhatif.instrumentation._dag_node import DagNode
-from mlwhatif.visualisation import save_fig_to_path
 
 logger = logging.getLogger(__name__)
 
@@ -29,34 +28,28 @@ class MultiQueryOptimizer:
                                        OperatorDeletionFilterPushUp(pipeline_executor),
                                        UdfSplitAndReuse(pipeline_executor)]
 
-    def create_optimized_plan(self, original_dag: networkx.DiGraph, patches: Iterable[Iterable[PipelinePatch]],
-                              prefix_analysis_dags: str or None = None,
-                              prefix_optimised_analysis_dag: str or None = None,
-                              skip_optimizer=False) -> \
-            networkx.DiGraph:
+    def create_optimized_plan(self, analysis_results: AnalysisResults, skip_optimizer=False) -> \
+            AnalysisResults:
         """ Optimize and combine multiple given input DAGs """
         # pylint: disable=too-many-arguments
-        estimate_original_runtime = self._estimate_runtime_of_dag(original_dag)
+        estimate_original_runtime = self._estimate_runtime_of_dag(analysis_results.original_dag)
         logger.info(f"Estimated runtime of original DAG is {estimate_original_runtime}ms")
 
         multi_query_optimization_start = time.time()
-        big_execution_dag, image_generation_duration = self._optimize_and_combine_dags(original_dag, skip_optimizer,
-                                                                                       patches, prefix_analysis_dags)
-        multi_query_optimization_duration = time.time() - multi_query_optimization_start - image_generation_duration
+        analysis_results = self._optimize_and_combine_dags(analysis_results, skip_optimizer)
+        multi_query_optimization_duration = time.time() - multi_query_optimization_start
         logger.info(f'---RUNTIME: Multi-Query Optimization took {multi_query_optimization_duration * 1000} ms')
 
-        image_generation_start = time.time()
-        if prefix_optimised_analysis_dag is not None:
-            save_fig_to_path(big_execution_dag, f"{prefix_optimised_analysis_dag}.png")
-        image_generation_duration += time.time() - image_generation_start
+        return analysis_results
 
-        return big_execution_dag
-
-    def _optimize_and_combine_dags(self, original_dag, skip_optimizer, patches, prefix_analysis_dags: str or None):
+    def _optimize_and_combine_dags(self, analysis_results: AnalysisResults, skip_optimizer):
         """Here, the multi query optimization happens"""
         if skip_optimizer is False:
             logger.info(f"Performing Multi-Query Optimization")
-            big_execution_dag, what_if_dags = self._optimize_and_combine_dags_with_optimization(original_dag, patches)
+
+            patches = [patches for (patches, _) in analysis_results.what_if_dags]
+            big_execution_dag, what_if_dags = self._optimize_and_combine_dags_with_optimization(
+                analysis_results.original_dag, patches)
 
             combined_estimated_runtimes = sum([self._estimate_runtime_of_dag(dag) for dag in what_if_dags])
             logger.info(f"Estimated unoptimized what-if runtime is {combined_estimated_runtimes}ms")
@@ -67,11 +60,14 @@ class MultiQueryOptimizer:
             estimated_saving = combined_estimated_runtimes - estimate_optimised_runtime
             logger.info(f"Estimated optimisation runtime saving is {estimated_saving}ms")
         else:
+            patches = [patches for patches, _ in analysis_results.what_if_dags]
             logger.warning("Skipping Multi-Query Optimization (instead, only combine execution DAGs)")
-            big_execution_dag, what_if_dags = self._optimize_and_combine_dags_without_optimization(original_dag,
-                                                                                                   patches)
-        image_generation_duration = self._save_what_if_dags_as_figs_to_path(prefix_analysis_dags, what_if_dags)
-        return big_execution_dag, image_generation_duration
+            big_execution_dag, what_if_dags = self._optimize_and_combine_dags_without_optimization(
+                analysis_results.original_dag, patches)
+
+        analysis_results.combined_optimized_dag = big_execution_dag
+        analysis_results.what_if_dags = list(zip(patches, what_if_dags))
+        return analysis_results
 
     def _optimize_and_combine_dags_without_optimization(self, original_dag, patches):
         """The baseline of not performing any optimizations"""
@@ -102,18 +98,11 @@ class MultiQueryOptimizer:
                                                                                              what_if_dag))
             self._generate_unique_ids_for_selected_nodes(what_if_dag, all_nodes_needing_recomputation)
             what_if_dags.append(what_if_dag)
-        big_execution_dag = networkx.compose_all(what_if_dags)
+        if len(what_if_dags) != 0:
+            big_execution_dag = networkx.compose_all(what_if_dags)
+        else:
+            big_execution_dag = networkx.DiGraph()
         return big_execution_dag, what_if_dags
-
-    @staticmethod
-    def _save_what_if_dags_as_figs_to_path(prefix_analysis_dags, what_if_dags):
-        """Store the what-if DAGs as figs."""
-        image_generation_start = time.time()
-        for dag_index, what_if_dag in enumerate(what_if_dags):
-            if prefix_analysis_dags is not None:
-                save_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-{dag_index}.png")
-        image_generation_duration = time.time() - image_generation_start
-        return image_generation_duration
 
     def _make_all_nodes_unique(self, what_if_dags):
         """We need to give all nodes new ids to combine DAGs without reusing results."""

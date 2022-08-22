@@ -74,12 +74,3 @@ class DagNode:
 
     def __hash__(self):
         return hash(self.node_id)
-
-
-@dataclasses.dataclass
-class AnalysisResult:
-    """
-    The class the PipelineExecutor returns
-    """
-    dag: networkx.DiGraph
-    analysis_to_result_reports: Dict[any, any]

@@ -62,9 +62,9 @@ def test_label_binarize():
                                                  "label_binarize(pd_series, classes=['no', 'yes'])"),
                                 Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_binarize, arg_index=0)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    label_binarize_node = list(inspector_result.dag.nodes)[1]
+    label_binarize_node = list(inspector_result.original_dag.nodes)[1]
     pd_series = pandas.Series(['no', 'yes', 'no', 'yes'], name='A')
     binarize_result = label_binarize_node.processing_func(pd_series)
     expected = numpy.array([[0], [1], [0], [1]])
@@ -90,8 +90,8 @@ def test_train_test_split():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[5])
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[4])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[5])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[4])
 
     expected_dag = networkx.DiGraph()
     expected_source = DagNode(0,
@@ -130,11 +130,11 @@ def test_train_test_split():
                             Comparison(FunctionType))
     expected_dag.add_edge(expected_split, expected_test, arg_index=0)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    split_node = list(inspector_result.dag.nodes)[1]
-    train_node = list(inspector_result.dag.nodes)[2]
-    test_node = list(inspector_result.dag.nodes)[3]
+    split_node = list(inspector_result.original_dag.nodes)[1]
+    train_node = list(inspector_result.original_dag.nodes)[2]
+    test_node = list(inspector_result.original_dag.nodes)[3]
     pandas_df = pandas.DataFrame({'A': ['a', 'c', 'e', 'f']})
     split_result = split_node.processing_func(pandas_df)
     assert isinstance(split_result, TrainTestSplitResult)
@@ -207,10 +207,10 @@ def test_standard_scaler():
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
     expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_transform_node = list(inspector_result.dag.nodes)[1]
-    transform_node = list(inspector_result.dag.nodes)[3]
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    transform_node = list(inspector_result.original_dag.nodes)[3]
     pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2]})
     fit_transformed_result = fit_transform_node.processing_func(pandas_df)
     expected_fit_transform_data = numpy.array([[-0.52166986], [-0.61651893], [1.73099545], [-0.59280666]])
@@ -288,10 +288,10 @@ def test_function_transformer():
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
     expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_transform_node = list(inspector_result.dag.nodes)[1]
-    transform_node = list(inspector_result.dag.nodes)[3]
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    transform_node = list(inspector_result.original_dag.nodes)[3]
     pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2]})
     fit_transformed_result = fit_transform_node.processing_func(pandas_df)
     expected_fit_transform_data = numpy.array([[1.609438], [0.000000], [4.605170], [0.693147]])
@@ -367,10 +367,10 @@ def test_kbins_discretizer():
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
     expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_transform_node = list(inspector_result.dag.nodes)[1]
-    transform_node = list(inspector_result.dag.nodes)[3]
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    transform_node = list(inspector_result.original_dag.nodes)[3]
     pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2]})
     fit_transformed_result = fit_transform_node.processing_func(pandas_df)
     expected_fit_transform_data = numpy.array([[0.], [0.], [2.], [0.]])
@@ -444,10 +444,10 @@ def test_simple_imputer():
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
     expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_transform_node = list(inspector_result.dag.nodes)[1]
-    transform_node = list(inspector_result.dag.nodes)[3]
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    transform_node = list(inspector_result.original_dag.nodes)[3]
     pandas_df = pandas.DataFrame({'A': ['cat_d', 'cat_h', 'cat_d', numpy.nan]})
     fit_transformed_result = fit_transform_node.processing_func(pandas_df)
     expected_fit_transform_data = numpy.array([['cat_d'], ['cat_h'], ['cat_d'], ['cat_d']])
@@ -521,10 +521,10 @@ def test_one_hot_encoder_not_sparse():
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
     expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_transform_node = list(inspector_result.dag.nodes)[1]
-    transform_node = list(inspector_result.dag.nodes)[3]
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    transform_node = list(inspector_result.original_dag.nodes)[3]
     pandas_df = pandas.DataFrame({'A': ['cat_d', 'cat_h', 'cat_d', 'cat_c']})
     fit_transformed_result = fit_transform_node.processing_func(pandas_df)
     expected_fit_transform_data = numpy.array([[0., 1., 0.], [0., 0., 1.], [0., 1., 0.], [1., 0., 0.]])
@@ -575,9 +575,9 @@ def test_one_hot_encoder_sparse():
                                    OptionalCodeInfo(CodeReference(7, 18, 7, 33), 'OneHotEncoder()'),
                                    Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_transform_node = list(inspector_result.dag.nodes)[1]
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
     pandas_df = pandas.DataFrame({'A': ['cat_d', 'cat_h', 'cat_d', 'cat_c']})
     fit_transformed_result = fit_transform_node.processing_func(pandas_df)
     expected_fit_transform_data = csr_matrix([[0., 1., 0.], [0., 0., 1.], [0., 1., 0.], [1., 0., 0.]])
@@ -604,8 +604,8 @@ def test_hashing_vectorizer():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag)[0])
-    inspector_result.dag.remove_node(list(inspector_result.dag)[2])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag)[0])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag)[2])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(1,
@@ -649,10 +649,10 @@ def test_hashing_vectorizer():
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
     expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_transform_node = list(inspector_result.dag.nodes)[1]
-    transform_node = list(inspector_result.dag.nodes)[3]
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    transform_node = list(inspector_result.original_dag.nodes)[3]
     pandas_df = pandas.DataFrame({'A': ['aaa', 'bbb', 'bbb', 'aaa']})
     fit_transformed_result = fit_transform_node.processing_func(pandas_df['A'])
     expected = csr_matrix([[0., -1., 0., 0.], [0., 0., 0., -1.], [0., 0., 0., -1.], [0., -1., 0., 0.]])
@@ -732,11 +732,11 @@ def test_column_transformer_one_transformer():
                                                "    ('numeric', StandardScaler(), ['A', 'B'])\n])"),
                               Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_concat, arg_index=0)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    project_node = list(inspector_result.dag.nodes)[1]
-    transformer_node = list(inspector_result.dag.nodes)[2]
-    concat_node = list(inspector_result.dag.nodes)[3]
+    project_node = list(inspector_result.original_dag.nodes)[1]
+    transformer_node = list(inspector_result.original_dag.nodes)[2]
+    concat_node = list(inspector_result.original_dag.nodes)[3]
     pandas_df = pandas.DataFrame({'A': [1, 2, 10, 5], 'B': [1, 2, 10, 5]})
     projected_data = project_node.processing_func(pandas_df)
     transformed_data = transformer_node.processing_func(projected_data)
@@ -820,11 +820,11 @@ def test_column_transformer_one_transformer_single_column_projection():
                                  Comparison(FunctionType))
     expected_dag.add_edge(expected_vectorizer, expected_transform, arg_index=0)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    project_node = list(inspector_result.dag.nodes)[0]
-    transformer_node = list(inspector_result.dag.nodes)[1]
-    concat_node = list(inspector_result.dag.nodes)[2]
+    project_node = list(inspector_result.original_dag.nodes)[0]
+    transformer_node = list(inspector_result.original_dag.nodes)[1]
+    concat_node = list(inspector_result.original_dag.nodes)[2]
     pandas_df = pandas.DataFrame({'A': ['cat_a', 'cat_a', 'cat_b', 'cat_c'], 'B': [1, 2, 10, 5]})
     projected_data = project_node.processing_func(pandas_df)
     transformed_data = transformer_node.processing_func(projected_data)
@@ -930,13 +930,13 @@ def test_column_transformer_multiple_transformers_all_dense():
                               Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_concat, arg_index=0)
     expected_dag.add_edge(expected_one_hot, expected_concat, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    project1_node = list(inspector_result.dag.nodes)[1]
-    project2_node = list(inspector_result.dag.nodes)[3]
-    transformer1_node = list(inspector_result.dag.nodes)[2]
-    transformer2_node = list(inspector_result.dag.nodes)[4]
-    concat_node = list(inspector_result.dag.nodes)[5]
+    project1_node = list(inspector_result.original_dag.nodes)[1]
+    project2_node = list(inspector_result.original_dag.nodes)[3]
+    transformer1_node = list(inspector_result.original_dag.nodes)[2]
+    transformer2_node = list(inspector_result.original_dag.nodes)[4]
+    concat_node = list(inspector_result.original_dag.nodes)[5]
     pandas_df = pandas.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_b', 'cat_c']})
     projected_data1 = project1_node.processing_func(pandas_df)
     projected_data2 = project2_node.processing_func(pandas_df)
@@ -1045,13 +1045,13 @@ def test_column_transformer_multiple_transformers_sparse_dense():
                               Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_concat, arg_index=0)
     expected_dag.add_edge(expected_one_hot, expected_concat, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    project1_node = list(inspector_result.dag.nodes)[1]
-    project2_node = list(inspector_result.dag.nodes)[3]
-    transformer1_node = list(inspector_result.dag.nodes)[2]
-    transformer2_node = list(inspector_result.dag.nodes)[4]
-    concat_node = list(inspector_result.dag.nodes)[5]
+    project1_node = list(inspector_result.original_dag.nodes)[1]
+    project2_node = list(inspector_result.original_dag.nodes)[3]
+    transformer1_node = list(inspector_result.original_dag.nodes)[2]
+    transformer2_node = list(inspector_result.original_dag.nodes)[4]
+    concat_node = list(inspector_result.original_dag.nodes)[5]
     pandas_df = pandas.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_b', 'cat_c']})
     projected_data1 = project1_node.processing_func(pandas_df)
     projected_data2 = project2_node.processing_func(pandas_df)
@@ -1091,8 +1091,8 @@ def test_column_transformer_transform_after_fit_transform():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    fit_func_transformer1 = list(inspector_result.dag.nodes)[2].processing_func
-    fit_func_transformer2 = list(inspector_result.dag.nodes)[4].processing_func
+    fit_func_transformer1 = list(inspector_result.original_dag.nodes)[2].processing_func
+    fit_func_transformer2 = list(inspector_result.original_dag.nodes)[4].processing_func
     filter_dag_for_nodes_with_ids(inspector_result, {6, 7, 8, 9, 10, 11}, 12)
 
     expected_dag = networkx.DiGraph()
@@ -1165,13 +1165,13 @@ def test_column_transformer_transform_after_fit_transform():
                               Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_concat, arg_index=0)
     expected_dag.add_edge(expected_one_hot, expected_concat, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    project1_node = list(inspector_result.dag.nodes)[1]
-    project2_node = list(inspector_result.dag.nodes)[3]
-    transformer1_node = list(inspector_result.dag.nodes)[2]
-    transformer2_node = list(inspector_result.dag.nodes)[4]
-    concat_node = list(inspector_result.dag.nodes)[5]
+    project1_node = list(inspector_result.original_dag.nodes)[1]
+    project2_node = list(inspector_result.original_dag.nodes)[3]
+    transformer1_node = list(inspector_result.original_dag.nodes)[2]
+    transformer2_node = list(inspector_result.original_dag.nodes)[4]
+    concat_node = list(inspector_result.original_dag.nodes)[5]
     pandas_df = pandas.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_b', 'cat_c']})
     projected_data1 = project1_node.processing_func(pandas_df)
     projected_data2 = project2_node.processing_func(pandas_df)
@@ -1210,9 +1210,9 @@ def test_decision_tree():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[10])
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[9])
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[8])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[10])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[9])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[8])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -1297,11 +1297,11 @@ def test_decision_tree():
     expected_dag.add_edge(expected_train_data, expected_decision_tree, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_decision_tree, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[7]
-    train_data_node = list(inspector_result.dag.nodes)[5]
-    train_label_node = list(inspector_result.dag.nodes)[6]
+    fit_node = list(inspector_result.original_dag.nodes)[7]
+    train_data_node = list(inspector_result.original_dag.nodes)[5]
+    train_label_node = list(inspector_result.original_dag.nodes)[6]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_data = train_data_node.processing_func(train_df[['C', 'D']])
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
@@ -1419,13 +1419,13 @@ def test_decision_tree_score():
     expected_dag.add_edge(expected_predict, expected_score, arg_index=0)
     expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[0]
-    predict_node = list(inspector_result.dag.nodes)[5]
-    score_node = list(inspector_result.dag.nodes)[6]
-    test_data_node = list(inspector_result.dag.nodes)[3]
-    test_label_node = list(inspector_result.dag.nodes)[4]
+    fit_node = list(inspector_result.original_dag.nodes)[0]
+    predict_node = list(inspector_result.original_dag.nodes)[5]
+    score_node = list(inspector_result.original_dag.nodes)[6]
+    test_data_node = list(inspector_result.original_dag.nodes)[3]
+    test_label_node = list(inspector_result.original_dag.nodes)[4]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
@@ -1512,11 +1512,11 @@ def test_decision_tree_predict():
     expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
     expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[0]
-    predict_node = list(inspector_result.dag.nodes)[3]
-    test_data_node = list(inspector_result.dag.nodes)[2]
+    fit_node = list(inspector_result.original_dag.nodes)[0]
+    predict_node = list(inspector_result.original_dag.nodes)[3]
+    test_data_node = list(inspector_result.original_dag.nodes)[2]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
@@ -1612,11 +1612,11 @@ def test_sgd_classifier():
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[4]
-    train_data_node = list(inspector_result.dag.nodes)[2]
-    train_label_node = list(inspector_result.dag.nodes)[3]
+    fit_node = list(inspector_result.original_dag.nodes)[4]
+    train_data_node = list(inspector_result.original_dag.nodes)[2]
+    train_label_node = list(inspector_result.original_dag.nodes)[3]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_data = train_data_node.processing_func(train_df[['C', 'D']])
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
@@ -1635,11 +1635,11 @@ def filter_dag_for_nodes_with_ids(inspector_result, node_ids, total_expected_nod
     """
     Filter for DAG Nodes relevant for this test
     """
-    assert len(inspector_result.dag.nodes) == total_expected_node_num
-    dag_nodes_irrelevant__for_test = [dag_node for dag_node in list(inspector_result.dag.nodes)
+    assert len(inspector_result.original_dag.nodes) == total_expected_node_num
+    dag_nodes_irrelevant__for_test = [dag_node for dag_node in list(inspector_result.original_dag.nodes)
                                       if dag_node.node_id not in node_ids]
-    inspector_result.dag.remove_nodes_from(dag_nodes_irrelevant__for_test)
-    assert len(inspector_result.dag.nodes) == len(node_ids)
+    inspector_result.original_dag.remove_nodes_from(dag_nodes_irrelevant__for_test)
+    assert len(inspector_result.original_dag.nodes) == len(node_ids)
 
 
 def test_sgd_classifier_score():
@@ -1749,13 +1749,13 @@ def test_sgd_classifier_score():
     expected_dag.add_edge(expected_predict, expected_score, arg_index=0)
     expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[0]
-    predict_node = list(inspector_result.dag.nodes)[5]
-    score_node = list(inspector_result.dag.nodes)[6]
-    test_data_node = list(inspector_result.dag.nodes)[3]
-    test_label_node = list(inspector_result.dag.nodes)[4]
+    fit_node = list(inspector_result.original_dag.nodes)[0]
+    predict_node = list(inspector_result.original_dag.nodes)[5]
+    score_node = list(inspector_result.original_dag.nodes)[6]
+    test_data_node = list(inspector_result.original_dag.nodes)[3]
+    test_label_node = list(inspector_result.original_dag.nodes)[4]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
@@ -1843,11 +1843,11 @@ def test_sgd_classifier_predict():
     expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
     expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[0]
-    predict_node = list(inspector_result.dag.nodes)[3]
-    test_data_node = list(inspector_result.dag.nodes)[2]
+    fit_node = list(inspector_result.original_dag.nodes)[0]
+    predict_node = list(inspector_result.original_dag.nodes)[3]
+    test_data_node = list(inspector_result.original_dag.nodes)[2]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
@@ -1885,9 +1885,9 @@ def test_logistic_regression():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[10])
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[9])
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[8])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[10])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[9])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[8])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -1975,11 +1975,11 @@ def test_logistic_regression():
     expected_dag.add_edge(expected_train_data, expected_estimator, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_estimator, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[7]
-    train_data_node = list(inspector_result.dag.nodes)[5]
-    train_label_node = list(inspector_result.dag.nodes)[6]
+    fit_node = list(inspector_result.original_dag.nodes)[7]
+    train_data_node = list(inspector_result.original_dag.nodes)[5]
+    train_label_node = list(inspector_result.original_dag.nodes)[6]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_data = train_data_node.processing_func(train_df[['C', 'D']])
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
@@ -2101,13 +2101,13 @@ def test_logistic_regression_score():
     expected_dag.add_edge(expected_predict, expected_score, arg_index=0)
     expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[0]
-    predict_node = list(inspector_result.dag.nodes)[5]
-    score_node = list(inspector_result.dag.nodes)[6]
-    test_data_node = list(inspector_result.dag.nodes)[3]
-    test_label_node = list(inspector_result.dag.nodes)[4]
+    fit_node = list(inspector_result.original_dag.nodes)[0]
+    predict_node = list(inspector_result.original_dag.nodes)[5]
+    score_node = list(inspector_result.original_dag.nodes)[6]
+    test_data_node = list(inspector_result.original_dag.nodes)[3]
+    test_label_node = list(inspector_result.original_dag.nodes)[4]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
@@ -2195,11 +2195,11 @@ def test_logistic_regression_predict():
     expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
     expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[0]
-    predict_node = list(inspector_result.dag.nodes)[3]
-    test_data_node = list(inspector_result.dag.nodes)[2]
+    fit_node = list(inspector_result.original_dag.nodes)[0]
+    predict_node = list(inspector_result.original_dag.nodes)[3]
+    test_data_node = list(inspector_result.original_dag.nodes)[2]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
@@ -2247,9 +2247,9 @@ def test_keras_wrapper():
                 """)
 
     inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[10])
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[9])
-    inspector_result.dag.remove_node(list(inspector_result.dag.nodes)[8])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[10])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[9])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[8])
 
     expected_dag = networkx.DiGraph()
     expected_data_source = DagNode(0,
@@ -2342,11 +2342,11 @@ def test_keras_wrapper():
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[7]
-    train_data_node = list(inspector_result.dag.nodes)[5]
-    train_label_node = list(inspector_result.dag.nodes)[6]
+    fit_node = list(inspector_result.original_dag.nodes)[7]
+    train_data_node = list(inspector_result.original_dag.nodes)[5]
+    train_label_node = list(inspector_result.original_dag.nodes)[6]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_data = train_data_node.processing_func(train_df[['C', 'D']])
     train_labels = OneHotEncoder(sparse=False).fit_transform(train_df[['target']])
@@ -2483,13 +2483,13 @@ def test_keras_wrapper_score():
     expected_dag.add_edge(expected_predict, expected_score, arg_index=0)
     expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[0]
-    predict_node = list(inspector_result.dag.nodes)[5]
-    score_node = list(inspector_result.dag.nodes)[6]
-    test_data_node = list(inspector_result.dag.nodes)[3]
-    test_label_node = list(inspector_result.dag.nodes)[4]
+    fit_node = list(inspector_result.original_dag.nodes)[0]
+    predict_node = list(inspector_result.original_dag.nodes)[5]
+    score_node = list(inspector_result.original_dag.nodes)[6]
+    test_data_node = list(inspector_result.original_dag.nodes)[3]
+    test_label_node = list(inspector_result.original_dag.nodes)[4]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_labels = OneHotEncoder(sparse=False).fit_transform(train_df[['target']])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
@@ -2592,11 +2592,11 @@ def test_keras_wrapper_predict():
     expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
     expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[0]
-    predict_node = list(inspector_result.dag.nodes)[3]
-    test_data_node = list(inspector_result.dag.nodes)[2]
+    fit_node = list(inspector_result.original_dag.nodes)[0]
+    predict_node = list(inspector_result.original_dag.nodes)[3]
+    test_data_node = list(inspector_result.original_dag.nodes)[2]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_labels = OneHotEncoder(sparse=False).fit_transform(train_df[['target']])
     fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
@@ -2669,9 +2669,9 @@ def test_accuracy_score():
     expected_dag.add_edge(expected_data_source1, expected_score, arg_index=0)
     expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    extracted_node = list(inspector_result.dag.nodes)[3]
+    extracted_node = list(inspector_result.original_dag.nodes)[3]
     pd_series1 = pandas.Series([True, False, True, True], name='C')
     pd_series2 = pandas.Series([False, False, False, True], name='D')
     extracted_func_result = extracted_node.processing_func(pd_series1, pd_series2)
@@ -2768,11 +2768,11 @@ def test_grid_search_cv_sgd_classifier():
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[4]
-    train_data_node = list(inspector_result.dag.nodes)[2]
-    train_label_node = list(inspector_result.dag.nodes)[3]
+    fit_node = list(inspector_result.original_dag.nodes)[4]
+    train_data_node = list(inspector_result.original_dag.nodes)[2]
+    train_label_node = list(inspector_result.original_dag.nodes)[3]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_data = train_data_node.processing_func(train_df[['C', 'D']])
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
@@ -2880,11 +2880,11 @@ def test_grid_search_cv_decision_tree():
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[4]
-    train_data_node = list(inspector_result.dag.nodes)[2]
-    train_label_node = list(inspector_result.dag.nodes)[3]
+    fit_node = list(inspector_result.original_dag.nodes)[4]
+    train_data_node = list(inspector_result.original_dag.nodes)[2]
+    train_label_node = list(inspector_result.original_dag.nodes)[3]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_data = train_data_node.processing_func(train_df[['C', 'D']])
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
@@ -2992,11 +2992,11 @@ def test_grid_search_cv_logistic_regression():
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[4]
-    train_data_node = list(inspector_result.dag.nodes)[2]
-    train_label_node = list(inspector_result.dag.nodes)[3]
+    fit_node = list(inspector_result.original_dag.nodes)[4]
+    train_data_node = list(inspector_result.original_dag.nodes)[2]
+    train_label_node = list(inspector_result.original_dag.nodes)[3]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_data = train_data_node.processing_func(train_df[['C', 'D']])
     train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
@@ -3124,11 +3124,11 @@ def test_grid_search_cv_keras_wrapper():
     expected_dag.add_edge(expected_train_data, expected_classifier, arg_index=0)
     expected_dag.add_edge(expected_train_labels, expected_classifier, arg_index=1)
 
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_node = list(inspector_result.dag.nodes)[4]
-    train_data_node = list(inspector_result.dag.nodes)[2]
-    train_label_node = list(inspector_result.dag.nodes)[3]
+    fit_node = list(inspector_result.original_dag.nodes)[4]
+    train_data_node = list(inspector_result.original_dag.nodes)[2]
+    train_label_node = list(inspector_result.original_dag.nodes)[3]
     train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
     train_data = train_data_node.processing_func(train_df[['C', 'D']])
     train_labels = OneHotEncoder(sparse=False).fit_transform(train_df[['target']])

@@ -53,13 +53,14 @@ def test_data_corruption_mini_example_with_transformer_processing_multiple_colum
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .add_what_if_analysis(data_corruption) \
-        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
-        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
-        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (6, 4)
+
+    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
+    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
+    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
 
 
 def test_data_corruption_mini_example_with_projection_modify():
@@ -104,13 +105,14 @@ def test_data_corruption_mini_example_with_projection_modify():
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .add_what_if_analysis(data_corruption) \
-        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
-        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
-        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (4, 4)
+
+    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
+    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
+    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
 
 
 def test_data_corruption_mini_example_only_train_test_split():
@@ -149,13 +151,14 @@ def test_data_corruption_mini_example_only_train_test_split():
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .add_what_if_analysis(data_corruption) \
-        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
-        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
-        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (6, 4)
+
+    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
+    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
+    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
 
 
 def test_data_corruption_mini_example_only_train_test_split_without_optimizer():
@@ -195,13 +198,14 @@ def test_data_corruption_mini_example_only_train_test_split_without_optimizer():
         .on_pipeline_from_string(test_code) \
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
-        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
-        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
-        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (6, 4)
+
+    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
+    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
+    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
 
 
 def test_data_corruption_mini_example_manual_split():
@@ -241,13 +245,14 @@ def test_data_corruption_mini_example_manual_split():
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .add_what_if_analysis(data_corruption) \
-        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
-        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
-        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (6, 4)
+
+    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
+    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
+    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
 
 
 def test_data_corruption_healthcare():
@@ -267,13 +272,14 @@ def test_data_corruption_healthcare():
         .skip_multi_query_optimization(False) \
         .add_custom_monkey_patching_module(custom_monkeypatching) \
         .add_what_if_analysis(data_corruption) \
-        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
-        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
-        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (4, 8)
+
+    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
+    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
+    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
 
 
 def test_data_corruption_compas():
@@ -290,13 +296,14 @@ def test_data_corruption_compas():
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(COMPAS_PY) \
         .add_what_if_analysis(data_corruption) \
-        .save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH) \
-        .save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH) \
-        .save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH) \
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (6, 3)
+
+    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
+    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
+    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
 
 
 def test_data_corruption_adult_complex():
