@@ -100,7 +100,7 @@ class MultiQueryOptimizer:
             what_if_dag = original_dag.copy()
             all_nodes_needing_recomputation = set()
             for patch in patch_set:
-                patch.apply(what_if_dag)
+                patch.apply(what_if_dag, self.pipeline_executor)
             for patch in patch_set:
                 all_nodes_needing_recomputation.update(patch.get_nodes_needing_recomputation(original_dag,
                                                                                              what_if_dag))
@@ -127,7 +127,8 @@ class MultiQueryOptimizer:
                                            node_to_recompute.operator_info,
                                            node_to_recompute.details,
                                            node_to_recompute.optional_code_info,
-                                           node_to_recompute.processing_func)
+                                           node_to_recompute.processing_func,
+                                           node_to_recompute.make_classifier_func)
                 dag.add_node(replacement_node)
                 for parent_node in dag.predecessors(node_to_recompute):
                     edge_data = dag.get_edge_data(parent_node, node_to_recompute)

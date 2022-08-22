@@ -30,10 +30,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
             for patch in pipeline_variant_patches:
                 if isinstance(patch, OperatorRemoval) and \
                         patch.operator_to_remove.operator_info.operator == OperatorType.SELECTION:
-                    parent = list(dag.predecessors(patch.operator_to_remove))[0]
-                    parent_row_count = parent.details.optimizer_info.shape[0]
-                    current_row_count = patch.operator_to_remove.details.optimizer_info.shape[0]
-                    selectivity = current_row_count / parent_row_count
+                    selectivity = patch.compute_filter_selectivity(dag)
                     selectivity_and_filters_to_push_up.append((selectivity, patch))
                     # calculate selectivities
 
@@ -52,6 +49,8 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                                                                operator_to_add_node_after_test,
                                                                operator_to_add_node_after_train)
         return dag, patches
+
+
 
     def _move_filters_and_duplicate_if_required(self, dag, filter_removal_patch, operator_to_add_node_after_test,
                                                 operator_to_add_node_after_train):

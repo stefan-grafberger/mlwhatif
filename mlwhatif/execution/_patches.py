@@ -9,8 +9,7 @@ import networkx
 from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_data_patch, add_new_node_after_node, \
     find_nodes_by_type, replace_node, remove_node, get_sorted_parent_nodes
-from mlwhatif.instrumentation._dag_node import DagNode
-
+from mlwhatif.instrumentation._dag_node import DagNode, OptimizerInfo, DagNodeDetails
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +22,7 @@ class PipelinePatch(ABC):
     changes_following_results: bool
 
     @abstractmethod
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
         """Apply the patch to some DAG"""
         raise NotImplementedError
 
@@ -61,7 +60,7 @@ class OperatorReplacement(OperatorPatch):
     operator_to_replace: DagNode
     replacement_operator: DagNode
 
-    def apply(self, dag: networkx.DiGraph) -> networkx.DiGraph:
+    def apply(self, dag: networkx.DiGraph, pipeline_executor) -> networkx.DiGraph:
         replace_node(dag, self.operator_to_replace, self.replacement_operator)
         return dag
 
@@ -80,13 +79,27 @@ class OperatorRemoval(OperatorPatch):
     maybe_corresponding_test_set_operator: DagNode or None
     before_train_test_split: bool
 
-    def apply(self, dag: networkx.DiGraph):
-        for node in self.get_all_operators_associated_with_filter(dag, self.operator_to_remove):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
+        # We only have one use-case with OperatorRemoval, some very minor updates are required here once this changes,
+        #  we only wan to update selectivities if we actually have a filter
+        assert self.operator_to_remove.operator_info.operator == OperatorType.SELECTION
+        selectivity = self.compute_filter_selectivity(dag)
+
+        all_operators_to_remove = self.get_all_operators_associated_with_filter(dag, self.operator_to_remove)
+        all_operators_to_remove.update(self.get_all_operators_associated_with_filter(
+            dag, self.maybe_corresponding_test_set_operator))
+
+        all_nodes_to_update = set()
+        if self.changes_following_results is True:
+            for removed_node in all_operators_to_remove:
+                original_nodes_needing_recomputation = set(networkx.descendants(dag, removed_node))
+                all_nodes_to_update.update(original_nodes_needing_recomputation)
+        all_nodes_to_update.difference_update(all_operators_to_remove)
+
+        for node in all_operators_to_remove:
             remove_node(dag, node)
-        operators_to_remove = self.get_all_operators_associated_with_filter(
-            dag, self.maybe_corresponding_test_set_operator)
-        for node in operators_to_remove:
-            remove_node(dag, node)
+
+        self._update_optimizer_info_with_selectivity_info(dag, all_nodes_to_update, selectivity, pipeline_executor)
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
         nodes_being_removed_train = self.get_all_operators_associated_with_filter(old_dag, self.operator_to_remove)
@@ -123,6 +136,65 @@ class OperatorRemoval(OperatorPatch):
                                                                                selection_parent_b)
         return operator_after_which_cutoff_required
 
+    @staticmethod
+    def _update_optimizer_info_with_selectivity_info(dag: networkx.DiGraph, nodes_to_update: Iterable[DagNode],
+                                                     selectivity: float, pipeline_executor):
+        """ This updates the optimizer info of all dependent dag nodes """
+        for node_to_recompute in nodes_to_update:
+            replacement_node = OperatorRemoval._update_dag_node_optimizer_info(node_to_recompute, selectivity,
+                                                                               pipeline_executor)
+            dag.add_node(replacement_node)
+            for parent_node in dag.predecessors(node_to_recompute):
+                edge_data = dag.get_edge_data(parent_node, node_to_recompute)
+                dag.add_edge(parent_node, replacement_node, **edge_data)
+            for child_node in dag.successors(node_to_recompute):
+                edge_data = dag.get_edge_data(node_to_recompute, child_node)
+                dag.add_edge(replacement_node, child_node, **edge_data)
+            dag.remove_node(node_to_recompute)
+
+    @staticmethod
+    def _update_dag_node_optimizer_info(node_to_recompute, selectivity, pipeline_executor):
+        """Updates the OptimizerInfo for a single DagNode"""
+        # This assumes filters are not correlated etc
+        if node_to_recompute.details.optimizer_info is not None:
+            if node_to_recompute.details.optimizer_info.shape is not None:
+                updated_shape = (node_to_recompute.details.optimizer_info.shape[0] * (1 / selectivity),
+                                 node_to_recompute.details.optimizer_info.shape[1])
+            else:
+                updated_shape = None
+            if node_to_recompute.operator_info.operator != OperatorType.ESTIMATOR:
+                new_memory_value = node_to_recompute.details.optimizer_info.memory * (1 / selectivity)
+            else:
+                new_memory_value = node_to_recompute.details.optimizer_info.memory
+            updated_optimizer_info = OptimizerInfo(
+                node_to_recompute.details.optimizer_info.runtime * (1 / selectivity),
+                updated_shape,
+                new_memory_value
+            )
+        else:
+            updated_optimizer_info = None
+        replacement_node = DagNode(pipeline_executor.get_next_op_id(),
+                                   node_to_recompute.code_location,
+                                   node_to_recompute.operator_info,
+                                   DagNodeDetails(
+                                       node_to_recompute.details.description,
+                                       node_to_recompute.details.columns,
+                                       updated_optimizer_info
+                                   ),
+                                   node_to_recompute.optional_code_info,
+                                   node_to_recompute.processing_func,
+                                   node_to_recompute.make_classifier_func)
+        return replacement_node
+
+    def compute_filter_selectivity(self, dag):
+        """Compute the selecivity of the filter being removed"""
+        assert self.operator_to_remove.operator_info.operator == OperatorType.SELECTION
+        parent = list(dag.predecessors(self.operator_to_remove))[0]
+        parent_row_count = parent.details.optimizer_info.shape[0]
+        current_row_count = self.operator_to_remove.details.optimizer_info.shape[0]
+        selectivity = current_row_count / parent_row_count
+        return selectivity
+
 
 @dataclasses.dataclass
 class AppendNodeAfterOperator(OperatorPatch):
@@ -131,7 +203,7 @@ class AppendNodeAfterOperator(OperatorPatch):
     operator_to_add_node_after: DagNode
     node_to_insert: DagNode
 
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
         add_new_node_after_node(dag, self.node_to_insert, self.operator_to_add_node_after)
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
@@ -151,7 +223,7 @@ class DataFiltering(DataPatch):
     train_not_test: bool
     only_reads_column: List[str]
 
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
         location, is_before_slit = find_dag_location_for_data_patch(self.only_reads_column, dag, self.train_not_test)
         if is_before_slit is False:
             add_new_node_after_node(dag, self.filter_operator, location)
@@ -200,7 +272,7 @@ class DataProjection(DataPatch):
     maybe_udf_split_info: UdfSplitInfo
 
 
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
 
         columns_required = set()
         if self.only_reads_column is not None:
@@ -231,7 +303,7 @@ class DataTransformer(DataPatch):
     transform_operator: DagNode
     modifies_column: str
 
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
         train_location, _ = find_dag_location_for_data_patch([self.modifies_column], dag, True)
         test_location, _ = find_dag_location_for_data_patch([self.modifies_column], dag, False)
         add_new_node_after_node(dag, self.fit_transform_operator, train_location)
@@ -250,7 +322,7 @@ class ModelPatch(PipelinePatch):
 
     replace_with_node: DagNode
 
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
         estimator_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
         if len(estimator_nodes) != 1:
             raise Exception("Currently, ModelPatch only supports pipelines with exactly one estimator!")
