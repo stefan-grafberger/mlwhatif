@@ -7,7 +7,7 @@ from typing import Iterable
 
 import networkx
 
-from mlwhatif import AnalysisResults
+from mlwhatif._analysis_results import AnalysisResults
 from mlwhatif.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
 from mlwhatif.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
 from mlwhatif.optimization._simple_projection_push_up import SimpleProjectionPushUp

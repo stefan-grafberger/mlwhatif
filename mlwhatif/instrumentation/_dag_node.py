@@ -2,9 +2,7 @@
 The Nodes used in the DAG as nodes for the networkx.DiGraph
 """
 import dataclasses
-from typing import List, Dict, Callable, Tuple
-
-import networkx
+from typing import List, Callable, Tuple
 
 from mlwhatif.instrumentation._operator_types import OperatorContext
 

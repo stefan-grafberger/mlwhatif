@@ -17,7 +17,7 @@ from nbconvert import PythonExporter
 
 from ._call_capture_transformer import CallCaptureTransformer
 from .. import monkeypatching
-from .._inspector_result import AnalysisResults
+from .._analysis_results import AnalysisResults
 from ..analysis._what_if_analysis import WhatIfAnalysis
 from ..execution._dag_executor import DagExecutor
 from ..execution._multi_query_optimizer import MultiQueryOptimizer

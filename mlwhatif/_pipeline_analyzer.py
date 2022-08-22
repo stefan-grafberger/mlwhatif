@@ -3,7 +3,7 @@ User-facing API for inspecting the pipeline
 """
 from typing import Iterable, List
 
-from ._inspector_result import AnalysisResults
+from ._analysis_results import AnalysisResults
 from .analysis._what_if_analysis import WhatIfAnalysis
 from .instrumentation._pipeline_executor import singleton, logger
 
