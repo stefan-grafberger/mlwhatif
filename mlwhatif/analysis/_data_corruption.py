@@ -1,6 +1,7 @@
 """
 The Data Corruption What-If Analysis
 """
+from enum import Enum
 from functools import partial
 from types import FunctionType
 from typing import Iterable, Dict, Callable, Union
@@ -8,6 +9,9 @@ from typing import Iterable, Dict, Callable, Union
 import networkx
 import numpy
 import pandas
+from jenga.corruptions.generic import CategoricalShift
+from jenga.corruptions.numerical import Scaling, GaussianNoise
+from jenga.corruptions.text import BrokenCharacters
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type
@@ -17,18 +21,46 @@ from mlwhatif.execution._patches import DataProjection, PipelinePatch, UdfSplitI
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
 
+class CorruptionType(Enum):
+    """
+    The different corruption functions known to mlwhatif, but custom corruption functions can also be used
+    """
+    CATEGORICAL_SHIFT = "categorical shift"
+    MISSING_VALUES = "missing values"
+    BROKEN_CHARACTERS = "broken characters"
+    GAUSSIAN_NOISE = "gaussian noise"
+    SCALING = "scaling"
+
+
+CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES = {
+    CorruptionType.CATEGORICAL_SHIFT: lambda pandas_df, column: CategoricalShift('education', 1.).transform(pandas_df),
+    CorruptionType.MISSING_VALUES: lambda pandas_df, column: Scaling(column=column, fraction=1.).transform(pandas_df),
+    CorruptionType.BROKEN_CHARACTERS:
+        lambda pandas_df, column: BrokenCharacters(column=column, fraction=1.).transform(pandas_df),
+    CorruptionType.GAUSSIAN_NOISE:
+        lambda pandas_df, column: GaussianNoise(column=column, fraction=1.).transform(pandas_df),
+    CorruptionType.SCALING: lambda pandas_df, column: Scaling(column=column, fraction=1.).transform(pandas_df)
+}
+
+
 class DataCorruption(WhatIfAnalysis):
     """
     The Data Corruption What-If Analysis
     """
 
     def __init__(self,
-                 column_to_corruption: Dict[str, FunctionType],
+                 column_to_corruption: Dict[str, Union[FunctionType, CorruptionType]],
                  corruption_percentages: Iterable[Union[float, Callable]] or None = None,
                  also_corrupt_train: bool = False):
         # pylint: disable=unsubscriptable-object
-        self.column_to_corruption = list(column_to_corruption.items())
         self.also_corrupt_train = also_corrupt_train
+        self.column_to_corruption = column_to_corruption
+        for column, corruption_function in self.column_to_corruption.items():
+            if isinstance(corruption_function, CorruptionType):
+                # noinspection PyTypeChecker
+                self.column_to_corruption[column] = partial(CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES[corruption_function],
+                                                            column=column)
+        self.column_to_corruption = list(self.column_to_corruption.items())
         if corruption_percentages is None:
             self.corruption_percentages = [0.2, 0.5, 0.9]
         else:

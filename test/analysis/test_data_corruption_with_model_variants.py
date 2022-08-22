@@ -5,13 +5,12 @@ import os
 from functools import partial
 from inspect import cleandoc
 
-from jenga.corruptions.generic import CategoricalShift
-from jenga.corruptions.numerical import Scaling
 from sklearn.linear_model import LogisticRegression
 
 from example_pipelines import HEALTHCARE_PY, COMPAS_PY, ADULT_COMPLEX_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
+from mlwhatif.analysis._data_corruption import CorruptionType
 from mlwhatif.analysis._data_corruption_with_model_variants import DataCorruptionWithModelVariants
 from mlwhatif.utils import get_project_root
 
@@ -53,10 +52,9 @@ def test_data_corruption_model_variants_mini_example_with_transformer_processing
         pandas_df['B'] = 0
         return pandas_df
 
-    data_corruption = DataCorruptionWithModelVariants(
-        {'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df), 'B': corruption},
-        [('logistic_regression', partial(LogisticRegression))],
-        also_corrupt_train=True)
+    data_corruption = DataCorruptionWithModelVariants({'A': CorruptionType.SCALING, 'B': corruption},
+                                                      [('logistic_regression', partial(LogisticRegression))],
+                                                      also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -106,11 +104,10 @@ def test_data_corruption_model_variants_mini_example_with_projection_modify():
     def custom_index_selection_func(pandas_df):
         return pandas_df['B'] >= 3
 
-    data_corruption = DataCorruptionWithModelVariants(
-        {'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df), 'B': corruption},
-        [('logistic_regression', partial(LogisticRegression))],
-        also_corrupt_train=True,
-        corruption_percentages=[0.2, custom_index_selection_func])
+    data_corruption = DataCorruptionWithModelVariants({'A': CorruptionType.SCALING, 'B': corruption},
+                                                      [('logistic_regression', partial(LogisticRegression))],
+                                                      also_corrupt_train=True,
+                                                      corruption_percentages=[0.2, custom_index_selection_func])
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -155,10 +152,9 @@ def test_data_corruption_model_variants_mini_example_only_train_test_split():
         pandas_df['B'] = 0
         return pandas_df
 
-    data_corruption = DataCorruptionWithModelVariants(
-        {'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df), 'B': corruption},
-        [('logistic_regression', partial(LogisticRegression))],
-        also_corrupt_train=True)
+    data_corruption = DataCorruptionWithModelVariants({'A': CorruptionType.SCALING, 'B': corruption},
+                                                      [('logistic_regression', partial(LogisticRegression))],
+                                                      also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -203,10 +199,9 @@ def test_data_corruption_model_variants_mini_example_only_train_test_split_witho
         pandas_df['B'] = 0
         return pandas_df
 
-    data_corruption = DataCorruptionWithModelVariants(
-        {'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df), 'B': corruption},
-        [('logistic_regression', partial(LogisticRegression))],
-        also_corrupt_train=True)
+    data_corruption = DataCorruptionWithModelVariants({'A': CorruptionType.SCALING, 'B': corruption},
+                                                      [('logistic_regression', partial(LogisticRegression))],
+                                                      also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -253,10 +248,9 @@ def test_data_corruption_model_variants_mini_example_manual_split():
         pandas_df['B'] = 0
         return pandas_df
 
-    data_corruption = DataCorruptionWithModelVariants(
-        {'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df), 'B': corruption},
-        [('logistic_regression', partial(LogisticRegression))],
-        also_corrupt_train=True)
+    data_corruption = DataCorruptionWithModelVariants({'A': CorruptionType.SCALING, 'B': corruption},
+                                                      [('logistic_regression', partial(LogisticRegression))],
+                                                      also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -279,12 +273,10 @@ def test_data_corruption_model_variants_healthcare():
         pandas_df['num_children'] = 0
         return pandas_df
 
-    data_corruption = DataCorruptionWithModelVariants(
-        {'income': lambda pandas_df: Scaling(column='income', fraction=1.).transform(pandas_df),
-         'num_children': corruption},
-        [('logistic_regression', partial(LogisticRegression))],
-        corruption_percentages=[0.3, 0.6],
-        also_corrupt_train=True)
+    data_corruption = DataCorruptionWithModelVariants({'income': CorruptionType.SCALING, 'num_children': corruption},
+                                                      [('logistic_regression', partial(LogisticRegression))],
+                                                      corruption_percentages=[0.3, 0.6],
+                                                      also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(HEALTHCARE_PY) \
@@ -309,11 +301,9 @@ def test_data_corruption_model_variants_compas():
         pandas_df['is_recid'] = 1
         return pandas_df
 
-    data_corruption = DataCorruptionWithModelVariants(
-        {'age': lambda pandas_df: Scaling(column='age', fraction=1.).transform(pandas_df),
-         'is_recid': corruption},
-        [('logistic_regression', partial(LogisticRegression))],
-        also_corrupt_train=False)
+    data_corruption = DataCorruptionWithModelVariants({'age': CorruptionType.SCALING, 'is_recid': corruption},
+                                                      [('logistic_regression', partial(LogisticRegression))],
+                                                      also_corrupt_train=False)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(COMPAS_PY) \
@@ -337,8 +327,8 @@ def test_data_corruption_model_variants_adult_complex():
         return pandas_df
 
     data_corruption = DataCorruptionWithModelVariants(
-        {'education': lambda pandas_df: CategoricalShift('education', 1.).transform(pandas_df),
-         'workclass': lambda pandas_df: CategoricalShift('workclass', 1.).transform(pandas_df),
+        {'education': CorruptionType.CATEGORICAL_SHIFT,
+         'workclass':  CorruptionType.CATEGORICAL_SHIFT,
          'hours-per-week': corruption},
         [('logistic_regression', partial(LogisticRegression, solver='saga'))],
         corruption_percentages=[0.25, 0.5, 0.75, 1.0],

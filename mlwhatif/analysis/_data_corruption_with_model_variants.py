@@ -12,6 +12,7 @@ import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type
+from mlwhatif.analysis._data_corruption import CorruptionType, CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import DataProjection, PipelinePatch, UdfSplitInfo, ModelPatch
@@ -24,12 +25,18 @@ class DataCorruptionWithModelVariants(WhatIfAnalysis):
     """
 
     def __init__(self,
-                 column_to_corruption: Dict[str, FunctionType],
+                 column_to_corruption: Dict[str, Union[FunctionType, CorruptionType]],
                  named_model_variants: Iterable[tuple[str, Callable]],
                  corruption_percentages: Iterable[Union[float, Callable]] or None = None,
                  also_corrupt_train: bool = False):
         # pylint: disable=unsubscriptable-object
-        self.column_to_corruption = list(column_to_corruption.items())
+        self.column_to_corruption = column_to_corruption
+        for column, corruption_function in self.column_to_corruption.items():
+            if isinstance(corruption_function, CorruptionType):
+                # noinspection PyTypeChecker
+                self.column_to_corruption[column] = partial(CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES[corruption_function],
+                                                            column=column)
+        self.column_to_corruption = list(self.column_to_corruption.items())
         self.also_corrupt_train = also_corrupt_train
         self.named_model_variants = [("original", None), *named_model_variants]
         if corruption_percentages is None:

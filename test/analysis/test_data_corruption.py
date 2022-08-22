@@ -4,13 +4,10 @@ Tests whether the Data Corruption analysis works
 import os
 from inspect import cleandoc
 
-from jenga.corruptions.generic import CategoricalShift
-from jenga.corruptions.numerical import Scaling
-
 from example_pipelines import HEALTHCARE_PY, COMPAS_PY, ADULT_COMPLEX_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
-from mlwhatif.analysis._data_corruption import DataCorruption
+from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
 from mlwhatif.utils import get_project_root
 
 INTERMEDIATE_EXTRACTION_ORIG_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
@@ -51,9 +48,7 @@ def test_data_corruption_mini_example_with_transformer_processing_multiple_colum
         pandas_df['B'] = 0
         return pandas_df
 
-    data_corruption = DataCorruption({'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df),
-                                      'B': corruption},
-                                     also_corrupt_train=True)
+    data_corruption = DataCorruption({'A': CorruptionType.SCALING, 'B': corruption}, also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -103,9 +98,7 @@ def test_data_corruption_mini_example_with_projection_modify():
     def custom_index_selection_func(pandas_df):
         return pandas_df['B'] >= 3
 
-    data_corruption = DataCorruption({'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df),
-                                      'B': corruption},
-                                     also_corrupt_train=True,
+    data_corruption = DataCorruption({'A': CorruptionType.SCALING, 'B': corruption}, also_corrupt_train=True,
                                      corruption_percentages=[0.2, custom_index_selection_func])
 
     analysis_result = PipelineAnalyzer \
@@ -151,9 +144,7 @@ def test_data_corruption_mini_example_only_train_test_split():
         pandas_df['B'] = 0
         return pandas_df
 
-    data_corruption = DataCorruption({'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df),
-                                      'B': corruption},
-                                     also_corrupt_train=True)
+    data_corruption = DataCorruption({'A': CorruptionType.SCALING, 'B': corruption}, also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -198,9 +189,7 @@ def test_data_corruption_mini_example_only_train_test_split_without_optimizer():
         pandas_df['B'] = 0
         return pandas_df
 
-    data_corruption = DataCorruption({'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df),
-                                      'B': corruption},
-                                     also_corrupt_train=True)
+    data_corruption = DataCorruption({'A': CorruptionType.SCALING, 'B': corruption}, also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -247,9 +236,7 @@ def test_data_corruption_mini_example_manual_split():
         pandas_df['B'] = 0
         return pandas_df
 
-    data_corruption = DataCorruption({'A': lambda pandas_df: Scaling(column='A', fraction=1.).transform(pandas_df),
-                                      'B': corruption},
-                                     also_corrupt_train=True)
+    data_corruption = DataCorruption({'A': CorruptionType.SCALING, 'B': corruption}, also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -271,9 +258,7 @@ def test_data_corruption_healthcare():
         pandas_df['num_children'] = 0
         return pandas_df
 
-    data_corruption = DataCorruption({'income':
-                                      lambda pandas_df: Scaling(column='income', fraction=1.).transform(pandas_df),
-                                      'num_children': corruption},
+    data_corruption = DataCorruption({'income': CorruptionType.SCALING, 'num_children': corruption},
                                      corruption_percentages=[0.3, 0.6],
                                      also_corrupt_train=True)
 
@@ -300,10 +285,7 @@ def test_data_corruption_compas():
         pandas_df['is_recid'] = 1
         return pandas_df
 
-    data_corruption = DataCorruption({'age':
-                                      lambda pandas_df: Scaling(column='age', fraction=1.).transform(pandas_df),
-                                      'is_recid': corruption},
-                                     also_corrupt_train=False)
+    data_corruption = DataCorruption({'age': CorruptionType.SCALING, 'is_recid': corruption}, also_corrupt_train=False)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(COMPAS_PY) \
@@ -326,10 +308,8 @@ def test_data_corruption_adult_complex():
         pandas_df['hours-per-week'] = 400
         return pandas_df
 
-    data_corruption = DataCorruption({'education':
-                                      lambda pandas_df: CategoricalShift('education', 1.).transform(pandas_df),
-                                      'workclass':
-                                      lambda pandas_df: CategoricalShift('workclass', 1.).transform(pandas_df),
+    data_corruption = DataCorruption({'education': CorruptionType.CATEGORICAL_SHIFT,
+                                      'workclass': CorruptionType.CATEGORICAL_SHIFT,
                                       'hours-per-week': corruption},
                                      corruption_percentages=[0.25, 0.5, 0.75, 1.0],
                                      also_corrupt_train=True)
