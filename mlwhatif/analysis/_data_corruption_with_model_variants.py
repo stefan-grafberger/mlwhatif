@@ -139,7 +139,8 @@ class DataCorruptionWithModelVariants(WhatIfAnalysis):
         new_estimator_node = DagNode(singleton.get_next_op_id(),
                                      estimator_node.code_location,
                                      estimator_node.operator_info,
-                                     DagNodeDetails(new_description, estimator_node.details.columns),
+                                     DagNodeDetails(new_description, estimator_node.details.columns,
+                                                    estimator_node.details.optimizer_info),
                                      estimator_node.optional_code_info,
                                      new_processing_func)
         model_patch = ModelPatch(singleton.get_next_patch_id(), self, True, new_estimator_node)

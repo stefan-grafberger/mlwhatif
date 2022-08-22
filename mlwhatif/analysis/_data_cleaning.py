@@ -15,6 +15,7 @@ from mlwhatif.analysis._cleaning_methods import MissingValueCleaner, DuplicateCl
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import DataFiltering, DataTransformer, ModelPatch, PipelinePatch
+from mlwhatif.instrumentation._dag_node import OptimizerInfo
 from mlwhatif.instrumentation._pipeline_executor import singleton
 
 
@@ -218,10 +219,20 @@ class DataCleaning(WhatIfAnalysis):
                     new_processing_func = partial(cleaning_method.fit_or_fit_transform_func,
                                                   make_classifier_func=estimator_node.make_classifier_func)
                     new_description = f"{cleaning_method.method_name} patched {estimator_node.details.description}"
+                    old_optimizer_info = estimator_node.details.optimizer_info
+                    if cleaning_method.method_name == "cleanlab":
+                        optimizer_mult_factor = (5 + 1)  # cleanlab default cross-val setting is *5, +1 is final retrain
+                    elif cleaning_method.method_name == "shapley":
+                        optimizer_mult_factor = (1 + 1)  # no cross-val currently, +1 is final retrain
+                    else:
+                        optimizer_mult_factor = 1
+                    new_optimizer_info = OptimizerInfo(old_optimizer_info.runtime * optimizer_mult_factor,
+                                                       old_optimizer_info.shape, old_optimizer_info.memory)
                     new_estimator_node = DagNode(singleton.get_next_op_id(),
                                                  estimator_node.code_location,
                                                  estimator_node.operator_info,
-                                                 DagNodeDetails(new_description, estimator_node.details.columns),
+                                                 DagNodeDetails(new_description, estimator_node.details.columns,
+                                                                new_optimizer_info),
                                                  estimator_node.optional_code_info,
                                                  new_processing_func)
                     model_patch = ModelPatch(singleton.get_next_patch_id(), self, True, new_estimator_node)
