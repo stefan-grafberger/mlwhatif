@@ -11,7 +11,7 @@ from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_new_filter_on_column, get_sorted_parent_nodes, \
     get_sorted_children_nodes
 from mlwhatif.execution._patches import PipelinePatch, OperatorRemoval
-from mlwhatif.execution.optimization._query_optimization_rules import QueryOptimizationRule
+from mlwhatif.optimization._query_optimization_rules import QueryOptimizationRule
 
 
 class OperatorDeletionFilterPushUp(QueryOptimizationRule):
