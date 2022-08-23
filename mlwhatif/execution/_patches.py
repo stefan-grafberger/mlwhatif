@@ -177,7 +177,7 @@ class OperatorRemoval(OperatorPatch):
         # This assumes filters are not correlated etc
         if node_to_recompute.details.optimizer_info is not None:
             if node_to_recompute.details.optimizer_info.shape is not None:
-                updated_shape = (node_to_recompute.details.optimizer_info.shape[0] * (1 / selectivity),
+                updated_shape = (int(node_to_recompute.details.optimizer_info.shape[0] * (1 / selectivity)),
                                  node_to_recompute.details.optimizer_info.shape[1])
             else:
                 updated_shape = None
@@ -207,7 +207,6 @@ class OperatorRemoval(OperatorPatch):
 
     def compute_filter_selectivity(self, dag):
         """Compute the selecivity of the filter being removed"""
-        assert self.operator_to_remove.operator_info.operator == OperatorType.SELECTION
         parent = list(dag.predecessors(self.operator_to_remove))[0]
         parent_row_count = parent.details.optimizer_info.shape[0]
         current_row_count = self.operator_to_remove.details.optimizer_info.shape[0]

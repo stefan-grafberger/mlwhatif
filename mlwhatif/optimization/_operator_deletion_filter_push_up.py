@@ -59,6 +59,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                 .filter_get_operator_after_which_cutoff_required(dag, filter_removal_patch.operator_to_remove)
 
             selectivity = filter_removal_patch.compute_filter_selectivity(dag)
+            previous_row_count = operator_after_which_cutoff_required_train.details.optimizer_info.shape[0]
 
             dag, operator_after_which_cutoff_required_test = \
                 self.duplicate_filter_nodes_for_push_up_behind_train_test_split(dag, filter_removal_patch)
@@ -83,6 +84,23 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                                                          operator_to_add_node_after_train)
 
             filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, ops_affected_by_move, selectivity)
+
+            filter_condition_nodes_train = filter_removal_patch.get_all_operators_associated_with_filter(
+                dag, filter_removal_patch.operator_to_remove)
+            filter_condition_nodes_test = filter_removal_patch.get_all_operators_associated_with_filter(
+                dag, filter_removal_patch.maybe_corresponding_test_set_operator)
+
+            filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, filter_condition_nodes_train,
+                                                                             selectivity)
+
+            correction_factor_train = previous_row_count / \
+                operator_to_add_node_after_train.details.optimizer_info.shape[0]
+            filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, filter_condition_nodes_train,
+                                                                             correction_factor_train)
+            correction_factor_test = previous_row_count / \
+                operator_to_add_node_after_test.details.optimizer_info.shape[0]
+            filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, filter_condition_nodes_test,
+                                                                             correction_factor_test)
         elif filter_removal_patch.maybe_corresponding_test_set_operator is not None:
             operator_after_which_cutoff_required_train = filter_removal_patch \
                 .filter_get_operator_after_which_cutoff_required(dag, filter_removal_patch.operator_to_remove)
