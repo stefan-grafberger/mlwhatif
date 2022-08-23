@@ -83,7 +83,7 @@ class MultiQueryOptimizer:
         for patch_set in patches:
             what_if_dag = original_dag.copy()
             for patch in patch_set:
-                patch.apply(what_if_dag)
+                patch.apply(what_if_dag, self.pipeline_executor)
             what_if_dags.append(what_if_dag)
         self._make_all_nodes_unique(what_if_dags)
         big_execution_dag = networkx.compose_all(what_if_dags)

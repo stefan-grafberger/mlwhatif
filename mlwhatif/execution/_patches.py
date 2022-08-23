@@ -90,10 +90,9 @@ class OperatorRemoval(OperatorPatch):
             dag, self.maybe_corresponding_test_set_operator))
 
         all_nodes_to_update = set()
-        if self.changes_following_results is True:
-            for removed_node in all_operators_to_remove:
-                original_nodes_needing_recomputation = set(networkx.descendants(dag, removed_node))
-                all_nodes_to_update.update(original_nodes_needing_recomputation)
+        for removed_node in all_operators_to_remove:
+            original_nodes_needing_recomputation = set(networkx.descendants(dag, removed_node))
+            all_nodes_to_update.update(original_nodes_needing_recomputation)
         all_nodes_to_update.difference_update(all_operators_to_remove)
 
         for node in all_operators_to_remove:
