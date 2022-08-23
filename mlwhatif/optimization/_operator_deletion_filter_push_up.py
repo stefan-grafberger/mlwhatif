@@ -50,16 +50,31 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                                                                operator_to_add_node_after_train)
         return dag, patches
 
-    def _move_filters_and_duplicate_if_required(self, dag, filter_removal_patch, operator_to_add_node_after_test,
-                                                operator_to_add_node_after_train):
+    def _move_filters_and_duplicate_if_required(self, dag, filter_removal_patch: OperatorRemoval,
+                                                operator_to_add_node_after_test, operator_to_add_node_after_train):
         """The part where the actual filter push-up happens"""
         if filter_removal_patch.before_train_test_split is True:
             # Modifiy DAG, duplicate deletion node not needed probably
             operator_after_which_cutoff_required_train = filter_removal_patch \
                 .filter_get_operator_after_which_cutoff_required(dag, filter_removal_patch.operator_to_remove)
 
+            selectivity = filter_removal_patch.compute_filter_selectivity(dag)
+
             dag, operator_after_which_cutoff_required_test = \
                 self.duplicate_filter_nodes_for_push_up_behind_train_test_split(dag, filter_removal_patch)
+
+            paths_between_generator_train = networkx.all_simple_paths(dag,
+                                                                      source=operator_after_which_cutoff_required_train,
+                                                                      target=operator_to_add_node_after_train)
+            paths_between_generator_test = networkx.all_simple_paths(dag,
+                                                                     source=operator_after_which_cutoff_required_test,
+                                                                     target=operator_to_add_node_after_test)
+            ops_affected_by_move = {node for path in paths_between_generator_train for node in path}
+            ops_affected_by_move.update({node for path in paths_between_generator_test for node in path})
+
+            nodes_associated_with_filter = filter_removal_patch.get_all_operators_associated_with_filter(
+                dag, filter_removal_patch.operator_to_remove, True)
+            ops_affected_by_move.difference_update(nodes_associated_with_filter)
 
             self._move_duplicated_filter_to_new_location(dag, filter_removal_patch,
                                                          operator_after_which_cutoff_required_test,
@@ -67,6 +82,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                                                          operator_to_add_node_after_test,
                                                          operator_to_add_node_after_train)
 
+            filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, ops_affected_by_move, selectivity)
         elif filter_removal_patch.maybe_corresponding_test_set_operator is not None:
             operator_after_which_cutoff_required_train = filter_removal_patch \
                 .filter_get_operator_after_which_cutoff_required(dag, filter_removal_patch.operator_to_remove)

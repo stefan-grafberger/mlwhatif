@@ -53,7 +53,7 @@ class DagNodeDetails:
     """
     description: str or None = None
     columns: List[str] or None = None
-    optimizer_info: OptimizerInfo or None = None
+    optimizer_info: OptimizerInfo or None = dataclasses.field(compare=False, default=None)
 
 
 @dataclasses.dataclass

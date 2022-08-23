@@ -98,7 +98,7 @@ class OperatorRemoval(OperatorPatch):
         for node in all_operators_to_remove:
             remove_node(dag, node)
 
-        self._update_optimizer_info_with_selectivity_info(dag, all_nodes_to_update, selectivity, pipeline_executor)
+        self.update_optimizer_info_with_selectivity_info(dag, all_nodes_to_update, selectivity)
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
         nodes_being_removed_train = self.get_all_operators_associated_with_filter(old_dag, self.operator_to_remove)
@@ -136,23 +136,43 @@ class OperatorRemoval(OperatorPatch):
         return operator_after_which_cutoff_required
 
     @staticmethod
-    def _update_optimizer_info_with_selectivity_info(dag: networkx.DiGraph, nodes_to_update: Iterable[DagNode],
-                                                     selectivity: float, pipeline_executor):
+    def update_optimizer_info_with_selectivity_info(dag: networkx.DiGraph, nodes_to_update: Iterable[DagNode],
+                                                    selectivity: float):
         """ This updates the optimizer info of all dependent dag nodes """
-        for node_to_recompute in nodes_to_update:
-            replacement_node = OperatorRemoval._update_dag_node_optimizer_info(node_to_recompute, selectivity,
-                                                                               pipeline_executor)
-            dag.add_node(replacement_node)
-            for parent_node in dag.predecessors(node_to_recompute):
-                edge_data = dag.get_edge_data(parent_node, node_to_recompute)
-                dag.add_edge(parent_node, replacement_node, **edge_data)
-            for child_node in dag.successors(node_to_recompute):
-                edge_data = dag.get_edge_data(node_to_recompute, child_node)
-                dag.add_edge(replacement_node, child_node, **edge_data)
-            dag.remove_node(node_to_recompute)
+        nodes_to_update = set(nodes_to_update)
+        node_ids_to_fix = set()
+
+        def update_selectivity_func(dag_node: DagNode) -> DagNode:
+            if dag_node not in nodes_to_update:
+                result = dag_node
+            else:
+                result = OperatorRemoval._update_dag_node_optimizer_info(dag_node, selectivity)
+                node_ids_to_fix.add(result.node_id)
+            return result
+
+        def finalise_node_update(dag_node: DagNode) -> DagNode:
+            result = dag_node
+            if dag_node.node_id in node_ids_to_fix:
+                # necessary because otherwise equals true and network does nothing
+                result = DagNode(
+                    -dag_node.node_id,
+                    dag_node.code_location,
+                    dag_node.operator_info,
+                    dag_node.details,
+                    dag_node.optional_code_info,
+                    dag_node.processing_func,
+                    dag_node.make_classifier_func
+                )
+            return result
+
+        # two relabels necessary because otherwise equals true and network does nothing
+        # noinspection PyTypeChecker
+        networkx.relabel_nodes(dag, update_selectivity_func, copy=False)
+        # noinspection PyTypeChecker
+        networkx.relabel_nodes(dag, finalise_node_update, copy=False)
 
     @staticmethod
-    def _update_dag_node_optimizer_info(node_to_recompute, selectivity, pipeline_executor):
+    def _update_dag_node_optimizer_info(node_to_recompute, selectivity) -> DagNode:
         """Updates the OptimizerInfo for a single DagNode"""
         # This assumes filters are not correlated etc
         if node_to_recompute.details.optimizer_info is not None:
@@ -172,7 +192,7 @@ class OperatorRemoval(OperatorPatch):
             )
         else:
             updated_optimizer_info = None
-        replacement_node = DagNode(pipeline_executor.get_next_op_id(),
+        replacement_node = DagNode(-node_to_recompute.node_id,
                                    node_to_recompute.code_location,
                                    node_to_recompute.operator_info,
                                    DagNodeDetails(
