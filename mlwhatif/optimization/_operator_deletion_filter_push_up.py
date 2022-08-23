@@ -50,8 +50,6 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                                                                operator_to_add_node_after_train)
         return dag, patches
 
-
-
     def _move_filters_and_duplicate_if_required(self, dag, filter_removal_patch, operator_to_add_node_after_test,
                                                 operator_to_add_node_after_train):
         """The part where the actual filter push-up happens"""

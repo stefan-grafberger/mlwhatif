@@ -21,7 +21,7 @@ class AppendNodeBetweenOperators(OperatorPatch):
     maybe_udf_split_info: UdfSplitInfo
     train_not_test: bool
 
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
         add_new_node_between_nodes(dag, self.node_to_insert, self.operator_to_add_node_after,
                                    self.operator_to_add_node_before)
         # TODO: Handle case where maybe_udf_split_info is not None and use it
@@ -44,7 +44,7 @@ class UdfSplitAndReuseAppendNodeBetweenOperators(OperatorPatch):
     train_not_test: bool
     first_index_function_occurrence: bool
 
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
         add_new_node_between_nodes(dag, self.apply_corruption_to_fraction_node, self.operator_to_add_node_after,
                                    self.operator_to_add_node_before)
         if self.first_index_function_occurrence is True:
@@ -70,7 +70,7 @@ class OperatorTransformerInsertion(OperatorPatch):
     operator_to_add_transform_node_after: DagNode
     operator_to_add_transform_node_before: DagNode
 
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
         add_new_node_between_nodes(dag, self.fit_transform_node_to_insert,
                                    self.operator_to_add_fit_transform_node_after,
                                    self.operator_to_add_fit_transform_node_before)
