@@ -109,6 +109,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
 
 
         elif filter_removal_patch.maybe_corresponding_test_set_operator is not None:
+            # TODO: Update estimates
             operator_after_which_cutoff_required_train = filter_removal_patch \
                 .filter_get_operator_after_which_cutoff_required(dag, filter_removal_patch.operator_to_remove)
             operator_after_which_cutoff_required_test = filter_removal_patch \
@@ -120,6 +121,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
             self._move_filter_to_new_location(dag, filter_removal_patch, operator_after_which_cutoff_required_test,
                                               operator_to_add_node_after_test)
         else:
+            # TODO: Update estimates
             # Need to move train operator only
             # Modifiy DAG, duplicate deletion node not needed probably
             operator_after_which_cutoff_required_train = filter_removal_patch \
