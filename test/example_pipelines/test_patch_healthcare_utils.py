@@ -79,10 +79,10 @@ def test_my_word_to_vec_transformer():
                                        Comparison(FunctionType))
     expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
     expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
-    compare(networkx.to_dict_of_dicts(inspector_result.dag), networkx.to_dict_of_dicts(expected_dag))
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_transform_node = list(inspector_result.dag.nodes)[1]
-    transform_node = list(inspector_result.dag.nodes)[3]
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    transform_node = list(inspector_result.original_dag.nodes)[3]
     pandas_df = pandas.DataFrame({'A': ['cat_a', 'cat_b', 'cat_b', 'cat_c']})
     fit_transformed_result = fit_transform_node.processing_func(pandas_df)
     assert fit_transformed_result.shape == (4, 2)
