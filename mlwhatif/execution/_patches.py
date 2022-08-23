@@ -2,7 +2,7 @@
 import dataclasses
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Callable, Iterable
+from typing import List, Callable, Iterable, Dict
 
 import networkx
 
@@ -137,7 +137,7 @@ class OperatorRemoval(OperatorPatch):
 
     @staticmethod
     def update_optimizer_info_with_selectivity_info(dag: networkx.DiGraph, nodes_to_update: Iterable[DagNode],
-                                                    selectivity: float):
+                                                    selectivity: float, force_row_count: Dict[DagNode, int] = None):
         """ This updates the optimizer info of all dependent dag nodes """
         nodes_to_update = set(nodes_to_update)
         node_ids_to_fix = set()
@@ -146,7 +146,7 @@ class OperatorRemoval(OperatorPatch):
             if dag_node not in nodes_to_update:
                 result = dag_node
             else:
-                result = OperatorRemoval._update_dag_node_optimizer_info(dag_node, selectivity)
+                result = OperatorRemoval._update_dag_node_optimizer_info(dag_node, selectivity, force_row_count)
                 node_ids_to_fix.add(result.node_id)
             return result
 
@@ -172,13 +172,17 @@ class OperatorRemoval(OperatorPatch):
         networkx.relabel_nodes(dag, finalise_node_update, copy=False)
 
     @staticmethod
-    def _update_dag_node_optimizer_info(node_to_recompute, selectivity) -> DagNode:
+    def _update_dag_node_optimizer_info(node_to_recompute, selectivity, force_row_count) -> DagNode:
         """Updates the OptimizerInfo for a single DagNode"""
         # This assumes filters are not correlated etc
         if node_to_recompute.details.optimizer_info is not None:
             if node_to_recompute.details.optimizer_info.shape is not None:
-                updated_shape = (int(node_to_recompute.details.optimizer_info.shape[0] * (1 / selectivity)),
-                                 node_to_recompute.details.optimizer_info.shape[1])
+                if force_row_count is None or node_to_recompute not in force_row_count:
+                    updated_shape = (int(node_to_recompute.details.optimizer_info.shape[0] * (1 / selectivity)),
+                                     node_to_recompute.details.optimizer_info.shape[1])
+                else:
+                    updated_shape = (force_row_count[node_to_recompute],
+                                     node_to_recompute.details.optimizer_info.shape[1])
             else:
                 updated_shape = None
             if node_to_recompute.operator_info.operator != OperatorType.ESTIMATOR:
@@ -223,6 +227,7 @@ class AppendNodeAfterOperator(OperatorPatch):
 
     def apply(self, dag: networkx.DiGraph, pipeline_executor):
         add_new_node_after_node(dag, self.node_to_insert, self.operator_to_add_node_after)
+        # If node_to_insert is a selection, we do not now the selectivity, so we cannot update estimates
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
         return self._get_nodes_needing_recomputation(old_dag, new_dag, [], [self.node_to_insert])

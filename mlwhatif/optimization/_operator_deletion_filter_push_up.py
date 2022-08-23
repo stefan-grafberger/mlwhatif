@@ -97,10 +97,17 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                 operator_to_add_node_after_train.details.optimizer_info.shape[0]
             filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, filter_condition_nodes_train,
                                                                              correction_factor_train)
+
+            children_of_test_filter = list(dag.successors(filter_removal_patch.maybe_corresponding_test_set_operator))
+            children_row_count = children_of_test_filter[0].details.optimizer_info.shape[0]
+            force_children_row_count = {filter_removal_patch.maybe_corresponding_test_set_operator: children_row_count}
             correction_factor_test = previous_row_count / \
                 operator_to_add_node_after_test.details.optimizer_info.shape[0]
             filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, filter_condition_nodes_test,
-                                                                             correction_factor_test)
+                                                                             correction_factor_test,
+                                                                             force_children_row_count)
+
+
         elif filter_removal_patch.maybe_corresponding_test_set_operator is not None:
             operator_after_which_cutoff_required_train = filter_removal_patch \
                 .filter_get_operator_after_which_cutoff_required(dag, filter_removal_patch.operator_to_remove)
