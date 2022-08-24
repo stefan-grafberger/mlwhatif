@@ -2,15 +2,15 @@
 import dataclasses
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Callable, Iterable
+from typing import List, Callable, Iterable, Dict
 
 import networkx
 
 from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_data_patch, add_new_node_after_node, \
-    find_nodes_by_type, replace_node, remove_node, get_sorted_parent_nodes
-from mlwhatif.instrumentation._dag_node import DagNode
-
+    find_nodes_by_type, replace_node, remove_node, get_sorted_parent_nodes, get_sorted_children_nodes, \
+    filter_estimator_transformer_edges
+from mlwhatif.instrumentation._dag_node import DagNode, OptimizerInfo, DagNodeDetails
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class PipelinePatch(ABC):
     changes_following_results: bool
 
     @abstractmethod
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
         """Apply the patch to some DAG"""
         raise NotImplementedError
 
@@ -61,7 +61,7 @@ class OperatorReplacement(OperatorPatch):
     operator_to_replace: DagNode
     replacement_operator: DagNode
 
-    def apply(self, dag: networkx.DiGraph) -> networkx.DiGraph:
+    def apply(self, dag: networkx.DiGraph, pipeline_executor) -> networkx.DiGraph:
         replace_node(dag, self.operator_to_replace, self.replacement_operator)
         return dag
 
@@ -80,20 +80,46 @@ class OperatorRemoval(OperatorPatch):
     maybe_corresponding_test_set_operator: DagNode or None
     before_train_test_split: bool
 
-    def apply(self, dag: networkx.DiGraph):
-        for node in self.get_all_operators_associated_with_filter(dag, self.operator_to_remove):
-            remove_node(dag, node)
-        operators_to_remove = self.get_all_operators_associated_with_filter(
-            dag, self.maybe_corresponding_test_set_operator)
-        for node in operators_to_remove:
-            remove_node(dag, node)
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
+        # We only have one use-case with OperatorRemoval, some very minor updates are required here once this changes,
+        #  we only wan to update selectivities if we actually have a filter
+        assert self.operator_to_remove.operator_info.operator == OperatorType.SELECTION
+
+        dag_descendants_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
+
+        self.remove_filter_and_update_descendant_optimizer_info(dag, dag_descendants_to_consider,
+                                                                self.operator_to_remove)
+        self.remove_filter_and_update_descendant_optimizer_info(dag, dag_descendants_to_consider,
+                                                                self.maybe_corresponding_test_set_operator)
+
+    def remove_filter_and_update_descendant_optimizer_info(self, dag, dag_to_consider, filter_to_remove):
+        """Remove a filter and update descendent optimizer info accordingly"""
+        if filter_to_remove is not None:
+            selectivity_test = self.compute_filter_selectivity(dag, filter_to_remove)
+            all_operators_to_remove_test = self.get_all_operators_associated_with_filter(dag, filter_to_remove)
+            all_nodes_to_update_test = set()
+            for removed_node in all_operators_to_remove_test:
+                original_nodes_needing_recomputation = set(networkx.descendants(dag_to_consider, removed_node))
+                all_nodes_to_update_test.update(original_nodes_needing_recomputation)
+            all_nodes_to_update_test.difference_update(all_operators_to_remove_test)
+
+            for node in all_operators_to_remove_test:
+                remove_node(dag, node)
+
+            self.update_optimizer_info_with_selectivity_info(dag, all_nodes_to_update_test, selectivity_test)
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
         nodes_being_removed_train = self.get_all_operators_associated_with_filter(old_dag, self.operator_to_remove)
         nodes_being_removed_test = self.get_all_operators_associated_with_filter(
             old_dag, self.maybe_corresponding_test_set_operator)
         all_nodes_being_removed = nodes_being_removed_train.union(nodes_being_removed_test)
-        return self._get_nodes_needing_recomputation(old_dag, new_dag, all_nodes_being_removed, [])
+        nodes_needing_recomputation = self._get_nodes_needing_recomputation(old_dag, new_dag, all_nodes_being_removed,
+                                                                            [])
+
+        nodes_needing_recomputation_ids = {node.node_id for node in nodes_needing_recomputation}
+        nodes_needing_recomputation_with_updated_optimizer_info = {node for node in list(new_dag.nodes)
+                                                                   if node.node_id in nodes_needing_recomputation_ids}
+        return nodes_needing_recomputation_with_updated_optimizer_info
 
     def get_all_operators_associated_with_filter(self, modified_dag, operator_to_replace, keep_root=False) \
             -> set[DagNode]:
@@ -123,6 +149,94 @@ class OperatorRemoval(OperatorPatch):
                                                                                selection_parent_b)
         return operator_after_which_cutoff_required
 
+    @staticmethod
+    def update_optimizer_info_with_selectivity_info(dag: networkx.DiGraph, nodes_to_update: Iterable[DagNode],
+                                                    selectivity: float, force_row_count: Dict[DagNode, int] = None):
+        """ This updates the optimizer info of all dependent dag nodes """
+        node_ids_to_update = {node.node_id for node in nodes_to_update}
+        node_ids_to_fix = set()
+
+        def update_selectivity_func(dag_node: DagNode) -> DagNode:
+            if dag_node.node_id not in node_ids_to_update:
+                result = dag_node
+            else:
+                result = OperatorRemoval._update_dag_node_optimizer_info(dag_node, selectivity, force_row_count)
+                node_ids_to_fix.add(result.node_id)
+            return result
+
+        def finalise_node_update(dag_node: DagNode) -> DagNode:
+            result = dag_node
+            if dag_node.node_id in node_ids_to_fix:
+                # necessary because otherwise equals true and network does nothing
+                result = DagNode(
+                    -dag_node.node_id,
+                    dag_node.code_location,
+                    dag_node.operator_info,
+                    dag_node.details,
+                    dag_node.optional_code_info,
+                    dag_node.processing_func,
+                    dag_node.make_classifier_func
+                )
+            return result
+
+        # two relabels necessary because otherwise equals true and network does nothing
+        # noinspection PyTypeChecker
+        networkx.relabel_nodes(dag, update_selectivity_func, copy=False)
+        # noinspection PyTypeChecker
+        networkx.relabel_nodes(dag, finalise_node_update, copy=False)
+
+    @staticmethod
+    def _update_dag_node_optimizer_info(node_to_recompute, selectivity, force_row_count) -> DagNode:
+        """Updates the OptimizerInfo for a single DagNode"""
+        # This assumes filters are not correlated etc
+        if node_to_recompute.details.optimizer_info is not None:
+            if node_to_recompute.details.optimizer_info.shape is not None:
+                if force_row_count is None or node_to_recompute not in force_row_count:
+                    updated_shape = (int(node_to_recompute.details.optimizer_info.shape[0] * (1 / selectivity)),
+                                     node_to_recompute.details.optimizer_info.shape[1])
+                else:
+                    updated_shape = (force_row_count[node_to_recompute],
+                                     node_to_recompute.details.optimizer_info.shape[1])
+            else:
+                updated_shape = None
+            if node_to_recompute.operator_info.operator != OperatorType.ESTIMATOR:
+                new_memory_value = node_to_recompute.details.optimizer_info.memory * (1 / selectivity)
+            else:
+                new_memory_value = node_to_recompute.details.optimizer_info.memory
+            updated_optimizer_info = OptimizerInfo(
+                node_to_recompute.details.optimizer_info.runtime * (1 / selectivity),
+                updated_shape,
+                new_memory_value
+            )
+        else:
+            updated_optimizer_info = None
+        replacement_node = DagNode(-node_to_recompute.node_id,
+                                   node_to_recompute.code_location,
+                                   node_to_recompute.operator_info,
+                                   DagNodeDetails(
+                                       node_to_recompute.details.description,
+                                       node_to_recompute.details.columns,
+                                       updated_optimizer_info
+                                   ),
+                                   node_to_recompute.optional_code_info,
+                                   node_to_recompute.processing_func,
+                                   node_to_recompute.make_classifier_func)
+        return replacement_node
+
+    @staticmethod
+    def compute_filter_selectivity(dag, operator_to_remove):
+        """Compute the selecivity of the filter being removed"""
+        assert operator_to_remove is not None
+        # The filter row count may have changed because of the reordering of operations
+        filter_parents = get_sorted_parent_nodes(dag, operator_to_remove)
+        filter_condition_parent = filter_parents[1]
+        operator_filter_was_added_after = filter_parents[0]
+        parent_row_count = operator_filter_was_added_after.details.optimizer_info.shape[0]
+        refreshed_current_node = get_sorted_children_nodes(dag, filter_condition_parent)[0]
+        current_row_count = refreshed_current_node.details.optimizer_info.shape[0]
+        selectivity = current_row_count / parent_row_count
+        return selectivity
+
 
 @dataclasses.dataclass
 class AppendNodeAfterOperator(OperatorPatch):
@@ -131,8 +245,9 @@ class AppendNodeAfterOperator(OperatorPatch):
     operator_to_add_node_after: DagNode
     node_to_insert: DagNode
 
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
         add_new_node_after_node(dag, self.node_to_insert, self.operator_to_add_node_after)
+        # If node_to_insert is a selection, we do not now the selectivity, so we cannot update estimates
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
         return self._get_nodes_needing_recomputation(old_dag, new_dag, [], [self.node_to_insert])
@@ -151,7 +266,7 @@ class DataFiltering(DataPatch):
     train_not_test: bool
     only_reads_column: List[str]
 
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
         location, is_before_slit = find_dag_location_for_data_patch(self.only_reads_column, dag, self.train_not_test)
         if is_before_slit is False:
             add_new_node_after_node(dag, self.filter_operator, location)
@@ -200,7 +315,7 @@ class DataProjection(DataPatch):
     maybe_udf_split_info: UdfSplitInfo
 
 
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
 
         columns_required = set()
         if self.only_reads_column is not None:
@@ -231,7 +346,7 @@ class DataTransformer(DataPatch):
     transform_operator: DagNode
     modifies_column: str
 
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
         train_location, _ = find_dag_location_for_data_patch([self.modifies_column], dag, True)
         test_location, _ = find_dag_location_for_data_patch([self.modifies_column], dag, False)
         add_new_node_after_node(dag, self.fit_transform_operator, train_location)
@@ -250,7 +365,7 @@ class ModelPatch(PipelinePatch):
 
     replace_with_node: DagNode
 
-    def apply(self, dag: networkx.DiGraph):
+    def apply(self, dag: networkx.DiGraph, pipeline_executor):
         estimator_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
         if len(estimator_nodes) != 1:
             raise Exception("Currently, ModelPatch only supports pipelines with exactly one estimator!")

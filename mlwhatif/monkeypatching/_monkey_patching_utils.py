@@ -251,15 +251,19 @@ def add_dag_node(dag_node: DagNode, dag_node_parents: List[DagNode], function_ca
     # print("{}:{}: {}".format(dag_node.caller_filename, dag_node.lineno, dag_node.module))
 
     # print("source code: {}".format(dag_node.optional_source_code))
-    if function_call_result.function_result is not None:
+    if function_call_result.function_result is not None and dag_node.operator_info.operator != OperatorType.SCORE:
         function_call_result.function_result = wrap_in_mlinspect_array_if_necessary(
             function_call_result.function_result)
         function_call_result.function_result._mlinspect_dag_node = dag_node.node_id
+    elif dag_node.operator_info.operator == OperatorType.SCORE:
+        result_label = f"original_L{dag_node.code_location.lineno}"
+        result_value = function_call_result.function_result
+        singleton.original_pipeline_labels_to_extracted_plan_results[result_label] = result_value
     if dag_node_parents:
         for parent_index, parent in enumerate(dag_node_parents):
-            singleton.analysis_results.dag.add_edge(parent, dag_node, arg_index=parent_index)
+            singleton.analysis_results.original_dag.add_edge(parent, dag_node, arg_index=parent_index)
     else:
-        singleton.analysis_results.dag.add_node(dag_node)
+        singleton.analysis_results.original_dag.add_node(dag_node)
     singleton.op_id_to_dag_node[dag_node.node_id] = dag_node
     # if function_call_result.other is not None:
     # singleton.inspection_results.dag_node_to_inspection_results[dag_node] = backend_result.dag_node_annotation

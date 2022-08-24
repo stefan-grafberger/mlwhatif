@@ -38,12 +38,12 @@ def test_add_intermediate_extraction_after_node_intermediate_df():
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .execute()
-    dag = analysis_result.dag
+    dag = analysis_result.original_dag
     intermediate_pdf_result_value = find_nodes_by_type(dag, OperatorType.SELECTION)[0]
     label = "util-test"
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH)
     patch = get_intermediate_extraction_patch_after_node(singleton, None, intermediate_pdf_result_value, label)
-    patch.apply(dag)
+    patch.apply(dag, singleton)
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_AFTER_PATH)
     DagExecutor().execute(dag)
     extracted_value = singleton.labels_to_extracted_plan_results[label]
@@ -79,12 +79,12 @@ def test_add_intermediate_extraction_after_node_final_score():
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .execute()
-    dag = analysis_result.dag
+    dag = analysis_result.original_dag
     final_result_value = find_nodes_by_type(dag, OperatorType.SCORE)[0]
     label = "util-test"
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH)
     patch = get_intermediate_extraction_patch_after_node(singleton, None, final_result_value, label)
-    patch.apply(dag)
+    patch.apply(dag, singleton)
     save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_AFTER_PATH)
     DagExecutor().execute(dag)
     extracted_value = singleton.labels_to_extracted_plan_results[label]

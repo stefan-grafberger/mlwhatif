@@ -31,6 +31,6 @@ def test_find_nodes_by_type():
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .execute()
-    dag = analysis_result.dag
+    dag = analysis_result.original_dag
     selections = find_nodes_by_type(dag, OperatorType.SELECTION)
     assert len(selections) == 1

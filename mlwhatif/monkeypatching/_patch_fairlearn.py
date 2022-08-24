@@ -73,7 +73,7 @@ class MetricFramePatching:
                                DagNodeDetails(kwargs['metrics'].__name__, [], optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                process_func)
-            function_call_result = FunctionCallResult(None)
+            function_call_result = FunctionCallResult(self)
             add_dag_node(dag_node, [input_info_pred.dag_node, test_labels_node, input_info_sensitive_cols.dag_node],
                          function_call_result)
             return result
@@ -130,7 +130,7 @@ class MetricsPatching:
                                DagNodeDetails('equalized_odds_difference', [], optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                process_metric_frame)
-            function_call_result = FunctionCallResult(None)
+            function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [input_info_pred.dag_node, test_labels_node, input_info_sensitive_cols.dag_node],
                          function_call_result)
             return result

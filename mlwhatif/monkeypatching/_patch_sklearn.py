@@ -1221,7 +1221,7 @@ class SklearnDecisionTreePatching:
                                      DagNodeDetails("Accuracy", [], optimizer_info_score),
                                      get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                      processing_func_score)
-            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
+            function_call_result = FunctionCallResult(result_score)
             add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
                          function_call_result)
             return result_score
@@ -1443,7 +1443,7 @@ class SklearnSGDClassifierPatching:
                                      DagNodeDetails("Accuracy", [], optimizer_info_score),
                                      get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                      processing_func_score)
-            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
+            function_call_result = FunctionCallResult(result_score)
             add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
                          function_call_result)
             return result_score
@@ -1663,7 +1663,7 @@ class SklearnLogisticRegressionPatching:
                                      DagNodeDetails("Accuracy", [], optimizer_info_score),
                                      get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                      processing_func_score)
-            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
+            function_call_result = FunctionCallResult(result_score)
             add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
                          function_call_result)
             return result_score
@@ -1881,7 +1881,7 @@ class SklearnKerasClassifierPatching:
                                      DagNodeDetails("Accuracy", [], optimizer_info_score),
                                      get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                      processing_func_score)
-            function_call_result = FunctionCallResult(None)  # TODO: Do we ever want to use agg result further?
+            function_call_result = FunctionCallResult(result_score)
             add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
                          function_call_result)
             return result_score
@@ -1985,7 +1985,7 @@ class MetricsPatching:
                                DagNodeDetails('accuracy_score', [], optimizer_info),
                                get_optional_code_info_or_none(optional_code_reference, optional_source_code),
                                process_metric_frame)
-            function_call_result = FunctionCallResult(None)
+            function_call_result = FunctionCallResult(result)
             add_dag_node(dag_node, [input_info_pred.dag_node, test_labels_node], function_call_result)
             return result
 

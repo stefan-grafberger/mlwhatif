@@ -230,13 +230,13 @@ def run_and_assert_all_op_outputs_inspected(py_file_path, _, dag_png_path, custo
         .add_custom_monkey_patching_modules(custom_monkey_patching) \
         .execute()
 
-    save_fig_to_path(inspector_result.dag, dag_png_path)
+    save_fig_to_path(inspector_result.original_dag, dag_png_path)
     assert os.path.isfile(dag_png_path)
 
     for dag_node, _ in inspector_result.analysis_to_result_reports.items():
         assert dag_node.operator_info.operator != OperatorType.MISSING_OP
 
-    return inspector_result.dag
+    return inspector_result.original_dag
 
 
 def black_box_df_op():

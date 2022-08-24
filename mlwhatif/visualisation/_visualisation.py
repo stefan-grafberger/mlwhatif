@@ -11,6 +11,13 @@ from networkx.drawing.nx_agraph import to_agraph
 from mlwhatif.instrumentation._dag_node import DagNode
 
 
+def _save_what_if_dags_as_figs_to_path(prefix_analysis_dags, what_if_dags):
+    """Store the what-if DAGs as figs."""
+    for dag_index, what_if_dag in enumerate(what_if_dags):
+        if prefix_analysis_dags is not None:
+            save_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-{dag_index}.png")
+
+
 def save_fig_to_path(extracted_dag, filename):
     """
     Create a figure of the extracted DAG and save it with some filename

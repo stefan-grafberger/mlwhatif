@@ -7,19 +7,19 @@ from typing import Iterable
 
 import networkx
 
-from mlwhatif.execution._patches import PipelinePatch
-from mlwhatif.execution.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
-from mlwhatif.execution.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
-from mlwhatif.execution.optimization._simple_projection_push_up import SimpleProjectionPushUp
-from mlwhatif.execution.optimization._udf_split_and_reuse import UdfSplitAndReuse
+from mlwhatif._analysis_results import AnalysisResults
+from mlwhatif.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
+from mlwhatif.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
+from mlwhatif.optimization._simple_projection_push_up import SimpleProjectionPushUp
+from mlwhatif.optimization._udf_split_and_reuse import UdfSplitAndReuse
 from mlwhatif.instrumentation._dag_node import DagNode
-from mlwhatif.visualisation import save_fig_to_path
 
 logger = logging.getLogger(__name__)
 
 
 class MultiQueryOptimizer:
     """ Combines multiple DAGs and optimizes the joint plan """
+
     # pylint: disable=too-few-public-methods
 
     def __init__(self, pipeline_executor):
@@ -29,49 +29,58 @@ class MultiQueryOptimizer:
                                        OperatorDeletionFilterPushUp(pipeline_executor),
                                        UdfSplitAndReuse(pipeline_executor)]
 
-    def create_optimized_plan(self, original_dag: networkx.DiGraph, patches: Iterable[Iterable[PipelinePatch]],
-                              prefix_analysis_dags: str or None = None,
-                              prefix_optimised_analysis_dag: str or None = None,
-                              skip_optimizer=False) -> \
-            networkx.DiGraph:
+    def create_optimized_plan(self, analysis_results: AnalysisResults, skip_optimizer=False) -> \
+            AnalysisResults:
         """ Optimize and combine multiple given input DAGs """
         # pylint: disable=too-many-arguments
-        estimate_original_runtime = self._estimate_runtime_of_dag(original_dag)
+        estimate_original_runtime = self._estimate_runtime_of_dag(analysis_results.original_dag)
         logger.info(f"Estimated runtime of original DAG is {estimate_original_runtime}ms")
+        analysis_results.runtime_info.original_pipeline_estimated = estimate_original_runtime
 
         multi_query_optimization_start = time.time()
-        big_execution_dag, image_generation_duration = self._optimize_and_combine_dags(original_dag, skip_optimizer,
-                                                                                       patches, prefix_analysis_dags)
-        multi_query_optimization_duration = time.time() - multi_query_optimization_start - image_generation_duration
+        analysis_results = self._optimize_and_combine_dags(analysis_results, skip_optimizer)
+        multi_query_optimization_duration = time.time() - multi_query_optimization_start
         logger.info(f'---RUNTIME: Multi-Query Optimization took {multi_query_optimization_duration * 1000} ms')
+        analysis_results.runtime_info.what_if_query_optimization_duration = multi_query_optimization_duration * 1000
 
-        image_generation_start = time.time()
-        if prefix_optimised_analysis_dag is not None:
-            save_fig_to_path(big_execution_dag, f"{prefix_optimised_analysis_dag}.png")
-        image_generation_duration += time.time() - image_generation_start
+        return analysis_results
 
-        return big_execution_dag
-
-    def _optimize_and_combine_dags(self, original_dag, skip_optimizer, patches, prefix_analysis_dags: str or None):
+    def _optimize_and_combine_dags(self, analysis_results: AnalysisResults, skip_optimizer):
         """Here, the multi query optimization happens"""
         if skip_optimizer is False:
             logger.info(f"Performing Multi-Query Optimization")
-            big_execution_dag, what_if_dags = self._optimize_and_combine_dags_with_optimization(original_dag, patches)
 
+            patches = [patches for (patches, _) in analysis_results.what_if_dags]
+            big_execution_dag, what_if_dags = self._optimize_and_combine_dags_with_optimization(
+                analysis_results.original_dag.copy(), patches)
+
+            # TODO: This comparison may be a bit unfair in case of expensive UDFs because the UDF split reuse
+            #  DAG rewriting is applied before measuring the runtime of the DAGs without reuse. For now,
+            #  the corruption and index selection functions are considered to have a runtime of zero,
+            #  so it does not matter at the moment, but it might in the future once this changes.
             combined_estimated_runtimes = sum([self._estimate_runtime_of_dag(dag) for dag in what_if_dags])
             logger.info(f"Estimated unoptimized what-if runtime is {combined_estimated_runtimes}ms")
+            analysis_results.runtime_info.what_if_unoptimized_estimated = combined_estimated_runtimes
 
             estimate_optimised_runtime = self._estimate_runtime_of_dag(big_execution_dag)
             logger.info(f"Estimated optimised what-if runtime is {estimate_optimised_runtime}ms")
+            analysis_results.runtime_info.what_if_optimized_estimated = estimate_optimised_runtime
 
             estimated_saving = combined_estimated_runtimes - estimate_optimised_runtime
             logger.info(f"Estimated optimisation runtime saving is {estimated_saving}ms")
+            analysis_results.runtime_info.what_if_optimization_saving_estimated = estimated_saving
         else:
+            patches = [patches for patches, _ in analysis_results.what_if_dags]
             logger.warning("Skipping Multi-Query Optimization (instead, only combine execution DAGs)")
-            big_execution_dag, what_if_dags = self._optimize_and_combine_dags_without_optimization(original_dag,
-                                                                                                   patches)
-        image_generation_duration = self._save_what_if_dags_as_figs_to_path(prefix_analysis_dags, what_if_dags)
-        return big_execution_dag, image_generation_duration
+            big_execution_dag, what_if_dags = self._optimize_and_combine_dags_without_optimization(
+                analysis_results.original_dag, patches)
+            estimate_combined_runtime = self._estimate_runtime_of_dag(big_execution_dag)
+            logger.info(f"Estimated unoptimised what-if runtime is {estimate_combined_runtime}ms")
+            analysis_results.runtime_info.what_if_unoptimized_estimated = estimate_combined_runtime
+
+        analysis_results.combined_optimized_dag = big_execution_dag
+        analysis_results.what_if_dags = list(zip(patches, what_if_dags))
+        return analysis_results
 
     def _optimize_and_combine_dags_without_optimization(self, original_dag, patches):
         """The baseline of not performing any optimizations"""
@@ -79,7 +88,7 @@ class MultiQueryOptimizer:
         for patch_set in patches:
             what_if_dag = original_dag.copy()
             for patch in patch_set:
-                patch.apply(what_if_dag)
+                patch.apply(what_if_dag, self.pipeline_executor)
             what_if_dags.append(what_if_dag)
         self._make_all_nodes_unique(what_if_dags)
         big_execution_dag = networkx.compose_all(what_if_dags)
@@ -96,49 +105,46 @@ class MultiQueryOptimizer:
             what_if_dag = original_dag.copy()
             all_nodes_needing_recomputation = set()
             for patch in patch_set:
-                patch.apply(what_if_dag)
+                patch.apply(what_if_dag, self.pipeline_executor)
             for patch in patch_set:
                 all_nodes_needing_recomputation.update(patch.get_nodes_needing_recomputation(original_dag,
                                                                                              what_if_dag))
             self._generate_unique_ids_for_selected_nodes(what_if_dag, all_nodes_needing_recomputation)
             what_if_dags.append(what_if_dag)
-        big_execution_dag = networkx.compose_all(what_if_dags)
+        if len(what_if_dags) != 0:
+            big_execution_dag = networkx.compose_all(what_if_dags)
+        else:
+            big_execution_dag = networkx.DiGraph()
         return big_execution_dag, what_if_dags
-
-    @staticmethod
-    def _save_what_if_dags_as_figs_to_path(prefix_analysis_dags, what_if_dags):
-        """Store the what-if DAGs as figs."""
-        image_generation_start = time.time()
-        for dag_index, what_if_dag in enumerate(what_if_dags):
-            if prefix_analysis_dags is not None:
-                save_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-{dag_index}.png")
-        image_generation_duration = time.time() - image_generation_start
-        return image_generation_duration
 
     def _make_all_nodes_unique(self, what_if_dags):
         """We need to give all nodes new ids to combine DAGs without reusing results."""
         for dag in what_if_dags:
-            self._generate_unique_ids_for_selected_nodes(dag, list(dag.nodes))
+            self._generate_unique_ids_for_selected_nodes(dag, set(dag.nodes))
 
     def _generate_unique_ids_for_selected_nodes(self, dag: networkx.DiGraph, nodes_to_recompute: Iterable[DagNode]):
         """ This gives new node_ids to all reachable nodes given some input node """
-        what_if_node_set = set(dag.nodes)
-        for node_to_recompute in nodes_to_recompute:
-            if node_to_recompute in what_if_node_set:  # condition required because node may be removed
-                replacement_node = DagNode(self.pipeline_executor.get_next_op_id(),
-                                           node_to_recompute.code_location,
-                                           node_to_recompute.operator_info,
-                                           node_to_recompute.details,
-                                           node_to_recompute.optional_code_info,
-                                           node_to_recompute.processing_func)
-                dag.add_node(replacement_node)
-                for parent_node in dag.predecessors(node_to_recompute):
-                    edge_data = dag.get_edge_data(parent_node, node_to_recompute)
-                    dag.add_edge(parent_node, replacement_node, **edge_data)
-                for child_node in dag.successors(node_to_recompute):
-                    edge_data = dag.get_edge_data(node_to_recompute, child_node)
-                    dag.add_edge(replacement_node, child_node, **edge_data)
-                dag.remove_node(node_to_recompute)
+        what_if_node_set = {node.node_id for node in list(dag.nodes)}
+        nodes_to_recompute = {node.node_id for node in nodes_to_recompute}
+        # condition required because node may be removed
+        nodes_requiring_new_id = what_if_node_set.intersection(nodes_to_recompute)
+
+        def generate_new_node_ids_if_required(dag_node: DagNode) -> DagNode:
+            if dag_node.node_id in nodes_requiring_new_id:
+                result = DagNode(self.pipeline_executor.get_next_op_id(),
+                                 dag_node.code_location,
+                                 dag_node.operator_info,
+                                 dag_node.details,
+                                 dag_node.optional_code_info,
+                                 dag_node.processing_func,
+                                 dag_node.make_classifier_func)
+
+            else:
+                result = dag_node
+            return result
+
+        # noinspection PyTypeChecker
+        networkx.relabel_nodes(dag, generate_new_node_ids_if_required, copy=False)
 
     @staticmethod
     def _estimate_runtime_of_dag(dag: networkx.DiGraph):
