@@ -99,8 +99,10 @@ class PipelineExecutor:
             # TODO: Do we ever need the captured output from the original pipeline version?
             #  Maybe this gets relevant once we add the DAG as input to mlwhat in case there are multiple executions
             # captured_output = stdout_output.getvalue()
-            orig_instrumented_exec_duration = time.time() - orig_instrumented_exec_start - singleton.monkey_patch_duration
-            self.analysis_results.runtime_info.original_pipeline_without_importing_and_monkeypatching = orig_instrumented_exec_duration * 1000
+            orig_instrumented_exec_duration = (time.time() - orig_instrumented_exec_start -
+                                               singleton.monkey_patch_duration)
+            self.analysis_results.runtime_info.original_pipeline_without_importing_and_monkeypatching = \
+                orig_instrumented_exec_duration * 1000
             logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms '
                         f'(excluding imports and monkey-patching)')
         else:

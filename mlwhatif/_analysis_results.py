@@ -29,6 +29,7 @@ class RuntimeInfo:
 
 @dataclasses.dataclass
 class DagExtractionInfo:
+    """All info required to reuse a previously extracted DAG for different what-if analyses"""
     original_dag: networkx.DiGraph
     original_pipeline_labels_to_extracted_plan_results: Dict[str, any]
     next_op_id: int
