@@ -3,7 +3,7 @@ User-facing API for inspecting the pipeline
 """
 from typing import Iterable, List
 
-from ._analysis_results import AnalysisResults
+from ._analysis_results import AnalysisResults, DagExtractionInfo
 from .analysis._what_if_analysis import WhatIfAnalysis
 from .instrumentation._pipeline_executor import singleton, logger
 
@@ -16,13 +16,15 @@ class PipelineInspectorBuilder:
 
     def __init__(self, notebook_path: str or None = None,
                  python_path: str or None = None,
-                 python_code: str or None = None
+                 python_code: str or None = None,
+                 extraction_info: DagExtractionInfo or None = None
                  ) -> None:
         self._track_code_references = True
         self._monkey_patching_modules = []
         self._notebook_path = notebook_path
         self._python_path = python_path
         self._python_code = python_code
+        self._extraction_info = extraction_info
         self._analyses = []
         self._checks = []
         self._prefix_original_dag = None
@@ -70,7 +72,7 @@ class PipelineInspectorBuilder:
         A convenience function to
         """
         logger.info("The skip_multi_query_optimization function is only intended for benchmarking!")
-        self._skip_optimizer = skip_optimizer#test
+        self._skip_optimizer = skip_optimizer
         return self
 
     def execute(self) -> AnalysisResults:
@@ -80,6 +82,7 @@ class PipelineInspectorBuilder:
         return singleton.run(notebook_path=self._notebook_path,
                              python_path=self._python_path,
                              python_code=self._python_code,
+                             extraction_info=self._extraction_info,
                              analyses=self._analyses,
                              custom_monkey_patching=self._monkey_patching_modules,
                              skip_optimizer=self._skip_optimizer)
@@ -103,3 +106,8 @@ class PipelineAnalyzer:
     def on_pipeline_from_string(code: str) -> PipelineInspectorBuilder:
         """Inspect a pipeline from a string."""
         return PipelineInspectorBuilder(python_code=code)
+
+    @staticmethod
+    def on_previously_extracted_pipeline(extraction_info: DagExtractionInfo) -> PipelineInspectorBuilder:
+        """Inspect a pipeline from a string."""
+        return PipelineInspectorBuilder(extraction_info=extraction_info)

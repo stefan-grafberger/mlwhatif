@@ -123,3 +123,7 @@ def test_data_cleaning_adult_complex():
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
     assert report.shape == (19, 4)
+
+    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
+    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
+    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)

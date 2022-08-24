@@ -28,6 +28,15 @@ class RuntimeInfo:
 
 
 @dataclasses.dataclass
+class DagExtractionInfo:
+    original_dag: networkx.DiGraph
+    original_pipeline_labels_to_extracted_plan_results: Dict[str, any]
+    next_op_id: int
+    next_patch_id: int
+    next_missing_op_id: int
+
+
+@dataclasses.dataclass
 class AnalysisResults:
     """
     The class the PipelineExecutor returns
@@ -37,6 +46,7 @@ class AnalysisResults:
     what_if_dags: List[tuple[List[PipelinePatch], networkx.DiGraph]]
     combined_optimized_dag: networkx.DiGraph
     runtime_info: RuntimeInfo
+    dag_extraction_info: DagExtractionInfo
 
     def save_original_dag_to_path(self, prefix_original_dag: str):
         """

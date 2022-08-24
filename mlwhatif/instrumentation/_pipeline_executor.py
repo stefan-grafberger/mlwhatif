@@ -17,7 +17,7 @@ from nbconvert import PythonExporter
 
 from ._call_capture_transformer import CallCaptureTransformer
 from .. import monkeypatching
-from .._analysis_results import AnalysisResults, RuntimeInfo
+from .._analysis_results import AnalysisResults, RuntimeInfo, DagExtractionInfo
 from ..analysis._what_if_analysis import WhatIfAnalysis
 from ..execution._dag_executor import DagExecutor
 from ..execution._multi_query_optimizer import MultiQueryOptimizer
@@ -53,7 +53,8 @@ class PipelineExecutor:
     original_pipeline_labels_to_extracted_plan_results = dict()
     labels_to_extracted_plan_results = dict()
     analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
-                                       RuntimeInfo(0, 0, 0, 0, 0, 0, 0, 0, 0))
+                                       RuntimeInfo(0, 0, 0, 0, 0, 0, 0, 0, 0),
+                                       DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0))
     monkey_patch_duration = 0
     skip_optimizer = False
 
@@ -61,6 +62,7 @@ class PipelineExecutor:
             notebook_path: str or None = None,
             python_path: str or None = None,
             python_code: str or None = None,
+            extraction_info: DagExtractionInfo or None = None,
             analyses: List[WhatIfAnalysis] or None = None,
             reset_state: bool = True,
             track_code_references: bool = True,
@@ -87,23 +89,36 @@ class PipelineExecutor:
         self.analyses = analyses
         self.skip_optimizer = skip_optimizer
 
-        logger.info(f'Running instrumented original pipeline...')
-        orig_instrumented_exec_start = time.time()
-        sys.stdout.flush()
-        stdout_output = StringIO()
-        with redirect_stdout(stdout_output):
-            self.run_instrumented_pipeline(notebook_path, python_code, python_path)
-        # TODO: Do we ever need the captured output from the original pipeline version?
-        #  Maybe this gets relevant once we add the DAG as input to mlwhat in case there are multiple executions
-        # captured_output = stdout_output.getvalue()
-        orig_instrumented_exec_duration = time.time() - orig_instrumented_exec_start - singleton.monkey_patch_duration
-        self.analysis_results.runtime_info.original_pipeline_without_importing_and_monkeypatching = orig_instrumented_exec_duration * 1000
-        logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms '
-                    f'(excluding imports and monkey-patching)')
+        if extraction_info is None:
+            logger.info(f'Running instrumented original pipeline...')
+            orig_instrumented_exec_start = time.time()
+            sys.stdout.flush()
+            stdout_output = StringIO()
+            with redirect_stdout(stdout_output):
+                self.run_instrumented_pipeline(notebook_path, python_code, python_path)
+            # TODO: Do we ever need the captured output from the original pipeline version?
+            #  Maybe this gets relevant once we add the DAG as input to mlwhat in case there are multiple executions
+            # captured_output = stdout_output.getvalue()
+            orig_instrumented_exec_duration = time.time() - orig_instrumented_exec_start - singleton.monkey_patch_duration
+            self.analysis_results.runtime_info.original_pipeline_without_importing_and_monkeypatching = orig_instrumented_exec_duration * 1000
+            logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms '
+                        f'(excluding imports and monkey-patching)')
+        else:
+            logger.info(f'Reusing DAG extraction results results from previously instrumented pipeline...')
+            self.analysis_results.original_dag = extraction_info.original_dag.copy()
+            self.original_pipeline_labels_to_extracted_plan_results = \
+                extraction_info.original_pipeline_labels_to_extracted_plan_results.copy()
+            self.analysis_results.runtime_info.original_pipeline_without_importing_and_monkeypatching = None
+            self.next_op_id = extraction_info.next_op_id
+            self.next_patch_id = extraction_info.next_patch_id
+            self.next_missing_op_id = extraction_info.next_missing_op_id
 
         logger.info(f'Starting execution of {len(self.analyses)} what-if analyses...')
         self.run_what_if_analyses()
 
+        self.analysis_results.dag_extraction_info = DagExtractionInfo(
+            self.analysis_results.original_dag.copy(), self.original_pipeline_labels_to_extracted_plan_results.copy(),
+            self.next_op_id, self.next_patch_id, self.next_missing_op_id)
         logger.info(f'Done!')
         return self.analysis_results
 
@@ -186,7 +201,8 @@ class PipelineExecutor:
         self.track_code_references = True
         self.op_id_to_dag_node = dict()
         self.analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
-                                                RuntimeInfo(0, 0, 0, 0, 0, 0, 0, 0, 0))
+                                                RuntimeInfo(0, 0, 0, 0, 0, 0, 0, 0, 0),
+                                                DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0))
         self.analyses = []
         self.original_pipeline_labels_to_extracted_plan_results = dict()
         self.labels_to_extracted_plan_results = dict()

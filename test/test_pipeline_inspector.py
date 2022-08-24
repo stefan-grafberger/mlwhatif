@@ -6,8 +6,9 @@ import networkx
 from testfixtures import compare
 
 from example_pipelines.healthcare import custom_monkeypatching
-from example_pipelines import ADULT_SIMPLE_PY, ADULT_SIMPLE_IPYNB, HEALTHCARE_PY
+from example_pipelines import ADULT_SIMPLE_PY, ADULT_SIMPLE_IPYNB, HEALTHCARE_PY, ADULT_COMPLEX_PY
 from mlwhatif import PipelineAnalyzer, OperatorType
+from mlwhatif.analysis._data_cleaning import DataCleaning, ErrorType
 from mlwhatif.testing._testing_helper_utils import get_expected_dag_adult_easy
 
 
@@ -84,6 +85,29 @@ def test_inspector_additional_modules():
         .execute()
 
     assert_healthcare_pipeline_output_complete(inspector_result)
+
+
+def test_dag_extraction_reuse():
+    """
+    Tests whether the Data Cleaning analysis works for a very simple pipeline with a DecisionTree score
+    """
+
+    analysis_result = PipelineAnalyzer \
+        .on_pipeline_from_py_file(ADULT_COMPLEX_PY) \
+        .execute()
+
+    data_cleaning = DataCleaning({'education': ErrorType.CAT_MISSING_VALUES,
+                                  'age': ErrorType.NUM_MISSING_VALUES,
+                                  'hours-per-week': ErrorType.OUTLIERS,
+                                  None: ErrorType.MISLABEL})
+
+    analysis_result = PipelineAnalyzer \
+        .on_previously_extracted_pipeline(analysis_result.dag_extraction_info) \
+        .add_what_if_analysis(data_cleaning) \
+        .execute()
+
+    report = analysis_result.analysis_to_result_reports[data_cleaning]
+    assert report.shape == (19, 4)
 
 
 def assert_healthcare_pipeline_output_complete(inspector_result):
