@@ -137,7 +137,8 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                                                                          correction_factor,
                                                                          force_children_row_count)
 
-    def get_all_ops_requiring_optimizer_info_update(self, dag, filter_operator, filter_removal_patch,
+    @staticmethod
+    def get_all_ops_requiring_optimizer_info_update(dag, filter_operator, filter_removal_patch,
                                                     operator_after_which_cutoff_required_train,
                                                     operator_to_add_node_after_train):
         """Get all ops between the new and old filter location that are not the filter ops itself"""
