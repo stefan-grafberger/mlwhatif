@@ -51,7 +51,7 @@ def test_operator_fairness_mini_example_with_transformer_processing_multiple_col
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
-    assert report.shape == (1, 5)
+    assert report.shape == (2, 5)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -70,7 +70,7 @@ def test_operator_fairness_healthcare():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
-    assert report.shape == (4, 7)
+    assert report.shape == (5, 7)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -88,7 +88,7 @@ def test_operator_fairness_compas():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
-    assert report.shape == (7, 5)
+    assert report.shape == (8, 5)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -106,7 +106,7 @@ def test_operator_fairness_restrict_to_linenos():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
-    assert report.shape == (2, 5)
+    assert report.shape == (3, 5)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -124,7 +124,7 @@ def test_operator_fairness_test_transformers():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, False)]
-    assert report.shape == (3, 5)
+    assert report.shape == (4, 5)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -142,7 +142,7 @@ def test_operator_fairness_test_selections():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(False, True)]
-    assert report.shape == (4, 5)
+    assert report.shape == (5, 5)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -159,7 +159,7 @@ def test_operator_fairness_adult_complex():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
-    assert report.shape == (2, 5)
+    assert report.shape == (3, 5)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)

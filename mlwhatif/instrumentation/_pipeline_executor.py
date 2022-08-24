@@ -50,6 +50,7 @@ class PipelineExecutor:
     analyses = []
     custom_monkey_patching = []
     # TODO: Do we want to add the analysis to the key next to label to isolate analyses and avoid name clashes?
+    original_pipeline_labels_to_extracted_plan_results = dict()
     labels_to_extracted_plan_results = dict()
     analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
                                        RuntimeInfo(0, 0, 0, 0, 0, 0, 0, 0, 0))
@@ -69,6 +70,7 @@ class PipelineExecutor:
         """
         Instrument and execute the pipeline and evaluate all checks
         """
+        # TODO: Add option to reuse results
         # pylint: disable=too-many-arguments
         if reset_state:
             # reset_state=False should only be used internally for performance experiments etc!
@@ -128,6 +130,7 @@ class PipelineExecutor:
         logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
         self.analysis_results.runtime_info.what_if_execution = execution_duration * 1000
 
+        self.labels_to_extracted_plan_results.update(self.original_pipeline_labels_to_extracted_plan_results)
         for analysis in self.analyses:
             report = analysis.generate_final_report(self.labels_to_extracted_plan_results)
             self.analysis_results.analysis_to_result_reports[analysis] = report
@@ -185,6 +188,7 @@ class PipelineExecutor:
         self.analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
                                                 RuntimeInfo(0, 0, 0, 0, 0, 0, 0, 0, 0))
         self.analyses = []
+        self.original_pipeline_labels_to_extracted_plan_results = dict()
         self.labels_to_extracted_plan_results = dict()
         self.custom_monkey_patching = []
         self.monkey_patch_duration = 0

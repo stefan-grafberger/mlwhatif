@@ -62,7 +62,7 @@ def test_data_corruption_model_variants_mini_example_with_transformer_processing
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (12, 5)
+    assert report.shape == (13, 5)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -116,7 +116,7 @@ def test_data_corruption_model_variants_mini_example_with_projection_modify():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (8, 5)
+    assert report.shape == (9, 5)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -164,7 +164,7 @@ def test_data_corruption_model_variants_mini_example_only_train_test_split():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (12, 5)
+    assert report.shape == (13, 5)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -213,7 +213,7 @@ def test_data_corruption_model_variants_mini_example_only_train_test_split_witho
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (12, 5)
+    assert report.shape == (13, 5)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -262,7 +262,7 @@ def test_data_corruption_model_variants_mini_example_manual_split():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (12, 5)
+    assert report.shape == (13, 5)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -291,7 +291,7 @@ def test_data_corruption_model_variants_healthcare():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (8, 9)
+    assert report.shape == (9, 9)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -317,7 +317,7 @@ def test_data_corruption_model_variants_compas():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (12, 4)
+    assert report.shape == (13, 4)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -351,4 +351,4 @@ def test_data_corruption_model_variants_adult_complex():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (24, 5)
+    assert report.shape == (25, 5)

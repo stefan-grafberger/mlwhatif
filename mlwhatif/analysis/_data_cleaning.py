@@ -250,6 +250,17 @@ class DataCleaning(WhatIfAnalysis):
         result_df_metrics = {}
         score_description_and_linenos = [(score_node.details.description, lineno)
                                          for (score_node, lineno) in self._score_nodes_and_linenos]
+
+        result_df_columns.append(None)
+        result_df_errors.append(None)
+        result_df_cleaning_methods.append(None)
+        for (score_description, lineno) in score_description_and_linenos:
+            original_pipeline_result_label = f"original_L{lineno}"
+            test_result_column_name = f"{score_description}_L{lineno}"
+            test_column_values = result_df_metrics.get(test_result_column_name, [])
+            test_column_values.append(singleton.labels_to_extracted_plan_results[original_pipeline_result_label])
+            result_df_metrics[test_result_column_name] = test_column_values
+
         for (column, error_type) in self._columns_with_error:
             for cleaning_method in CLEANING_METHODS_FOR_ERROR_TYPE[error_type]:
                 result_df_columns.append(column)
@@ -261,7 +272,7 @@ class DataCleaning(WhatIfAnalysis):
                     test_column_values = result_df_metrics.get(test_result_column_name, [])
                     test_column_values.append(singleton.labels_to_extracted_plan_results[cleaning_result_label])
                     result_df_metrics[test_result_column_name] = test_column_values
-        result_df = pandas.DataFrame({'column': result_df_columns,
+        result_df = pandas.DataFrame({'corrupted_column': result_df_columns,
                                       'error': result_df_errors,
                                       'cleaning_method': result_df_cleaning_methods,
                                       **result_df_metrics})

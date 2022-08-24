@@ -52,7 +52,7 @@ def test_data_cleaning_mini_example_with_transformer_processing_multiple_columns
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
-    assert report.shape == (1, 4)
+    assert report.shape == (2, 4)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -77,7 +77,7 @@ def test_data_cleaning_healthcare():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
-    assert report.shape == (19, 6)
+    assert report.shape == (20, 6)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -99,7 +99,7 @@ def test_data_cleaning_compas():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
-    assert report.shape == (14, 4)
+    assert report.shape == (15, 4)
 
     analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
     analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
@@ -122,4 +122,4 @@ def test_data_cleaning_adult_complex():
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
-    assert report.shape == (18, 4)
+    assert report.shape == (19, 4)
