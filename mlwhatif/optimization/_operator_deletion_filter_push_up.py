@@ -30,14 +30,14 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
             for patch in pipeline_variant_patches:
                 if isinstance(patch, OperatorRemoval) and \
                         patch.operator_to_remove.operator_info.operator == OperatorType.SELECTION:
-                    selectivity = patch.compute_filter_selectivity(dag)
+                    selectivity = patch.compute_filter_selectivity(dag, patch.operator_to_remove)
                     selectivity_and_filters_to_push_up.append((selectivity, patch))
                     # calculate selectivities
 
         # Sort filters by selectivity, the ones with the highest selectivity should be moved up first
         selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0])
 
-        for _, filter_removal_patch in selectivity_and_filters_to_push_up[0:2]:
+        for _, filter_removal_patch in selectivity_and_filters_to_push_up:
             using_columns_for_filter = self._get_columns_required_for_filter_eval(dag, filter_removal_patch)
 
             operator_to_add_node_after_train = find_dag_location_for_new_filter_on_column(
@@ -59,7 +59,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                 .filter_get_operator_after_which_cutoff_required(dag, filter_removal_patch.operator_to_remove)
 
             # Get filter selectivity for optimizer info updates
-            selectivity = filter_removal_patch.compute_filter_selectivity(dag)
+            selectivity = filter_removal_patch.compute_filter_selectivity(dag, filter_removal_patch.operator_to_remove)
 
             dag, operator_after_which_cutoff_required_test = \
                 self.duplicate_filter_nodes_for_push_up_behind_train_test_split(dag, filter_removal_patch)
@@ -197,7 +197,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
         if operator_after_which_cutoff_required_train == operator_to_add_node_after_train:
             return
 
-        selectivity = filter_removal_patch.compute_filter_selectivity(dag)
+        selectivity = filter_removal_patch.compute_filter_selectivity(dag, operator_to_remove)
 
         children_of_train_operator_after_which_cutoff_required = list(dag.successors(
             operator_after_which_cutoff_required_train))

@@ -8,7 +8,7 @@ import networkx
 
 from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_data_patch, add_new_node_after_node, \
-    find_nodes_by_type, replace_node, remove_node, get_sorted_parent_nodes
+    find_nodes_by_type, replace_node, remove_node, get_sorted_parent_nodes, get_sorted_children_nodes
 from mlwhatif.instrumentation._dag_node import DagNode, OptimizerInfo, DagNodeDetails
 
 logger = logging.getLogger(__name__)
@@ -83,7 +83,11 @@ class OperatorRemoval(OperatorPatch):
         # We only have one use-case with OperatorRemoval, some very minor updates are required here once this changes,
         #  we only wan to update selectivities if we actually have a filter
         assert self.operator_to_remove.operator_info.operator == OperatorType.SELECTION
-        selectivity = self.compute_filter_selectivity(dag)
+        selectivity_train = self.compute_filter_selectivity(dag, self.operator_to_remove)
+        selectivity = selectivity_train
+        if self.maybe_corresponding_test_set_operator is not None:
+            selectivity_test = self.compute_filter_selectivity(dag, self.operator_to_remove)
+            selectivity = max(selectivity_train, selectivity_test)  # We want to estimate the worst case
 
         all_operators_to_remove = self.get_all_operators_associated_with_filter(dag, self.operator_to_remove)
         all_operators_to_remove.update(self.get_all_operators_associated_with_filter(
@@ -98,6 +102,7 @@ class OperatorRemoval(OperatorPatch):
         for node in all_operators_to_remove:
             remove_node(dag, node)
 
+        # TODO: Deal with test and train filter separately?
         self.update_optimizer_info_with_selectivity_info(dag, all_nodes_to_update, selectivity)
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
@@ -209,11 +214,16 @@ class OperatorRemoval(OperatorPatch):
                                    node_to_recompute.make_classifier_func)
         return replacement_node
 
-    def compute_filter_selectivity(self, dag):
+    def compute_filter_selectivity(self, dag, operator_to_remove):
         """Compute the selecivity of the filter being removed"""
-        parent = list(dag.predecessors(self.operator_to_remove))[0]
-        parent_row_count = parent.details.optimizer_info.shape[0]
-        current_row_count = self.operator_to_remove.details.optimizer_info.shape[0]
+        assert operator_to_remove is not None
+        # The filter row count may have changed because of the reordering of operations
+        filter_parents = get_sorted_parent_nodes(dag, operator_to_remove)
+        filter_condition_parent = filter_parents[1]
+        operator_filter_was_added_after = filter_parents[0]
+        parent_row_count = operator_filter_was_added_after.details.optimizer_info.shape[0]
+        refreshed_current_node = get_sorted_children_nodes(dag, filter_condition_parent)[0]
+        current_row_count = refreshed_current_node.details.optimizer_info.shape[0]
         selectivity = current_row_count / parent_row_count
         return selectivity
 
