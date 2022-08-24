@@ -53,6 +53,8 @@ class MultiQueryOptimizer:
             big_execution_dag, what_if_dags = self._optimize_and_combine_dags_with_optimization(
                 analysis_results.original_dag.copy(), patches)
 
+            # TODO: This comparison may be a bit unfair in case of expensive UDFs because the UDF split reuse
+            #  DAG rewriting is applied before measuring the runtime of the DAGs without reuse
             combined_estimated_runtimes = sum([self._estimate_runtime_of_dag(dag) for dag in what_if_dags])
             logger.info(f"Estimated unoptimized what-if runtime is {combined_estimated_runtimes}ms")
             analysis_results.runtime_info.what_if_unoptimized_estimated = combined_estimated_runtimes
