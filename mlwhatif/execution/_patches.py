@@ -93,6 +93,7 @@ class OperatorRemoval(OperatorPatch):
                                                                 self.maybe_corresponding_test_set_operator)
 
     def remove_filter_and_update_descendant_optimizer_info(self, dag, dag_to_consider, filter_to_remove):
+        """Remove a filter and update descendent optimizer info accordingly"""
         if filter_to_remove is not None:
             selectivity_test = self.compute_filter_selectivity(dag, filter_to_remove)
             all_operators_to_remove_test = self.get_all_operators_associated_with_filter(dag, filter_to_remove)
@@ -222,7 +223,8 @@ class OperatorRemoval(OperatorPatch):
                                    node_to_recompute.make_classifier_func)
         return replacement_node
 
-    def compute_filter_selectivity(self, dag, operator_to_remove):
+    @staticmethod
+    def compute_filter_selectivity(dag, operator_to_remove):
         """Compute the selecivity of the filter being removed"""
         assert operator_to_remove is not None
         # The filter row count may have changed because of the reordering of operations

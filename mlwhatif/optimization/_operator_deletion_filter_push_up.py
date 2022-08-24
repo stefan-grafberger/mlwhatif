@@ -108,6 +108,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
         Update optimizer info for all nodes that are effected by the filter push-up but are not the filter node
         themselves
         """
+        # pylint: disable=too-many-arguments
         ops_affected_by_move_train = self.get_all_ops_requiring_optimizer_info_update(
             dag, filter_removal_patch.operator_to_remove, filter_removal_patch,
             operator_after_which_cutoff_required_train, operator_to_add_node_after_train)
@@ -118,7 +119,8 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
 
         filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, ops_affected_by_move, selectivity)
 
-    def update_filter_nodes_optimizer_info(self, dag, filter_op, filter_removal_patch):
+    @staticmethod
+    def update_filter_nodes_optimizer_info(dag, filter_op, filter_removal_patch):
         """Update all optimizer info according to the new filter location"""
         filter_condition_nodes = filter_removal_patch.get_all_operators_associated_with_filter(
             dag, filter_op)
@@ -138,6 +140,8 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
     def get_all_ops_requiring_optimizer_info_update(self, dag, filter_operator, filter_removal_patch,
                                                     operator_after_which_cutoff_required_train,
                                                     operator_to_add_node_after_train):
+        """Get all ops between the new and old filter location that are not the filter ops itself"""
+        # pylint: disable=too-many-arguments
         paths_between_generator_train = networkx.all_simple_paths(dag,
                                                                   source=operator_after_which_cutoff_required_train,
                                                                   target=operator_to_add_node_after_train)
@@ -193,6 +197,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
     def _move_filter_to_new_location(self, dag, filter_removal_patch, operator_after_which_cutoff_required_train,
                                      operator_to_add_node_after_train, operator_to_remove):
         """Remove a filter from its old location and move it to the new one"""
+        # pylint: disable=too-many-arguments
         # Apply the filter to the new train filter location and remove the old filter application
         if operator_after_which_cutoff_required_train == operator_to_add_node_after_train:
             return
