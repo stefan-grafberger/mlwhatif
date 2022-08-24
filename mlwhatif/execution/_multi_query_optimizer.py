@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class MultiQueryOptimizer:
     """ Combines multiple DAGs and optimizes the joint plan """
+
     # pylint: disable=too-few-public-methods
 
     def __init__(self, pipeline_executor):
@@ -119,28 +120,31 @@ class MultiQueryOptimizer:
     def _make_all_nodes_unique(self, what_if_dags):
         """We need to give all nodes new ids to combine DAGs without reusing results."""
         for dag in what_if_dags:
-            self._generate_unique_ids_for_selected_nodes(dag, list(dag.nodes))
+            self._generate_unique_ids_for_selected_nodes(dag, set(dag.nodes))
 
     def _generate_unique_ids_for_selected_nodes(self, dag: networkx.DiGraph, nodes_to_recompute: Iterable[DagNode]):
         """ This gives new node_ids to all reachable nodes given some input node """
-        what_if_node_set = set(dag.nodes)
-        for node_to_recompute in nodes_to_recompute:
-            if node_to_recompute in what_if_node_set:  # condition required because node may be removed
-                replacement_node = DagNode(self.pipeline_executor.get_next_op_id(),
-                                           node_to_recompute.code_location,
-                                           node_to_recompute.operator_info,
-                                           node_to_recompute.details,
-                                           node_to_recompute.optional_code_info,
-                                           node_to_recompute.processing_func,
-                                           node_to_recompute.make_classifier_func)
-                dag.add_node(replacement_node)
-                for parent_node in dag.predecessors(node_to_recompute):
-                    edge_data = dag.get_edge_data(parent_node, node_to_recompute)
-                    dag.add_edge(parent_node, replacement_node, **edge_data)
-                for child_node in dag.successors(node_to_recompute):
-                    edge_data = dag.get_edge_data(node_to_recompute, child_node)
-                    dag.add_edge(replacement_node, child_node, **edge_data)
-                dag.remove_node(node_to_recompute)
+        what_if_node_set = {node.node_id for node in list(dag.nodes)}
+        nodes_to_recompute = {node.node_id for node in nodes_to_recompute}
+        # condition required because node may be removed
+        nodes_requiring_new_id = what_if_node_set.intersection(nodes_to_recompute)
+
+        def generate_new_node_ids_if_required(dag_node: DagNode) -> DagNode:
+            if dag_node.node_id in nodes_requiring_new_id:
+                result = DagNode(self.pipeline_executor.get_next_op_id(),
+                                 dag_node.code_location,
+                                 dag_node.operator_info,
+                                 dag_node.details,
+                                 dag_node.optional_code_info,
+                                 dag_node.processing_func,
+                                 dag_node.make_classifier_func)
+
+            else:
+                result = dag_node
+            return result
+
+        # noinspection PyTypeChecker
+        networkx.relabel_nodes(dag, generate_new_node_ids_if_required, copy=False)
 
     @staticmethod
     def _estimate_runtime_of_dag(dag: networkx.DiGraph):
