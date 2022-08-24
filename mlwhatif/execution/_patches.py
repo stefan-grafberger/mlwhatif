@@ -8,7 +8,8 @@ import networkx
 
 from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_data_patch, add_new_node_after_node, \
-    find_nodes_by_type, replace_node, remove_node, get_sorted_parent_nodes, get_sorted_children_nodes
+    find_nodes_by_type, replace_node, remove_node, get_sorted_parent_nodes, get_sorted_children_nodes, \
+    filter_estimator_transformer_edges
 from mlwhatif.instrumentation._dag_node import DagNode, OptimizerInfo, DagNodeDetails
 
 logger = logging.getLogger(__name__)
@@ -83,34 +84,41 @@ class OperatorRemoval(OperatorPatch):
         # We only have one use-case with OperatorRemoval, some very minor updates are required here once this changes,
         #  we only wan to update selectivities if we actually have a filter
         assert self.operator_to_remove.operator_info.operator == OperatorType.SELECTION
-        selectivity_train = self.compute_filter_selectivity(dag, self.operator_to_remove)
-        selectivity = selectivity_train
-        if self.maybe_corresponding_test_set_operator is not None:
-            selectivity_test = self.compute_filter_selectivity(dag, self.operator_to_remove)
-            selectivity = max(selectivity_train, selectivity_test)  # We want to estimate the worst case
 
-        all_operators_to_remove = self.get_all_operators_associated_with_filter(dag, self.operator_to_remove)
-        all_operators_to_remove.update(self.get_all_operators_associated_with_filter(
-            dag, self.maybe_corresponding_test_set_operator))
+        dag_descendants_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
 
-        all_nodes_to_update = set()
-        for removed_node in all_operators_to_remove:
-            original_nodes_needing_recomputation = set(networkx.descendants(dag, removed_node))
-            all_nodes_to_update.update(original_nodes_needing_recomputation)
-        all_nodes_to_update.difference_update(all_operators_to_remove)
+        self.remove_filter_and_update_descendant_optimizer_info(dag, dag_descendants_to_consider,
+                                                                self.operator_to_remove)
+        self.remove_filter_and_update_descendant_optimizer_info(dag, dag_descendants_to_consider,
+                                                                self.maybe_corresponding_test_set_operator)
 
-        for node in all_operators_to_remove:
-            remove_node(dag, node)
+    def remove_filter_and_update_descendant_optimizer_info(self, dag, dag_to_consider, filter_to_remove):
+        if filter_to_remove is not None:
+            selectivity_test = self.compute_filter_selectivity(dag, filter_to_remove)
+            all_operators_to_remove_test = self.get_all_operators_associated_with_filter(dag, filter_to_remove)
+            all_nodes_to_update_test = set()
+            for removed_node in all_operators_to_remove_test:
+                original_nodes_needing_recomputation = set(networkx.descendants(dag_to_consider, removed_node))
+                all_nodes_to_update_test.update(original_nodes_needing_recomputation)
+            all_nodes_to_update_test.difference_update(all_operators_to_remove_test)
 
-        # TODO: Deal with test and train filter separately?
-        self.update_optimizer_info_with_selectivity_info(dag, all_nodes_to_update, selectivity)
+            for node in all_operators_to_remove_test:
+                remove_node(dag, node)
+
+            self.update_optimizer_info_with_selectivity_info(dag, all_nodes_to_update_test, selectivity_test)
 
     def get_nodes_needing_recomputation(self, old_dag: networkx.DiGraph, new_dag: networkx.DiGraph):
         nodes_being_removed_train = self.get_all_operators_associated_with_filter(old_dag, self.operator_to_remove)
         nodes_being_removed_test = self.get_all_operators_associated_with_filter(
             old_dag, self.maybe_corresponding_test_set_operator)
         all_nodes_being_removed = nodes_being_removed_train.union(nodes_being_removed_test)
-        return self._get_nodes_needing_recomputation(old_dag, new_dag, all_nodes_being_removed, [])
+        nodes_needing_recomputation = self._get_nodes_needing_recomputation(old_dag, new_dag, all_nodes_being_removed,
+                                                                            [])
+
+        nodes_needing_recomputation_ids = {node.node_id for node in nodes_needing_recomputation}
+        nodes_needing_recomputation_with_updated_optimizer_info = {node for node in list(new_dag.nodes)
+                                                                   if node.node_id in nodes_needing_recomputation_ids}
+        return nodes_needing_recomputation_with_updated_optimizer_info
 
     def get_all_operators_associated_with_filter(self, modified_dag, operator_to_replace, keep_root=False) \
             -> set[DagNode]:
@@ -144,11 +152,11 @@ class OperatorRemoval(OperatorPatch):
     def update_optimizer_info_with_selectivity_info(dag: networkx.DiGraph, nodes_to_update: Iterable[DagNode],
                                                     selectivity: float, force_row_count: Dict[DagNode, int] = None):
         """ This updates the optimizer info of all dependent dag nodes """
-        nodes_to_update = set(nodes_to_update)
+        node_ids_to_update = {node.node_id for node in nodes_to_update}
         node_ids_to_fix = set()
 
         def update_selectivity_func(dag_node: DagNode) -> DagNode:
-            if dag_node not in nodes_to_update:
+            if dag_node.node_id not in node_ids_to_update:
                 result = dag_node
             else:
                 result = OperatorRemoval._update_dag_node_optimizer_info(dag_node, selectivity, force_row_count)
