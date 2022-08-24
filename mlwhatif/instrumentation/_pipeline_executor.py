@@ -118,6 +118,7 @@ class PipelineExecutor:
             logger.info(f'---RUNTIME: Plan generation took {plan_generation_duration * 1000} ms')
             self.analysis_results.runtime_info.what_if_plan_generation = plan_generation_duration * 1000
 
+        # TODO: Add try catch statements so we can see intermediate DAGs even if something goes wrong for debugging
         MultiQueryOptimizer(self).create_optimized_plan(self.analysis_results, self.skip_optimizer)
 
         logger.info(f"Executing generated plans")
