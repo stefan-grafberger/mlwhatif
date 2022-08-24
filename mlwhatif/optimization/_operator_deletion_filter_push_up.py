@@ -37,7 +37,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
         # Sort filters by selectivity, the ones with the highest selectivity should be moved up first
         selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0])
 
-        for _, filter_removal_patch in selectivity_and_filters_to_push_up:
+        for _, filter_removal_patch in selectivity_and_filters_to_push_up[0:2]:
             using_columns_for_filter = self._get_columns_required_for_filter_eval(dag, filter_removal_patch)
 
             operator_to_add_node_after_train = find_dag_location_for_new_filter_on_column(
@@ -58,24 +58,11 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
             operator_after_which_cutoff_required_train = filter_removal_patch \
                 .filter_get_operator_after_which_cutoff_required(dag, filter_removal_patch.operator_to_remove)
 
+            # Get filter selectivity for optimizer info updates
             selectivity = filter_removal_patch.compute_filter_selectivity(dag)
-            previous_row_count = operator_after_which_cutoff_required_train.details.optimizer_info.shape[0]
 
             dag, operator_after_which_cutoff_required_test = \
                 self.duplicate_filter_nodes_for_push_up_behind_train_test_split(dag, filter_removal_patch)
-
-            paths_between_generator_train = networkx.all_simple_paths(dag,
-                                                                      source=operator_after_which_cutoff_required_train,
-                                                                      target=operator_to_add_node_after_train)
-            paths_between_generator_test = networkx.all_simple_paths(dag,
-                                                                     source=operator_after_which_cutoff_required_test,
-                                                                     target=operator_to_add_node_after_test)
-            ops_affected_by_move = {node for path in paths_between_generator_train for node in path}
-            ops_affected_by_move.update({node for path in paths_between_generator_test for node in path})
-
-            nodes_associated_with_filter = filter_removal_patch.get_all_operators_associated_with_filter(
-                dag, filter_removal_patch.operator_to_remove, True)
-            ops_affected_by_move.difference_update(nodes_associated_with_filter)
 
             self._move_duplicated_filter_to_new_location(dag, filter_removal_patch,
                                                          operator_after_which_cutoff_required_test,
@@ -83,33 +70,23 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                                                          operator_to_add_node_after_test,
                                                          operator_to_add_node_after_train)
 
+            # Update selectivity info
+            ops_affected_by_move_train = self.get_all_ops_requiring_optimizer_info_update(
+                dag, filter_removal_patch.operator_to_remove, filter_removal_patch,
+                operator_after_which_cutoff_required_train, operator_to_add_node_after_train)
+            ops_affected_by_move_test = self.get_all_ops_requiring_optimizer_info_update(
+                dag, filter_removal_patch.maybe_corresponding_test_set_operator, filter_removal_patch,
+                operator_after_which_cutoff_required_train, operator_to_add_node_after_test)
+            ops_affected_by_move = ops_affected_by_move_train.union(ops_affected_by_move_test)
             filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, ops_affected_by_move, selectivity)
 
-            filter_condition_nodes_train = filter_removal_patch.get_all_operators_associated_with_filter(
-                dag, filter_removal_patch.operator_to_remove)
-            filter_condition_nodes_test = filter_removal_patch.get_all_operators_associated_with_filter(
-                dag, filter_removal_patch.maybe_corresponding_test_set_operator)
+            self.update_filter_nodes_optimizer_info(dag, filter_removal_patch.operator_to_remove, filter_removal_patch,
+                                                    operator_to_add_node_after_train, selectivity)
 
-            filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, filter_condition_nodes_train,
-                                                                             selectivity)
-
-            correction_factor_train = previous_row_count / \
-                operator_to_add_node_after_train.details.optimizer_info.shape[0]
-            filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, filter_condition_nodes_train,
-                                                                             correction_factor_train)
-
-            children_of_test_filter = list(dag.successors(filter_removal_patch.maybe_corresponding_test_set_operator))
-            children_row_count = children_of_test_filter[0].details.optimizer_info.shape[0]
-            force_children_row_count = {filter_removal_patch.maybe_corresponding_test_set_operator: children_row_count}
-            correction_factor_test = previous_row_count / \
-                operator_to_add_node_after_test.details.optimizer_info.shape[0]
-            filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, filter_condition_nodes_test,
-                                                                             correction_factor_test,
-                                                                             force_children_row_count)
-
+            self.update_filter_nodes_optimizer_info(dag, filter_removal_patch.maybe_corresponding_test_set_operator,
+                                                    filter_removal_patch, operator_to_add_node_after_test, selectivity)
 
         elif filter_removal_patch.maybe_corresponding_test_set_operator is not None:
-            # TODO: Update estimates
             operator_after_which_cutoff_required_train = filter_removal_patch \
                 .filter_get_operator_after_which_cutoff_required(dag, filter_removal_patch.operator_to_remove)
             operator_after_which_cutoff_required_test = filter_removal_patch \
@@ -117,19 +94,46 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                 dag, filter_removal_patch.maybe_corresponding_test_set_operator)
 
             self._move_filter_to_new_location(dag, filter_removal_patch, operator_after_which_cutoff_required_train,
-                                              operator_to_add_node_after_train)
+                                              operator_to_add_node_after_train, filter_removal_patch.operator_to_remove)
             self._move_filter_to_new_location(dag, filter_removal_patch, operator_after_which_cutoff_required_test,
-                                              operator_to_add_node_after_test)
+                                              operator_to_add_node_after_test,
+                                              filter_removal_patch.maybe_corresponding_test_set_operator)
         else:
-            # TODO: Update estimates
-            # Need to move train operator only
-            # Modifiy DAG, duplicate deletion node not needed probably
             operator_after_which_cutoff_required_train = filter_removal_patch \
                 .filter_get_operator_after_which_cutoff_required(dag, filter_removal_patch.operator_to_remove)
 
             self._move_filter_to_new_location(dag, filter_removal_patch, operator_after_which_cutoff_required_train,
-                                              operator_to_add_node_after_train)
+                                              operator_to_add_node_after_train, filter_removal_patch.operator_to_remove)
         return dag
+
+    def update_filter_nodes_optimizer_info(self, dag, filter_op, filter_removal_patch, operator_to_add_filter_after,
+                                           selectivity):
+        filter_condition_nodes = filter_removal_patch.get_all_operators_associated_with_filter(
+            dag, filter_op)
+
+        children_of_train_filter = list(dag.successors(filter_op))
+        children_row_count = children_of_train_filter[0].details.optimizer_info.shape[0]
+        force_children_row_count = {filter_op: children_row_count}
+        filter_condition_parent = get_sorted_parent_nodes(dag, filter_op)[1]
+        correction_factor = 1 / (operator_to_add_filter_after.details.optimizer_info.shape[0] /
+                                 filter_condition_parent.details.optimizer_info.shape[0] / selectivity)
+        filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, filter_condition_nodes,
+                                                                         correction_factor,
+                                                                         force_children_row_count)
+
+    def get_all_ops_requiring_optimizer_info_update(self, dag, filter_operator, filter_removal_patch,
+                                                    operator_after_which_cutoff_required_train,
+                                                    operator_to_add_node_after_train):
+        paths_between_generator_train = networkx.all_simple_paths(dag,
+                                                                  source=operator_after_which_cutoff_required_train,
+                                                                  target=operator_to_add_node_after_train)
+        ops_affected_by_move_train = {node for path in paths_between_generator_train for node in path}
+        ops_affected_by_move_train.remove(operator_after_which_cutoff_required_train)
+        if filter_operator is not None:
+            nodes_associated_with_filter = filter_removal_patch.get_all_operators_associated_with_filter(
+                dag, filter_operator)
+            ops_affected_by_move_train.difference_update(nodes_associated_with_filter)
+        return ops_affected_by_move_train
 
     @staticmethod
     def _move_duplicated_filter_to_new_location(dag, filter_removal_patch,
@@ -172,16 +176,22 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
             dag.add_edge(filter_removal_patch.maybe_corresponding_test_set_operator, child_node, **edge_data)
             dag.remove_edge(operator_to_add_node_after_test, child_node)
 
-    @staticmethod
-    def _move_filter_to_new_location(dag, filter_removal_patch, operator_after_which_cutoff_required_train,
-                                     operator_to_add_node_after_train):
+    def _move_filter_to_new_location(self, dag, filter_removal_patch, operator_after_which_cutoff_required_train,
+                                     operator_to_add_node_after_train, operator_to_remove):
         """Remove a filter from its old location and move it to the new one"""
         # Apply the filter to the new train filter location and remove the old filter application
         if operator_after_which_cutoff_required_train == operator_to_add_node_after_train:
             return
+
+        selectivity = filter_removal_patch.compute_filter_selectivity(dag)
+
+        ops_affected_by_move_train = self.get_all_ops_requiring_optimizer_info_update(
+            dag, operator_to_remove, filter_removal_patch, operator_after_which_cutoff_required_train,
+            operator_to_add_node_after_train)
+
         children_of_train_operator_after_which_cutoff_required = list(dag.successors(
             operator_after_which_cutoff_required_train))
-        children_of_filter_to_be_removed = list(dag.successors(filter_removal_patch.operator_to_remove))
+        children_of_filter_to_be_removed = list(dag.successors(operator_to_remove))
         children_of_operator_to_add_node_after_train = list(dag.successors(operator_to_add_node_after_train))
         # Apply the filters to the new data
         for child_node in children_of_train_operator_after_which_cutoff_required:
@@ -199,6 +209,11 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
             edge_data = dag.get_edge_data(operator_to_add_node_after_train, child_node)
             dag.add_edge(filter_removal_patch.operator_to_remove, child_node, **edge_data)
             dag.remove_edge(operator_to_add_node_after_train, child_node)
+
+        filter_removal_patch.update_optimizer_info_with_selectivity_info(dag, ops_affected_by_move_train, selectivity)
+
+        self.update_filter_nodes_optimizer_info(dag, operator_to_remove, filter_removal_patch,
+                                                operator_to_add_node_after_train, selectivity)
 
     def duplicate_filter_nodes_for_push_up_behind_train_test_split(self, dag, filter_removal_patch: OperatorRemoval):
         """Duplicate a filter so we can push it up to both the train and test side separately"""
