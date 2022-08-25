@@ -2004,7 +2004,7 @@ class SklearnDummyClassifierPatching:
                         mlinspect_lineno=None, mlinspect_optional_code_reference=None,
                         mlinspect_optional_source_code=None, mlinspect_estimator_node_id=None):
         """ Patch for ('sklearn.dummy.DummyClassifier', 'LogisticRegression') """
-        # pylint: disable=no-method-argument, attribute-defined-outside-init, too-many-locals
+        # pylint: disable=no-method-argument, attribute-defined-outside-init, too-many-locals, too-many-arguments
         original = gorilla.get_original_attribute(dummy.DummyClassifier, '__init__')
 
         self.mlinspect_caller_filename = mlinspect_caller_filename
