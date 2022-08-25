@@ -71,7 +71,7 @@ def test_frame_fuzzy_merge_on():
     extracted_merge = list(inspector_result.original_dag.nodes)[2]
     df_a = pandas.DataFrame({'A': [0, 2, 4], 'name': ['George Smiley', 'Oliver Lacon', 'Toby Esterhase']})
     df_b = pandas.DataFrame({'B': [1, 2, 3, 4], 'person_name': ['Peter Guillam', 'Oliver LACON', 'George SMILEY',
-                                                                   'Claus Kretzschmar']})
+                                                                'Claus Kretzschmar']})
     df_merged = extracted_merge.processing_func(df_a, df_b)
     df_expected = pandas.DataFrame({'A': [0, 2], 'name': ['George Smiley', 'Oliver Lacon'],
                                     'B': [3, 2], 'person_name': ['George SMILEY', 'Oliver LACON']})
