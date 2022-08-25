@@ -24,7 +24,7 @@ def test_projection_push_up_ideal_case(tmpdir):
     """
     tmpdir.mkdir("projection_push_up")
 
-    df_a, df_b = get_test_df_ideal_case(1000)
+    df_a, df_b = get_test_df_ideal_case(5000)
     df_a_path = os.path.join(tmpdir, "projection_push_up", "projection_push_up_df_a_ideal_case.csv")
     df_a.to_csv(df_a_path, index=False)
     df_b_path = os.path.join(tmpdir, "projection_push_up", "projection_push_up_df_b_ideal_case.csv")
@@ -36,10 +36,13 @@ def test_projection_push_up_ideal_case(tmpdir):
             from sklearn.dummy import DummyClassifier
             import numpy as np
             from sklearn.model_selection import train_test_split
+            import fuzzy_pandas as fpd
 
-            df_a = pd.read_csv("{df_a_path}")
-            df_b = pd.read_csv("{df_b_path}")
-            pandas_df = df_a.merge(df_b, on='id')
+            df_a = pd.read_csv("{df_a_path}", engine='python')
+            df_b = pd.read_csv("{df_b_path}", engine='python')
+            pandas_df = fpd.fuzzy_merge(df_a, df_b, on='str_id', method='levenshtein', keep_right=['C', 'D'],
+                threshold=0.99)
+            pandas_df = pandas_df[pandas_df['A'] >= 95]
             train_data = pandas_df[pandas_df['B'] < 80]
             test_data = pandas_df[pandas_df['B'] >= 80]
 
@@ -101,5 +104,7 @@ def get_test_df_ideal_case(data_frame_rows):
     d = randint(0, 100, size=sizes_before_join)
     df_a = pd.DataFrame(zip(id_a, a, b, group_col_1, group_col_2, group_col_3, target),
                         columns=['id', 'A', 'B', 'group_col_1', 'group_col_2', 'group_col_3', 'target'])
+    df_a["str_id"] = "id_" + df_a["id"].astype(str)
     df_b = pd.DataFrame(zip(id_b, c, d), columns=['id', 'C', 'D'])
+    df_b["str_id"] = "id_" + df_b["id"].astype(str)
     return df_a, df_b
