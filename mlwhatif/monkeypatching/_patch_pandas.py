@@ -166,14 +166,14 @@ class DataFramePatching:
                 dag_parents.append(selection_series_input_info.dag_node)
                 if optional_source_code:
                     description_code = optional_source_code
-                    # if '[' in description_code:
-                    #     description_code = description_code[description_code.find('[')+1:]
-                    # if ']' in description_code:
-                    #     description_code = description_code[:description_code.rfind(']')]
-                    # df_names = re.findall(r"([^\W0-9]\w*)\[.*\]", description_code)
-                    # if len(df_names) is not None:
-                    #     for df_name in df_names:
-                    #         description_code = description_code.replace(df_name, "df")
+                    if '[' in description_code:
+                        description_code = description_code[description_code.find('[')+1:]
+                    if ']' in description_code:
+                        description_code = description_code[:description_code.rfind(']')]
+                    df_names = re.findall(r"([^\W0-9]\w*)\[.*\]", description_code)
+                    if len(df_names) is not None:
+                        for df_name in df_names:
+                            description_code = description_code.replace(df_name, "df")
                     description = "Select by Series: {}".format(description_code)
                 else:
                     description = "Select by Series"

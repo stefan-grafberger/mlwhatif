@@ -30,9 +30,9 @@ def test_filter_push_up_ideal_case(tmpdir):
     df_b_train.to_csv(df_b_path_train, index=False)
 
     df_a_test, df_b_test = get_test_df_ideal_case(int(data_size * 0.2))
-    df_a_path_test = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_train.csv")
+    df_a_path_test = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
-    df_b_path_test = os.path.join(tmpdir, "filter_push_up_df_b_ideal_case_train.csv")
+    df_b_path_test = os.path.join(tmpdir, "filter_push_up_df_b_ideal_case_test.csv")
     df_b_test.to_csv(df_b_path_test, index=False)
 
     test_code = cleandoc(f"""
