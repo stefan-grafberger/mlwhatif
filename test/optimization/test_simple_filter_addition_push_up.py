@@ -21,7 +21,7 @@ def test_filter_push_up_ideal_case(tmpdir):
     Tests whether the .py version of the inspector works
     """
     data_size = 1000
-    variant_count = 10
+    variant_count = 2
 
     df_a_train, df_b_train = get_test_df_ideal_case(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_train.csv")
@@ -44,16 +44,16 @@ def test_filter_push_up_ideal_case(tmpdir):
         import fuzzy_pandas as fpd
         
         df_a_train = pd.read_csv("{df_a_path_train}", engine='python')
+        df_a_train = df_a_train[df_a_train['A'] >= 95]
         df_b_train = pd.read_csv("{df_b_path_train}", engine='python')
         df_train = fpd.fuzzy_merge(df_a_train, df_b_train, on='str_id', method='levenshtein', keep_right=['C', 'D'],
             threshold=0.99)
-        df_train = df_train[df_train['A'] >= 95]
         
         df_a_test = pd.read_csv("{df_a_path_test}", engine='python')
+        df_a_test = df_a_test[df_a_test['A'] >= 95]
         df_b_test = pd.read_csv("{df_b_path_test}", engine='python')
         df_test = fpd.fuzzy_merge(df_a_test, df_b_test, on='str_id', method='levenshtein', keep_right=['C', 'D'],
             threshold=0.99)
-        df_test = df_test[df_test['A'] >= 95]
         
         train_target = label_binarize(df_train['target'], classes=['no', 'yes'])
         train_data = df_train[['A', 'B']]
@@ -72,7 +72,7 @@ def test_filter_push_up_ideal_case(tmpdir):
         index_filter.append(0)
 
     data_corruption = WhatIfWrapper(
-        DataCleaning({'A': ErrorType.NUM_MISSING_VALUES}),
+        DataCleaning({'B': ErrorType.NUM_MISSING_VALUES}),
         index_filter=index_filter)
 
     dag_extraction_result = PipelineAnalyzer \

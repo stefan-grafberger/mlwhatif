@@ -10,30 +10,41 @@ import pandas as pd
 from numpy.random import randint, shuffle
 
 from mlwhatif import PipelineAnalyzer
-from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
+from mlwhatif.analysis._operator_fairness import OperatorFairness
 from mlwhatif.instrumentation._pipeline_executor import singleton
-from mlwhatif.optimization._simple_projection_push_up import SimpleProjectionPushUp
+from mlwhatif.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
 from mlwhatif.testing._testing_helper_utils import WhatIfWrapper
 
 
-def test_projection_push_up_ideal_case(tmpdir):
+def test_filter_push_up_ideal_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 1000
-    variant_count = 2
+    data_size = 4000
+    variant_count = 10
 
     df_a_train, df_b_train = get_test_df_ideal_case(int(data_size * 0.8))
-    df_a_path_train = os.path.join(tmpdir, "projection_push_up_df_a_ideal_case_train.csv")
+    df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
-    df_b_path_train = os.path.join(tmpdir, "projection_push_up_df_b_ideal_case_train.csv")
+    df_b_path_train = os.path.join(tmpdir, "filter_push_up_df_b_ideal_case_train.csv")
     df_b_train.to_csv(df_b_path_train, index=False)
 
     df_a_test, df_b_test = get_test_df_ideal_case(int(data_size * 0.2))
-    df_a_path_test = os.path.join(tmpdir, "projection_push_up_df_a_ideal_case_train.csv")
+    df_a_path_test = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_train.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
-    df_b_path_test = os.path.join(tmpdir, "projection_push_up_df_b_ideal_case_train.csv")
+    df_b_path_test = os.path.join(tmpdir, "filter_push_up_df_b_ideal_case_train.csv")
     df_b_test.to_csv(df_b_path_test, index=False)
+
+    index_filter = []
+    filter_lines_train = []
+    filter_lines_test = []
+    for variant_index in range(variant_count):
+        index_filter.append(variant_index)
+        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] >= {95 - variant_index}]")
+        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] >= {95 - variant_index}]")
+
+    filter_line_train = '\n        '.join(filter_lines_train)
+    filter_line_test = '\n        '.join(filter_lines_test)
 
     test_code = cleandoc(f"""
         import pandas as pd
@@ -44,13 +55,13 @@ def test_projection_push_up_ideal_case(tmpdir):
         import fuzzy_pandas as fpd
         
         df_a_train = pd.read_csv("{df_a_path_train}", engine='python')
-        df_a_train = df_a_train[df_a_train['A'] >= 95]
+        {filter_line_train}
         df_b_train = pd.read_csv("{df_b_path_train}", engine='python')
         df_train = fpd.fuzzy_merge(df_a_train, df_b_train, on='str_id', method='levenshtein', keep_right=['C', 'D'],
             threshold=0.99)
         
         df_a_test = pd.read_csv("{df_a_path_test}", engine='python')
-        df_a_test = df_a_test[df_a_test['A'] >= 95]
+        {filter_line_test}
         df_b_test = pd.read_csv("{df_b_path_test}", engine='python')
         df_test = fpd.fuzzy_merge(df_a_test, df_b_test, on='str_id', method='levenshtein', keep_right=['C', 'D'],
             threshold=0.99)
@@ -67,15 +78,8 @@ def test_projection_push_up_ideal_case(tmpdir):
         assert 0. <= test_score <= 1.
         """)
 
-    corruption_percentages = []
-    index_filter = []
-    for variant_index in range(variant_count):
-        corruption_percentages.append(variant_index * (1. / (variant_count - 1)))
-        index_filter.append(1 + 2 * variant_index)
-
     data_corruption = WhatIfWrapper(
-        DataCorruption({'B': CorruptionType.SCALING}, also_corrupt_train=True,
-                       corruption_percentages=corruption_percentages),
+        OperatorFairness(test_transformers=False, test_selections=True),
         index_filter=index_filter)
 
     dag_extraction_result = PipelineAnalyzer \
@@ -86,7 +90,7 @@ def test_projection_push_up_ideal_case(tmpdir):
     analysis_result_with_opt_rule = PipelineAnalyzer \
         .on_previously_extracted_pipeline(dag_extraction_result) \
         .add_what_if_analysis(data_corruption) \
-        .overwrite_optimization_rules([SimpleProjectionPushUp(singleton)]) \
+        .overwrite_optimization_rules([OperatorDeletionFilterPushUp(singleton)]) \
         .execute()
 
     analysis_result_without_opt_rule = PipelineAnalyzer \
@@ -111,8 +115,8 @@ def test_projection_push_up_ideal_case(tmpdir):
 
     analysis_result_with_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-opt-orig"))
     analysis_result_with_opt_rule.save_what_if_dags_to_path(os.path.join(str(tmpdir), "with-opt-what-if"))
-    analysis_result_with_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
-                                                                                   "with-opt-what-if-optimised"))
+    analysis_result_with_opt_rule.save_optimised_what_if_dags_to_path(
+        os.path.join(str(tmpdir), "with-opt-what-if-optimised"))
 
     analysis_result_without_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "without-opt-orig"))
     analysis_result_without_opt_rule.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-opt-what-if"))

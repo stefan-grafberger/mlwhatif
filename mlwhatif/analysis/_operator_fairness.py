@@ -68,15 +68,21 @@ class OperatorFairness(WhatIfAnalysis):
             fairness_patch_sets.append(patches_for_variant)
         for (operator_to_replace_train, operator_to_replace_test, before_split) in self._filter_operators_to_test:
             patches_for_variant = []
-            result_label = self.get_label_for_operator(operator_to_replace_train)
+            if operator_to_replace_train is not None:
+                main_operator_to_remove = operator_to_replace_train
+                maybe_secondary_operator = operator_to_replace_test
+            else:
+                main_operator_to_remove = operator_to_replace_test
+                maybe_secondary_operator = None
+            result_label = self.get_label_for_operator(main_operator_to_remove)
             extraction_nodes = get_intermediate_extraction_patch_after_score_nodes(singleton, self,
                                                                                    result_label,
                                                                                    self._score_nodes_and_linenos)
             patches_for_variant.extend(extraction_nodes)
 
-            assert operator_to_replace_train.operator_info.operator == OperatorType.SELECTION
+            assert main_operator_to_remove.operator_info.operator == OperatorType.SELECTION
             removal_patch = OperatorRemoval(singleton.get_next_patch_id(), self, True,
-                                            operator_to_replace_train, operator_to_replace_test, before_split)
+                                            main_operator_to_remove, maybe_secondary_operator, before_split)
             patches_for_variant.append(removal_patch)
             fairness_patch_sets.append(patches_for_variant)
         return fairness_patch_sets
@@ -168,7 +174,7 @@ class OperatorFairness(WhatIfAnalysis):
             result_df_metrics[test_result_column_name] = test_column_values
 
         # TODO: Maybe the strategy_description should also contain if we found and dropped a corresponding test filter
-        main_filter_ops = [train_op for (train_op, _, _) in self._filter_operators_to_test]
+        main_filter_ops = [train_op or test_op for (train_op, test_op, _) in self._filter_operators_to_test]
         for operator_to_replace in [*self._transformer_operators_to_test, *main_filter_ops]:
             result_df_op_type.append(operator_to_replace.operator_info.operator.value)
             result_df_lineno.append(operator_to_replace.code_location.lineno)
@@ -232,8 +238,11 @@ class OperatorFairness(WhatIfAnalysis):
         This is because for transformers it is easy to find the corresponding test set operation and for the
         selection we do not need to worry about finding corresponding test set operations.
         """
-        search_start_node = find_train_or_test_pipeline_part_end(dag, True)
-        nodes_to_search = set(networkx.ancestors(dag, search_start_node))
+        search_start_node_train = find_train_or_test_pipeline_part_end(dag, True)
+        search_start_node_test = find_train_or_test_pipeline_part_end(dag, False)
+        nodes_to_search_train = set(networkx.ancestors(dag, search_start_node_train))
+        nodes_to_search_test = set(networkx.ancestors(dag, search_start_node_test))
+        nodes_to_search = set(nodes_to_search_train).union(nodes_to_search_test)
         all_nodes_to_test = []
         if self._test_selections is True:
             selections_to_replace = [node for node in nodes_to_search if
