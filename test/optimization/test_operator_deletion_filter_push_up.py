@@ -21,7 +21,7 @@ def test_filter_push_up_ideal_case(tmpdir):
     Tests whether the .py version of the inspector works
     """
     data_size = 1000
-    variant_count = 4
+    variant_count = 10
 
     df_a_train, df_b_train = get_test_df_ideal_case(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_train.csv")
@@ -40,8 +40,12 @@ def test_filter_push_up_ideal_case(tmpdir):
     filter_lines_test = []
     for variant_index in range(variant_count):
         index_filter.append(variant_index)
-        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] >= {95 - variant_index}]")
-        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] >= {95 - variant_index}]")
+        # FIXME: For filters like this that basically all do the same, the performance can heavily decrease!
+        #  The optimization needs a special case for this to not do the optimization then.
+        # filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] >= {95 - variant_index}]")
+        # filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] >= {95 - variant_index}]")
+        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] != {95 - variant_index}]")
+        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] != {95 - variant_index}]")
 
     filter_line_train = '\n        '.join(filter_lines_train)
     filter_line_test = '\n        '.join(filter_lines_test)
