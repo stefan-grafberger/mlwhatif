@@ -86,21 +86,11 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                 .filter_get_operator_after_which_cutoff_required(
                     dag, filter_removal_patch.maybe_corresponding_test_set_operator)
 
-            # We need to retreive the children in this case first because the first move removes the edges to the
-            #  children
-            children_of_train_operator_after_which_cutoff_required = list(dag.successors(
-                operator_after_which_cutoff_required_train))
-            edge_data = [dag.get_edge_data(operator_after_which_cutoff_required_train, child_node)
-                         for child_node in children_of_train_operator_after_which_cutoff_required]
-            children_of_train_operator_after_which_cutoff_required = zip(
-                children_of_train_operator_after_which_cutoff_required, edge_data)
             self._move_filter_to_new_location(dag, filter_removal_patch, operator_after_which_cutoff_required_train,
-                                              operator_to_add_node_after_train, filter_removal_patch.operator_to_remove,
-                                              children_of_train_operator_after_which_cutoff_required)
+                                              operator_to_add_node_after_train, filter_removal_patch.operator_to_remove)
             self._move_filter_to_new_location(dag, filter_removal_patch, operator_after_which_cutoff_required_test,
                                               operator_to_add_node_after_test,
-                                              filter_removal_patch.maybe_corresponding_test_set_operator,
-                                              children_of_train_operator_after_which_cutoff_required)
+                                              filter_removal_patch.maybe_corresponding_test_set_operator)
         else:
             operator_after_which_cutoff_required_train = filter_removal_patch \
                 .filter_get_operator_after_which_cutoff_required(dag, filter_removal_patch.operator_to_remove)
@@ -206,8 +196,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
             dag.remove_edge(operator_to_add_node_after_test, child_node)
 
     def _move_filter_to_new_location(self, dag, filter_removal_patch, operator_after_which_cutoff_required_train,
-                                     operator_to_add_node_after_train, operator_to_remove,
-                                     children_of_train_operator_after_which_cutoff_required=None):
+                                     operator_to_add_node_after_train, operator_to_remove):
         """Remove a filter from its old location and move it to the new one"""
         # pylint: disable=too-many-arguments
         # Apply the filter to the new train filter location and remove the old filter application
@@ -216,20 +205,15 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
 
         selectivity = filter_removal_patch.compute_filter_selectivity(dag, operator_to_remove)
 
-        if children_of_train_operator_after_which_cutoff_required is None:
-            children_of_train_operator_after_which_cutoff_required = list(dag.successors(
-                operator_after_which_cutoff_required_train))
-            edge_data = [dag.get_edge_data(operator_after_which_cutoff_required_train, child_node)
-                         for child_node in children_of_train_operator_after_which_cutoff_required]
-            children_of_train_operator_after_which_cutoff_required = zip(
-                children_of_train_operator_after_which_cutoff_required, edge_data)
+        children_of_train_operator_after_which_cutoff_required = list(dag.successors(
+            operator_after_which_cutoff_required_train))
         children_of_filter_to_be_removed = list(dag.successors(operator_to_remove))
         children_of_operator_to_add_node_after_train = list(dag.successors(operator_to_add_node_after_train))
         # Apply the filters to the new data
-        for child_node, edge_data in children_of_train_operator_after_which_cutoff_required:
+        for child_node in children_of_train_operator_after_which_cutoff_required:
+            edge_data = dag.get_edge_data(operator_after_which_cutoff_required_train, child_node)
             dag.add_edge(operator_to_add_node_after_train, child_node, **edge_data)
-            if dag.has_edge(operator_after_which_cutoff_required_train, child_node):
-                dag.remove_edge(operator_after_which_cutoff_required_train, child_node)
+            dag.remove_edge(operator_after_which_cutoff_required_train, child_node)
         # Remove the filter output from its previous location and make the previous filter results
         # use the unfiltered result
         for child_node in children_of_filter_to_be_removed:
