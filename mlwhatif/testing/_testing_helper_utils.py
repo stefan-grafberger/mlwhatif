@@ -5,15 +5,20 @@ import os
 from functools import partial
 from inspect import cleandoc
 from types import FunctionType
+from typing import Dict, Iterable, List
 
 import networkx
+import pandas
 from pandas import DataFrame
 from testfixtures import Comparison, RangeComparison
 
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif._pipeline_analyzer import PipelineAnalyzer
+from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.execution._patches import PipelinePatch
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
+from mlwhatif.instrumentation._pipeline_executor import singleton
 from mlwhatif.visualisation._visualisation import save_fig_to_path
 
 
@@ -262,3 +267,19 @@ def get_test_code_with_function_def_and_for_loop():
                 df = df.dropna()
             """)
     return test_code
+
+
+class WhatIfWrapper(WhatIfAnalysis):
+
+    def __init__(self, what_if_analysis: WhatIfAnalysis, index_filter: List[int]):
+        self.what_if_analysis = what_if_analysis
+        self.index_filter = index_filter
+
+    def generate_plans_to_try(self, dag: networkx.DiGraph) -> Iterable[Iterable[PipelinePatch]]:
+        unfiltered_plans = list(self.what_if_analysis.generate_plans_to_try(dag))
+        filtered_plans = [unfiltered_plans[index] for index in self.index_filter]
+        return filtered_plans
+
+    def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:
+        keys_and_labels = singleton.labels_to_extracted_plan_results.items()
+        return pandas.DataFrame(keys_and_labels, columns=['result_key', 'result_value'])
