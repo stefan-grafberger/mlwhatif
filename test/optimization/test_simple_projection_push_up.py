@@ -26,39 +26,49 @@ def test_projection_push_up_ideal_case(tmpdir):
     """
     tmpdir.mkdir("projection_push_up")
 
-    df_a, df_b = get_test_df_ideal_case(400)
-    df_a_path = os.path.join(tmpdir, "projection_push_up", "projection_push_up_df_a_ideal_case.csv")
-    df_a.to_csv(df_a_path, index=False)
-    df_b_path = os.path.join(tmpdir, "projection_push_up", "projection_push_up_df_b_ideal_case.csv")
-    df_b.to_csv(df_b_path, index=False)
+    df_a_train, df_b_train = get_test_df_ideal_case(400)
+    df_a_path_train = os.path.join(tmpdir, "projection_push_up", "projection_push_up_df_a_ideal_case_train.csv")
+    df_a_train.to_csv(df_a_path_train, index=False)
+    df_b_path_train = os.path.join(tmpdir, "projection_push_up", "projection_push_up_df_b_ideal_case_train.csv")
+    df_b_train.to_csv(df_b_path_train, index=False)
+
+    df_a_test, df_b_test = get_test_df_ideal_case(50)
+    df_a_path_test = os.path.join(tmpdir, "projection_push_up", "projection_push_up_df_a_ideal_case_train.csv")
+    df_a_test.to_csv(df_a_path_test, index=False)
+    df_b_path_test = os.path.join(tmpdir, "projection_push_up", "projection_push_up_df_b_ideal_case_train.csv")
+    df_b_test.to_csv(df_b_path_test, index=False)
 
     test_code = cleandoc(f"""
-            import pandas as pd
-            from sklearn.preprocessing import label_binarize, StandardScaler
-            from sklearn.dummy import DummyClassifier
-            import numpy as np
-            from sklearn.model_selection import train_test_split
-            import fuzzy_pandas as fpd
-
-            df_a = pd.read_csv("{df_a_path}", engine='python')
-            df_b = pd.read_csv("{df_b_path}", engine='python')
-            pandas_df = fpd.fuzzy_merge(df_a, df_b, on='str_id', method='levenshtein', keep_right=['C', 'D'],
-                threshold=0.99)
-            pandas_df = pandas_df[pandas_df['A'] >= 95]
-            train_data = pandas_df[pandas_df['B'] < 80]
-            test_data = pandas_df[pandas_df['B'] >= 80]
-
-            target = label_binarize(train_data['target'], classes=['no', 'yes'])
-            train_data = train_data[['A', 'B']]
-
-            clf = DummyClassifier(strategy='constant', constant=0.)
-            clf = clf.fit(train_data, target)
-
-            test_labels = label_binarize(test_data['target'], classes=['no', 'yes'])
-            test_data = test_data[['A', 'B']]
-            test_score = clf.score(test_data, test_labels)
-            assert 0. <= test_score <= 1.
-            """)
+        import pandas as pd
+        from sklearn.preprocessing import label_binarize, StandardScaler
+        from sklearn.dummy import DummyClassifier
+        import numpy as np
+        from sklearn.model_selection import train_test_split
+        import fuzzy_pandas as fpd
+        
+        df_a_train = pd.read_csv("{df_a_path_train}", engine='python')
+        df_b_train = pd.read_csv("{df_b_path_train}", engine='python')
+        df_train = fpd.fuzzy_merge(df_a_train, df_b_train, on='str_id', method='levenshtein', keep_right=['C', 'D'],
+            threshold=0.99)
+        df_train = df_train[df_train['A'] >= 95]
+        
+        df_a_test = pd.read_csv("{df_a_path_test}", engine='python')
+        df_b_test = pd.read_csv("{df_b_path_test}", engine='python')
+        df_test = fpd.fuzzy_merge(df_a_test, df_b_test, on='str_id', method='levenshtein', keep_right=['C', 'D'],
+            threshold=0.99)
+        df_test = df_train[df_train['A'] >= 95]
+        
+        train_target = label_binarize(df_train['target'], classes=['no', 'yes'])
+        train_data = df_train[['A', 'B']]
+        
+        test_target = label_binarize(df_test['target'], classes=['no', 'yes'])
+        test_data = df_test[['A', 'B']]
+        
+        clf = DummyClassifier(strategy='constant', constant=0.)
+        clf = clf.fit(train_data, train_target)
+        test_score = clf.score(test_data, test_target)
+        assert 0. <= test_score <= 1.
+        """)
 
     def corruption(pandas_df):
         pandas_df['B'] = 0
@@ -102,9 +112,9 @@ def test_projection_push_up_ideal_case(tmpdir):
     intermediate_extraction_optimised_path = os.path.join(str(tmpdir), "projection_push_up",
                                                           "data_corruption-what-if-optimised")
 
-    analysis_result_with_opt_rule.save_original_dag_to_path(intermediate_extraction_orig_path)
-    analysis_result_with_opt_rule.save_what_if_dags_to_path(intermediate_extraction_generated_path)
-    analysis_result_with_opt_rule.save_optimised_what_if_dags_to_path(intermediate_extraction_optimised_path)
+    analysis_result_without_opt_rule.save_original_dag_to_path(intermediate_extraction_orig_path)
+    analysis_result_without_opt_rule.save_what_if_dags_to_path(intermediate_extraction_generated_path)
+    analysis_result_without_opt_rule.save_optimised_what_if_dags_to_path(intermediate_extraction_optimised_path)
 
 
 def get_test_df_ideal_case(data_frame_rows):
