@@ -21,6 +21,7 @@ from .._analysis_results import AnalysisResults, RuntimeInfo, DagExtractionInfo
 from ..analysis._what_if_analysis import WhatIfAnalysis
 from ..execution._dag_executor import DagExecutor
 from ..execution._multi_query_optimizer import MultiQueryOptimizer
+from ..optimization._query_optimization_rules import QueryOptimizationRule
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 for _ in ("gensim", "tensorflow", "h5py"):
@@ -57,6 +58,7 @@ class PipelineExecutor:
                                        DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0))
     monkey_patch_duration = 0
     skip_optimizer = False
+    force_optimization_rules = None
 
     def run(self, *,
             notebook_path: str or None = None,
@@ -67,7 +69,8 @@ class PipelineExecutor:
             reset_state: bool = True,
             track_code_references: bool = True,
             custom_monkey_patching: List[any] = None,
-            skip_optimizer=False
+            skip_optimizer=False,
+            force_optimization_rules: List[QueryOptimizationRule] or None
             ) -> AnalysisResults:
         """
         Instrument and execute the pipeline and evaluate all checks
@@ -88,6 +91,7 @@ class PipelineExecutor:
         self.custom_monkey_patching = custom_monkey_patching
         self.analyses = analyses
         self.skip_optimizer = skip_optimizer
+        self.force_optimization_rules = force_optimization_rules
 
         if extraction_info is None:
             logger.info(f'Running instrumented original pipeline...')
@@ -138,7 +142,8 @@ class PipelineExecutor:
             self.analysis_results.runtime_info.what_if_plan_generation = plan_generation_duration * 1000
 
         # TODO: Add try catch statements so we can see intermediate DAGs even if something goes wrong for debugging
-        MultiQueryOptimizer(self).create_optimized_plan(self.analysis_results, self.skip_optimizer)
+        MultiQueryOptimizer(self, self.force_optimization_rules)\
+            .create_optimized_plan(self.analysis_results, self.skip_optimizer)
 
         logger.info(f"Executing generated plans")
         execution_start = time.time()
@@ -211,6 +216,7 @@ class PipelineExecutor:
         self.custom_monkey_patching = []
         self.monkey_patch_duration = 0
         self.skip_optimizer = False
+        self.force_optimization_rules = None
 
     @staticmethod
     def instrument_pipeline(parsed_ast, track_code_references):

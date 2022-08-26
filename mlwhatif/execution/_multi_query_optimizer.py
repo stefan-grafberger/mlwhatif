@@ -3,12 +3,13 @@ The place where the Multi-Query optimization happens
 """
 import logging
 import time
-from typing import Iterable
+from typing import Iterable, List
 
 import networkx
 
 from mlwhatif._analysis_results import AnalysisResults
 from mlwhatif.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
+from mlwhatif.optimization._query_optimization_rules import QueryOptimizationRule
 from mlwhatif.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
 from mlwhatif.optimization._simple_projection_push_up import SimpleProjectionPushUp
 from mlwhatif.optimization._udf_split_and_reuse import UdfSplitAndReuse
@@ -22,12 +23,15 @@ class MultiQueryOptimizer:
 
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, pipeline_executor):
+    def __init__(self, pipeline_executor, force_optimization_rules: List[QueryOptimizationRule] or None):
         self.pipeline_executor = pipeline_executor
-        self.all_optimization_rules = [SimpleProjectionPushUp(pipeline_executor),
-                                       SimpleFilterAdditionPushUp(pipeline_executor),
-                                       OperatorDeletionFilterPushUp(pipeline_executor),
-                                       UdfSplitAndReuse(pipeline_executor)]
+        if force_optimization_rules is None:
+            self.all_optimization_rules = [SimpleProjectionPushUp(pipeline_executor),
+                                           SimpleFilterAdditionPushUp(pipeline_executor),
+                                           OperatorDeletionFilterPushUp(pipeline_executor),
+                                           UdfSplitAndReuse(pipeline_executor)]
+        else:
+            self.all_optimization_rules = force_optimization_rules
 
     def create_optimized_plan(self, analysis_results: AnalysisResults, skip_optimizer=False) -> \
             AnalysisResults:

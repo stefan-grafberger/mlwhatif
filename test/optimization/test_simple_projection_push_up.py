@@ -10,6 +10,8 @@ from testfixtures import compare
 from example_pipelines import ADULT_SIMPLE_PY
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
+from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.optimization._simple_projection_push_up import SimpleProjectionPushUp
 from mlwhatif.testing._testing_helper_utils import get_expected_dag_adult_easy
 
 import pandas as pd
@@ -24,7 +26,7 @@ def test_projection_push_up_ideal_case(tmpdir):
     """
     tmpdir.mkdir("projection_push_up")
 
-    df_a, df_b = get_test_df_ideal_case(5000)
+    df_a, df_b = get_test_df_ideal_case(400)
     df_a_path = os.path.join(tmpdir, "projection_push_up", "projection_push_up_df_a_ideal_case.csv")
     df_a.to_csv(df_a_path, index=False)
     df_b_path = os.path.join(tmpdir, "projection_push_up", "projection_push_up_df_b_ideal_case.csv")
@@ -62,24 +64,47 @@ def test_projection_push_up_ideal_case(tmpdir):
         pandas_df['B'] = 0
         return pandas_df
 
-    data_corruption = DataCorruption({'A': CorruptionType.SCALING, 'B': corruption}, also_corrupt_train=True)
-
-    analysis_result = PipelineAnalyzer \
+    data_corruption = DataCorruption({'A': CorruptionType.SCALING, 'B': corruption}, also_corrupt_train=True,
+                                     corruption_percentages=[1.])
+    dag_extraction_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
+        .execute() \
+        .dag_extraction_info
+
+    analysis_result_with_opt_rule = PipelineAnalyzer \
+        .on_previously_extracted_pipeline(dag_extraction_result) \
         .add_what_if_analysis(data_corruption) \
+        .overwrite_optimization_rules([SimpleProjectionPushUp(singleton)])  \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (7, 4)
+    analysis_result_without_opt_rule = PipelineAnalyzer \
+        .on_previously_extracted_pipeline(dag_extraction_result) \
+        .add_what_if_analysis(data_corruption) \
+        .overwrite_optimization_rules([]) \
+        .execute()
+
+    analysis_result_without_any_opt = PipelineAnalyzer \
+        .on_previously_extracted_pipeline(dag_extraction_result) \
+        .add_what_if_analysis(data_corruption) \
+        .skip_multi_query_optimization(True) \
+        .execute()
+
+    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (3, 4)
+    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (3, 4)
+    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (3, 4)
+
+    assert analysis_result_with_opt_rule.runtime_info.what_if_optimized_estimated < \
+           analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
+           analysis_result_without_any_opt.runtime_info.what_if_unoptimized_estimated
 
     intermediate_extraction_orig_path = os.path.join(str(tmpdir), "projection_push_up", "data_corruption-orig")
     intermediate_extraction_generated_path = os.path.join(str(tmpdir), "projection_push_up", "data_corruption-what-if")
     intermediate_extraction_optimised_path = os.path.join(str(tmpdir), "projection_push_up",
                                                           "data_corruption-what-if-optimised")
 
-    analysis_result.save_original_dag_to_path(intermediate_extraction_orig_path)
-    analysis_result.save_what_if_dags_to_path(intermediate_extraction_generated_path)
-    analysis_result.save_optimised_what_if_dags_to_path(intermediate_extraction_optimised_path)
+    analysis_result_with_opt_rule.save_original_dag_to_path(intermediate_extraction_orig_path)
+    analysis_result_with_opt_rule.save_what_if_dags_to_path(intermediate_extraction_generated_path)
+    analysis_result_with_opt_rule.save_optimised_what_if_dags_to_path(intermediate_extraction_optimised_path)
 
 
 def get_test_df_ideal_case(data_frame_rows):
