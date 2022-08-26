@@ -270,6 +270,7 @@ def get_test_code_with_function_def_and_for_loop():
 
 
 class WhatIfWrapper(WhatIfAnalysis):
+    """A simple wrapper to filter plans to try for benchmarking specific optimizations"""
 
     def __init__(self, what_if_analysis: WhatIfAnalysis, index_filter: List[int]):
         self.what_if_analysis = what_if_analysis

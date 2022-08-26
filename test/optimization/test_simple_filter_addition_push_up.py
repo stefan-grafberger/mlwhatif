@@ -10,29 +10,29 @@ import pandas as pd
 from numpy.random import randint, shuffle
 
 from mlwhatif import PipelineAnalyzer
-from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
+from mlwhatif.analysis._data_cleaning import DataCleaning, ErrorType
 from mlwhatif.instrumentation._pipeline_executor import singleton
-from mlwhatif.optimization._simple_projection_push_up import SimpleProjectionPushUp
+from mlwhatif.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
 from mlwhatif.testing._testing_helper_utils import WhatIfWrapper
 
 
-def test_projection_push_up_ideal_case(tmpdir):
+def test_filter_push_up_ideal_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
     data_size = 1000
-    variant_count = 2
+    variant_count = 10
 
     df_a_train, df_b_train = get_test_df_ideal_case(int(data_size * 0.8))
-    df_a_path_train = os.path.join(tmpdir, "projection_push_up_df_a_ideal_case_train.csv")
+    df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
-    df_b_path_train = os.path.join(tmpdir, "projection_push_up_df_b_ideal_case_train.csv")
+    df_b_path_train = os.path.join(tmpdir, "filter_push_up_df_b_ideal_case_train.csv")
     df_b_train.to_csv(df_b_path_train, index=False)
 
     df_a_test, df_b_test = get_test_df_ideal_case(int(data_size * 0.2))
-    df_a_path_test = os.path.join(tmpdir, "projection_push_up_df_a_ideal_case_train.csv")
+    df_a_path_test = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_train.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
-    df_b_path_test = os.path.join(tmpdir, "projection_push_up_df_b_ideal_case_train.csv")
+    df_b_path_test = os.path.join(tmpdir, "filter_push_up_df_b_ideal_case_train.csv")
     df_b_test.to_csv(df_b_path_test, index=False)
 
     test_code = cleandoc(f"""
@@ -67,15 +67,12 @@ def test_projection_push_up_ideal_case(tmpdir):
         assert 0. <= test_score <= 1.
         """)
 
-    corruption_percentages = []
     index_filter = []
     for variant_index in range(variant_count):
-        corruption_percentages.append(variant_index * (1. / (variant_count - 1)))
-        index_filter.append(1 + 2 * variant_index)
+        index_filter.append(0)
 
     data_corruption = WhatIfWrapper(
-        DataCorruption({'A': CorruptionType.SCALING}, also_corrupt_train=True,
-                       corruption_percentages=corruption_percentages),
+        DataCleaning({'A': ErrorType.NUM_MISSING_VALUES}),
         index_filter=index_filter)
 
     dag_extraction_result = PipelineAnalyzer \
@@ -86,7 +83,7 @@ def test_projection_push_up_ideal_case(tmpdir):
     analysis_result_with_opt_rule = PipelineAnalyzer \
         .on_previously_extracted_pipeline(dag_extraction_result) \
         .add_what_if_analysis(data_corruption) \
-        .overwrite_optimization_rules([SimpleProjectionPushUp(singleton)]) \
+        .overwrite_optimization_rules([SimpleFilterAdditionPushUp(singleton)]) \
         .execute()
 
     analysis_result_without_opt_rule = PipelineAnalyzer \
@@ -101,9 +98,9 @@ def test_projection_push_up_ideal_case(tmpdir):
         .skip_multi_query_optimization(True) \
         .execute()
 
-    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
-    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
-    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
+    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (2, 2)
+    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (2, 2)
+    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (2, 2)
 
     assert analysis_result_with_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
@@ -111,8 +108,8 @@ def test_projection_push_up_ideal_case(tmpdir):
 
     analysis_result_with_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-opt-orig"))
     analysis_result_with_opt_rule.save_what_if_dags_to_path(os.path.join(str(tmpdir), "with-opt-what-if"))
-    analysis_result_with_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
-                                                                                   "with-opt-what-if-optimised"))
+    analysis_result_with_opt_rule.save_optimised_what_if_dags_to_path(
+        os.path.join(str(tmpdir), "with-opt-what-if-optimised"))
 
     analysis_result_without_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "without-opt-orig"))
     analysis_result_without_opt_rule.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-opt-what-if"))
