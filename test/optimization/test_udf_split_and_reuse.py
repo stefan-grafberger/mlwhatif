@@ -1,0 +1,177 @@
+"""
+Tests whether the optimization works
+"""
+# pylint: disable=too-many-locals,invalid-name
+# TODO: Clean up these tests
+import os
+import random
+from inspect import cleandoc
+
+import numpy as np
+import pandas as pd
+from numpy.random import randint, shuffle
+
+from mlwhatif import PipelineAnalyzer
+from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
+from mlwhatif.execution._pipeline_executor import singleton
+from mlwhatif.optimization._simple_projection_push_up import SimpleProjectionPushUp
+from mlwhatif.optimization._udf_split_and_reuse import UdfSplitAndReuse
+from mlwhatif.testing._testing_helper_utils import WhatIfWrapper
+
+
+def test_udf_split_and_reuse_ideal_case(tmpdir):
+    """
+    Tests whether the .py version of the inspector works
+    """
+    # TODO: use string column, add expensive corruption
+    data_size = 10000
+    variant_count = 10
+
+    df_a_train, df_b_train = get_test_df_ideal_case(int(data_size * 0.8))
+    df_a_path_train = os.path.join(tmpdir, "projection_push_up_df_a_ideal_case_train.csv")
+    df_a_train.to_csv(df_a_path_train, index=False)
+    df_b_path_train = os.path.join(tmpdir, "projection_push_up_df_b_ideal_case_train.csv")
+    df_b_train.to_csv(df_b_path_train, index=False)
+
+    df_a_test, df_b_test = get_test_df_ideal_case(int(data_size * 0.2))
+    df_a_path_test = os.path.join(tmpdir, "projection_push_up_df_a_ideal_case_test.csv")
+    df_a_test.to_csv(df_a_path_test, index=False)
+    df_b_path_test = os.path.join(tmpdir, "projection_push_up_df_b_ideal_case_test.csv")
+    df_b_test.to_csv(df_b_path_test, index=False)
+
+    test_code = cleandoc(f"""
+        import pandas as pd
+        from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
+        from sklearn.dummy import DummyClassifier
+        from sklearn.pipeline import Pipeline
+        import numpy as np
+        from sklearn.model_selection import train_test_split
+        import fuzzy_pandas as fpd
+        from sklearn.compose import ColumnTransformer
+        
+        df_train = pd.read_csv("{df_a_path_train}", engine='python')
+        df_test = pd.read_csv("{df_a_path_test}", engine='python')
+        
+        train_target = label_binarize(df_train['target'], classes=['no', 'yes'])
+        
+        column_transformer = ColumnTransformer(transformers=[
+                    ('numeric', StandardScaler(), ['A', 'B']),
+                    ('cat', OneHotEncoder(sparse=True, handle_unknown='ignore'), ['group_col_1'])
+                ])
+        pipeline = Pipeline(steps=[
+            ('column_transformer', column_transformer),
+            ('learner', DummyClassifier(strategy='constant', constant=0.))
+        ])
+        
+        train_data = df_train[['A', 'B', 'group_col_1']]
+        
+        test_target = label_binarize(df_test['target'], classes=['no', 'yes'])
+        test_data = df_test[['A', 'B', 'group_col_1']]
+        
+        pipeline = pipeline.fit(train_data, train_target)
+        test_score = pipeline.score(test_data, test_target)
+        assert 0. <= test_score <= 1.
+        """)
+
+    corruption_percentages = []
+    index_filter = []
+    for variant_index in range(variant_count):
+        corruption_percentages.append(variant_index * (1. / (variant_count - 1)))
+        index_filter.append(1 + 2 * variant_index)
+
+    data_corruption = WhatIfWrapper(
+        DataCorruption({'group_col_1': CorruptionType.BROKEN_CHARACTERS}, also_corrupt_train=True,
+                       corruption_percentages=corruption_percentages),
+        index_filter=index_filter)
+
+    dag_extraction_result = PipelineAnalyzer \
+        .on_pipeline_from_string(test_code) \
+        .execute() \
+        .dag_extraction_info
+
+    analysis_result_with_reuse_opt_rule = PipelineAnalyzer \
+        .on_previously_extracted_pipeline(dag_extraction_result) \
+        .add_what_if_analysis(data_corruption) \
+        .overwrite_optimization_rules([SimpleProjectionPushUp(singleton), UdfSplitAndReuse(singleton)]) \
+        .execute()
+
+    analysis_result_with_pushup_opt_rule = PipelineAnalyzer \
+        .on_previously_extracted_pipeline(dag_extraction_result) \
+        .add_what_if_analysis(data_corruption) \
+        .overwrite_optimization_rules([SimpleProjectionPushUp(singleton)]) \
+        .execute()
+
+    analysis_result_without_opt_rule = PipelineAnalyzer \
+        .on_previously_extracted_pipeline(dag_extraction_result) \
+        .add_what_if_analysis(data_corruption) \
+        .overwrite_optimization_rules([]) \
+        .execute()
+
+    analysis_result_without_any_opt = PipelineAnalyzer \
+        .on_previously_extracted_pipeline(dag_extraction_result) \
+        .add_what_if_analysis(data_corruption) \
+        .skip_multi_query_optimization(True) \
+        .execute()
+
+    assert analysis_result_with_reuse_opt_rule.analysis_to_result_reports[data_corruption].shape == (
+        variant_count + 1, 2)
+    assert analysis_result_with_pushup_opt_rule.analysis_to_result_reports[data_corruption].shape == \
+           (variant_count + 1, 2)
+    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
+    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
+
+    assert analysis_result_with_reuse_opt_rule.runtime_info.what_if_optimized_estimated <= \
+           analysis_result_with_pushup_opt_rule.runtime_info.what_if_optimized_estimated < \
+           analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
+           analysis_result_without_any_opt.runtime_info.what_if_unoptimized_estimated
+
+    analysis_result_with_reuse_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-reuse-opt-orig"))
+    analysis_result_with_reuse_opt_rule.save_what_if_dags_to_path(os.path.join(str(tmpdir), "with-reuse-opt-what-if"))
+    analysis_result_with_reuse_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
+                                                                                         "with-reuse-opt-what-if-"
+                                                                                         "optimised"))
+
+    analysis_result_with_pushup_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-pushup-opt-orig"))
+    analysis_result_with_pushup_opt_rule.save_what_if_dags_to_path(
+        os.path.join(str(tmpdir), "with-pushup-opt-what-if"))
+    analysis_result_with_pushup_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
+                                                                                          "with-pushup-opt-what-if"
+                                                                                          "-optimised"))
+
+    analysis_result_without_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "without-opt-orig"))
+    analysis_result_without_opt_rule.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-opt-what-if"))
+    analysis_result_without_opt_rule.save_optimised_what_if_dags_to_path(
+        os.path.join(str(tmpdir), "without-opt-what-if-optimised"))
+
+    analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
+    analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
+    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
+        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
+
+
+def get_test_df_ideal_case(data_frame_rows):
+    """Get some test data """
+    sizes_before_join = int(data_frame_rows * 1.1)
+    start_with_offset = int(data_frame_rows * 0.1)
+    end_with_offset = start_with_offset + sizes_before_join
+    assert sizes_before_join - start_with_offset == data_frame_rows
+
+    id_a = np.arange(sizes_before_join)
+    shuffle(id_a)
+    a = randint(0, 100, size=sizes_before_join)
+    b = randint(0, 100, size=sizes_before_join)
+    categories = ['cat_a', 'cat_b', 'cat_c']
+    group_col_1 = pd.Series(random.choices(categories, k=sizes_before_join))
+    group_col_2 = pd.Series(random.choices(categories, k=sizes_before_join))
+    group_col_3 = pd.Series(random.choices(categories, k=sizes_before_join))
+    target = pd.Series(random.choices(["yes", "no"], k=sizes_before_join))
+    id_b = np.arange(start_with_offset, end_with_offset)
+    shuffle(id_b)
+    c = randint(0, 100, size=sizes_before_join)
+    d = randint(0, 100, size=sizes_before_join)
+    df_a = pd.DataFrame(zip(id_a, a, b, group_col_1, group_col_2, group_col_3, target),
+                        columns=['id', 'A', 'B', 'group_col_1', 'group_col_2', 'group_col_3', 'target'])
+    df_a["str_id"] = "id_" + df_a["id"].astype(str)
+    df_b = pd.DataFrame(zip(id_b, c, d), columns=['id', 'C', 'D'])
+    df_b["str_id"] = "id_" + df_b["id"].astype(str)
+    return df_a, df_b
