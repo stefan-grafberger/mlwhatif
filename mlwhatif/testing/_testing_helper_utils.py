@@ -2,13 +2,16 @@
 Some util functions used in other tests
 """
 import os
+import random
 from functools import partial
 from inspect import cleandoc
 from types import FunctionType
 from typing import Dict, Iterable, List, Union, Callable
 
 import networkx
+import numpy
 import pandas
+from numpy.random.mtrand import shuffle, randint
 from pandas import DataFrame
 from testfixtures import Comparison, RangeComparison
 
@@ -293,3 +296,31 @@ class WhatIfWrapper(WhatIfAnalysis):
     def generate_final_report(self, extracted_plan_results: Dict[str, any]) -> any:
         keys_and_labels = singleton.labels_to_extracted_plan_results.items()
         return pandas.DataFrame(keys_and_labels, columns=['result_key', 'result_value'])
+
+
+def get_test_df(data_frame_rows):
+    """Get some test data """
+    sizes_before_join = int(data_frame_rows * 1.1)
+    start_with_offset = int(data_frame_rows * 0.1)
+    end_with_offset = start_with_offset + sizes_before_join
+    assert sizes_before_join - start_with_offset == data_frame_rows
+
+    id_a = numpy.arange(sizes_before_join)
+    shuffle(id_a)
+    a = randint(0, 100, size=sizes_before_join)
+    b = randint(0, 100, size=sizes_before_join)
+    categories = ['cat_a', 'cat_b', 'cat_c']
+    group_col_1 = pandas.Series(random.choices(categories, k=sizes_before_join))
+    group_col_2 = pandas.Series(random.choices(categories, k=sizes_before_join))
+    group_col_3 = pandas.Series(random.choices(categories, k=sizes_before_join))
+    target = pandas.Series(random.choices(["yes", "no"], k=sizes_before_join))
+    id_b = numpy.arange(start_with_offset, end_with_offset)
+    shuffle(id_b)
+    c = randint(0, 100, size=sizes_before_join)
+    d = randint(0, 100, size=sizes_before_join)
+    df_a = pandas.DataFrame(zip(id_a, a, b, group_col_1, group_col_2, group_col_3, target),
+                            columns=['id', 'A', 'B', 'group_col_1', 'group_col_2', 'group_col_3', 'target'])
+    df_a["str_id"] = "id_" + df_a["id"].astype(str)
+    df_b = pandas.DataFrame(zip(id_b, c, d), columns=['id', 'C', 'D'])
+    df_b["str_id"] = "id_" + df_b["id"].astype(str)
+    return df_a, df_b

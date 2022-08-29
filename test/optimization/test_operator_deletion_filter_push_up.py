@@ -15,7 +15,7 @@ from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._operator_fairness import OperatorFairness
 from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
-from mlwhatif.testing._testing_helper_utils import WhatIfWrapper
+from mlwhatif.testing._testing_helper_utils import WhatIfWrapper, get_test_df
 
 
 def test_filter_push_up_ideal_case(tmpdir):
@@ -25,13 +25,13 @@ def test_filter_push_up_ideal_case(tmpdir):
     data_size = 1000
     variant_count = 10
 
-    df_a_train, df_b_train = get_test_df_ideal_case(int(data_size * 0.8))
+    df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
     df_b_path_train = os.path.join(tmpdir, "filter_push_up_df_b_ideal_case_train.csv")
     df_b_train.to_csv(df_b_path_train, index=False)
 
-    df_a_test, df_b_test = get_test_df_ideal_case(int(data_size * 0.2))
+    df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
     df_a_path_test = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
     df_b_path_test = os.path.join(tmpdir, "filter_push_up_df_b_ideal_case_test.csv")
@@ -138,13 +138,13 @@ def test_filter_push_up_worst_case(tmpdir):
     data_size = 2000
     variant_count = 2
 
-    df_a_train, df_b_train = get_test_df_ideal_case(int(data_size * 0.8))
+    df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
     df_b_path_train = os.path.join(tmpdir, "filter_push_up_df_b_worst_case_train.csv")
     df_b_train.to_csv(df_b_path_train, index=False)
 
-    df_a_test, df_b_test = get_test_df_ideal_case(int(data_size * 0.2))
+    df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
     df_a_path_test = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
     df_b_path_test = os.path.join(tmpdir, "filter_push_up_df_b_worst_case_test.csv")
@@ -244,31 +244,3 @@ def test_filter_push_up_worst_case(tmpdir):
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
     analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
         os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
-
-
-def get_test_df_ideal_case(data_frame_rows):
-    """Get some test data """
-    sizes_before_join = int(data_frame_rows * 1.1)
-    start_with_offset = int(data_frame_rows * 0.1)
-    end_with_offset = start_with_offset + sizes_before_join
-    assert sizes_before_join - start_with_offset == data_frame_rows
-
-    id_a = np.arange(sizes_before_join)
-    shuffle(id_a)
-    a = randint(0, 100, size=sizes_before_join)
-    b = randint(0, 100, size=sizes_before_join)
-    categories = ['cat_a', 'cat_b', 'cat_c']
-    group_col_1 = pd.Series(random.choices(categories, k=sizes_before_join))
-    group_col_2 = pd.Series(random.choices(categories, k=sizes_before_join))
-    group_col_3 = pd.Series(random.choices(categories, k=sizes_before_join))
-    target = pd.Series(random.choices(["yes", "no"], k=sizes_before_join))
-    id_b = np.arange(start_with_offset, end_with_offset)
-    shuffle(id_b)
-    c = randint(0, 100, size=sizes_before_join)
-    d = randint(0, 100, size=sizes_before_join)
-    df_a = pd.DataFrame(zip(id_a, a, b, group_col_1, group_col_2, group_col_3, target),
-                        columns=['id', 'A', 'B', 'group_col_1', 'group_col_2', 'group_col_3', 'target'])
-    df_a["str_id"] = "id_" + df_a["id"].astype(str)
-    df_b = pd.DataFrame(zip(id_b, c, d), columns=['id', 'C', 'D'])
-    df_b["str_id"] = "id_" + df_b["id"].astype(str)
-    return df_a, df_b
