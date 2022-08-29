@@ -70,7 +70,7 @@ def test_filter_push_up_ideal_case(tmpdir):
         """)
 
     index_filter = []
-    for variant_index in range(variant_count):
+    for _ in range(variant_count):
         index_filter.append(0)
 
     data_corruption = WhatIfWrapper(
