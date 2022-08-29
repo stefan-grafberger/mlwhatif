@@ -70,7 +70,7 @@ class PipelineExecutor:
             track_code_references: bool = True,
             custom_monkey_patching: List[any] = None,
             skip_optimizer=False,
-            force_optimization_rules: List[QueryOptimizationRule] or None
+            force_optimization_rules: List[QueryOptimizationRule] or None=None
             ) -> AnalysisResults:
         """
         Instrument and execute the pipeline and evaluate all checks
