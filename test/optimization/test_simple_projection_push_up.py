@@ -1,6 +1,8 @@
 """
 Tests whether the optimization works
 """
+# pylint: disable=too-many-locals,invalid-name
+# TODO: Clean up these tests
 import os
 import random
 from inspect import cleandoc
