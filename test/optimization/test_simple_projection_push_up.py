@@ -13,7 +13,7 @@ from numpy.random import randint, shuffle
 
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.optimization._simple_projection_push_up import SimpleProjectionPushUp
 from mlwhatif.testing._testing_helper_utils import WhatIfWrapper
 

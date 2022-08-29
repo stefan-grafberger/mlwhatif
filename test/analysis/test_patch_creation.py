@@ -11,7 +11,7 @@ from mlwhatif.analysis._analysis_utils import find_nodes_by_type
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_node
 from mlwhatif.execution._dag_executor import DagExecutor
 
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.visualisation import save_fig_to_path
 
 

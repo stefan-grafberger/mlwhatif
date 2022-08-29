@@ -1,6 +1,7 @@
 """
 Instrument and executes the pipeline
 """
+# TODO: At some point, this should be split into two files, one for mere orchestration, one for instrumentation
 import ast
 import logging
 import sys
@@ -15,13 +16,13 @@ import networkx
 from astmonkey.transformers import ParentChildNodeTransformer
 from nbconvert import PythonExporter
 
-from ._call_capture_transformer import CallCaptureTransformer
-from .. import monkeypatching
-from .._analysis_results import AnalysisResults, RuntimeInfo, DagExtractionInfo
-from ..analysis._what_if_analysis import WhatIfAnalysis
-from ..execution._dag_executor import DagExecutor
-from ..execution._multi_query_optimizer import MultiQueryOptimizer
-from ..optimization._query_optimization_rules import QueryOptimizationRule
+from mlwhatif.instrumentation._call_capture_transformer import CallCaptureTransformer
+from mlwhatif import monkeypatching
+from mlwhatif._analysis_results import AnalysisResults, RuntimeInfo, DagExtractionInfo
+from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.execution._dag_executor import DagExecutor
+from mlwhatif.optimization._multi_query_optimizer import MultiQueryOptimizer
+from mlwhatif.optimization._query_optimization_rules import QueryOptimizationRule
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 for _ in ("gensim", "tensorflow", "h5py"):

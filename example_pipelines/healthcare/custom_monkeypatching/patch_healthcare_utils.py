@@ -10,7 +10,7 @@ from example_pipelines.healthcare import healthcare_utils
 from mlwhatif.execution._stat_tracking import capture_optimizer_info
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import add_dag_node, \
     get_input_info, execute_patched_func_no_op_id, get_optional_code_info_or_none, FunctionCallResult, \
     wrap_in_mlinspect_array_if_necessary, get_dag_node_for_id

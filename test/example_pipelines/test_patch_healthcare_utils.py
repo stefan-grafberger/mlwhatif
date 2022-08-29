@@ -11,7 +11,7 @@ from testfixtures import compare, Comparison, RangeComparison
 
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
-from mlwhatif.instrumentation import _pipeline_executor
+from mlwhatif.execution import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
 

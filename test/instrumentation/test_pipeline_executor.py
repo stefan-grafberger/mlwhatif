@@ -11,10 +11,10 @@ import networkx
 from testfixtures import compare, Comparison, RangeComparison
 
 from mlwhatif import OperatorType, OperatorContext, FunctionInfo
-from mlwhatif.instrumentation import _pipeline_executor
+from mlwhatif.execution import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import CodeReference, DagNode, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.testing._testing_helper_utils import get_test_code_with_function_def_and_for_loop
 
 

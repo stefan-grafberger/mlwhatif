@@ -18,7 +18,7 @@ from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import PipelinePatch
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.visualisation._visualisation import save_fig_to_path
 
 

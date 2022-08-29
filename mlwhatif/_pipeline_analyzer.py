@@ -5,7 +5,7 @@ from typing import Iterable, List
 
 from ._analysis_results import AnalysisResults, DagExtractionInfo
 from .analysis._what_if_analysis import WhatIfAnalysis
-from .instrumentation._pipeline_executor import singleton, logger
+from mlwhatif.execution._pipeline_executor import singleton, logger
 from .optimization._query_optimization_rules import QueryOptimizationRule
 
 

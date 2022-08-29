@@ -13,7 +13,7 @@ from numpy.random import randint, shuffle
 
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._operator_fairness import OperatorFairness
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
 from mlwhatif.testing._testing_helper_utils import WhatIfWrapper
 

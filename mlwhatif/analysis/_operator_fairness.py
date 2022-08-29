@@ -18,7 +18,7 @@ from mlwhatif.analysis._analysis_utils import find_nodes_by_type, find_train_or_
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import PipelinePatch, OperatorReplacement, OperatorRemoval
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import wrap_in_mlinspect_array_if_necessary
 
 

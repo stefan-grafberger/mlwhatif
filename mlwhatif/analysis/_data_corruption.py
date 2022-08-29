@@ -18,7 +18,7 @@ from mlwhatif.analysis._analysis_utils import find_nodes_by_type
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import DataProjection, PipelinePatch, UdfSplitInfo
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 
 
 class CorruptionType(Enum):

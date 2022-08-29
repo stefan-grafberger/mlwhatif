@@ -16,7 +16,7 @@ from mlwhatif.analysis._data_corruption import CorruptionType, CORRUPTION_FUNCS_
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import DataProjection, PipelinePatch, UdfSplitInfo, ModelPatch
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 
 
 class DataCorruptionWithModelVariants(WhatIfAnalysis):

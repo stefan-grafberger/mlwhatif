@@ -5,7 +5,6 @@ Monkey patching for pandas
 import operator
 import os
 import re
-import string
 from functools import partial
 
 import gorilla
@@ -15,7 +14,7 @@ from mlwhatif import OperatorType, DagNode, BasicCodeLocation, DagNodeDetails
 from mlwhatif.execution._stat_tracking import capture_optimizer_info
 from mlwhatif.instrumentation._dag_node import OptimizerInfo
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, get_input_info, add_dag_node, \
     get_dag_node_for_id, execute_patched_func_no_op_id, get_optional_code_info_or_none, FunctionCallResult, \
     execute_patched_internal_func_with_depth, get_dag_node_copy_with_optimizer_info

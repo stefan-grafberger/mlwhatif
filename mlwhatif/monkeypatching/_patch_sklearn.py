@@ -21,7 +21,7 @@ from tensorflow.python.keras.wrappers import scikit_learn as keras_sklearn_inter
 from mlwhatif.execution._stat_tracking import capture_optimizer_info, get_df_shape, get_df_memory
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails, CodeReference, OptimizerInfo
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.monkeypatching._mlinspect_ndarray import MlinspectNdarray
 from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, add_dag_node, \
     execute_patched_func_indirect_allowed, get_input_info, execute_patched_func_no_op_id, \

@@ -19,7 +19,7 @@ from tensorflow.python.keras.wrappers.scikit_learn import KerasClassifier  # pyl
 from testfixtures import compare, Comparison, RangeComparison
 
 from mlwhatif import OperatorType, OperatorContext, FunctionInfo
-from mlwhatif.instrumentation import _pipeline_executor
+from mlwhatif.execution import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
 from mlwhatif.monkeypatching._patch_sklearn import TrainTestSplitResult
