@@ -4,12 +4,7 @@ Tests whether the optimization works
 # pylint: disable=too-many-locals,invalid-name
 # TODO: Clean up these tests
 import os
-import random
 from inspect import cleandoc
-
-import numpy as np
-import pandas as pd
-from numpy.random import randint, shuffle
 
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._operator_fairness import OperatorFairness
