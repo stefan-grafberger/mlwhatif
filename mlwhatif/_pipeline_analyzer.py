@@ -3,9 +3,9 @@ User-facing API for inspecting the pipeline
 """
 from typing import Iterable, List
 
+from .execution._pipeline_executor import singleton, logger
 from ._analysis_results import AnalysisResults, DagExtractionInfo
 from .analysis._what_if_analysis import WhatIfAnalysis
-from mlwhatif.execution._pipeline_executor import singleton, logger
 from .optimization._query_optimization_rules import QueryOptimizationRule
 
 
