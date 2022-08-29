@@ -253,7 +253,7 @@ def test_frame__getitem__selection():
                                  BasicCodeLocation("<string-source>", 4),
                                  OperatorContext(OperatorType.SELECTION,
                                                  FunctionInfo('pandas.core.frame', '__getitem__')),
-                                 DagNodeDetails("Select by Series: df[df['A'] > 3]", ['A', 'B'],
+                                 DagNodeDetails("Select by Series: df['A'] > 3", ['A', 'B'],
                                                 OptimizerInfo(RangeComparison(0, 100), (3, 2),
                                                               RangeComparison(0, 500))),
                                  OptionalCodeInfo(CodeReference(4, 15, 4, 30), "df[df['A'] > 3]"),
