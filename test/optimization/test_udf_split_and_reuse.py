@@ -76,7 +76,7 @@ def test_udf_split_and_reuse_ideal_case(tmpdir):
     corruption_percentages = []
     index_filter = []
     for variant_index in range(variant_count):
-        corruption_percentages.append(variant_index * (1. / (variant_count - 1)))
+        corruption_percentages.append(variant_index * (0.1 / (variant_count - 1) + 0.9))
         index_filter.append(1 + 2 * variant_index)
 
     data_corruption = WhatIfWrapper(
