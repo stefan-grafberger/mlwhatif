@@ -235,7 +235,7 @@ class PipelineExecutor:
             parsed_ast = ast.fix_missing_locations(parsed_ast)
 
         # from mlinspect2._pipeline_executor import set_code_reference, monkey_patch
-        func_import_node = ast.ImportFrom(module='mlwhatif.instrumentation._pipeline_executor',
+        func_import_node = ast.ImportFrom(module='mlwhatif.execution._pipeline_executor',
                                           names=[ast.alias(name='set_code_reference_call', asname=None),
                                                  ast.alias(name='set_code_reference_subscript', asname=None),
                                                  ast.alias(name='monkey_patch', asname=None),
