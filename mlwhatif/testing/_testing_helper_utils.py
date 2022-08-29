@@ -5,7 +5,7 @@ import os
 from functools import partial
 from inspect import cleandoc
 from types import FunctionType
-from typing import Dict, Iterable, List
+from typing import Dict, Iterable, List, Union, Callable
 
 import networkx
 import pandas
@@ -14,8 +14,10 @@ from testfixtures import Comparison, RangeComparison
 
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif._pipeline_analyzer import PipelineAnalyzer
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type
+from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
-from mlwhatif.execution._patches import PipelinePatch
+from mlwhatif.execution._patches import PipelinePatch, ModelPatch
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
 from mlwhatif.execution._pipeline_executor import singleton
