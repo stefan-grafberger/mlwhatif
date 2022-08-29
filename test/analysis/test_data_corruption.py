@@ -1,24 +1,16 @@
 """
 Tests whether the Data Corruption analysis works
 """
-import os
 from inspect import cleandoc
 
 from example_pipelines import HEALTHCARE_PY, COMPAS_PY, ADULT_COMPLEX_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
-from mlwhatif.utils import get_project_root
-
-INTERMEDIATE_EXTRACTION_ORIG_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
-                                                 "data_corruption-orig")
-INTERMEDIATE_EXTRACTION_GENERATED_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
-                                                      "data_corruption-what-if")
-INTERMEDIATE_EXTRACTION_OPTIMISED_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
-                                                      "data_corruption-what-if-optimised")
+from mlwhatif.testing._testing_helper_utils import visualize_dags
 
 
-def test_data_corruption_mini_example_with_transformer_processing_multiple_columns():
+def test_data_corruption_mini_example_with_transformer_processing_multiple_columns(tmpdir):
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -58,12 +50,10 @@ def test_data_corruption_mini_example_with_transformer_processing_multiple_colum
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (7, 4)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
 
 
-def test_data_corruption_mini_example_with_projection_modify():
+def test_data_corruption_mini_example_with_projection_modify(tmpdir):
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -110,12 +100,10 @@ def test_data_corruption_mini_example_with_projection_modify():
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (5, 4)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
 
 
-def test_data_corruption_mini_example_only_train_test_split():
+def test_data_corruption_mini_example_only_train_test_split(tmpdir):
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -156,12 +144,10 @@ def test_data_corruption_mini_example_only_train_test_split():
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (7, 4)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
 
 
-def test_data_corruption_mini_example_only_train_test_split_without_optimizer():
+def test_data_corruption_mini_example_only_train_test_split_without_optimizer(tmpdir):
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -203,12 +189,10 @@ def test_data_corruption_mini_example_only_train_test_split_without_optimizer():
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (7, 4)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
 
 
-def test_data_corruption_mini_example_manual_split():
+def test_data_corruption_mini_example_manual_split(tmpdir):
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -250,12 +234,10 @@ def test_data_corruption_mini_example_manual_split():
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (7, 4)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
 
 
-def test_data_corruption_healthcare():
+def test_data_corruption_healthcare(tmpdir):
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -277,12 +259,10 @@ def test_data_corruption_healthcare():
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (5, 8)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
 
 
-def test_data_corruption_compas():
+def test_data_corruption_compas(tmpdir):
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -301,9 +281,7 @@ def test_data_corruption_compas():
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (7, 3)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_corruption_adult_complex():

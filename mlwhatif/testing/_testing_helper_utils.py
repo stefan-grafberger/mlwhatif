@@ -269,6 +269,13 @@ def get_test_code_with_function_def_and_for_loop():
     return test_code
 
 
+def visualize_dags(analysis_result, tmpdir):
+    """Visualise the intermediate DAGs"""
+    analysis_result.save_original_dag_to_path(os.path.join(str(tmpdir), "orig"))
+    analysis_result.save_what_if_dags_to_path(os.path.join(str(tmpdir), "what-if"))
+    analysis_result.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir), "what-if-optimised"))
+
+
 class WhatIfWrapper(WhatIfAnalysis):
     """A simple wrapper to filter plans to try for benchmarking specific optimizations"""
 

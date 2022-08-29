@@ -12,16 +12,10 @@ from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_
 from mlwhatif.execution._dag_executor import DagExecutor
 
 from mlwhatif.instrumentation._pipeline_executor import singleton
-from mlwhatif.utils import get_project_root
 from mlwhatif.visualisation import save_fig_to_path
 
-INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
-                                                       "test_add_intermediate_extraction_before.png")
-INTERMEDIATE_EXTRACTION_ADD_AFTER_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
-                                                      "test_add_intermediate_extraction_after.png")
 
-
-def test_add_intermediate_extraction_after_node_intermediate_df():
+def test_add_intermediate_extraction_after_node_intermediate_df(tmpdir):
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -41,10 +35,11 @@ def test_add_intermediate_extraction_after_node_intermediate_df():
     dag = analysis_result.original_dag
     intermediate_pdf_result_value = find_nodes_by_type(dag, OperatorType.SELECTION)[0]
     label = "util-test"
-    save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH)
+
+    save_fig_to_path(dag, os.path.join(str(tmpdir), "test_add_intermediate_extraction_before.png"))
     patch = get_intermediate_extraction_patch_after_node(singleton, None, intermediate_pdf_result_value, label)
     patch.apply(dag, singleton)
-    save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_AFTER_PATH)
+    save_fig_to_path(dag, os.path.join(str(tmpdir), "test_add_intermediate_extraction_after.png"))
     DagExecutor().execute(dag)
     extracted_value = singleton.labels_to_extracted_plan_results[label]
 
@@ -52,7 +47,7 @@ def test_add_intermediate_extraction_after_node_intermediate_df():
     pandas.testing.assert_frame_equal(extracted_value, df_expected)
 
 
-def test_add_intermediate_extraction_after_node_final_score():
+def test_add_intermediate_extraction_after_node_final_score(tmpdir):
     """
     Tests whether the Data Corruption analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -82,10 +77,10 @@ def test_add_intermediate_extraction_after_node_final_score():
     dag = analysis_result.original_dag
     final_result_value = find_nodes_by_type(dag, OperatorType.SCORE)[0]
     label = "util-test"
-    save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH)
+    save_fig_to_path(dag, os.path.join(str(tmpdir), "test_add_intermediate_extraction_before.png"))
     patch = get_intermediate_extraction_patch_after_node(singleton, None, final_result_value, label)
     patch.apply(dag, singleton)
-    save_fig_to_path(dag, INTERMEDIATE_EXTRACTION_ADD_AFTER_PATH)
+    save_fig_to_path(dag, os.path.join(str(tmpdir), "test_add_intermediate_extraction_after.png"))
     DagExecutor().execute(dag)
     extracted_value = singleton.labels_to_extracted_plan_results[label]
     assert isinstance(extracted_value, float) and 0. <= extracted_value <= 1.

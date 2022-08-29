@@ -1,24 +1,16 @@
 """
 Tests whether the Data Corruption analysis works
 """
-import os
 from inspect import cleandoc
 
 from example_pipelines import HEALTHCARE_PY, ADULT_COMPLEX_PY, COMPAS_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._operator_fairness import OperatorFairness
-from mlwhatif.utils import get_project_root
-
-INTERMEDIATE_EXTRACTION_ORIG_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
-                                                 "operator-fairness-orig")
-INTERMEDIATE_EXTRACTION_GENERATED_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
-                                                      "operator-fairness-what-if")
-INTERMEDIATE_EXTRACTION_OPTIMISED_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
-                                                      "operator-fairness-what-if-optimised")
+from mlwhatif.testing._testing_helper_utils import visualize_dags
 
 
-def test_operator_fairness_mini_example_with_transformer_processing_multiple_columns():
+def test_operator_fairness_mini_example_with_transformer_processing_multiple_columns(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -53,12 +45,10 @@ def test_operator_fairness_mini_example_with_transformer_processing_multiple_col
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
     assert report.shape == (2, 5)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
 
 
-def test_operator_fairness_healthcare():
+def test_operator_fairness_healthcare(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -72,12 +62,10 @@ def test_operator_fairness_healthcare():
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
     assert report.shape == (5, 7)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
 
 
-def test_operator_fairness_compas():
+def test_operator_fairness_compas(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -90,12 +78,10 @@ def test_operator_fairness_compas():
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
     assert report.shape == (8, 5)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
 
 
-def test_operator_fairness_restrict_to_linenos():
+def test_operator_fairness_restrict_to_linenos(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -108,12 +94,10 @@ def test_operator_fairness_restrict_to_linenos():
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
     assert report.shape == (3, 5)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
 
 
-def test_operator_fairness_test_transformers():
+def test_operator_fairness_test_transformers(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -126,12 +110,10 @@ def test_operator_fairness_test_transformers():
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, False)]
     assert report.shape == (4, 5)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
 
 
-def test_operator_fairness_test_selections():
+def test_operator_fairness_test_selections(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -144,12 +126,10 @@ def test_operator_fairness_test_selections():
     report = analysis_result.analysis_to_result_reports[OperatorFairness(False, True)]
     assert report.shape == (5, 5)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
 
 
-def test_operator_fairness_adult_complex():
+def test_operator_fairness_adult_complex(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -161,6 +141,4 @@ def test_operator_fairness_adult_complex():
     report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
     assert report.shape == (3, 5)
 
-    analysis_result.save_original_dag_to_path(INTERMEDIATE_EXTRACTION_ORIG_PATH)
-    analysis_result.save_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_GENERATED_PATH)
-    analysis_result.save_optimised_what_if_dags_to_path(INTERMEDIATE_EXTRACTION_OPTIMISED_PATH)
+    visualize_dags(analysis_result, tmpdir)
