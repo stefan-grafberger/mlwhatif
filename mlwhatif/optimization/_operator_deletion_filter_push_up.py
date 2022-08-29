@@ -19,8 +19,9 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
 
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, pipeline_executor):
+    def __init__(self, pipeline_executor, disable_selectivity_safety=False):
         self._pipeline_executor = pipeline_executor
+        self._disable_selectivity_safety = disable_selectivity_safety
 
     def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[PipelinePatch]]) -> \
             tuple[networkx.DiGraph, List[List[PipelinePatch]]]:
@@ -37,17 +38,26 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
         # Sort filters by selectivity, the ones with the highest selectivity should be moved up first
         selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0])
 
-        for _, filter_removal_patch in selectivity_and_filters_to_push_up:
-            using_columns_for_filter = self._get_columns_required_for_filter_eval(dag, filter_removal_patch)
+        if self._disable_selectivity_safety is True:
+            do_filter_pushup = True
+        else:
+            if len(selectivity_and_filters_to_push_up) >= 1:
+                max_selectivity, _ = selectivity_and_filters_to_push_up[0]
+                do_filter_pushup = max_selectivity * len(selectivity_and_filters_to_push_up) >= 1.
+            else:
+                do_filter_pushup = True
+        if do_filter_pushup is True:
+            for _, filter_removal_patch in selectivity_and_filters_to_push_up:
+                using_columns_for_filter = self._get_columns_required_for_filter_eval(dag, filter_removal_patch)
 
-            operator_to_add_node_after_train = find_dag_location_for_new_filter_on_column(
-                using_columns_for_filter, dag, True)
-            operator_to_add_node_after_test = find_dag_location_for_new_filter_on_column(
-                using_columns_for_filter, dag, False)
+                operator_to_add_node_after_train = find_dag_location_for_new_filter_on_column(
+                    using_columns_for_filter, dag, True)
+                operator_to_add_node_after_test = find_dag_location_for_new_filter_on_column(
+                    using_columns_for_filter, dag, False)
 
-            dag = self._move_filters_and_duplicate_if_required(dag, filter_removal_patch,
-                                                               operator_to_add_node_after_test,
-                                                               operator_to_add_node_after_train)
+                dag = self._move_filters_and_duplicate_if_required(dag, filter_removal_patch,
+                                                                   operator_to_add_node_after_test,
+                                                                   operator_to_add_node_after_train)
         return dag, patches
 
     def _move_filters_and_duplicate_if_required(self, dag, filter_removal_patch: OperatorRemoval,
