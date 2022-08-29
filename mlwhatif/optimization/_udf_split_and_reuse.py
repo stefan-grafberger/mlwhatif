@@ -20,8 +20,9 @@ class UdfSplitAndReuse(QueryOptimizationRule):
     """ Combines multiple DAGs and optimizes the joint plan """
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, pipeline_executor):
+    def __init__(self, pipeline_executor, disable_selectivity_safety=False):
         self._pipeline_executor = pipeline_executor
+        self._disable_selectivity_safety = disable_selectivity_safety
 
     def optimize_patches(self, dag: networkx.DiGraph, patches: List[List[PipelinePatch]]) -> List[List[PipelinePatch]]:
         columns_worth_fully_corrupting = self._get_columns_worth_fully_corrupting(patches)
@@ -160,8 +161,7 @@ class UdfSplitAndReuse(QueryOptimizationRule):
         )
         return updated_patch
 
-    @staticmethod
-    def _get_columns_worth_fully_corrupting(patches):
+    def _get_columns_worth_fully_corrupting(self, patches):
         """Get columns where, in total, different corruptions corrupt more than 100% of the data"""
         selectivities_per_column = defaultdict(list)
 
@@ -173,9 +173,12 @@ class UdfSplitAndReuse(QueryOptimizationRule):
 
         columns_worth_fully_corrupting = set()
         for column, selectivity_list in selectivities_per_column.items():
-            total_corruption_fraction = sum(filter(None, selectivity_list))
-            if total_corruption_fraction > 1.0:
+            if self._disable_selectivity_safety is True:
                 columns_worth_fully_corrupting.add(column)
+            else:
+                total_corruption_fraction = sum(filter(None, selectivity_list))
+                if total_corruption_fraction > 1.0:
+                    columns_worth_fully_corrupting.add(column)
         return columns_worth_fully_corrupting
 
     def _create_projection_func_dag_node(self, projection_func, column_name) -> DagNode:
