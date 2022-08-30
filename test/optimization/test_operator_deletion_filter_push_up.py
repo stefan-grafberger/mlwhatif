@@ -21,15 +21,15 @@ def test_filter_push_up_ideal_case(tmpdir):
     variant_count = 10
 
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
-    df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_train.csv")
+    df_a_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_a_ideal_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
-    df_b_path_train = os.path.join(tmpdir, "filter_push_up_df_b_ideal_case_train.csv")
+    df_b_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_b_ideal_case_train.csv")
     df_b_train.to_csv(df_b_path_train, index=False)
 
     df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
-    df_a_path_test = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_test.csv")
+    df_a_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_a_ideal_case_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
-    df_b_path_test = os.path.join(tmpdir, "filter_push_up_df_b_ideal_case_test.csv")
+    df_b_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_b_ideal_case_test.csv")
     df_b_test.to_csv(df_b_path_test, index=False)
 
     index_filter = []
@@ -134,15 +134,15 @@ def test_filter_push_up_worst_case_safety_inactive(tmpdir):
     variant_count = 2
 
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
-    df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_train.csv")
+    df_a_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_a_worst_case_safety_inactive_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
-    df_b_path_train = os.path.join(tmpdir, "filter_push_up_df_b_worst_case_train.csv")
+    df_b_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_b_worst_case_safety_inactive_train.csv")
     df_b_train.to_csv(df_b_path_train, index=False)
 
     df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
-    df_a_path_test = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_test.csv")
+    df_a_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_a_worst_case_safety_inactive_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
-    df_b_path_test = os.path.join(tmpdir, "filter_push_up_df_b_worst_case_test.csv")
+    df_b_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_b_worst_case_safety_inactive_test.csv")
     df_b_test.to_csv(df_b_path_test, index=False)
 
     index_filter = []
@@ -249,15 +249,15 @@ def test_filter_push_up_worst_case_safety_active(tmpdir):
     variant_count = 2
 
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
-    df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_train.csv")
+    df_a_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_a_worst_case_safety_active_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
-    df_b_path_train = os.path.join(tmpdir, "filter_push_up_df_b_worst_case_train.csv")
+    df_b_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_b_worst_case_safety_active_train.csv")
     df_b_train.to_csv(df_b_path_train, index=False)
 
     df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
-    df_a_path_test = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_test.csv")
+    df_a_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_a_worst_case_safety_active_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
-    df_b_path_test = os.path.join(tmpdir, "filter_push_up_df_b_worst_case_test.csv")
+    df_b_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_b_worst_case_safety_active_test.csv")
     df_b_test.to_csv(df_b_path_test, index=False)
 
     index_filter = []
@@ -364,15 +364,15 @@ def test_filter_push_up_average_case(tmpdir):
     variant_count = 5
 
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
-    df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_train.csv")
+    df_a_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_a_average_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
-    df_b_path_train = os.path.join(tmpdir, "filter_push_up_df_b_worst_case_train.csv")
+    df_b_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_b_average_case_train.csv")
     df_b_train.to_csv(df_b_path_train, index=False)
 
     df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
-    df_a_path_test = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_test.csv")
+    df_a_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_a_average_case_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
-    df_b_path_test = os.path.join(tmpdir, "filter_push_up_df_b_worst_case_test.csv")
+    df_b_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_b_average_case_test.csv")
     df_b_test.to_csv(df_b_path_test, index=False)
 
     index_filter = []
@@ -493,15 +493,15 @@ def test_filter_push_up_worst_case_circumventing_safety(tmpdir):
     variant_count = 3
 
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
-    df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_train.csv")
+    df_a_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_a_worst_case_safety_circumvented_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
-    df_b_path_train = os.path.join(tmpdir, "filter_push_up_df_b_worst_case_train.csv")
+    df_b_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_b_worst_case_safety_circumvented_train.csv")
     df_b_train.to_csv(df_b_path_train, index=False)
 
     df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
-    df_a_path_test = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_test.csv")
+    df_a_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_a_worst_case_safety_circumvented_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
-    df_b_path_test = os.path.join(tmpdir, "filter_push_up_df_b_worst_case_test.csv")
+    df_b_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_b_worst_case_safety_circumvented_test.csv")
     df_b_test.to_csv(df_b_path_test, index=False)
 
     index_filter = []
