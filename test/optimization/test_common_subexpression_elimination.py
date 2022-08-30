@@ -135,14 +135,14 @@ def test_common_subexpression_elimination_average_case(tmpdir):
         from sklearn.pipeline import Pipeline
         from sklearn.compose import ColumnTransformer
 
-        df_a_train = pd.read_csv("{df_a_path_train}", engine='python')
+        df_a_train = pd.read_csv("{df_a_path_train}")
         df_a_train = df_a_train[df_a_train['A'] >= 95]
-        df_b_train = pd.read_csv("{df_b_path_train}", engine='python')
+        df_b_train = pd.read_csv("{df_b_path_train}")
         df_train = df_a_train.merge(df_b_train, on=['str_id'])
 
-        df_a_test = pd.read_csv("{df_a_path_test}", engine='python')
+        df_a_test = pd.read_csv("{df_a_path_test}")
         df_a_test = df_a_test[df_a_test['A'] >= 95]
-        df_b_test = pd.read_csv("{df_b_path_test}", engine='python')
+        df_b_test = pd.read_csv("{df_b_path_test}")
         df_test = df_a_test.merge(df_b_test, on=['str_id'])
 
         column_transformer = ColumnTransformer(transformers=[
@@ -231,8 +231,8 @@ def test_common_subexpression_elimination_worst_case(tmpdir):
         from sklearn.pipeline import Pipeline
         from sklearn.compose import ColumnTransformer
 
-        df_train = pd.read_csv("{df_a_path_train}", engine='python')
-        df_test = pd.read_csv("{df_a_path_test}", engine='python')
+        df_train = pd.read_csv("{df_a_path_train}")
+        df_test = pd.read_csv("{df_a_path_test}")
 
         clf = DummyClassifier(strategy='constant', constant=0.)
 
