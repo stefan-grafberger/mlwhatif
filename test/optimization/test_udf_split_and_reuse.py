@@ -446,8 +446,6 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_inactive(tmpdir)
         df_train = pd.read_csv("{df_a_path_train}", engine='python')
         df_test = pd.read_csv("{df_a_path_test}", engine='python')
 
-        train_target = df_train['target_featurized']
-
         column_transformer = ColumnTransformer(transformers=[
                     ('numeric', StandardScaler(), ['A', 'B']),
                     ('cat', OneHotEncoder(sparse=True, handle_unknown='ignore'), ['group_col_1'])
@@ -458,6 +456,7 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_inactive(tmpdir)
         ])
 
         train_data = df_train[['A', 'B', 'group_col_1']]
+        train_target = df_train['target_featurized']
 
         test_target = df_test['target_featurized']
         test_data = df_test[['A', 'B', 'group_col_1']]

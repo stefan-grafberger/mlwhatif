@@ -213,11 +213,11 @@ def test_common_subexpression_elimination_worst_case(tmpdir):
     data_size = 2000
     variant_count = 10
 
-    df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
+    df_a_train, _ = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "common_subexpression_elimination_df_a_worst_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
 
-    df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
+    df_a_test, _ = get_test_df(int(data_size * 0.2))
     df_a_path_test = os.path.join(tmpdir, "common_subexpression_elimination_df_a_worst_case_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
 
