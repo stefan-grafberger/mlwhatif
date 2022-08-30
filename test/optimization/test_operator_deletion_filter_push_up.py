@@ -63,10 +63,10 @@ def test_filter_push_up_ideal_case(tmpdir):
         df_test = fpd.fuzzy_merge(df_a_test, df_b_test, on='str_id', method='levenshtein', keep_right=['C', 'D'],
             threshold=0.99)
         
-        train_target = label_binarize(df_train['target'], classes=['no', 'yes'])
+        train_target = df_train['target_featurized']
         train_data = df_train[['A', 'B']]
         
-        test_target = label_binarize(df_test['target'], classes=['no', 'yes'])
+        test_target = df_test['target_featurized']
         test_data = df_test[['A', 'B']]
         
         clf = DummyClassifier(strategy='constant', constant=0.)
@@ -178,10 +178,10 @@ def test_filter_push_up_worst_case_safety_inactive(tmpdir):
         df_test = fpd.fuzzy_merge(df_a_test, df_b_test, on='str_id', method='levenshtein', keep_right=['C', 'D'],
             threshold=0.99)
 
-        train_target = label_binarize(df_train['target'], classes=['no', 'yes'])
+        train_target = df_train['target_featurized']
         train_data = df_train[['A', 'B']]
 
-        test_target = label_binarize(df_test['target'], classes=['no', 'yes'])
+        test_target = df_test['target_featurized']
         test_data = df_test[['A', 'B']]
 
         clf = DummyClassifier(strategy='constant', constant=0.)
@@ -293,10 +293,10 @@ def test_filter_push_up_worst_case_safety_active(tmpdir):
         df_test = fpd.fuzzy_merge(df_a_test, df_b_test, on='str_id', method='levenshtein', keep_right=['C', 'D'],
             threshold=0.99)
 
-        train_target = label_binarize(df_train['target'], classes=['no', 'yes'])
+        train_target = df_train['target_featurized']
         train_data = df_train[['A', 'B']]
 
-        test_target = label_binarize(df_test['target'], classes=['no', 'yes'])
+        test_target = df_test['target_featurized']
         test_data = df_test[['A', 'B']]
 
         clf = DummyClassifier(strategy='constant', constant=0.)
@@ -412,10 +412,10 @@ def test_filter_push_up_worst_case_circumventing_safety(tmpdir):
         df_test = fpd.fuzzy_merge(df_a_test, df_b_test, on='str_id', method='levenshtein', keep_right=['C', 'D'],
             threshold=0.99)
 
-        train_target = label_binarize(df_train['target'], classes=['no', 'yes'])
+        train_target = df_train['target_featurized']
         train_data = df_train[['A', 'B']]
 
-        test_target = label_binarize(df_test['target'], classes=['no', 'yes'])
+        test_target = df_test['target_featurized']
         test_data = df_test[['A', 'B']]
 
         clf = DummyClassifier(strategy='constant', constant=0.)

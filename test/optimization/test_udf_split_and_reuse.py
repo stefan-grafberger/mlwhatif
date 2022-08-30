@@ -38,16 +38,16 @@ def test_udf_split_and_reuse_ideal_case(tmpdir):
         import pandas as pd
         from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
         from sklearn.dummy import DummyClassifier
-        from sklearn.pipeline import Pipeline
         import numpy as np
         from sklearn.model_selection import train_test_split
         import fuzzy_pandas as fpd
+        from sklearn.pipeline import Pipeline
         from sklearn.compose import ColumnTransformer
         
         df_train = pd.read_csv("{df_a_path_train}", engine='python')
         df_test = pd.read_csv("{df_a_path_test}", engine='python')
         
-        train_target = label_binarize(df_train['target'], classes=['no', 'yes'])
+        train_target = df_train['target_featurized']
         
         column_transformer = ColumnTransformer(transformers=[
                     ('numeric', StandardScaler(), ['A', 'B']),
@@ -60,7 +60,7 @@ def test_udf_split_and_reuse_ideal_case(tmpdir):
         
         train_data = df_train[['A', 'B', 'group_col_1']]
         
-        test_target = label_binarize(df_test['target'], classes=['no', 'yes'])
+        test_target = df_test['target_featurized']
         test_data = df_test[['A', 'B', 'group_col_1']]
         
         pipeline = pipeline.fit(train_data, train_target)
@@ -166,7 +166,7 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_active(tmpdir):
 
     test_code = cleandoc(f"""
         import pandas as pd
-        from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
+        from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder, FunctionTransformer
         from sklearn.dummy import DummyClassifier
         from sklearn.pipeline import Pipeline
         import numpy as np
@@ -177,10 +177,10 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_active(tmpdir):
         df_train = pd.read_csv("{df_a_path_train}", engine='python')
         df_test = pd.read_csv("{df_a_path_test}", engine='python')
 
-        train_target = label_binarize(df_train['target'], classes=['no', 'yes'])
+        train_target = df_train['target_featurized']
 
         column_transformer = ColumnTransformer(transformers=[
-                    ('numeric', StandardScaler(), ['A', 'B']),
+                    ('numeric', FunctionTransformer(accept_sparse=True, check_inverse=False), ['A', 'B']),
                     ('cat', OneHotEncoder(sparse=True, handle_unknown='ignore'), ['group_col_1'])
                 ])
         pipeline = Pipeline(steps=[
@@ -190,7 +190,7 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_active(tmpdir):
 
         train_data = df_train[['A', 'B', 'group_col_1']]
 
-        test_target = label_binarize(df_test['target'], classes=['no', 'yes'])
+        test_target = df_test['target_featurized']
         test_data = df_test[['A', 'B', 'group_col_1']]
 
         pipeline = pipeline.fit(train_data, train_target)
@@ -307,7 +307,7 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_inactive(tmpdir)
         df_train = pd.read_csv("{df_a_path_train}", engine='python')
         df_test = pd.read_csv("{df_a_path_test}", engine='python')
 
-        train_target = label_binarize(df_train['target'], classes=['no', 'yes'])
+        train_target = df_train['target_featurized']
 
         column_transformer = ColumnTransformer(transformers=[
                     ('numeric', StandardScaler(), ['A', 'B']),
@@ -320,7 +320,7 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_inactive(tmpdir)
 
         train_data = df_train[['A', 'B', 'group_col_1']]
 
-        test_target = label_binarize(df_test['target'], classes=['no', 'yes'])
+        test_target = df_test['target_featurized']
         test_data = df_test[['A', 'B', 'group_col_1']]
 
         pipeline = pipeline.fit(train_data, train_target)
@@ -438,7 +438,7 @@ def test_udf_split_and_reuse_worst_case_with_none(tmpdir):
         df_train = pd.read_csv("{df_a_path_train}", engine='python')
         df_test = pd.read_csv("{df_a_path_test}", engine='python')
 
-        train_target = label_binarize(df_train['target'], classes=['no', 'yes'])
+        train_target = df_train['target_featurized']
 
         column_transformer = ColumnTransformer(transformers=[
                     ('numeric', StandardScaler(), ['A', 'B'])
@@ -450,7 +450,7 @@ def test_udf_split_and_reuse_worst_case_with_none(tmpdir):
 
         train_data = df_train[['A', 'B', 'group_col_1']]
 
-        test_target = label_binarize(df_test['target'], classes=['no', 'yes'])
+        test_target = df_test['target_featurized']
         test_data = df_test[['A', 'B', 'group_col_1']]
 
         pipeline = pipeline.fit(train_data, train_target)
