@@ -584,9 +584,9 @@ def test_filter_push_up_worst_case_circumventing_safety(tmpdir):
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
     assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
 
-    # assert analysis_result_with_opt_rule.runtime_info.what_if_optimized_estimated <= \
-    #        analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
-    #        analysis_result_without_any_opt.runtime_info.what_if_unoptimized_estimated
+    assert analysis_result_with_opt_rule.runtime_info.what_if_optimized_estimated <= \
+           analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
+           analysis_result_without_any_opt.runtime_info.what_if_unoptimized_estimated
 
     analysis_result_with_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-opt-orig"))
     analysis_result_with_opt_rule.save_what_if_dags_to_path(os.path.join(str(tmpdir), "with-opt-what-if"))

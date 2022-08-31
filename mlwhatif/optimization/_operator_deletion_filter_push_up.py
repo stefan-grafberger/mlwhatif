@@ -2,6 +2,7 @@
 Simple Projection push-up optimization that ignores that data corruptions only corrupt subsets and that
 it is possible to corrupt the whole set at once and then only sample from the corrupted DF.
 """
+from math import prod
 from typing import List
 
 import networkx
@@ -36,28 +37,46 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                     # calculate selectivities
 
         # Sort filters by selectivity, the ones with the highest selectivity should be moved up first
-        selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0])
+        selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0],
+                                                    reverse=True)
 
-        if self._disable_selectivity_safety is True:
-            do_filter_pushup = True
-        else:
-            if len(selectivity_and_filters_to_push_up) >= 1:
-                max_selectivity, _ = selectivity_and_filters_to_push_up[0]
-                do_filter_pushup = max_selectivity * len(selectivity_and_filters_to_push_up) >= 1.
+        do_filter_pushup_until = len(selectivity_and_filters_to_push_up)
+        sorted_selectivities = [selectivity for selectivity, _ in selectivity_and_filters_to_push_up]
+        filter_count = len(selectivity_and_filters_to_push_up)
+        for filter_index, (selectivity, _) in enumerate(selectivity_and_filters_to_push_up):
+            if filter_index < len(selectivity_and_filters_to_push_up):
+                selectivities_until = prod(sorted_selectivities[filter_index + 1:])
             else:
-                do_filter_pushup = True
-        if do_filter_pushup is True:
-            for _, filter_removal_patch in selectivity_and_filters_to_push_up:
-                using_columns_for_filter = self._get_columns_required_for_filter_eval(dag, filter_removal_patch)
+                selectivities_until = 1.
+            # if self._disable_selectivity_safety is False:
+            #     worst_case_min_selectivity, _ = selectivity_and_filters_to_push_up[-1]
+            #     current_selectivity = worst_case_min_selectivity
+            # else:
+            #     current_selectivity = selectivity
+            current_selectivity = selectivity
 
-                operator_to_add_node_after_train = find_dag_location_for_new_filter_on_column(
-                    using_columns_for_filter, dag, True)
-                operator_to_add_node_after_test = find_dag_location_for_new_filter_on_column(
-                    using_columns_for_filter, dag, False)
+            # If we move the filter, we loose its selectivity in the beginning in every run, but need one
+            # execution less
+            costs_with_filter_movement = selectivities_until * (filter_count - (filter_index + 1))
+            # If we do not move the filter, we keep the selectivity but need one run without it
+            costs_without_filter_movement = selectivities_until * current_selectivity * (filter_count - filter_index)\
+                + (selectivities_until * 1)
+            if costs_without_filter_movement < costs_with_filter_movement:
+                do_filter_pushup_until = filter_index
+                break
+        selectivity_and_filters_to_push_up = selectivity_and_filters_to_push_up[:do_filter_pushup_until]
+        selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0])
+        for _, filter_removal_patch in selectivity_and_filters_to_push_up:
+            using_columns_for_filter = self._get_columns_required_for_filter_eval(dag, filter_removal_patch)
 
-                dag = self._move_filters_and_duplicate_if_required(dag, filter_removal_patch,
-                                                                   operator_to_add_node_after_test,
-                                                                   operator_to_add_node_after_train)
+            operator_to_add_node_after_train = find_dag_location_for_new_filter_on_column(
+                using_columns_for_filter, dag, True)
+            operator_to_add_node_after_test = find_dag_location_for_new_filter_on_column(
+                using_columns_for_filter, dag, False)
+
+            dag = self._move_filters_and_duplicate_if_required(dag, filter_removal_patch,
+                                                               operator_to_add_node_after_test,
+                                                               operator_to_add_node_after_train)
         return dag, patches
 
     def _move_filters_and_duplicate_if_required(self, dag, filter_removal_patch: OperatorRemoval,
@@ -94,7 +113,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                 .filter_get_operator_after_which_cutoff_required(dag, filter_removal_patch.operator_to_remove)
             operator_after_which_cutoff_required_test = filter_removal_patch \
                 .filter_get_operator_after_which_cutoff_required(
-                    dag, filter_removal_patch.maybe_corresponding_test_set_operator)
+                dag, filter_removal_patch.maybe_corresponding_test_set_operator)
 
             self._move_filter_to_new_location(dag, filter_removal_patch, operator_after_which_cutoff_required_train,
                                               operator_to_add_node_after_train, filter_removal_patch.operator_to_remove)
