@@ -6,6 +6,7 @@ from math import prod
 from typing import List
 
 import networkx
+from numpy import argmin
 
 from mlwhatif.instrumentation._dag_node import DagNode
 from mlwhatif.instrumentation._operator_types import OperatorType
@@ -40,30 +41,28 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
         selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0],
                                                     reverse=True)
 
-        do_filter_pushup_until = len(selectivity_and_filters_to_push_up)
         sorted_selectivities = [selectivity for selectivity, _ in selectivity_and_filters_to_push_up]
-        filter_count = len(selectivity_and_filters_to_push_up)
-        for filter_index, (selectivity, _) in enumerate(selectivity_and_filters_to_push_up):
-            if filter_index < len(selectivity_and_filters_to_push_up):
-                selectivities_until = prod(sorted_selectivities[filter_index + 1:])
-            else:
-                selectivities_until = 1.
-            # if self._disable_selectivity_safety is False:
-            #     worst_case_min_selectivity, _ = selectivity_and_filters_to_push_up[-1]
-            #     current_selectivity = worst_case_min_selectivity
-            # else:
-            #     current_selectivity = selectivity
-            current_selectivity = selectivity
+        selectivities_total = prod(sorted_selectivities)
 
+        if self._disable_selectivity_safety is False and len(selectivity_and_filters_to_push_up) >= 2:
+            min_selectivity, _ = selectivity_and_filters_to_push_up[-1]
+            if min_selectivity * len(selectivity_and_filters_to_push_up) <= 1.0:
+                return dag, patches
+
+        costs_with_filter_movement = []
+        cost_without_filter_movement = 0
+        for filter_index, (selectivity, _) in enumerate(selectivity_and_filters_to_push_up):
+            selectivities_until = prod(sorted_selectivities[filter_index + 1:])
+            cost_with_filter_movement = selectivities_until
+            for still_existing_filter in range(filter_index + 1, len(selectivity_and_filters_to_push_up)):
+                still_existing_filter_selectivity = selectivity_and_filters_to_push_up[still_existing_filter][0]
+                cost_with_filter_movement += (selectivities_until / still_existing_filter_selectivity)
+            cost_without_filter_movement += (selectivities_total / selectivity)
             # If we move the filter, we loose its selectivity in the beginning in every run, but need one
             # execution less
-            costs_with_filter_movement = selectivities_until * (filter_count - (filter_index + 1))
-            # If we do not move the filter, we keep the selectivity but need one run without it
-            costs_without_filter_movement = selectivities_until * current_selectivity * (filter_count - filter_index)\
-                + (selectivities_until * 1)
-            if costs_without_filter_movement < costs_with_filter_movement:
-                do_filter_pushup_until = filter_index
-                break
+            costs_with_filter_movement.append(cost_with_filter_movement)
+        costs_with_filter_movement.insert(0, cost_without_filter_movement)
+        do_filter_pushup_until = argmin(costs_with_filter_movement)
         selectivity_and_filters_to_push_up = selectivity_and_filters_to_push_up[:do_filter_pushup_until]
         selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0])
         for _, filter_removal_patch in selectivity_and_filters_to_push_up:

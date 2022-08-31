@@ -131,7 +131,7 @@ def test_filter_push_up_worst_case_safety_inactive(tmpdir):
     Tests whether the .py version of the inspector works
     """
     data_size = 2000
-    variant_count = 2
+    variant_count = 3
 
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_a_worst_case_safety_inactive_train.csv")
@@ -246,7 +246,7 @@ def test_filter_push_up_worst_case_safety_active(tmpdir):
     Tests whether the .py version of the inspector works
     """
     data_size = 2000
-    variant_count = 2
+    variant_count = 10
 
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_a_worst_case_safety_active_train.csv")
@@ -361,7 +361,7 @@ def test_filter_push_up_average_case(tmpdir):
     Tests whether the .py version of the inspector works
     """
     data_size = 10000
-    variant_count = 5
+    variant_count = 10
 
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_a_average_case_train.csv")
@@ -382,8 +382,8 @@ def test_filter_push_up_average_case(tmpdir):
         index_filter.append(variant_index)
         # FIXME: For filters like this that basically all do the same, the performance can heavily decrease!
         #  The optimization needs a special case for this to not do the optimization then.
-        lower_bound = 90 + 10 / variant_count * variant_index
-        upper_bound = 90 + 10 / variant_count * (variant_index + 1)
+        lower_bound = 80 + 20 / variant_count * variant_index
+        upper_bound = 80 + 20 / variant_count * (variant_index + 1)
 
         filter_lines_train.append(f"df_a_train = df_a_train[(df_a_train['A'] <= {lower_bound}) "
                                   f"| (df_a_train['A'] >= {upper_bound})]")
@@ -446,7 +446,7 @@ def test_filter_push_up_average_case(tmpdir):
     analysis_result_with_opt_rule = PipelineAnalyzer \
         .on_previously_extracted_pipeline(dag_extraction_result) \
         .add_what_if_analysis(data_corruption) \
-        .overwrite_optimization_rules([OperatorDeletionFilterPushUp(singleton)]) \
+        .overwrite_optimization_rules([OperatorDeletionFilterPushUp(singleton, disable_selectivity_safety=True)]) \
         .execute()
 
     analysis_result_without_opt_rule = PipelineAnalyzer \
@@ -489,34 +489,31 @@ def test_filter_push_up_worst_case_circumventing_safety(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 4000
-    variant_count = 3
+    data_size = 1000
+    variant_count = 10
 
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
-    df_a_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_a_worst_case_safety_circumvented_train.csv")
+    df_a_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_a_worst_case_safety_circumventing_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
-    df_b_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_b_worst_case_safety_circumvented_train.csv")
+    df_b_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_b_worst_case_safety_circumventing_train.csv")
     df_b_train.to_csv(df_b_path_train, index=False)
 
     df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
-    df_a_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_a_worst_case_safety_circumvented_test.csv")
+    df_a_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_a_worst_case_safety_circumventing_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
-    df_b_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_b_worst_case_safety_circumvented_test.csv")
+    df_b_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_b_worst_case_safety_circumventing_test.csv")
     df_b_test.to_csv(df_b_path_test, index=False)
 
     index_filter = []
     filter_lines_train = []
     filter_lines_test = []
+    circumvent_treshold = int(100 - 100 / variant_count - 3)
     for variant_index in range(variant_count):
         index_filter.append(variant_index)
         # FIXME: For filters like this that basically all do the same, the performance can heavily decrease!
         #  The optimization needs a special case for this to not do the optimization then.
-        # Make all detected selectivities 100 / variant_count to exactly be above safety check threshold
-        selectivity_threshold = 100 - int(pow((1. / variant_count), variant_index + 1) * 100)
-        selectivity_threshold -= 0.01 * variant_index  # Minor orrection to still have distinct filters
-        selectivity_threshold -= 3  # To stop us from randomly being below safety threshold
-        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] >= {selectivity_threshold}]")
-        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] >= {selectivity_threshold}]")
+        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] >= {circumvent_treshold - variant_index}]")
+        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] >= {circumvent_treshold - variant_index}]")
 
     filter_line_train = '\n        '.join(filter_lines_train)
     filter_line_test = '\n        '.join(filter_lines_test)
@@ -551,7 +548,7 @@ def test_filter_push_up_worst_case_circumventing_safety(tmpdir):
         clf = clf.fit(train_data, train_target)
         test_score = clf.score(test_data, test_target)
         assert 0. <= test_score <= 1.
-        """)
+            """)
 
     data_corruption = WhatIfWrapper(
         OperatorFairness(test_transformers=False, test_selections=True),
