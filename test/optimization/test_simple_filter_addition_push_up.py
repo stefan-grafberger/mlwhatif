@@ -8,11 +8,10 @@ from functools import partial
 from inspect import cleandoc
 
 from mlwhatif import PipelineAnalyzer
-from mlwhatif.analysis._data_cleaning import DataCleaning, ErrorType
 from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
 from mlwhatif.testing._data_filter_variants import DataFilterVariants
-from mlwhatif.testing._testing_helper_utils import WhatIfWrapper, get_test_df
+from mlwhatif.testing._testing_helper_utils import get_test_df
 
 
 # TODO: Actually introduce some missing values optionally? Without the filter removing values, the optimization
