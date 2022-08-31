@@ -136,12 +136,12 @@ def test_common_subexpression_elimination_average_case(tmpdir):
         from sklearn.compose import ColumnTransformer
 
         df_a_train = pd.read_csv("{df_a_path_train}")
-        df_a_train = df_a_train[df_a_train['A'] >= 95]
+        df_a_train = df_a_train[df_a_train['A'] >= 15]
         df_b_train = pd.read_csv("{df_b_path_train}")
         df_train = df_a_train.merge(df_b_train, on=['str_id'])
 
         df_a_test = pd.read_csv("{df_a_path_test}")
-        df_a_test = df_a_test[df_a_test['A'] >= 95]
+        df_a_test = df_a_test[df_a_test['A'] >= 15]
         df_b_test = pd.read_csv("{df_b_path_test}")
         df_test = df_a_test.merge(df_b_test, on=['str_id'])
 

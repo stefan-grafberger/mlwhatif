@@ -72,13 +72,13 @@ def test_filter_push_up_ideal_case(tmpdir):
         """)
 
     filter_variants = {}
-    for variant_index in range(variant_count):
+    for variant_index in range(variant_count - 1):
         def filter_func(df, bound_variant_index):
-            return df[df['A'] <= (100 - bound_variant_index)]
+            return df[df['B'] <= (99 - bound_variant_index)]
 
-        filter_variants[f"filter_{variant_index}"] = ("A", partial(filter_func, bound_variant_index=variant_index))
+        filter_variants[f"filter_{variant_index}"] = ("B", partial(filter_func, bound_variant_index=variant_index))
 
-    data_corruption = DataFilterVariants(filter_variants)
+    data_corruption = DataFilterVariants(filter_variants, True)
 
     dag_extraction_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -131,8 +131,8 @@ def test_filter_push_up_average_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 1000
-    variant_count = 2
+    data_size = 100000
+    variant_count = 5
 
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_average_case_train.csv")
@@ -157,12 +157,12 @@ def test_filter_push_up_average_case(tmpdir):
         from sklearn.compose import ColumnTransformer
 
         df_a_train = pd.read_csv("{df_a_path_train}")
-        df_a_train = df_a_train[df_a_train['A'] >= 95]
+        df_a_train = df_a_train[df_a_train['A'] >= 15]
         df_b_train = pd.read_csv("{df_b_path_train}")
         df_train = df_a_train.merge(df_b_train, on=['str_id'])
 
         df_a_test = pd.read_csv("{df_a_path_test}")
-        df_a_test = df_a_test[df_a_test['A'] >= 95]
+        df_a_test = df_a_test[df_a_test['A'] >= 15]
         df_b_test = pd.read_csv("{df_b_path_test}")
         df_test = df_a_test.merge(df_b_test, on=['str_id'])
 
@@ -186,13 +186,14 @@ def test_filter_push_up_average_case(tmpdir):
         assert 0. <= test_score <= 1.
         """)
 
-    index_filter = []
-    for _ in range(variant_count):
-        index_filter.append(0)
+    filter_variants = {}
+    for variant_index in range(variant_count - 1):
+        def filter_func(df, bound_variant_index):
+            return df[df['B'] <= (80 - bound_variant_index)]
 
-    data_corruption = WhatIfWrapper(
-        DataCleaning({'B': ErrorType.NUM_MISSING_VALUES}),  # TODO: Actually introduce some missing values optionally?
-        index_filter=index_filter)
+        filter_variants[f"filter_{variant_index}"] = ("B", partial(filter_func, bound_variant_index=variant_index))
+
+    data_corruption = DataFilterVariants(filter_variants, True)
 
     dag_extraction_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -217,9 +218,9 @@ def test_filter_push_up_average_case(tmpdir):
         .skip_multi_query_optimization(True) \
         .execute()
 
-    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (2, 2)
-    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (2, 2)
-    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (2, 2)
+    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
+    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
+    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
 
     assert analysis_result_with_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
@@ -241,54 +242,65 @@ def test_filter_push_up_average_case(tmpdir):
         os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
-def test_filter_push_up_worst_case(tmpdir):
+def test_filter_push_up_worst_case_no_original_pipeline(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 1000
+    data_size = 5000
     variant_count = 2
 
-    df_a_train, _ = get_test_df(int(data_size * 0.8))
-    df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_train.csv")
+    df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
+    df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_no_original_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
+    df_b_path_train = os.path.join(tmpdir, "filter_push_up_df_b_worst_case_no_original_train.csv")
+    df_b_train.to_csv(df_b_path_train, index=False)
 
-    df_a_test, _ = get_test_df(int(data_size * 0.2))
-    df_a_path_test = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_test.csv")
+    df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
+    df_a_path_test = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_no_original_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
+    df_b_path_test = os.path.join(tmpdir, "filter_push_up_df_b_worst_case_no_original_test.csv")
+    df_b_test.to_csv(df_b_path_test, index=False)
 
     test_code = cleandoc(f"""
         import pandas as pd
-        from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
+        from sklearn.preprocessing import label_binarize, StandardScaler
         from sklearn.dummy import DummyClassifier
         import numpy as np
         from sklearn.model_selection import train_test_split
         import fuzzy_pandas as fpd
-        from sklearn.pipeline import Pipeline
-        from sklearn.compose import ColumnTransformer
-
-        df_train = pd.read_csv("{df_a_path_train}")
-        df_test = pd.read_csv("{df_a_path_test}")
-
-        clf = DummyClassifier(strategy='constant', constant=0.)
-
-        train_data = df_train[['A', 'B', 'group_col_1']]
+        
+        df_a_train = pd.read_csv("{df_a_path_train}", engine='python')
+        df_a_train = df_a_train[df_a_train['A'] >= 95]
+        df_b_train = pd.read_csv("{df_b_path_train}", engine='python')
+        df_train = fpd.fuzzy_merge(df_a_train, df_b_train, on='str_id', method='levenshtein', keep_right=['C', 'D'],
+            threshold=0.99)
+        
+        df_a_test = pd.read_csv("{df_a_path_test}", engine='python')
+        df_a_test = df_a_test[df_a_test['A'] >= 95]
+        df_b_test = pd.read_csv("{df_b_path_test}", engine='python')
+        df_test = fpd.fuzzy_merge(df_a_test, df_b_test, on='str_id', method='levenshtein', keep_right=['C', 'D'],
+            threshold=0.99)
+        
         train_target = df_train['target_featurized']
-
+        train_data = df_train[['A', 'B']]
+        
         test_target = df_test['target_featurized']
-        test_data = df_test[['A', 'B', 'group_col_1']]
-
+        test_data = df_test[['A', 'B']]
+        
+        clf = DummyClassifier(strategy='constant', constant=0.)
         clf = clf.fit(train_data, train_target)
         test_score = clf.score(test_data, test_target)
         assert 0. <= test_score <= 1.
         """)
 
-    index_filter = []
-    for _ in range(variant_count):
-        index_filter.append(0)
+    filter_variants = {}
+    for variant_index in range(variant_count):
+        def filter_func(df, bound_variant_index):
+            return df[df['B'] <= 3]
 
-    data_corruption = WhatIfWrapper(
-        DataCleaning({'B': ErrorType.NUM_MISSING_VALUES}),  # TODO: Actually introduce some missing values optionally?
-        index_filter=index_filter)
+        filter_variants[f"filter_{variant_index}"] = ("B", partial(filter_func, bound_variant_index=variant_index))
+
+    data_corruption = DataFilterVariants(filter_variants, False)
 
     dag_extraction_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -313,9 +325,9 @@ def test_filter_push_up_worst_case(tmpdir):
         .skip_multi_query_optimization(True) \
         .execute()
 
-    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (2, 2)
-    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (2, 2)
-    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (2, 2)
+    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
+    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
+    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
 
     assert analysis_result_with_opt_rule.runtime_info.what_if_optimized_estimated <= \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \

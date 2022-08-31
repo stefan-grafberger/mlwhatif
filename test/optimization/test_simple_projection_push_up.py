@@ -126,7 +126,7 @@ def test_projection_push_up_average_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 1000
+    data_size = 100000
     variant_count = 2
 
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
@@ -152,12 +152,12 @@ def test_projection_push_up_average_case(tmpdir):
         from sklearn.compose import ColumnTransformer
 
         df_a_train = pd.read_csv("{df_a_path_train}")
-        df_a_train = df_a_train[df_a_train['A'] >= 95]
+        df_a_train = df_a_train[df_a_train['A'] >= 15]
         df_b_train = pd.read_csv("{df_b_path_train}")
         df_train = df_a_train.merge(df_b_train, on=['str_id'])
 
         df_a_test = pd.read_csv("{df_a_path_test}")
-        df_a_test = df_a_test[df_a_test['A'] >= 95]
+        df_a_test = df_a_test[df_a_test['A'] >= 15]
         df_b_test = pd.read_csv("{df_b_path_test}")
         df_test = df_a_test.merge(df_b_test, on=['str_id'])
 
