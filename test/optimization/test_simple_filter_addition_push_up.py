@@ -4,12 +4,14 @@ Tests whether the optimization works
 # pylint: disable=too-many-locals,invalid-name
 # TODO: Clean up these tests
 import os
+from functools import partial
 from inspect import cleandoc
 
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._data_cleaning import DataCleaning, ErrorType
 from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
+from mlwhatif.testing._data_filter_variants import DataFilterVariants
 from mlwhatif.testing._testing_helper_utils import WhatIfWrapper, get_test_df
 
 
@@ -22,8 +24,8 @@ def test_filter_push_up_ideal_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 1000
-    variant_count = 2
+    data_size = 2000
+    variant_count = 5
 
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_train.csv")
@@ -69,13 +71,14 @@ def test_filter_push_up_ideal_case(tmpdir):
         assert 0. <= test_score <= 1.
         """)
 
-    index_filter = []
-    for _ in range(variant_count):
-        index_filter.append(0)
+    filter_variants = {}
+    for variant_index in range(variant_count):
+        def filter_func(df, bound_variant_index):
+            return df[df['A'] <= (100 - bound_variant_index)]
 
-    data_corruption = WhatIfWrapper(
-        DataCleaning({'B': ErrorType.NUM_MISSING_VALUES}),
-        index_filter=index_filter)
+        filter_variants[f"filter_{variant_index}"] = ("A", partial(filter_func, bound_variant_index=variant_index))
+
+    data_corruption = DataFilterVariants(filter_variants)
 
     dag_extraction_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -100,9 +103,9 @@ def test_filter_push_up_ideal_case(tmpdir):
         .skip_multi_query_optimization(True) \
         .execute()
 
-    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (2, 2)
-    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (2, 2)
-    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (2, 2)
+    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
+    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
+    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
 
     assert analysis_result_with_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
