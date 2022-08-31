@@ -62,6 +62,8 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
             # execution less
             costs_with_filter_movement.append(cost_with_filter_movement)
         costs_with_filter_movement.insert(0, cost_without_filter_movement)
+        # TODO: We can also add an additional combined or filter in the beginning to move even more filters up but
+        #  this is not always worth it if the filter computation is expensive.
         do_filter_pushup_until = argmin(costs_with_filter_movement)
         selectivity_and_filters_to_push_up = selectivity_and_filters_to_push_up[:do_filter_pushup_until]
         selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0])
