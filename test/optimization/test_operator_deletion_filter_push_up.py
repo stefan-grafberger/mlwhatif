@@ -8,7 +8,8 @@ import os
 from experiments.operator_deletion_filter_push_up import execute_operator_deletion_filter_push_up_ideal_case, \
     execute_operator_deletion_filter_push_up_worst_case_safety_inactive, \
     execute_operator_deletion_filter_push_up_worst_case_safety_active, \
-    execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario
+    execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario, \
+    execute_operator_deletion_filter_push_up_average_case
 
 
 def test_operator_deletion_filter_push_up_ideal_case(tmpdir):
@@ -21,9 +22,9 @@ def test_operator_deletion_filter_push_up_ideal_case(tmpdir):
     analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
         data_corruption = execute_operator_deletion_filter_push_up_ideal_case(data_size, tmpdir, variant_count)
 
-    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
-    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
-    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
+    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
+    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
+    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
 
     assert analysis_result_with_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
@@ -56,9 +57,9 @@ def test_operator_deletion_filter_push_up_worst_case_safety_inactive(tmpdir):
         data_corruption = execute_operator_deletion_filter_push_up_worst_case_safety_inactive(data_size, tmpdir,
                                                                                               variant_count)
 
-    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
-    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
-    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
+    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
+    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
+    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
 
     assert analysis_result_with_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
@@ -91,9 +92,9 @@ def test_operator_deletion_filter_push_up_worst_case_safety_active(tmpdir):
         data_corruption = execute_operator_deletion_filter_push_up_worst_case_safety_active(data_size, tmpdir,
                                                                                             variant_count)
 
-    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
-    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
-    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
+    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
+    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
+    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
 
     assert analysis_result_with_opt_rule.runtime_info.what_if_optimized_estimated <= \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
@@ -125,9 +126,9 @@ def test_operator_deletion_filter_push_up_average_case(tmpdir):
     analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
         data_corruption = execute_operator_deletion_filter_push_up_average_case(data_size, tmpdir, variant_count)
 
-    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
-    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
-    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
+    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
+    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
+    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
 
     assert analysis_result_with_opt_rule.runtime_info.what_if_optimized_estimated <= \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
@@ -160,9 +161,9 @@ def test_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_sc
         data_corruption = execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario(
             data_size, tmpdir, variant_count)
 
-    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
-    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
-    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
+    assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
+    assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
+    assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
 
     assert analysis_result_with_opt_rule.runtime_info.what_if_optimized_estimated <= \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
