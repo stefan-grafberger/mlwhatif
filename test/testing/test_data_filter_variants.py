@@ -6,7 +6,7 @@ from inspect import cleandoc
 from example_pipelines import HEALTHCARE_PY, COMPAS_PY, ADULT_COMPLEX_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
-from mlwhatif.testing._data_filtering_variants import DataFilterVariants
+from mlwhatif.testing._data_filter_variants import DataFilterVariants
 from mlwhatif.testing._testing_helper_utils import visualize_dags
 
 
@@ -56,7 +56,8 @@ def test_data_filter_variants_healthcare(tmpdir):
     """
 
     filter_variants = DataFilterVariants({'filter_0': ('num_children', lambda df: df[df['num_children'] <= 2]),
-                                          'filter_1': ('num_children', lambda df: df[df['num_children'] <= 3])})
+                                          'filter_1': ('num_children', lambda df: df[df['num_children'] <= 3])},
+                                         True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(HEALTHCARE_PY) \
@@ -66,7 +67,7 @@ def test_data_filter_variants_healthcare(tmpdir):
         .execute()
 
     report = analysis_result.analysis_to_result_reports[filter_variants]
-    assert report.shape == (3, 5)
+    assert report.shape == (4, 5)
 
     visualize_dags(analysis_result, tmpdir)
 

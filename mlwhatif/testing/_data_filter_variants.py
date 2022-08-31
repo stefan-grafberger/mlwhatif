@@ -6,6 +6,7 @@ from typing import Iterable, Dict, Callable
 
 import networkx
 import pandas
+from sklearn.dummy import DummyClassifier
 
 from mlwhatif import OperatorType, DagNode, DagNodeDetails, BasicCodeLocation, OperatorContext
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type
@@ -20,11 +21,13 @@ class DataFilterVariants(WhatIfAnalysis):
     A Data Filtering Variants What-If Analysis, currently only used for benchmarking optimizations
     """
 
-    def __init__(self, filter_name_column_and_filter_functions: Dict[str, tuple[str, Callable]]):
+    def __init__(self, filter_name_column_and_filter_functions: Dict[str, tuple[str, Callable]],
+                 add_dummy_model_patch_variant=False):
         # pylint: disable=unsubscriptable-object
         self._filter_name_column_and_filter_functions = list(filter_name_column_and_filter_functions.items())
+        self._add_dummy_model_patch_variant = add_dummy_model_patch_variant
         self._score_nodes_and_linenos = []
-        self._analysis_id = (*self._filter_name_column_and_filter_functions,)
+        self._analysis_id = (*self._filter_name_column_and_filter_functions, add_dummy_model_patch_variant)
 
     @property
     def analysis_id(self):
@@ -43,10 +46,23 @@ class DataFilterVariants(WhatIfAnalysis):
                             "be uniquely identified by the line number in the code!")
 
         corruption_patch_sets = []
+        if self._add_dummy_model_patch_variant is True:
+            patches_for_variant = []
+
+            test_corruption_result_label = f"data-filter-variant-dummy-model"
+            extraction_nodes = get_intermediate_extraction_patch_after_score_nodes(singleton, self,
+                                                                                   test_corruption_result_label,
+                                                                                   self._score_nodes_and_linenos)
+            patches_for_variant.extend(extraction_nodes)
+            model_patch = self._get_model_patch(dag, "dummy-model",
+                                                partial(DummyClassifier, strategy='constant', constant=0.))
+            patches_for_variant.append(model_patch)
+            corruption_patch_sets.append(patches_for_variant)
+
         for filter_description, (column, filter_function) in self._filter_name_column_and_filter_functions:
             patches_for_variant = []
 
-            test_corruption_result_label = f"model-variant-{filter_description}"
+            test_corruption_result_label = f"data-filter-variant-{filter_description}"
             extraction_nodes = get_intermediate_extraction_patch_after_score_nodes(singleton, self,
                                                                                    test_corruption_result_label,
                                                                                    self._score_nodes_and_linenos)
@@ -103,12 +119,23 @@ class DataFilterVariants(WhatIfAnalysis):
             test_column_values.append(metric_value)
             result_df_metrics[test_result_column_name] = test_column_values
 
+        if self._add_dummy_model_patch_variant is True:
+            result_df_filter_variants.append("dummy-model")
+            result_df_columns.append(None)
+
+            for (score_description, lineno) in score_description_and_linenos:
+                test_label = f"data-filter-variant-dummy-model_L{lineno}"
+                test_result_column_name = f"{score_description}_L{lineno}"
+                test_column_values = result_df_metrics.get(test_result_column_name, [])
+                test_column_values.append(singleton.labels_to_extracted_plan_results[test_label])
+                result_df_metrics[test_result_column_name] = test_column_values
+
         for filter_description, (column, _) in self._filter_name_column_and_filter_functions:
             result_df_filter_variants.append(filter_description)
             result_df_columns.append(column)
 
             for (score_description, lineno) in score_description_and_linenos:
-                test_label = f"model-variant-{filter_description}_L{lineno}"
+                test_label = f"data-filter-variant-{filter_description}_L{lineno}"
                 test_result_column_name = f"{score_description}_L{lineno}"
                 test_column_values = result_df_metrics.get(test_result_column_name, [])
                 test_column_values.append(singleton.labels_to_extracted_plan_results[test_label])
@@ -118,3 +145,28 @@ class DataFilterVariants(WhatIfAnalysis):
                                       'column': result_df_columns,
                                       **result_df_metrics})
         return result_df
+
+    def _get_model_patch(self, dag, model_description, model_function):
+        estimator_nodes = find_nodes_by_type(dag, OperatorType.ESTIMATOR)
+        if len(estimator_nodes) != 1:
+            raise Exception(
+                "Currently, DataCorruption only supports pipelines with exactly one estimator!")
+        estimator_node = estimator_nodes[0]
+        new_processing_func = partial(self.fit_model_variant, make_classifier_func=model_function)
+        new_description = f"Model Variant: {model_description}"
+        new_estimator_node = DagNode(singleton.get_next_op_id(),
+                                     estimator_node.code_location,
+                                     estimator_node.operator_info,
+                                     DagNodeDetails(new_description, estimator_node.details.columns,
+                                                    estimator_node.details.optimizer_info),
+                                     estimator_node.optional_code_info,
+                                     new_processing_func)
+        model_patch = ModelPatch(singleton.get_next_patch_id(), self, True, new_estimator_node)
+        return model_patch
+
+    @staticmethod
+    def fit_model_variant(train_data, train_labels, make_classifier_func):
+        """Create the classifier and fit it"""
+        estimator = make_classifier_func()
+        estimator.fit(train_data, train_labels)
+        return estimator
