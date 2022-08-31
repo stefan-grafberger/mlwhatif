@@ -27,6 +27,8 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
 
     def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[PipelinePatch]]) -> \
             tuple[networkx.DiGraph, List[List[PipelinePatch]]]:
+        # pylint: disable=too-many-locals
+        # TODO: Clean this up a bit
         selectivity_and_filters_to_push_up = []
 
         for pipeline_variant_patches in patches:
