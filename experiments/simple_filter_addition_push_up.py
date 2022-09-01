@@ -14,6 +14,13 @@ from mlwhatif.optimization._simple_filter_addition_push_up import SimpleFilterAd
 from mlwhatif.testing._data_filter_variants import DataFilterVariants
 
 
+def run_filter_addition_push_up_benchmark(scenario, variant_count, data_size, csv_dir):
+    if scenario not in scenario_funcs:
+        print(f"Valid scenario names: {scenario_funcs.keys()}")
+        raise ValueError(f"Scenario name {scenario} is not one of them!")
+    return scenario_funcs[scenario](data_size, csv_dir, variant_count)
+
+
 def execute_filter_addition_push_up_ideal_case(data_size, tmpdir, variant_count):
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_ideal_case_train.csv")
@@ -304,3 +311,11 @@ def execute_filter_addition_push_up_worst_case_original_pipeline(data_size, tmpd
         .skip_multi_query_optimization(True) \
         .execute()
     return analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, data_corruption
+
+
+scenario_funcs = {
+    'ideal': execute_filter_addition_push_up_ideal_case,
+    'average': execute_filter_addition_push_up_average_case,
+    'worst_wo_original': execute_filter_addition_push_up_worst_case_no_original_pipeline,
+    'worst_w_original': execute_filter_addition_push_up_worst_case_original_pipeline
+}

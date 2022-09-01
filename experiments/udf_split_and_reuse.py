@@ -14,6 +14,13 @@ from mlwhatif.optimization._simple_projection_push_up import SimpleProjectionPus
 from mlwhatif.optimization._udf_split_and_reuse import UdfSplitAndReuse
 
 
+def run_udf_split_and_reuse_benchmark(scenario, variant_count, data_size, csv_dir):
+    if scenario not in scenario_funcs:
+        print(f"Valid scenario names: {scenario_funcs.keys()}")
+        raise ValueError(f"Scenario name {scenario} is not one of them!")
+    return scenario_funcs[scenario](data_size, csv_dir, variant_count)
+
+
 def execute_udf_split_and_reuse_ideal_case(data_size, tmpdir, variant_count):
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_a_ideal_case_train.csv")
@@ -416,3 +423,12 @@ def execute_udf_split_and_reuse_worst_case_with_constant(data_size, tmpdir, vari
         .execute()
     return analysis_result_with_pushup_opt_rule, analysis_result_with_reuse_opt_rule, analysis_result_without_any_opt, \
         analysis_result_without_opt_rule, data_corruption
+
+
+scenario_funcs = {
+    'ideal': execute_udf_split_and_reuse_ideal_case,
+    'average': execute_udf_split_and_reuse_average_case,
+    'worst_w_safety': execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active,
+    'worst_wo_safety': execute_udf_split_and_reuse_worst_case_with_selectivity_inactive,
+    'worst_constant': execute_udf_split_and_reuse_worst_case_with_constant
+}
