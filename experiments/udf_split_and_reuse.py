@@ -1,7 +1,7 @@
 """
 Tests whether the optimization works
 """
-# pylint: disable=too-many-locals,invalid-name
+# pylint: disable=too-many-locals,invalid-name,missing-function-docstring
 # TODO: Clean up these tests
 import os
 from inspect import cleandoc
