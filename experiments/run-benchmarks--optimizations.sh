@@ -7,21 +7,21 @@ PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization
 
 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py operator_deletion_filter_push_up ideal 10 1000
 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py operator_deletion_filter_push_up average 10 10000
-PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py operator_deletion_filter_push_up worst_wo_safety 3 2000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py operator_deletion_filter_push_up worst_wo_safety 10 2000
 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py operator_deletion_filter_push_up worst_w_safety 10 2000
-PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py operator_deletion_filter_push_up worst_safety_too_defensive 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py operator_deletion_filter_push_up worst_safety_too_defensive 10 2000
 
-PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py filter_addition_push_up ideal 5 2000
-PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py filter_addition_push_up average 5 100000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py filter_addition_push_up ideal 10 2000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py filter_addition_push_up average 10 100000
 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py filter_addition_push_up worst_wo_original 2 5000
 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py filter_addition_push_up worst_w_original 3 5000
 
-PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py projection_push_up ideal 5 1000
-PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py projection_push_up average 2 100000
-PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py projection_push_up worst 2 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py projection_push_up ideal 10 2000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py projection_push_up average 10 100000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py projection_push_up worst 10 100000
 
 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py udf_split_and_reuse ideal 10 10000
 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py udf_split_and_reuse average 10 200000
 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py udf_split_and_reuse worst_w_safety 2 100000
 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py udf_split_and_reuse worst_wo_safety 2 100000
-PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py udf_split_and_reuse worst_constant 2 100000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py udf_split_and_reuse worst_constant 10 100000
