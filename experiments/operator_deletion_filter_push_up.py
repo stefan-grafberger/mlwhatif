@@ -89,20 +89,27 @@ def execute_operator_deletion_filter_push_up_ideal_case(data_size, tmpdir, varia
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption
+
+    return {'analysis': data_corruption,
+            'analysis_result_with_opt_rule': analysis_result_with_opt_rule,
+            'analysis_result_without_opt_rule': analysis_result_without_opt_rule,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 def execute_operator_deletion_filter_push_up_worst_case_safety_inactive(data_size, tmpdir, variant_count):
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
-    df_a_path_train = os.path.join(tmpdir, "operator_deletion_filter_deletion_push_up_df_a_worst_case_safety_inactive_train.csv")
+    df_a_path_train = os.path.join(tmpdir,
+                                   "operator_deletion_filter_deletion_push_up_df_a_worst_case_safety_inactive_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
-    df_b_path_train = os.path.join(tmpdir, "operator_deletion_filter_deletion_push_up_df_b_worst_case_safety_inactive_train.csv")
+    df_b_path_train = os.path.join(tmpdir,
+                                   "operator_deletion_filter_deletion_push_up_df_b_worst_case_safety_inactive_train.csv")
     df_b_train.to_csv(df_b_path_train, index=False)
     df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
-    df_a_path_test = os.path.join(tmpdir, "operator_deletion_filter_deletion_push_up_df_a_worst_case_safety_inactive_test.csv")
+    df_a_path_test = os.path.join(tmpdir,
+                                  "operator_deletion_filter_deletion_push_up_df_a_worst_case_safety_inactive_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
-    df_b_path_test = os.path.join(tmpdir, "operator_deletion_filter_deletion_push_up_df_b_worst_case_safety_inactive_test.csv")
+    df_b_path_test = os.path.join(tmpdir,
+                                  "operator_deletion_filter_deletion_push_up_df_b_worst_case_safety_inactive_test.csv")
     df_b_test.to_csv(df_b_path_test, index=False)
     filter_lines_train = []
     filter_lines_test = []
@@ -162,8 +169,10 @@ def execute_operator_deletion_filter_push_up_worst_case_safety_inactive(data_siz
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption
+    return {'analysis': data_corruption,
+            'analysis_result_with_opt_rule': analysis_result_with_opt_rule,
+            'analysis_result_without_opt_rule': analysis_result_without_opt_rule,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 def execute_operator_deletion_filter_push_up_worst_case_safety_active(data_size, tmpdir, variant_count):
@@ -239,8 +248,10 @@ def execute_operator_deletion_filter_push_up_worst_case_safety_active(data_size,
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption
+    return {'analysis': data_corruption,
+            'analysis_result_with_opt_rule': analysis_result_with_opt_rule,
+            'analysis_result_without_opt_rule': analysis_result_without_opt_rule,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 def execute_operator_deletion_filter_push_up_average_case(data_size, tmpdir, variant_count):
@@ -326,11 +337,14 @@ def execute_operator_deletion_filter_push_up_average_case(data_size, tmpdir, var
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption
+    return {'analysis': data_corruption,
+            'analysis_result_with_opt_rule': analysis_result_with_opt_rule,
+            'analysis_result_without_opt_rule': analysis_result_without_opt_rule,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
-def execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario(data_size, tmpdir, variant_count):
+def execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario(data_size, tmpdir,
+                                                                                          variant_count):
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "operator_deletion_filter_deletion_push_up_df_a_worst_case_safety_failing_"
                                            "train.csv")
@@ -409,7 +423,10 @@ def execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, data_corruption
+    return {'analysis': data_corruption,
+            'analysis_result_with_opt_rule': analysis_result_with_opt_rule,
+            'analysis_result_without_opt_rule': analysis_result_without_opt_rule,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 scenario_funcs = {

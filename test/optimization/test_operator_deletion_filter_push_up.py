@@ -19,8 +19,12 @@ def test_operator_deletion_filter_push_up_ideal_case(tmpdir):
     data_size = 1000
     variant_count = 10
 
-    analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption = execute_operator_deletion_filter_push_up_ideal_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_operator_deletion_filter_push_up_ideal_case(data_size, tmpdir, variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
@@ -53,9 +57,13 @@ def test_operator_deletion_filter_push_up_worst_case_safety_inactive(tmpdir):
     data_size = 2000
     variant_count = 3
 
-    analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption = execute_operator_deletion_filter_push_up_worst_case_safety_inactive(data_size, tmpdir,
-                                                                                              variant_count)
+    scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_safety_inactive(data_size, tmpdir,
+                                                                                               variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
@@ -88,9 +96,13 @@ def test_operator_deletion_filter_push_up_worst_case_safety_active(tmpdir):
     data_size = 2000
     variant_count = 10
 
-    analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption = execute_operator_deletion_filter_push_up_worst_case_safety_active(data_size, tmpdir,
-                                                                                            variant_count)
+    scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_safety_active(data_size, tmpdir,
+                                                                                        variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
@@ -123,8 +135,12 @@ def test_operator_deletion_filter_push_up_average_case(tmpdir):
     data_size = 10000
     variant_count = 10
 
-    analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption = execute_operator_deletion_filter_push_up_average_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_operator_deletion_filter_push_up_average_case(data_size, tmpdir, variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
@@ -157,9 +173,13 @@ def test_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_sc
     data_size = 1000
     variant_count = 10
 
-    analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption = execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario(
-            data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario(
+        data_size, tmpdir, variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 5)

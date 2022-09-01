@@ -1,7 +1,27 @@
 #!/bin/bash
 
 # PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python is required on our Azure machine due to some dependency issues
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py common_subexpression_elimination ideal 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py common_subexpression_elimination average 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py common_subexpression_elimination worst 5 1000
+
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py operator_deletion_filter_push_up ideal 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py operator_deletion_filter_push_up average 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py operator_deletion_filter_push_up worst_wo_safety 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py operator_deletion_filter_push_up worst_w_safety 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py operator_deletion_filter_push_up worst_safety_too_defensive 5 1000
+
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py filter_addition_push_up ideal 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py filter_addition_push_up average 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py filter_addition_push_up worst_wo_original 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py filter_addition_push_up worst_w_original 5 1000
 
 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py projection_push_up ideal 5 1000
 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py projection_push_up average 5 1000
 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py projection_push_up worst 5 1000
+
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py udf_split_and_reuse ideal 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py udf_split_and_reuse average 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py udf_split_and_reuse worst_w_safety 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py udf_split_and_reuse worst_wo_safety 5 1000
+PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py udf_split_and_reuse worst_constant 5 1000

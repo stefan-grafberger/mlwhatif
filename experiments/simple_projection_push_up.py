@@ -90,7 +90,10 @@ def execute_projection_push_up_ideal_case(data_size, tmpdir, variant_count):
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, data_corruption
+    return {'analysis': data_corruption,
+            'analysis_result_with_opt_rule': analysis_result_with_opt_rule,
+            'analysis_result_without_opt_rule': analysis_result_without_opt_rule,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 def execute_projection_push_up_average_case(data_size, tmpdir, variant_count):
@@ -171,7 +174,10 @@ def execute_projection_push_up_average_case(data_size, tmpdir, variant_count):
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, data_corruption
+    return {'analysis': data_corruption,
+            'analysis_result_with_opt_rule': analysis_result_with_opt_rule,
+            'analysis_result_without_opt_rule': analysis_result_without_opt_rule,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 def execute_projection_push_up_worst_case(data_size, tmpdir, variant_count):
@@ -234,7 +240,10 @@ def execute_projection_push_up_worst_case(data_size, tmpdir, variant_count):
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, data_corruption
+    return {'analysis': data_corruption,
+            'analysis_result_with_opt_rule': analysis_result_with_opt_rule,
+            'analysis_result_without_opt_rule': analysis_result_without_opt_rule,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 scenario_funcs = {

@@ -16,8 +16,12 @@ def test_projection_push_up_ideal_case(tmpdir):
     data_size = 1000
     variant_count = 2
 
-    analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption = execute_projection_push_up_ideal_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_projection_push_up_ideal_case(data_size, tmpdir, variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
@@ -50,8 +54,12 @@ def test_projection_push_up_average_case(tmpdir):
     data_size = 100000
     variant_count = 2
 
-    analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption = execute_projection_push_up_average_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_projection_push_up_average_case(data_size, tmpdir, variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
@@ -84,8 +92,12 @@ def test_projection_push_up_worst_case(tmpdir):
     data_size = 1000
     variant_count = 2
 
-    analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption = execute_projection_push_up_worst_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_projection_push_up_worst_case(data_size, tmpdir, variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)

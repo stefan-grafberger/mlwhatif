@@ -18,19 +18,23 @@ def test_udf_split_and_reuse_ideal_case(tmpdir):
     data_size = 10000
     variant_count = 10
 
-    analysis_result_with_pushup_opt_rule, analysis_result_with_reuse_opt_rule, analysis_result_without_any_opt, \
-        analysis_result_without_opt_rule, data_corruption = execute_udf_split_and_reuse_ideal_case(
-            data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_udf_split_and_reuse_ideal_case(data_size, tmpdir, variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_push_up_opt_rule = scenario_result_dict['analysis_result_with_push_up_opt_rule']
+    analysis_result_with_reuse_opt_rule = scenario_result_dict['analysis_result_with_reuse_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_reuse_opt_rule.analysis_to_result_reports[data_corruption].shape == (
         variant_count + 1, 2)
-    assert analysis_result_with_pushup_opt_rule.analysis_to_result_reports[data_corruption].shape == \
+    assert analysis_result_with_push_up_opt_rule.analysis_to_result_reports[data_corruption].shape == \
            (variant_count + 1, 2)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
     assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
 
     assert analysis_result_with_reuse_opt_rule.runtime_info.what_if_optimized_estimated <= \
-           analysis_result_with_pushup_opt_rule.runtime_info.what_if_optimized_estimated < \
+           analysis_result_with_push_up_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_any_opt.runtime_info.what_if_unoptimized_estimated
 
@@ -40,12 +44,12 @@ def test_udf_split_and_reuse_ideal_case(tmpdir):
                                                                                          "with-reuse-opt-what-if-"
                                                                                          "optimised"))
 
-    analysis_result_with_pushup_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-pushup-opt-orig"))
-    analysis_result_with_pushup_opt_rule.save_what_if_dags_to_path(
+    analysis_result_with_push_up_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-pushup-opt-orig"))
+    analysis_result_with_push_up_opt_rule.save_what_if_dags_to_path(
         os.path.join(str(tmpdir), "with-pushup-opt-what-if"))
-    analysis_result_with_pushup_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
-                                                                                          "with-pushup-opt-what-if"
-                                                                                          "-optimised"))
+    analysis_result_with_push_up_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
+                                                                                           "with-pushup-opt-what-if"
+                                                                                           "-optimised"))
 
     analysis_result_without_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "without-opt-orig"))
     analysis_result_without_opt_rule.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-opt-what-if"))
@@ -69,19 +73,23 @@ def test_udf_split_and_reuse_average_case(tmpdir):
     data_size = 200000
     variant_count = 10
 
-    analysis_result_with_pushup_opt_rule, analysis_result_with_reuse_opt_rule, analysis_result_without_any_opt, \
-        analysis_result_without_opt_rule, data_corruption = execute_udf_split_and_reuse_average_case(
-            data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_udf_split_and_reuse_average_case(data_size, tmpdir, variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_push_up_opt_rule = scenario_result_dict['analysis_result_with_push_up_opt_rule']
+    analysis_result_with_reuse_opt_rule = scenario_result_dict['analysis_result_with_reuse_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_reuse_opt_rule.analysis_to_result_reports[data_corruption].shape == (
         variant_count + 1, 2)
-    assert analysis_result_with_pushup_opt_rule.analysis_to_result_reports[data_corruption].shape == \
+    assert analysis_result_with_push_up_opt_rule.analysis_to_result_reports[data_corruption].shape == \
            (variant_count + 1, 2)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
     assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
 
     assert analysis_result_with_reuse_opt_rule.runtime_info.what_if_optimized_estimated <= \
-           analysis_result_with_pushup_opt_rule.runtime_info.what_if_optimized_estimated < \
+           analysis_result_with_push_up_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_any_opt.runtime_info.what_if_unoptimized_estimated
 
@@ -91,12 +99,12 @@ def test_udf_split_and_reuse_average_case(tmpdir):
                                                                                          "with-reuse-opt-what-if-"
                                                                                          "optimised"))
 
-    analysis_result_with_pushup_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-pushup-opt-orig"))
-    analysis_result_with_pushup_opt_rule.save_what_if_dags_to_path(
+    analysis_result_with_push_up_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-pushup-opt-orig"))
+    analysis_result_with_push_up_opt_rule.save_what_if_dags_to_path(
         os.path.join(str(tmpdir), "with-pushup-opt-what-if"))
-    analysis_result_with_pushup_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
-                                                                                          "with-pushup-opt-what-if"
-                                                                                          "-optimised"))
+    analysis_result_with_push_up_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
+                                                                                           "with-pushup-opt-what-if"
+                                                                                           "-optimised"))
 
     analysis_result_without_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "without-opt-orig"))
     analysis_result_without_opt_rule.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-opt-what-if"))
@@ -117,19 +125,24 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_active(tmpdir):
     data_size = 100000
     variant_count = 2
 
-    analysis_result_with_pushup_opt_rule, analysis_result_with_reuse_opt_rule, analysis_result_without_any_opt, \
-        analysis_result_without_opt_rule, data_corruption = \
-        execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(data_size, tmpdir,
+                                                                                                 variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_push_up_opt_rule = scenario_result_dict['analysis_result_with_push_up_opt_rule']
+    analysis_result_with_reuse_opt_rule = scenario_result_dict['analysis_result_with_reuse_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_reuse_opt_rule.analysis_to_result_reports[data_corruption].shape == (
         variant_count + 1, 2)
-    assert analysis_result_with_pushup_opt_rule.analysis_to_result_reports[data_corruption].shape == \
+    assert analysis_result_with_push_up_opt_rule.analysis_to_result_reports[data_corruption].shape == \
            (variant_count + 1, 2)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
     assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
 
     assert analysis_result_with_reuse_opt_rule.runtime_info.what_if_optimized_estimated <= \
-           analysis_result_with_pushup_opt_rule.runtime_info.what_if_optimized_estimated < \
+           analysis_result_with_push_up_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_any_opt.runtime_info.what_if_unoptimized_estimated
 
@@ -139,10 +152,10 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_active(tmpdir):
                                                                                          "with-reuse-opt-what-if-"
                                                                                          "optimised"))
 
-    analysis_result_with_pushup_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-pushup-opt-orig"))
-    analysis_result_with_pushup_opt_rule.save_what_if_dags_to_path(
+    analysis_result_with_push_up_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-pushup-opt-orig"))
+    analysis_result_with_push_up_opt_rule.save_what_if_dags_to_path(
         os.path.join(str(tmpdir), "with-pushup-opt-what-if"))
-    analysis_result_with_pushup_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
+    analysis_result_with_push_up_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
                                                                                           "with-pushup-opt-what-if"
                                                                                           "-optimised"))
 
@@ -164,19 +177,24 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_inactive(tmpdir)
     data_size = 100000
     variant_count = 2
 
-    analysis_result_with_pushup_opt_rule, analysis_result_with_reuse_opt_rule, analysis_result_without_any_opt, \
-        analysis_result_without_opt_rule, data_corruption = \
-        execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(data_size, tmpdir,
+                                                                                            variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_push_up_opt_rule = scenario_result_dict['analysis_result_with_push_up_opt_rule']
+    analysis_result_with_reuse_opt_rule = scenario_result_dict['analysis_result_with_reuse_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_reuse_opt_rule.analysis_to_result_reports[data_corruption].shape == (
         variant_count + 1, 2)
-    assert analysis_result_with_pushup_opt_rule.analysis_to_result_reports[data_corruption].shape == \
+    assert analysis_result_with_push_up_opt_rule.analysis_to_result_reports[data_corruption].shape == \
            (variant_count + 1, 2)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
     assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
 
     assert analysis_result_with_reuse_opt_rule.runtime_info.what_if_optimized_estimated <= \
-           analysis_result_with_pushup_opt_rule.runtime_info.what_if_optimized_estimated < \
+           analysis_result_with_push_up_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_any_opt.runtime_info.what_if_unoptimized_estimated
 
@@ -186,10 +204,10 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_inactive(tmpdir)
                                                                                          "with-reuse-opt-what-if-"
                                                                                          "optimised"))
 
-    analysis_result_with_pushup_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-pushup-opt-orig"))
-    analysis_result_with_pushup_opt_rule.save_what_if_dags_to_path(
+    analysis_result_with_push_up_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-pushup-opt-orig"))
+    analysis_result_with_push_up_opt_rule.save_what_if_dags_to_path(
         os.path.join(str(tmpdir), "with-pushup-opt-what-if"))
-    analysis_result_with_pushup_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
+    analysis_result_with_push_up_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
                                                                                           "with-pushup-opt-what-if"
                                                                                           "-optimised"))
 
@@ -211,19 +229,23 @@ def test_udf_split_and_reuse_worst_case_with_constant(tmpdir):
     data_size = 100000
     variant_count = 2
 
-    analysis_result_with_pushup_opt_rule, analysis_result_with_reuse_opt_rule, analysis_result_without_any_opt, \
-        analysis_result_without_opt_rule, data_corruption = execute_udf_split_and_reuse_worst_case_with_constant(
-            data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_udf_split_and_reuse_worst_case_with_constant(data_size, tmpdir, variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_push_up_opt_rule = scenario_result_dict['analysis_result_with_push_up_opt_rule']
+    analysis_result_with_reuse_opt_rule = scenario_result_dict['analysis_result_with_reuse_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_reuse_opt_rule.analysis_to_result_reports[data_corruption].shape == (
         variant_count + 1, 2)
-    assert analysis_result_with_pushup_opt_rule.analysis_to_result_reports[data_corruption].shape == \
+    assert analysis_result_with_push_up_opt_rule.analysis_to_result_reports[data_corruption].shape == \
            (variant_count + 1, 2)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
     assert analysis_result_without_any_opt.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 2)
 
     assert analysis_result_with_reuse_opt_rule.runtime_info.what_if_optimized_estimated <= \
-           analysis_result_with_pushup_opt_rule.runtime_info.what_if_optimized_estimated < \
+           analysis_result_with_push_up_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_opt_rule.runtime_info.what_if_optimized_estimated < \
            analysis_result_without_any_opt.runtime_info.what_if_unoptimized_estimated
 
@@ -233,10 +255,10 @@ def test_udf_split_and_reuse_worst_case_with_constant(tmpdir):
                                                                                          "with-reuse-opt-what-if-"
                                                                                          "optimised"))
 
-    analysis_result_with_pushup_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-pushup-opt-orig"))
-    analysis_result_with_pushup_opt_rule.save_what_if_dags_to_path(
+    analysis_result_with_push_up_opt_rule.save_original_dag_to_path(os.path.join(str(tmpdir), "with-pushup-opt-orig"))
+    analysis_result_with_push_up_opt_rule.save_what_if_dags_to_path(
         os.path.join(str(tmpdir), "with-pushup-opt-what-if"))
-    analysis_result_with_pushup_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
+    analysis_result_with_push_up_opt_rule.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir),
                                                                                           "with-pushup-opt-what-if"
                                                                                           "-optimised"))
 

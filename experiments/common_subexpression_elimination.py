@@ -21,7 +21,6 @@ def run_common_subexpression_elimination_benchmark(scenario, variant_count, data
     return scenario_funcs[scenario](data_size, csv_dir, variant_count)
 
 
-
 def execute_common_subexpression_elimination_ideal_case(data_size, tmpdir, variant_count):
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "common_subexpression_elimination_df_a_ideal_case_train.csv")
@@ -83,7 +82,10 @@ def execute_common_subexpression_elimination_ideal_case(data_size, tmpdir, varia
         .add_what_if_analysis(analysis) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis, analysis_result_with_opt, analysis_result_without_any_opt
+
+    return {'analysis': analysis,
+            'analysis_result_with_opt': analysis_result_with_opt,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 def execute_common_subexpression_elimunation_average_case(data_size, tmpdir, variant_count):
@@ -155,7 +157,10 @@ def execute_common_subexpression_elimunation_average_case(data_size, tmpdir, var
         .add_what_if_analysis(analysis) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis, analysis_result_with_opt, analysis_result_without_any_opt
+
+    return {'analysis': analysis,
+            'analysis_result_with_opt': analysis_result_with_opt,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 def execute_common_subexpression_elimination_worst_case(data_size, tmpdir, variant_count):
@@ -209,7 +214,9 @@ def execute_common_subexpression_elimination_worst_case(data_size, tmpdir, varia
         .add_what_if_analysis(analysis) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis, analysis_result_with_opt, analysis_result_without_any_opt
+    return {'analysis': analysis,
+            'analysis_result_with_opt': analysis_result_with_opt,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 scenario_funcs = {

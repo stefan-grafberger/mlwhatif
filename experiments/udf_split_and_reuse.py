@@ -98,8 +98,12 @@ def execute_udf_split_and_reuse_ideal_case(data_size, tmpdir, variant_count):
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis_result_with_pushup_opt_rule, analysis_result_with_reuse_opt_rule, analysis_result_without_any_opt, \
-        analysis_result_without_opt_rule, data_corruption
+
+    return {'analysis': data_corruption,
+            'analysis_result_with_reuse_opt_rule': analysis_result_with_reuse_opt_rule,
+            'analysis_result_with_push_up_opt_rule': analysis_result_with_pushup_opt_rule,
+            'analysis_result_without_opt_rule': analysis_result_without_opt_rule,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 def execute_udf_split_and_reuse_average_case(data_size, tmpdir, variant_count):
@@ -185,8 +189,11 @@ def execute_udf_split_and_reuse_average_case(data_size, tmpdir, variant_count):
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis_result_with_pushup_opt_rule, analysis_result_with_reuse_opt_rule, analysis_result_without_any_opt, \
-        analysis_result_without_opt_rule, data_corruption
+    return {'analysis': data_corruption,
+            'analysis_result_with_reuse_opt_rule': analysis_result_with_reuse_opt_rule,
+            'analysis_result_with_push_up_opt_rule': analysis_result_with_pushup_opt_rule,
+            'analysis_result_without_opt_rule': analysis_result_without_opt_rule,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 def execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(data_size, tmpdir, variant_count):
@@ -266,8 +273,11 @@ def execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(data_s
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis_result_with_pushup_opt_rule, analysis_result_with_reuse_opt_rule, analysis_result_without_any_opt, \
-        analysis_result_without_opt_rule, data_corruption
+    return {'analysis': data_corruption,
+            'analysis_result_with_reuse_opt_rule': analysis_result_with_reuse_opt_rule,
+            'analysis_result_with_push_up_opt_rule': analysis_result_with_pushup_opt_rule,
+            'analysis_result_without_opt_rule': analysis_result_without_opt_rule,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 def execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(data_size, tmpdir, variant_count):
@@ -347,8 +357,11 @@ def execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(data_size, 
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis_result_with_pushup_opt_rule, analysis_result_with_reuse_opt_rule, analysis_result_without_any_opt, \
-        analysis_result_without_opt_rule, data_corruption
+    return {'analysis': data_corruption,
+            'analysis_result_with_reuse_opt_rule': analysis_result_with_reuse_opt_rule,
+            'analysis_result_with_push_up_opt_rule': analysis_result_with_pushup_opt_rule,
+            'analysis_result_without_opt_rule': analysis_result_without_opt_rule,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 def execute_udf_split_and_reuse_worst_case_with_constant(data_size, tmpdir, variant_count):
@@ -421,8 +434,11 @@ def execute_udf_split_and_reuse_worst_case_with_constant(data_size, tmpdir, vari
         .add_what_if_analysis(data_corruption) \
         .skip_multi_query_optimization(True) \
         .execute()
-    return analysis_result_with_pushup_opt_rule, analysis_result_with_reuse_opt_rule, analysis_result_without_any_opt, \
-        analysis_result_without_opt_rule, data_corruption
+    return {'analysis': data_corruption,
+            'analysis_result_with_reuse_opt_rule': analysis_result_with_reuse_opt_rule,
+            'analysis_result_with_push_up_opt_rule': analysis_result_with_pushup_opt_rule,
+            'analysis_result_without_opt_rule': analysis_result_without_opt_rule,
+            'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
 scenario_funcs = {

@@ -17,8 +17,12 @@ def test_filter_push_up_ideal_case(tmpdir):
     data_size = 2000
     variant_count = 5
 
-    analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption = execute_filter_addition_push_up_ideal_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_filter_addition_push_up_ideal_case(data_size, tmpdir, variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
@@ -51,8 +55,12 @@ def test_filter_push_up_average_case(tmpdir):
     data_size = 100000
     variant_count = 5
 
-    analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption = execute_filter_addition_push_up_average_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_filter_addition_push_up_average_case(data_size, tmpdir, variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
@@ -85,9 +93,13 @@ def test_filter_push_up_worst_case_no_original_pipeline(tmpdir):
     data_size = 5000
     variant_count = 2
 
-    analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption = execute_filter_addition_push_up_worst_case_no_original_pipeline(data_size, tmpdir,
+    scenario_result_dict = execute_filter_addition_push_up_worst_case_no_original_pipeline(data_size, tmpdir,
                                                                                           variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
@@ -120,8 +132,12 @@ def test_filter_push_up_worst_case_original_pipeline(tmpdir):
     data_size = 5000
     variant_count = 3
 
-    analysis_result_with_opt_rule, analysis_result_without_any_opt, analysis_result_without_opt_rule, \
-        data_corruption = execute_filter_addition_push_up_worst_case_original_pipeline(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_filter_addition_push_up_worst_case_original_pipeline(data_size, tmpdir, variant_count)
+
+    data_corruption = scenario_result_dict['analysis']
+    analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
+    analysis_result_without_opt_rule = scenario_result_dict['analysis_result_without_opt_rule']
 
     assert analysis_result_with_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)
     assert analysis_result_without_opt_rule.analysis_to_result_reports[data_corruption].shape == (variant_count + 1, 3)

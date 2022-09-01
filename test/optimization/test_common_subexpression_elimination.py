@@ -16,8 +16,11 @@ def test_common_subexpression_elimination_ideal_case(tmpdir):
     data_size = 2000
     variant_count = 10
 
-    analysis, analysis_result_with_opt, analysis_result_without_any_opt = \
-        execute_common_subexpression_elimination_ideal_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_common_subexpression_elimination_ideal_case(data_size, tmpdir, variant_count)
+
+    analysis = scenario_result_dict['analysis']
+    analysis_result_with_opt = scenario_result_dict['analysis_result_with_opt']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
 
     assert analysis_result_with_opt.analysis_to_result_reports[analysis].shape == (variant_count + 1, 2)
     assert analysis_result_without_any_opt.analysis_to_result_reports[analysis].shape == (variant_count + 1, 2)
@@ -43,8 +46,11 @@ def test_common_subexpression_elimination_average_case(tmpdir):
     data_size = 2000
     variant_count = 10
 
-    analysis, analysis_result_with_opt, analysis_result_without_any_opt = \
-        execute_common_subexpression_elimunation_average_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_common_subexpression_elimunation_average_case(data_size, tmpdir, variant_count)
+
+    analysis = scenario_result_dict['analysis']
+    analysis_result_with_opt = scenario_result_dict['analysis_result_with_opt']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
 
     assert analysis_result_with_opt.analysis_to_result_reports[analysis].shape == (variant_count + 1, 2)
     assert analysis_result_without_any_opt.analysis_to_result_reports[analysis].shape == (variant_count + 1, 2)
@@ -70,8 +76,11 @@ def test_common_subexpression_elimination_worst_case(tmpdir):
     data_size = 2000
     variant_count = 10
 
-    analysis, analysis_result_with_opt, analysis_result_without_any_opt = \
-        execute_common_subexpression_elimination_worst_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_common_subexpression_elimination_worst_case(data_size, tmpdir, variant_count)
+
+    analysis = scenario_result_dict['analysis']
+    analysis_result_with_opt = scenario_result_dict['analysis_result_with_opt']
+    analysis_result_without_any_opt = scenario_result_dict['analysis_result_without_any_opt']
 
     assert analysis_result_with_opt.analysis_to_result_reports[analysis].shape == (variant_count + 1, 2)
     assert analysis_result_without_any_opt.analysis_to_result_reports[analysis].shape == (variant_count + 1, 2)
