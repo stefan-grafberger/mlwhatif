@@ -1,6 +1,6 @@
 #!/bin/bash
 # PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python is required on our Azure machine due to some dependency issues
-for variant_count in 2 4 6 8
+for variant_count in 4 6
 do
 #  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py common_subexpression_elimination ideal "$variant_count" 2000
 #  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--optimization.py common_subexpression_elimination average "$variant_count" 2000
