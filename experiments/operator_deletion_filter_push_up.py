@@ -443,21 +443,18 @@ def execute_operator_deletion_filter_push_up_worst_case_only_some_filters_worth_
     df_b_path_test = os.path.join(tmpdir, "filter_deletion_push_up_df_b_worst_case_safety_circumventing_test.csv")
     df_b_test.to_csv(df_b_path_test, index=False)
 
-    index_filter = []
     filter_lines_train = []
     filter_lines_test = []
-    # circumvent_treshold = int(100 - 100 / variant_count - 3)
 
-    for variant_index in range(variant_count):
-        index_filter.append(variant_index)
-        # FIXME: For filters like this that basically all do the same, the performance can heavily decrease!
-        #  The optimization needs a special case for this to not do the optimization then.
-        # Make all detected selectivities 100 / variant_count to exactly be above safety check threshold
-        selectivity_threshold = 100 - int(pow((1. / variant_count), variant_index + 1) * 100)
-        selectivity_threshold -= 0.01 * variant_index  # Minor orrection to still have distinct filters
-        selectivity_threshold -= 3  # To stop us from randomly being below safety threshold
-        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] >= {selectivity_threshold}]")
-        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] >= {selectivity_threshold}]")
+    if variant_count >= 1:
+        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['B'] <= {100 * 1. / variant_count  + 3}]")
+        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['B'] <= {100 * 1. / variant_count  + 3}]")
+    if variant_count >= 2:
+        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] <= {100 * 1. / variant_count + 3}]")
+        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] <= {100 * 1. / variant_count + 3}]")
+    for variant_index in range(variant_count - 2):
+        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] != {99 - variant_index}]")
+        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] != {99 - variant_index}]")
 
     filter_line_train = '\n        '.join(filter_lines_train)
     filter_line_test = '\n        '.join(filter_lines_test)
