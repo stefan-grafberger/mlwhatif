@@ -1,8 +1,8 @@
-repetition,optimization,scenario,variant_counts,data_size,analysis_result_with_opt,analysis_result_without_any_opt
-0,common_subexpression_elimination,average,10,2000,29.729127883911133,274.0669250488281
-1,common_subexpression_elimination,average,10,2000,29.72698211669922,239.94922637939453
-2,common_subexpression_elimination,average,10,2000,32.254934310913086,236.74702644348145
-3,common_subexpression_elimination,average,10,2000,27.189970016479492,262.678861618042
-4,common_subexpression_elimination,average,10,2000,36.23509407043457,261.6260051727295
-5,common_subexpression_elimination,average,10,2000,27.498960494995117,254.82988357543945
-6,common_subexpression_elimination,average,10,2000,46.73910140991211,341.1729335784912
+repetition,optimization,scenario,variant_counts,data_size,original_pipeline,analysis_result_with_opt,analysis_result_without_any_opt
+0,common_subexpression_elimination,average,10,2000,21.44789695739746,26.32284164428711,214.3402099609375
+1,common_subexpression_elimination,average,10,2000,20.403146743774414,25.435686111450195,210.2069854736328
+2,common_subexpression_elimination,average,10,2000,19.966840744018555,25.203227996826172,213.4089469909668
+3,common_subexpression_elimination,average,10,2000,20.15066146850586,25.16007423400879,213.4380340576172
+4,common_subexpression_elimination,average,10,2000,22.771358489990234,25.656700134277344,215.6059741973877
+5,common_subexpression_elimination,average,10,2000,19.748210906982422,35.9039306640625,207.06987380981445
+6,common_subexpression_elimination,average,10,2000,19.924163818359375,26.643037796020508,210.2830410003662

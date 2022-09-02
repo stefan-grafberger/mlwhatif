@@ -1,8 +1,8 @@
-repetition,optimization,scenario,variant_counts,data_size,analysis_result_with_opt_rule,analysis_result_without_opt_rule,analysis_result_without_any_opt
-0,operator_deletion_filter_push_up,worst_w_safety,10,2000,493.49117279052734,624.9630451202393,594.2211151123047
-1,operator_deletion_filter_push_up,worst_w_safety,10,2000,507.7848434448242,529.778003692627,618.5500621795654
-2,operator_deletion_filter_push_up,worst_w_safety,10,2000,853.234052658081,766.5238380432129,851.3190746307373
-3,operator_deletion_filter_push_up,worst_w_safety,10,2000,547.5130081176758,541.0118103027344,774.6210098266602
-4,operator_deletion_filter_push_up,worst_w_safety,10,2000,476.69506072998047,473.721981048584,569.1049098968506
-5,operator_deletion_filter_push_up,worst_w_safety,10,2000,618.0322170257568,592.9110050201416,700.1290321350098
-6,operator_deletion_filter_push_up,worst_w_safety,10,2000,464.4439220428467,467.53573417663574,563.4341239929199
+repetition,optimization,scenario,variant_counts,data_size,original_pipeline,analysis_result_with_opt_rule,analysis_result_without_opt_rule,analysis_result_without_any_opt
+0,operator_deletion_filter_push_up,worst_w_safety,10,2000,76.51376724243164,638.4210586547852,832.3788642883301,802.6590347290039
+1,operator_deletion_filter_push_up,worst_w_safety,10,2000,61.86985969543457,511.68107986450195,498.445987701416,799.8378276824951
+2,operator_deletion_filter_push_up,worst_w_safety,10,2000,88.57393264770508,714.134931564331,771.9602584838867,1002.2351741790771
+3,operator_deletion_filter_push_up,worst_w_safety,10,2000,84.46264266967773,635.4539394378662,671.3099479675293,763.2651329040527
+4,operator_deletion_filter_push_up,worst_w_safety,10,2000,55.05037307739258,477.0932197570801,461.4410400390625,571.835994720459
+5,operator_deletion_filter_push_up,worst_w_safety,10,2000,84.45334434509277,699.6219158172607,670.9151268005371,753.3717155456543
+6,operator_deletion_filter_push_up,worst_w_safety,10,2000,72.12591171264648,567.842960357666,546.8018054962158,649.7142314910889
