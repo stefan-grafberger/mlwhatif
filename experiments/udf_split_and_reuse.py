@@ -42,8 +42,8 @@ def execute_udf_split_and_reuse_ideal_case(data_size, tmpdir, variant_count):
         from sklearn.pipeline import Pipeline
         from sklearn.compose import ColumnTransformer
         
-        df_train = pd.read_csv("{df_a_path_train}", engine='python')
-        df_test = pd.read_csv("{df_a_path_test}", engine='python')
+        df_train = pd.read_csv("{df_a_path_train}")
+        df_test = pd.read_csv("{df_a_path_test}")
         
         train_target = df_train['target_featurized']
         

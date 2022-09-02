@@ -522,5 +522,7 @@ scenario_funcs = {
     'average': execute_operator_deletion_filter_push_up_average_case,
     'worst_wo_safety': execute_operator_deletion_filter_push_up_worst_case_safety_inactive,
     'worst_w_safety': execute_operator_deletion_filter_push_up_worst_case_safety_active,
-    'worst_safety_too_defensive': execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario
+    'worst_safety_too_defensive': execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario,
+    'worst_case_only_some_filters_worth_pushing_up':
+        execute_operator_deletion_filter_push_up_worst_case_only_some_filters_worth_pushing_up
 }
