@@ -171,8 +171,8 @@ def test_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_sc
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 1000
-    variant_count = 10
+    data_size = 750
+    variant_count = 4
 
     scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario(
         data_size, tmpdir, variant_count)
@@ -210,8 +210,8 @@ def test_operator_deletion_filter_push_up_worst_case_only_some_filters_worth_pus
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 1000
-    variant_count = 10
+    data_size = 1100
+    variant_count = 4
 
     scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_only_some_filters_worth_pushing_up(
         data_size, tmpdir, variant_count)
