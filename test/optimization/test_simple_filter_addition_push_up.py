@@ -14,8 +14,8 @@ def test_filter_push_up_ideal_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 2000
-    variant_count = 5
+    data_size = 4000
+    variant_count = 4
 
     scenario_result_dict = execute_filter_addition_push_up_ideal_case(data_size, tmpdir, variant_count)
 
@@ -52,8 +52,8 @@ def test_filter_push_up_average_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 100000
-    variant_count = 5
+    data_size = 250000
+    variant_count = 4
 
     scenario_result_dict = execute_filter_addition_push_up_average_case(data_size, tmpdir, variant_count)
 
@@ -90,8 +90,8 @@ def test_filter_push_up_worst_case_no_original_pipeline(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 5000
-    variant_count = 2
+    data_size = 4000
+    variant_count = 4
 
     scenario_result_dict = execute_filter_addition_push_up_worst_case_no_original_pipeline(data_size, tmpdir,
                                                                                           variant_count)
@@ -129,8 +129,8 @@ def test_filter_push_up_worst_case_original_pipeline(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 5000
-    variant_count = 3
+    data_size = 4000
+    variant_count = 4
 
     scenario_result_dict = execute_filter_addition_push_up_worst_case_original_pipeline(data_size, tmpdir, variant_count)
 
