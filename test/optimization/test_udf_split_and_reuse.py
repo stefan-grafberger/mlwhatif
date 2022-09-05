@@ -15,8 +15,8 @@ def test_udf_split_and_reuse_ideal_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 10000
-    variant_count = 10
+    data_size = 12000
+    variant_count = 4
 
     scenario_result_dict = execute_udf_split_and_reuse_ideal_case(data_size, tmpdir, variant_count)
 
@@ -70,8 +70,8 @@ def test_udf_split_and_reuse_average_case(tmpdir):
     #  the variant with udf split and reuse is important enough to be more significant than the optimization, when
     #  executing this test just once, the option listed first will always be faster between push_up with and without
     #  udf split reuse.
-    data_size = 200000
-    variant_count = 10
+    data_size = 240000
+    variant_count = 4
 
     scenario_result_dict = execute_udf_split_and_reuse_average_case(data_size, tmpdir, variant_count)
 
@@ -122,8 +122,8 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_active(tmpdir):
     Tests whether the .py version of the inspector works
     """
     # TODO: use string column, add expensive corruption
-    data_size = 100000
-    variant_count = 2
+    data_size = 60000
+    variant_count = 4
 
     scenario_result_dict = execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(data_size, tmpdir,
                                                                                                  variant_count)
@@ -174,8 +174,8 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_inactive(tmpdir)
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 100000
-    variant_count = 2
+    data_size = 13000
+    variant_count = 4
 
     scenario_result_dict = execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(data_size, tmpdir,
                                                                                             variant_count)
@@ -226,8 +226,8 @@ def test_udf_split_and_reuse_worst_case_with_constant(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 100000
-    variant_count = 2
+    data_size = 500000
+    variant_count = 4
 
     scenario_result_dict = execute_udf_split_and_reuse_worst_case_with_constant(data_size, tmpdir, variant_count)
 
