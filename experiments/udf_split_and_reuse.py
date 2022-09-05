@@ -21,7 +21,8 @@ def run_udf_split_and_reuse_benchmark(scenario, variant_count, data_size, csv_di
     return scenario_funcs[scenario](data_size, csv_dir, variant_count)
 
 
-def execute_udf_split_and_reuse_ideal_case(data_size, tmpdir, variant_count):
+def execute_udf_split_and_reuse_ideal_case(scale_factor, tmpdir, variant_count):
+    data_size = int(12000 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_a_ideal_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -106,7 +107,8 @@ def execute_udf_split_and_reuse_ideal_case(data_size, tmpdir, variant_count):
             'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
-def execute_udf_split_and_reuse_average_case(data_size, tmpdir, variant_count):
+def execute_udf_split_and_reuse_average_case(scale_factor, tmpdir, variant_count):
+    data_size = int(240000 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_a_average_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -196,7 +198,8 @@ def execute_udf_split_and_reuse_average_case(data_size, tmpdir, variant_count):
             'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
-def execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(data_size, tmpdir, variant_count):
+def execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(scale_factor, tmpdir, variant_count):
+    data_size = int(60000 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_a_worst_case_with_safety_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -280,7 +283,8 @@ def execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(data_s
             'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
-def execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(data_size, tmpdir, variant_count):
+def execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(scale_factor, tmpdir, variant_count):
+    data_size = int(13000 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_a_worst_case_without_safety_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -364,7 +368,8 @@ def execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(data_size, 
             'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
-def execute_udf_split_and_reuse_worst_case_with_constant(data_size, tmpdir, variant_count):
+def execute_udf_split_and_reuse_worst_case_with_constant(scale_factor, tmpdir, variant_count):
+    data_size = int(500000 * scale_factor)
     df_a_train, _ = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_a_worst_case_constant_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)

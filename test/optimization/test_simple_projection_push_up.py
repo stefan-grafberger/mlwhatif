@@ -13,10 +13,9 @@ def test_projection_push_up_ideal_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 3900
     variant_count = 4
 
-    scenario_result_dict = execute_projection_push_up_ideal_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_projection_push_up_ideal_case(0.5, tmpdir, variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
@@ -51,10 +50,9 @@ def test_projection_push_up_average_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 240000
     variant_count = 4
 
-    scenario_result_dict = execute_projection_push_up_average_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_projection_push_up_average_case(0.5, tmpdir, variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
@@ -89,10 +87,9 @@ def test_projection_push_up_worst_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 450000
     variant_count = 4
 
-    scenario_result_dict = execute_projection_push_up_worst_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_projection_push_up_worst_case(0.5, tmpdir, variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']

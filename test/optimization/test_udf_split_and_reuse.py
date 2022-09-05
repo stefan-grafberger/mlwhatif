@@ -15,10 +15,9 @@ def test_udf_split_and_reuse_ideal_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 12000
     variant_count = 4
 
-    scenario_result_dict = execute_udf_split_and_reuse_ideal_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_udf_split_and_reuse_ideal_case(0.5, tmpdir, variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_push_up_opt_rule = scenario_result_dict['analysis_result_with_push_up_opt_rule']
@@ -70,10 +69,9 @@ def test_udf_split_and_reuse_average_case(tmpdir):
     #  the variant with udf split and reuse is important enough to be more significant than the optimization, when
     #  executing this test just once, the option listed first will always be faster between push_up with and without
     #  udf split reuse.
-    data_size = 240000
     variant_count = 4
 
-    scenario_result_dict = execute_udf_split_and_reuse_average_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_udf_split_and_reuse_average_case(0.5, tmpdir, variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_push_up_opt_rule = scenario_result_dict['analysis_result_with_push_up_opt_rule']
@@ -121,11 +119,9 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_active(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    # TODO: use string column, add expensive corruption
-    data_size = 60000
     variant_count = 4
 
-    scenario_result_dict = execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(data_size, tmpdir,
+    scenario_result_dict = execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(0.5, tmpdir,
                                                                                                  variant_count)
 
     data_corruption = scenario_result_dict['analysis']
@@ -174,10 +170,9 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_inactive(tmpdir)
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 13000
     variant_count = 4
 
-    scenario_result_dict = execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(data_size, tmpdir,
+    scenario_result_dict = execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(0.5, tmpdir,
                                                                                             variant_count)
 
     data_corruption = scenario_result_dict['analysis']
@@ -226,10 +221,9 @@ def test_udf_split_and_reuse_worst_case_with_constant(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 500000
     variant_count = 4
 
-    scenario_result_dict = execute_udf_split_and_reuse_worst_case_with_constant(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_udf_split_and_reuse_worst_case_with_constant(0.5, tmpdir, variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_push_up_opt_rule = scenario_result_dict['analysis_result_with_push_up_opt_rule']

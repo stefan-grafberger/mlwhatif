@@ -18,12 +18,12 @@ from mlwhatif import PipelineAnalyzer, AnalysisResults
 warnings.filterwarnings("ignore")
 
 if len(sys.argv) < 5:
-    print("optimization scenario variant_count data_size")
+    print("optimization scenario variant_count scale_factor")
 
 optimization = sys.argv[1]
 scenario = sys.argv[2]
 variant_count = int(sys.argv[3])
-data_size = int(sys.argv[4])
+scale_factor = float(sys.argv[4])
 
 cmd_args = []
 if len(sys.argv) > 5:
@@ -56,7 +56,7 @@ result_df_repetitions = []
 result_df_optimizations = []
 result_df_scenarios = []
 result_df_variant_counts = []
-result_df_data_sizes = []
+result_df_scale_factors = []
 result_df_original_pipeline = []
 result_df_metrics = {}
 for repetition in range(num_repetitions):
@@ -67,7 +67,7 @@ for repetition in range(num_repetitions):
         raise ValueError(f"Optimization type {optimization} is not one of them!")
     benchmark_func = optimizations_benchmark_funcs[optimization]
     with tempfile.TemporaryDirectory() as tmp_dir:
-        results_dict_items = benchmark_func(scenario, variant_count, data_size, tmp_dir).items()
+        results_dict_items = benchmark_func(scenario, variant_count, scale_factor, tmp_dir).items()
     results_dict_items = [(result_key, result_value)
                           for (result_key, result_value) in results_dict_items
                           if isinstance(result_value, AnalysisResults)]
@@ -82,7 +82,7 @@ for repetition in range(num_repetitions):
     result_df_optimizations.append(optimization)
     result_df_scenarios.append(scenario)
     result_df_variant_counts.append(variant_count)
-    result_df_data_sizes.append(data_size)
+    result_df_scale_factors.append(scale_factor)
     result_df_original_pipeline.append(results_dict_items[0][1].runtime_info.original_pipeline_estimated)
 
     print(f'# Final results -- repetition {repetition + 1} of {num_repetitions} ')
@@ -92,10 +92,10 @@ result_df = pandas.DataFrame({'repetition': result_df_repetitions,
                               'optimization': result_df_optimizations,
                               'scenario': result_df_scenarios,
                               'variant_counts': result_df_variant_counts,
-                              'data_size': result_df_data_sizes,
+                              'scale_factors': result_df_scale_factors,
                               'original_pipeline': result_df_original_pipeline,
                               **result_df_metrics})
-result_df_path = os.path.join(output_directory, f"results-{optimization}-{scenario}-{variant_count}-{data_size}.csv")
+result_df_path = os.path.join(output_directory, f"results-{optimization}-{scenario}-{variant_count}-{scale_factor}.csv")
 result_df.to_csv(result_df_path, index=False)
 print(f'# Final results after all repeititions')
 print(result_df)

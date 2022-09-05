@@ -14,10 +14,9 @@ def test_filter_push_up_ideal_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 4000
     variant_count = 4
 
-    scenario_result_dict = execute_filter_addition_push_up_ideal_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_filter_addition_push_up_ideal_case(0.5, tmpdir, variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
@@ -52,10 +51,9 @@ def test_filter_push_up_average_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 250000
     variant_count = 4
 
-    scenario_result_dict = execute_filter_addition_push_up_average_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_filter_addition_push_up_average_case(0.5, tmpdir, variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
@@ -90,11 +88,10 @@ def test_filter_push_up_worst_case_no_original_pipeline(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 4000
     variant_count = 4
 
-    scenario_result_dict = execute_filter_addition_push_up_worst_case_no_original_pipeline(data_size, tmpdir,
-                                                                                          variant_count)
+    scenario_result_dict = execute_filter_addition_push_up_worst_case_no_original_pipeline(0.5, tmpdir,
+                                                                                           variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
@@ -129,10 +126,10 @@ def test_filter_push_up_worst_case_original_pipeline(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 4000
     variant_count = 4
 
-    scenario_result_dict = execute_filter_addition_push_up_worst_case_original_pipeline(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_filter_addition_push_up_worst_case_original_pipeline(0.5, tmpdir,
+                                                                                        variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']

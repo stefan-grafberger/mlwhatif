@@ -13,10 +13,9 @@ def test_common_subexpression_elimination_ideal_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 4000
     variant_count = 4
 
-    scenario_result_dict = execute_common_subexpression_elimination_ideal_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_common_subexpression_elimination_ideal_case(0.5, tmpdir, variant_count)
 
     analysis = scenario_result_dict['analysis']
     analysis_result_with_opt = scenario_result_dict['analysis_result_with_opt']
@@ -43,10 +42,9 @@ def test_common_subexpression_elimination_average_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 300000
     variant_count = 4
 
-    scenario_result_dict = execute_common_subexpression_elimunation_average_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_common_subexpression_elimunation_average_case(0.5, tmpdir, variant_count)
 
     analysis = scenario_result_dict['analysis']
     analysis_result_with_opt = scenario_result_dict['analysis_result_with_opt']
@@ -73,10 +71,9 @@ def test_common_subexpression_elimination_worst_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 750000
     variant_count = 4
 
-    scenario_result_dict = execute_common_subexpression_elimination_worst_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_common_subexpression_elimination_worst_case(0.5, tmpdir, variant_count)
 
     analysis = scenario_result_dict['analysis']
     analysis_result_with_opt = scenario_result_dict['analysis_result_with_opt']

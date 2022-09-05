@@ -20,7 +20,8 @@ def run_operator_deletion_filter_push_up_benchmark(scenario, variant_count, data
     return scenario_funcs[scenario](data_size, csv_dir, variant_count)
 
 
-def execute_operator_deletion_filter_push_up_ideal_case(data_size, tmpdir, variant_count):
+def execute_operator_deletion_filter_push_up_ideal_case(scale_factor, tmpdir, variant_count):
+    data_size = int(950 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "operator_deletion_filter_deletion_push_up_df_a_ideal_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -96,7 +97,8 @@ def execute_operator_deletion_filter_push_up_ideal_case(data_size, tmpdir, varia
             'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
-def execute_operator_deletion_filter_push_up_worst_case_safety_inactive(data_size, tmpdir, variant_count):
+def execute_operator_deletion_filter_push_up_worst_case_safety_inactive(scale_factor, tmpdir, variant_count):
+    data_size = int(950 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir,
                                    "operator_deletion_filter_deletion_push_up_df_a_worst_case_safety_inactive_train.csv")
@@ -175,7 +177,8 @@ def execute_operator_deletion_filter_push_up_worst_case_safety_inactive(data_siz
             'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
-def execute_operator_deletion_filter_push_up_worst_case_safety_active(data_size, tmpdir, variant_count):
+def execute_operator_deletion_filter_push_up_worst_case_safety_active(scale_factor, tmpdir, variant_count):
+    data_size = int(4500 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "operator_deletion_filter_deletion_push_up_df_a_worst_case_safety_"
                                            "active_train.csv")
@@ -254,7 +257,8 @@ def execute_operator_deletion_filter_push_up_worst_case_safety_active(data_size,
             'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
-def execute_operator_deletion_filter_push_up_average_case(data_size, tmpdir, variant_count):
+def execute_operator_deletion_filter_push_up_average_case(scale_factor, tmpdir, variant_count):
+    data_size = int(250000 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "operator_deletion_filter_deletion_push_up_df_a_average_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -343,8 +347,9 @@ def execute_operator_deletion_filter_push_up_average_case(data_size, tmpdir, var
             'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
-def execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario(data_size, tmpdir,
+def execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario(scale_factor, tmpdir,
                                                                                           variant_count):
+    data_size = int(750 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "operator_deletion_filter_deletion_push_up_df_a_worst_case_safety_failing_"
                                            "train.csv")
@@ -429,8 +434,9 @@ def execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for
             'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
-def execute_operator_deletion_filter_push_up_worst_case_only_some_filters_worth_pushing_up(data_size, tmpdir,
+def execute_operator_deletion_filter_push_up_worst_case_only_some_filters_worth_pushing_up(scale_factor, tmpdir,
                                                                                            variant_count):
+    data_size = int(1100 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_deletion_push_up_df_a_worst_case_safety_circumventing_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)

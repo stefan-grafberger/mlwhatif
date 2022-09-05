@@ -17,10 +17,9 @@ def test_operator_deletion_filter_push_up_ideal_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 950
     variant_count = 4
 
-    scenario_result_dict = execute_operator_deletion_filter_push_up_ideal_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_operator_deletion_filter_push_up_ideal_case(0.5, tmpdir, variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
@@ -55,10 +54,9 @@ def test_operator_deletion_filter_push_up_worst_case_safety_inactive(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 950
     variant_count = 4
 
-    scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_safety_inactive(data_size, tmpdir,
+    scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_safety_inactive(0.5, tmpdir,
                                                                                                variant_count)
 
     data_corruption = scenario_result_dict['analysis']
@@ -94,11 +92,10 @@ def test_operator_deletion_filter_push_up_worst_case_safety_active(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 4500
     variant_count = 4
 
-    scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_safety_active(data_size, tmpdir,
-                                                                                        variant_count)
+    scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_safety_active(0.5, tmpdir,
+                                                                                             variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
@@ -133,10 +130,9 @@ def test_operator_deletion_filter_push_up_average_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 250000
     variant_count = 4
 
-    scenario_result_dict = execute_operator_deletion_filter_push_up_average_case(data_size, tmpdir, variant_count)
+    scenario_result_dict = execute_operator_deletion_filter_push_up_average_case(0.5, tmpdir, variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
@@ -171,11 +167,10 @@ def test_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_sc
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 750
     variant_count = 4
 
     scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario(
-        data_size, tmpdir, variant_count)
+        0.5, tmpdir, variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
@@ -210,11 +205,10 @@ def test_operator_deletion_filter_push_up_worst_case_only_some_filters_worth_pus
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 1100
     variant_count = 4
 
     scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_only_some_filters_worth_pushing_up(
-        data_size, tmpdir, variant_count)
+        0.5, tmpdir, variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']

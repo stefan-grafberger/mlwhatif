@@ -21,7 +21,8 @@ def run_common_subexpression_elimination_benchmark(scenario, variant_count, data
     return scenario_funcs[scenario](data_size, csv_dir, variant_count)
 
 
-def execute_common_subexpression_elimination_ideal_case(data_size, tmpdir, variant_count):
+def execute_common_subexpression_elimination_ideal_case(scale_factor, tmpdir, variant_count):
+    data_size = int(4000 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "common_subexpression_elimination_df_a_ideal_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -88,7 +89,8 @@ def execute_common_subexpression_elimination_ideal_case(data_size, tmpdir, varia
             'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
-def execute_common_subexpression_elimunation_average_case(data_size, tmpdir, variant_count):
+def execute_common_subexpression_elimunation_average_case(scale_factor, tmpdir, variant_count):
+    data_size = int(300000 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "common_subexpression_elimination_df_a_average_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -163,7 +165,8 @@ def execute_common_subexpression_elimunation_average_case(data_size, tmpdir, var
             'analysis_result_without_any_opt': analysis_result_without_any_opt}
 
 
-def execute_common_subexpression_elimination_worst_case(data_size, tmpdir, variant_count):
+def execute_common_subexpression_elimination_worst_case(scale_factor, tmpdir, variant_count):
+    data_size = int(750000 * scale_factor)
     df_a_train, _ = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "common_subexpression_elimination_df_a_worst_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
