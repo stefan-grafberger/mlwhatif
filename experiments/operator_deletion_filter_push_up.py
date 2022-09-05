@@ -116,8 +116,8 @@ def execute_operator_deletion_filter_push_up_worst_case_safety_inactive(scale_fa
     filter_lines_train = []
     filter_lines_test = []
     for variant_index in range(variant_count):
-        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] >= {99 - variant_index}]")
-        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] >= {99 - variant_index}]")
+        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] >= {99 - variant_index - 3}]")
+        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] >= {99 - variant_index - 3}]")
     filter_line_train = '\n        '.join(filter_lines_train)
     filter_line_test = '\n        '.join(filter_lines_test)
     test_code = cleandoc(f"""
@@ -196,8 +196,8 @@ def execute_operator_deletion_filter_push_up_worst_case_safety_active(scale_fact
     filter_lines_train = []
     filter_lines_test = []
     for variant_index in range(variant_count):
-        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] >= {99 - variant_index}]")
-        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] >= {99 - variant_index}]")
+        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] >= {99 - variant_index - 3}]")
+        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] >= {99 - variant_index - 3}]")
     filter_line_train = '\n        '.join(filter_lines_train)
     filter_line_test = '\n        '.join(filter_lines_test)
     test_code = cleandoc(f"""
