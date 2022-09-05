@@ -300,7 +300,7 @@ def execute_filter_addition_push_up_worst_case_original_pipeline(scale_factor, t
     filter_variants = {}
     for variant_index in range(variant_count - 1):
         def filter_func(df, bound_variant_index):
-            return df[df['B'] <= 3]
+            return df[df['B'] <= 4]
 
         filter_variants[f"filter_{variant_index}"] = ("B", partial(filter_func, bound_variant_index=variant_index))
     data_corruption = DataFilterVariants(filter_variants, True)
