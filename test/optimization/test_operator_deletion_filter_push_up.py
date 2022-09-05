@@ -17,8 +17,8 @@ def test_operator_deletion_filter_push_up_ideal_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 1000
-    variant_count = 10
+    data_size = 950
+    variant_count = 4
 
     scenario_result_dict = execute_operator_deletion_filter_push_up_ideal_case(data_size, tmpdir, variant_count)
 
@@ -55,8 +55,8 @@ def test_operator_deletion_filter_push_up_worst_case_safety_inactive(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 2000
-    variant_count = 3
+    data_size = 950
+    variant_count = 4
 
     scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_safety_inactive(data_size, tmpdir,
                                                                                                variant_count)
@@ -94,8 +94,8 @@ def test_operator_deletion_filter_push_up_worst_case_safety_active(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 2000
-    variant_count = 10
+    data_size = 4500
+    variant_count = 4
 
     scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_safety_active(data_size, tmpdir,
                                                                                         variant_count)
@@ -133,8 +133,8 @@ def test_operator_deletion_filter_push_up_average_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    data_size = 10000
-    variant_count = 10
+    data_size = 250000
+    variant_count = 4
 
     scenario_result_dict = execute_operator_deletion_filter_push_up_average_case(data_size, tmpdir, variant_count)
 
