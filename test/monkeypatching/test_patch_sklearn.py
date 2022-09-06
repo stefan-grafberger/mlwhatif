@@ -223,6 +223,81 @@ def test_standard_scaler():
     assert numpy.allclose(encoded_data, expected)
 
 
+def test_robust_scaler():
+    """
+    Tests whether the monkey patching of ('sklearn.preprocessing._data', 'RobustScaler') works
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import RobustScaler
+                import numpy as np
+
+                df = pd.DataFrame({'A': [1, 2, 10, 5]})
+                standard_scaler = RobustScaler()
+                encoded_data = standard_scaler.fit_transform(df)
+                test_df = pd.DataFrame({'A': [1, 2, 10, 5]})
+                encoded_data = standard_scaler.transform(test_df)
+                print(encoded_data)
+                expected = np.array([[-0.55555556], [-0.33333333], [ 1.44444444], [ 0.33333333]])
+                assert np.allclose(encoded_data, expected)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 5),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.frame', 'DataFrame')),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(5, 5, 5, 39), "pd.DataFrame({'A': [1, 2, 10, 5]})"),
+                                   Comparison(partial))
+    expected_transformer = DagNode(1,
+                                   BasicCodeLocation("<string-source>", 6),
+                                   OperatorContext(OperatorType.TRANSFORMER,
+                                                   FunctionInfo('sklearn.preprocessing._data', 'RobustScaler')),
+                                   DagNodeDetails('Robust Scaler: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                RangeComparison(0, 4000))),
+                                   OptionalCodeInfo(CodeReference(6, 18, 6, 32), 'RobustScaler()'),
+                                   Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_transformer, arg_index=0)
+    expected_data_source_two = DagNode(2,
+                                       BasicCodeLocation("<string-source>", 8),
+                                       OperatorContext(OperatorType.DATA_SOURCE,
+                                                       FunctionInfo('pandas.core.frame', 'DataFrame')),
+                                       DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                 RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(8, 10, 8, 44),
+                                                        "pd.DataFrame({'A': [1, 2, 10, 5]})"),
+                                       Comparison(partial))
+    expected_transformer_two = DagNode(3,
+                                       BasicCodeLocation("<string-source>", 6),
+                                       OperatorContext(OperatorType.TRANSFORMER,
+                                                       FunctionInfo('sklearn.preprocessing._data', 'RobustScaler')),
+                                       DagNodeDetails('Robust Scaler: transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                    RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(6, 18, 6, 32), 'RobustScaler()'),
+                                       Comparison(FunctionType))
+    expected_dag.add_edge(expected_transformer, expected_transformer_two, arg_index=0)
+    expected_dag.add_edge(expected_data_source_two, expected_transformer_two, arg_index=1)
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    transform_node = list(inspector_result.original_dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2]})
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df)
+    expected_fit_transform_data = numpy.array([[0.05555556], [-0.09259259], [3.57407407], [-0.05555556]])
+    assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
+
+    test_df = pandas.DataFrame({'A': [50, 2, 10, 1]})
+    encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
+    expected = numpy.array([[1.72222222], [-0.05555556], [0.24074074], [-0.09259259]])
+    assert numpy.allclose(encoded_data, expected)
+
+
 def test_function_transformer():
     """
     Tests whether the monkey patching of ('sklearn.preprocessing_function_transformer', 'FunctionTransformer') works

@@ -87,9 +87,9 @@ def test_projection_push_up_worst_case(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    variant_count = 4
+    variant_count = 2
 
-    scenario_result_dict = execute_projection_push_up_worst_case(0.5, tmpdir, variant_count)
+    scenario_result_dict = execute_projection_push_up_worst_case(1.0, tmpdir, variant_count)
 
     data_corruption = scenario_result_dict['analysis']
     analysis_result_with_opt_rule = scenario_result_dict['analysis_result_with_opt_rule']
