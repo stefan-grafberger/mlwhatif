@@ -94,7 +94,7 @@ def test_operator_deletion_filter_push_up_worst_case_safety_active(tmpdir):
     """
     variant_count = 4
 
-    scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_safety_active(0.5, tmpdir,
+    scenario_result_dict = execute_operator_deletion_filter_push_up_worst_case_safety_active(1.0, tmpdir,
                                                                                              variant_count)
 
     data_corruption = scenario_result_dict['analysis']

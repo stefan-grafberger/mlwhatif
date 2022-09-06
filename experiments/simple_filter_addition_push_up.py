@@ -180,7 +180,7 @@ def execute_filter_addition_push_up_average_case(scale_factor, tmpdir, variant_c
 
 
 def execute_filter_addition_push_up_worst_case_no_original_pipeline(scale_factor, tmpdir, variant_count):
-    data_size = int(4000 * scale_factor)
+    data_size = int(4100 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_no_original_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -226,7 +226,7 @@ def execute_filter_addition_push_up_worst_case_no_original_pipeline(scale_factor
     filter_variants = {}
     for variant_index in range(variant_count):
         def filter_func(df, bound_variant_index):
-            return df[df['B'] <= 4]
+            return df[df['B'] <= 5]
 
         filter_variants[f"filter_{variant_index}"] = ("B", partial(filter_func, bound_variant_index=variant_index))
     data_corruption = DataFilterVariants(filter_variants, False)
@@ -301,7 +301,7 @@ def execute_filter_addition_push_up_worst_case_original_pipeline(scale_factor, t
     filter_variants = {}
     for variant_index in range(variant_count - 1):
         def filter_func(df, bound_variant_index):
-            return df[df['B'] <= 4]
+            return df[df['B'] <= 5]
 
         filter_variants[f"filter_{variant_index}"] = ("B", partial(filter_func, bound_variant_index=variant_index))
     data_corruption = DataFilterVariants(filter_variants, True)

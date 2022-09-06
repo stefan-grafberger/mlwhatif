@@ -178,7 +178,7 @@ def execute_operator_deletion_filter_push_up_worst_case_safety_inactive(scale_fa
 
 
 def execute_operator_deletion_filter_push_up_worst_case_safety_active(scale_factor, tmpdir, variant_count):
-    data_size = int(4500 * scale_factor)
+    data_size = int(2200 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "operator_deletion_filter_deletion_push_up_df_a_worst_case_safety_"
                                            "active_train.csv")
