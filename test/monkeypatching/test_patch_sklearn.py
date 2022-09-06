@@ -298,6 +298,94 @@ def test_robust_scaler():
     assert numpy.allclose(encoded_data, expected)
 
 
+def test_pca():
+    """
+    Tests whether the monkey patching of ('sklearn.compose._column_transformer', 'ColumnTransformer') works with
+    multiple transformers with dense output
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
+                from sklearn.compose import ColumnTransformer
+                from sklearn.decomposition import PCA
+                from scipy.sparse import csr_matrix
+                import numpy
+                
+                df = pd.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})
+                column_transformer = ColumnTransformer(transformers=[
+                    ('numeric', StandardScaler(), ['A']),
+                    ('categorical', OneHotEncoder(sparse=False), ['B'])
+                ])
+                encoded_data = column_transformer.fit_transform(df)
+                transformer = PCA(n_components=2, random_state=42)
+                reduced_data = transformer.fit_transform(encoded_data)
+                test_transform_function = transformer.transform(encoded_data)
+                print(reduced_data)
+                expected = numpy.array([[-0.80795996, -0.75406407],
+                                        [-0.953227,    0.23384447],
+                                        [ 1.64711991, -0.29071836],
+                                        [ 0.11406705,  0.81093796]])
+                assert numpy.allclose(reduced_data, expected)
+                assert numpy.allclose(test_transform_function, expected)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, [5, 6, 7], 8)
+
+    expected_dag = networkx.DiGraph()
+    expected_concat = DagNode(5,
+                              BasicCodeLocation("<string-source>", 9),
+                              OperatorContext(OperatorType.CONCATENATION,
+                                              FunctionInfo('sklearn.compose._column_transformer', 'ColumnTransformer')),
+                              DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                                            RangeComparison(0, 2000))),
+                              OptionalCodeInfo(CodeReference(9, 21, 12, 2),
+                                               "ColumnTransformer(transformers=[\n"
+                                               "    ('numeric', StandardScaler(), ['A']),\n"
+                                               "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"),
+                              Comparison(FunctionType)                              )
+    expected_transformer = DagNode(6,
+                                   BasicCodeLocation("<string-source>", 14),
+                                   OperatorContext(OperatorType.TRANSFORMER,
+                                                   FunctionInfo('sklearn.decomposition._pca',
+                                                                'PCA')),
+                                   DagNodeDetails('PCA: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                RangeComparison(0, 2000))),
+                                   OptionalCodeInfo(CodeReference(14, 14, 14, 50),
+                                                    'PCA(n_components=2, random_state=42)'),
+                                   Comparison(FunctionType))
+    expected_dag.add_edge(expected_concat, expected_transformer, arg_index=0)
+    expected_transform_test = DagNode(7,
+                                      BasicCodeLocation("<string-source>", 14),
+                                      OperatorContext(OperatorType.TRANSFORMER,
+                                                      FunctionInfo('sklearn.decomposition._pca',
+                                                                   'PCA')),
+                                      DagNodeDetails('PCA: transform', ['array'],
+                                                     OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                   RangeComparison(0, 2000))),
+                                      OptionalCodeInfo(CodeReference(14, 14, 14, 50),
+                                                       'PCA(n_components=2, random_state=42)'),
+                                      Comparison(FunctionType))
+    expected_dag.add_edge(expected_transformer, expected_transform_test, arg_index=0)
+    expected_dag.add_edge(expected_concat, expected_transform_test, arg_index=1)
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    transform_node = list(inspector_result.original_dag.nodes)[2]
+    pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2], 'B': [5, 1, 100, 2]})
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df)
+    expected_fit_transform_data = numpy.array([[-3.11126984e+01,  1.17350380e-14], [-3.67695526e+01, -2.15521568e-15],
+                                               [ 1.03237590e+02,  1.99309735e-15], [-3.53553391e+01, -2.26556491e-15]])
+    assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
+
+    test_df = pandas.DataFrame({'A': [50, 2, 10, 1], 'B': [50, 2, 10, 1]})
+    encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
+    expected = numpy.array([[ 3.25269119e+01,  4.88498131e-15], [-3.53553391e+01, -5.77315973e-15],
+                            [-2.40416306e+01, -3.99680289e-15], [-3.67695526e+01, -4.44089210e-15]])
+    assert numpy.allclose(encoded_data, expected)
+
+
 def test_function_transformer():
     """
     Tests whether the monkey patching of ('sklearn.preprocessing_function_transformer', 'FunctionTransformer') works

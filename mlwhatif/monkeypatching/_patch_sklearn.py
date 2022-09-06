@@ -11,7 +11,7 @@ import numpy
 import pandas
 import scipy
 import tensorflow
-from sklearn import preprocessing, compose, tree, impute, linear_model, model_selection, metrics, dummy
+from sklearn import preprocessing, compose, tree, impute, linear_model, model_selection, metrics, dummy, decomposition
 from sklearn.feature_extraction import text
 from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.metrics import accuracy_score
@@ -585,6 +585,120 @@ class SklearnRobustScalerPatching:
                                BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                                operator_context,
                                DagNodeDetails("Robust Scaler: transform", ['array'], optimizer_info),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
+
+            function_call_result = FunctionCallResult(result)
+            transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
+            add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
+            new_result = function_call_result.function_result
+            assert isinstance(new_result, MlinspectNdarray)
+        else:
+            new_result = original(self, *args, **kwargs)
+        return new_result
+
+
+@gorilla.patches(decomposition.PCA)
+class SklearnPCAPatching:
+    """ Patches for sklearn PCA"""
+
+    # pylint: disable=too-few-public-methods
+
+    @gorilla.name('__init__')
+    @gorilla.settings(allow_hit=True)
+    def patched__init__(self, n_components=None, *, copy=True, whiten=False,
+                        svd_solver='auto', tol=0.0, iterated_power='auto',
+                        random_state=None,
+                        mlinspect_caller_filename=None, mlinspect_lineno=None,
+                        mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
+                        mlinspect_fit_transform_active=False):
+        """ Patch for ('sklearn.decomposition._pca', 'PCA') """
+        # pylint: disable=no-method-argument, attribute-defined-outside-init
+        original = gorilla.get_original_attribute(decomposition.PCA, '__init__')
+
+        self.mlinspect_caller_filename = mlinspect_caller_filename
+        self.mlinspect_lineno = mlinspect_lineno
+        self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
+        self.mlinspect_optional_source_code = mlinspect_optional_source_code
+        self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+
+        self.mlinspect_non_data_func_args = {'n_components': n_components, 'copy': copy, 'whiten': whiten,
+                                             'svd_solver': svd_solver, 'tol': tol, 'iterated_power': iterated_power,
+                                             'random_state': random_state}
+
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            original(self, **self.mlinspect_non_data_func_args)
+
+            self.mlinspect_caller_filename = caller_filename
+            self.mlinspect_lineno = lineno
+            self.mlinspect_optional_code_reference = optional_code_reference
+            self.mlinspect_optional_source_code = optional_source_code
+
+        return execute_patched_func_no_op_id(original, execute_inspections, self, **self.mlinspect_non_data_func_args)
+
+    @gorilla.name('fit_transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_fit_transform(self, *args, **kwargs):
+        """ Patch for ('sklearn.decomposition._pca.PCA', 'fit_transform') """
+        # pylint: disable=no-method-argument
+        self.mlinspect_fit_transform_active = True  # pylint: disable=attribute-defined-outside-init
+        original = gorilla.get_original_attribute(decomposition.PCA, 'fit_transform')
+        function_info = FunctionInfo('sklearn.decomposition._pca', 'PCA')
+        input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
+                                    self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
+
+        def processing_func(input_df):
+            transformer = decomposition.PCA(**self.mlinspect_non_data_func_args)
+            transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+            transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+            return transformed_data
+
+        operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+        initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
+                           BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                           operator_context,
+                           DagNodeDetails("PCA: fit_transform", ['array'], optimizer_info),
+                           get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
+
+        function_call_result = FunctionCallResult(result)
+        add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+        new_result = function_call_result.function_result
+        assert isinstance(new_result, MlinspectNdarray)
+        self.mlinspect_fit_transform_active = False  # pylint: disable=attribute-defined-outside-init
+        return new_result
+
+    @gorilla.name('transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_transform(self, *args, **kwargs):
+        """ Patch for ('sklearn.decomposition._pca.PCA', 'transform') """
+        # pylint: disable=no-method-argument
+        original = gorilla.get_original_attribute(decomposition.PCA, 'transform')
+        if not self.mlinspect_fit_transform_active:
+            function_info = FunctionInfo('sklearn.decomposition._pca', 'PCA')
+            input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
+                                        self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
+
+            def processing_func(fit_data, input_df):
+                transformer = fit_data._mlinspect_annotation  # pylint: disable=protected-access
+                transformed_data = transformer.transform(input_df, *args[1:], **kwargs)
+                return transformed_data
+
+            operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+            initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
+            dag_node = DagNode(singleton.get_next_op_id(),
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("PCA: transform", ['array'], optimizer_info),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
                                processing_func)

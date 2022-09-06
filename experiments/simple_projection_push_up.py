@@ -183,7 +183,7 @@ def execute_projection_push_up_average_case(scale_factor, tmpdir, variant_count)
 
 
 def execute_projection_push_up_worst_case(scale_factor, tmpdir, variant_count):
-    data_size = int(450000 * scale_factor)
+    data_size = int(800000 * scale_factor)
     df_a_train, _ = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "projection_push_up_df_a_worst_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -192,7 +192,7 @@ def execute_projection_push_up_worst_case(scale_factor, tmpdir, variant_count):
     df_a_test.to_csv(df_a_path_test, index=False)
     test_code = cleandoc(f"""
         import pandas as pd
-        from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
+        from sklearn.preprocessing import label_binarize, RobustScaler, OneHotEncoder, FunctionTransformer
         from sklearn.dummy import DummyClassifier
         import numpy as np
         from sklearn.model_selection import train_test_split
@@ -200,19 +200,27 @@ def execute_projection_push_up_worst_case(scale_factor, tmpdir, variant_count):
         from sklearn.pipeline import Pipeline
         from sklearn.compose import ColumnTransformer
 
-        df_train = pd.read_csv("{df_a_path_train}")
-        df_test = pd.read_csv("{df_a_path_test}")
+        df_train = pd.read_csv("{df_a_path_train}", usecols=['A', 'B', 'group_col_1', 'target_featurized'])
+        df_test = pd.read_csv("{df_a_path_test}", usecols=['A', 'B', 'group_col_1', 'target_featurized'])
 
-        clf = DummyClassifier(strategy='constant', constant=0.)
+        train_target = df_train['target_featurized']
+
+        column_transformer = ColumnTransformer(transformers=[
+                    ('passthrough', FunctionTransformer(accept_sparse=True, check_inverse=False), ['A', 'group_col_1']),
+                    ('cat', RobustScaler(), ['B'])
+                ])
+        pipeline = Pipeline(steps=[
+            ('column_transformer', column_transformer),
+            ('learner', DummyClassifier(strategy='constant', constant=0.))
+        ])
 
         train_data = df_train[['A', 'B', 'group_col_1']]
-        train_target = df_train['target_featurized']
 
         test_target = df_test['target_featurized']
         test_data = df_test[['A', 'B', 'group_col_1']]
 
-        clf = clf.fit(train_data, train_target)
-        test_score = clf.score(test_data, test_target)
+        pipeline = pipeline.fit(train_data, train_target)
+        test_score = pipeline.score(test_data, test_target)
         assert 0. <= test_score <= 1.
         """)
     corruption_percentages = []
