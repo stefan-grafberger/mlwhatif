@@ -1,6 +1,6 @@
 #!/bin/bash
 # PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python is required on our Azure machine due to some dependency issues
-for scale_factor in 0.5 1.0 # 1.5 2.0 2.5 3.0
+for scale_factor in 1.0 # 0.5 1.5 2.0 2.5 3.0
 do
   for variant_count in 4 # 2 6 8 10
   do
