@@ -180,7 +180,7 @@ def execute_filter_addition_push_up_average_case(scale_factor, tmpdir, variant_c
 
 
 def execute_filter_addition_push_up_worst_case_no_original_pipeline(scale_factor, tmpdir, variant_count):
-    data_size = int(4100 * scale_factor)
+    data_size = int(950 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_no_original_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -199,15 +199,13 @@ def execute_filter_addition_push_up_worst_case_no_original_pipeline(scale_factor
         from sklearn.model_selection import train_test_split
         import fuzzy_pandas as fpd
         
-        df_a_train = pd.read_csv("{df_a_path_train}", engine='python')
-        df_a_train = df_a_train[df_a_train['A'] >= 95]
-        df_b_train = pd.read_csv("{df_b_path_train}", engine='python')
+        df_a_train = pd.read_csv("{df_a_path_train}")
+        df_b_train = pd.read_csv("{df_b_path_train}")
         df_train = fpd.fuzzy_merge(df_a_train, df_b_train, on='str_id', method='levenshtein', keep_right=['C', 'D'],
             threshold=0.99)
         
-        df_a_test = pd.read_csv("{df_a_path_test}", engine='python')
-        df_a_test = df_a_test[df_a_test['A'] >= 95]
-        df_b_test = pd.read_csv("{df_b_path_test}", engine='python')
+        df_a_test = pd.read_csv("{df_a_path_test}")
+        df_b_test = pd.read_csv("{df_b_path_test}")
         df_test = fpd.fuzzy_merge(df_a_test, df_b_test, on='str_id', method='levenshtein', keep_right=['C', 'D'],
             threshold=0.99)
         
@@ -256,7 +254,7 @@ def execute_filter_addition_push_up_worst_case_no_original_pipeline(scale_factor
 
 
 def execute_filter_addition_push_up_worst_case_original_pipeline(scale_factor, tmpdir, variant_count):
-    data_size = int(4000 * scale_factor)
+    data_size = int(950 * scale_factor)
     df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "filter_push_up_df_a_worst_case_no_original_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -275,15 +273,13 @@ def execute_filter_addition_push_up_worst_case_original_pipeline(scale_factor, t
         from sklearn.model_selection import train_test_split
         import fuzzy_pandas as fpd
 
-        df_a_train = pd.read_csv("{df_a_path_train}", engine='python')
-        df_a_train = df_a_train[df_a_train['A'] >= 95]
-        df_b_train = pd.read_csv("{df_b_path_train}", engine='python')
+        df_a_train = pd.read_csv("{df_a_path_train}")
+        df_b_train = pd.read_csv("{df_b_path_train}")
         df_train = fpd.fuzzy_merge(df_a_train, df_b_train, on='str_id', method='levenshtein', keep_right=['C', 'D'],
             threshold=0.99)
 
-        df_a_test = pd.read_csv("{df_a_path_test}", engine='python')
-        df_a_test = df_a_test[df_a_test['A'] >= 95]
-        df_b_test = pd.read_csv("{df_b_path_test}", engine='python')
+        df_a_test = pd.read_csv("{df_a_path_test}")
+        df_b_test = pd.read_csv("{df_b_path_test}")
         df_test = fpd.fuzzy_merge(df_a_test, df_b_test, on='str_id', method='levenshtein', keep_right=['C', 'D'],
             threshold=0.99)
 

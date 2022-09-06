@@ -85,8 +85,8 @@ for repetition in range(num_repetitions):
     result_df_scale_factors.append(scale_factor)
     result_df_original_pipeline.append(results_dict_items[0][1].runtime_info.original_pipeline_estimated)
 
-    print(f'# Final results -- repetition {repetition + 1} of {num_repetitions} ')
-    print(results_dict_items)
+    print(f'# Finished -- repetition {repetition + 1} of {num_repetitions} ')
+    # print(results_dict_items)
 
 result_df = pandas.DataFrame({'repetition': result_df_repetitions,
                               'optimization': result_df_optimizations,
