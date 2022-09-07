@@ -43,27 +43,19 @@ def execute_udf_split_and_reuse_ideal_case(scale_factor, tmpdir, variant_count):
         from sklearn.pipeline import Pipeline
         from sklearn.compose import ColumnTransformer
         
-        df_train = pd.read_csv("{df_a_path_train}")
-        df_test = pd.read_csv("{df_a_path_test}")
+        df_train = pd.read_csv("{df_a_path_train}", usecols=['A', 'B', 'group_col_1', 'target_featurized'])
+        df_test = pd.read_csv("{df_a_path_test}", usecols=['A', 'B', 'group_col_1', 'target_featurized'])
         
-        train_target = df_train['target_featurized']
-        
-        column_transformer = ColumnTransformer(transformers=[
-                    ('numeric', StandardScaler(), ['A', 'B']),
-                    ('cat', OneHotEncoder(sparse=True, handle_unknown='ignore'), ['group_col_1'])
-                ])
-        pipeline = Pipeline(steps=[
-            ('column_transformer', column_transformer),
-            ('learner', DummyClassifier(strategy='constant', constant=0.))
-        ])
-        
+        clf = DummyClassifier(strategy='constant', constant=0.)
+
         train_data = df_train[['A', 'B', 'group_col_1']]
-        
+        train_target = df_train['target_featurized']
+
         test_target = df_test['target_featurized']
         test_data = df_test[['A', 'B', 'group_col_1']]
-        
-        pipeline = pipeline.fit(train_data, train_target)
-        test_score = pipeline.score(test_data, test_target)
+
+        clf = clf.fit(train_data, train_target)
+        test_score = clf.score(test_data, test_target)
         assert 0. <= test_score <= 1.
         """)
     corruption_percentages = []

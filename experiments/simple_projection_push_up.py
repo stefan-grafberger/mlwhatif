@@ -183,7 +183,7 @@ def execute_projection_push_up_average_case(scale_factor, tmpdir, variant_count)
 
 
 def execute_projection_push_up_worst_case(scale_factor, tmpdir, variant_count):
-    data_size = int(800000 * scale_factor)
+    data_size = int(50000 * scale_factor)
     df_a_train, _ = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "projection_push_up_df_a_worst_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -194,6 +194,7 @@ def execute_projection_push_up_worst_case(scale_factor, tmpdir, variant_count):
         import pandas as pd
         from sklearn.preprocessing import label_binarize, RobustScaler, OneHotEncoder, FunctionTransformer
         from sklearn.dummy import DummyClassifier
+        from sklearn.decomposition import PCA
         import numpy as np
         from sklearn.model_selection import train_test_split
         import fuzzy_pandas as fpd
@@ -206,8 +207,8 @@ def execute_projection_push_up_worst_case(scale_factor, tmpdir, variant_count):
         train_target = df_train['target_featurized']
 
         column_transformer = ColumnTransformer(transformers=[
-                    ('passthrough', FunctionTransformer(accept_sparse=True, check_inverse=False), ['A', 'group_col_1']),
-                    ('cat', RobustScaler(), ['B'])
+                    ('passthrough', FunctionTransformer(accept_sparse=True, check_inverse=False), ['group_col_1']),
+                    ('pca', PCA(n_components=1, svd_solver='randomized', iterated_power=1000), ['A', 'B'])
                 ])
         pipeline = Pipeline(steps=[
             ('column_transformer', column_transformer),

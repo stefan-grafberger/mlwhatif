@@ -166,7 +166,7 @@ def execute_common_subexpression_elimunation_average_case(scale_factor, tmpdir, 
 
 
 def execute_common_subexpression_elimination_worst_case(scale_factor, tmpdir, variant_count):
-    data_size = int(750000 * scale_factor)
+    data_size = int(1350000 * scale_factor)
     df_a_train, _ = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "common_subexpression_elimination_df_a_worst_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -183,8 +183,8 @@ def execute_common_subexpression_elimination_worst_case(scale_factor, tmpdir, va
         from sklearn.pipeline import Pipeline
         from sklearn.compose import ColumnTransformer
 
-        df_train = pd.read_csv("{df_a_path_train}")
-        df_test = pd.read_csv("{df_a_path_test}")
+        df_train = pd.read_csv("{df_a_path_train}", usecols=['A', 'B', 'group_col_1', 'target_featurized'])
+        df_test = pd.read_csv("{df_a_path_test}", usecols=['A', 'B', 'group_col_1', 'target_featurized'])
 
         clf = DummyClassifier(strategy='constant', constant=0.)
 
