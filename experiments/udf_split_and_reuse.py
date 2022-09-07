@@ -35,7 +35,7 @@ def execute_udf_split_and_reuse_ideal_case(scale_factor, tmpdir, variant_count):
     df_b_test.to_csv(df_b_path_test, index=False)
     test_code = cleandoc(f"""
         import pandas as pd
-        from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
+        from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder, FunctionTransformer
         from sklearn.dummy import DummyClassifier
         import numpy as np
         from sklearn.model_selection import train_test_split
@@ -46,7 +46,14 @@ def execute_udf_split_and_reuse_ideal_case(scale_factor, tmpdir, variant_count):
         df_train = pd.read_csv("{df_a_path_train}", usecols=['A', 'B', 'group_col_1', 'target_featurized'])
         df_test = pd.read_csv("{df_a_path_test}", usecols=['A', 'B', 'group_col_1', 'target_featurized'])
         
-        clf = DummyClassifier(strategy='constant', constant=0.)
+        column_transformer = ColumnTransformer(transformers=[
+                   ('numeric', FunctionTransformer(accept_sparse=True, check_inverse=False), ['A', 'B']),
+                   ('cat', OneHotEncoder(sparse=True, handle_unknown='ignore'), ['group_col_1'])
+               ])
+        pipeline = Pipeline(steps=[
+           ('column_transformer', column_transformer),
+           ('learner', DummyClassifier(strategy='constant', constant=0.))
+        ])
 
         train_data = df_train[['A', 'B', 'group_col_1']]
         train_target = df_train['target_featurized']
@@ -54,8 +61,8 @@ def execute_udf_split_and_reuse_ideal_case(scale_factor, tmpdir, variant_count):
         test_target = df_test['target_featurized']
         test_data = df_test[['A', 'B', 'group_col_1']]
 
-        clf = clf.fit(train_data, train_target)
-        test_score = clf.score(test_data, test_target)
+        pipeline = pipeline.fit(train_data, train_target)
+        test_score = pipeline.score(test_data, test_target)
         assert 0. <= test_score <= 1.
         """)
     corruption_percentages = []
@@ -100,51 +107,40 @@ def execute_udf_split_and_reuse_ideal_case(scale_factor, tmpdir, variant_count):
 
 
 def execute_udf_split_and_reuse_average_case(scale_factor, tmpdir, variant_count):
-    data_size = int(240000 * scale_factor)
-    df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
+    data_size = int(220000 * scale_factor)
+    df_a_train, _ = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_a_average_case_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
-    df_b_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_b_average_case_train.csv")
-    df_b_train.to_csv(df_b_path_train, index=False)
-    df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
+    df_a_test, _ = get_test_df(int(data_size * 0.2))
     df_a_path_test = os.path.join(tmpdir, "udf_split_and_reuse_df_a_average_case_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
-    df_b_path_test = os.path.join(tmpdir, "udf_split_and_reuse_df_b_average_case_test.csv")
-    df_b_test.to_csv(df_b_path_test, index=False)
     test_code = cleandoc(f"""
         import pandas as pd
-        from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
+        from sklearn.preprocessing import label_binarize, RobustScaler, OneHotEncoder, FunctionTransformer
         from sklearn.dummy import DummyClassifier
         import numpy as np
+        from sklearn.decomposition import PCA
         from sklearn.model_selection import train_test_split
         import fuzzy_pandas as fpd
         from sklearn.pipeline import Pipeline
         from sklearn.compose import ColumnTransformer
         
-        df_a_train = pd.read_csv("{df_a_path_train}")
-        df_a_train = df_a_train[df_a_train['A'] >= 15]
-        df_b_train = pd.read_csv("{df_b_path_train}")
-        df_train = df_a_train.merge(df_b_train, on=['str_id'])
-        
-        df_a_test = pd.read_csv("{df_a_path_test}")
-        df_a_test = df_a_test[df_a_test['A'] >= 15]
-        df_b_test = pd.read_csv("{df_b_path_test}")
-        df_test = df_a_test.merge(df_b_test, on=['str_id'])
+        df_train = pd.read_csv("{df_a_path_train}", usecols=['A', 'B', 'target_featurized'])
+        df_test = pd.read_csv("{df_a_path_test}", usecols=['A', 'B', 'target_featurized'])
         
         column_transformer = ColumnTransformer(transformers=[
-                   ('numeric', StandardScaler(), ['A', 'B']),
-                   ('cat', OneHotEncoder(sparse=True, handle_unknown='ignore'), ['group_col_1'])
+                   ('numeric', PCA(n_components=1, svd_solver='randomized', iterated_power=50), ['A', 'B']),
                ])
         pipeline = Pipeline(steps=[
            ('column_transformer', column_transformer),
            ('learner', DummyClassifier(strategy='constant', constant=0.))
         ])
 
-        train_data = df_train[['A', 'B', 'group_col_1']]
+        train_data = df_train[['A', 'B']]
         train_target = df_train['target_featurized']
 
         test_target = df_test['target_featurized']
-        test_data = df_test[['A', 'B', 'group_col_1']]
+        test_data = df_test[['A', 'B']]
 
         pipeline = pipeline.fit(train_data, train_target)
         test_score = pipeline.score(test_data, test_target)
@@ -153,7 +149,7 @@ def execute_udf_split_and_reuse_average_case(scale_factor, tmpdir, variant_count
     corruption_percentages = []
     index_filter = []
     for variant_index in range(variant_count):
-        corruption_percentages.append(variant_index * (1.0 / (variant_count - 1)))
+        corruption_percentages.append((variant_index + 1) * (1.0 / variant_count))
         index_filter.append(1 + 2 * variant_index)
     data_corruption = WhatIfWrapper(
         DataCorruption({'B': CorruptionType.GAUSSIAN_NOISE}, also_corrupt_train=True,
@@ -192,41 +188,36 @@ def execute_udf_split_and_reuse_average_case(scale_factor, tmpdir, variant_count
 
 def execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(scale_factor, tmpdir, variant_count):
     data_size = int(60000 * scale_factor)
-    df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
+    df_a_train, _ = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_a_worst_case_with_safety_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
-    df_b_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_b_worst_case_with_safety_train.csv")
-    df_b_train.to_csv(df_b_path_train, index=False)
-    df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
+    df_a_test, _ = get_test_df(int(data_size * 0.2))
     df_a_path_test = os.path.join(tmpdir, "udf_split_and_reuse_df_a_worst_case_with_safety_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
-    df_b_path_test = os.path.join(tmpdir, "udf_split_and_reuse_df_b_worst_case_with_safety_test.csv")
-    df_b_test.to_csv(df_b_path_test, index=False)
     test_code = cleandoc(f"""
         import pandas as pd
         from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder, FunctionTransformer
         from sklearn.dummy import DummyClassifier
-        from sklearn.pipeline import Pipeline
         import numpy as np
         from sklearn.model_selection import train_test_split
         import fuzzy_pandas as fpd
+        from sklearn.pipeline import Pipeline
         from sklearn.compose import ColumnTransformer
-
-        df_train = pd.read_csv("{df_a_path_train}")
-        df_test = pd.read_csv("{df_a_path_test}")
-
-        train_target = df_train['target_featurized']
-
+        
+        df_train = pd.read_csv("{df_a_path_train}", usecols=['A', 'B', 'group_col_1', 'target_featurized'])
+        df_test = pd.read_csv("{df_a_path_test}", usecols=['A', 'B', 'group_col_1', 'target_featurized'])
+        
         column_transformer = ColumnTransformer(transformers=[
-                    ('numeric', FunctionTransformer(accept_sparse=True, check_inverse=False), ['A', 'B']),
-                    ('cat', OneHotEncoder(sparse=True, handle_unknown='ignore'), ['group_col_1'])
-                ])
+                   ('numeric', FunctionTransformer(accept_sparse=True, check_inverse=False), ['A', 'B']),
+                   ('cat', OneHotEncoder(sparse=True, handle_unknown='ignore'), ['group_col_1'])
+               ])
         pipeline = Pipeline(steps=[
-            ('column_transformer', column_transformer),
-            ('learner', DummyClassifier(strategy='constant', constant=0.))
+           ('column_transformer', column_transformer),
+           ('learner', DummyClassifier(strategy='constant', constant=0.))
         ])
 
         train_data = df_train[['A', 'B', 'group_col_1']]
+        train_target = df_train['target_featurized']
 
         test_target = df_test['target_featurized']
         test_data = df_test[['A', 'B', 'group_col_1']]
@@ -277,36 +268,32 @@ def execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(scale_
 
 def execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(scale_factor, tmpdir, variant_count):
     data_size = int(13000 * scale_factor)
-    df_a_train, df_b_train = get_test_df(int(data_size * 0.8))
+    df_a_train, _ = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_a_worst_case_without_safety_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
-    df_b_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_b_worst_case_without_safety_train.csv")
-    df_b_train.to_csv(df_b_path_train, index=False)
-    df_a_test, df_b_test = get_test_df(int(data_size * 0.2))
+    df_a_test, _ = get_test_df(int(data_size * 0.2))
     df_a_path_test = os.path.join(tmpdir, "udf_split_and_reuse_df_a_worst_case_without_safety_test.csv")
     df_a_test.to_csv(df_a_path_test, index=False)
-    df_b_path_test = os.path.join(tmpdir, "udf_split_and_reuse_df_b_worst_case_without_safety_test.csv")
-    df_b_test.to_csv(df_b_path_test, index=False)
     test_code = cleandoc(f"""
         import pandas as pd
-        from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
+        from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder, FunctionTransformer
         from sklearn.dummy import DummyClassifier
-        from sklearn.pipeline import Pipeline
         import numpy as np
         from sklearn.model_selection import train_test_split
         import fuzzy_pandas as fpd
+        from sklearn.pipeline import Pipeline
         from sklearn.compose import ColumnTransformer
-
-        df_train = pd.read_csv("{df_a_path_train}")
-        df_test = pd.read_csv("{df_a_path_test}")
-
+        
+        df_train = pd.read_csv("{df_a_path_train}", usecols=['A', 'B', 'group_col_1', 'target_featurized'])
+        df_test = pd.read_csv("{df_a_path_test}", usecols=['A', 'B', 'group_col_1', 'target_featurized'])
+        
         column_transformer = ColumnTransformer(transformers=[
-                    ('numeric', StandardScaler(), ['A', 'B']),
-                    ('cat', OneHotEncoder(sparse=True, handle_unknown='ignore'), ['group_col_1'])
-                ])
+                   ('numeric', FunctionTransformer(accept_sparse=True, check_inverse=False), ['A', 'B']),
+                   ('cat', OneHotEncoder(sparse=True, handle_unknown='ignore'), ['group_col_1'])
+               ])
         pipeline = Pipeline(steps=[
-            ('column_transformer', column_transformer),
-            ('learner', DummyClassifier(strategy='constant', constant=0.))
+           ('column_transformer', column_transformer),
+           ('learner', DummyClassifier(strategy='constant', constant=0.))
         ])
 
         train_data = df_train[['A', 'B', 'group_col_1']]
@@ -361,7 +348,7 @@ def execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(scale_facto
 
 
 def execute_udf_split_and_reuse_worst_case_with_constant(scale_factor, tmpdir, variant_count):
-    data_size = int(500000 * scale_factor)
+    data_size = int(850000 * scale_factor)
     df_a_train, _ = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_a_worst_case_constant_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -377,17 +364,17 @@ def execute_udf_split_and_reuse_worst_case_with_constant(scale_factor, tmpdir, v
         import fuzzy_pandas as fpd
         from sklearn.pipeline import Pipeline
         from sklearn.compose import ColumnTransformer
-
-        df_train = pd.read_csv("{df_a_path_train}")
-        df_test = pd.read_csv("{df_a_path_test}")
-
+        
+        df_train = pd.read_csv("{df_a_path_train}", usecols=['A', 'B', 'target_featurized'])
+        df_test = pd.read_csv("{df_a_path_test}", usecols=['A', 'B', 'target_featurized'])
+        
         clf = DummyClassifier(strategy='constant', constant=0.)
 
-        train_data = df_train[['A', 'B', 'group_col_1']]
+        train_data = df_train[['A', 'B']]
         train_target = df_train['target_featurized']
 
         test_target = df_test['target_featurized']
-        test_data = df_test[['A', 'B', 'group_col_1']]
+        test_data = df_test[['A', 'B']]
 
         clf = clf.fit(train_data, train_target)
         test_score = clf.score(test_data, test_target)
@@ -396,7 +383,7 @@ def execute_udf_split_and_reuse_worst_case_with_constant(scale_factor, tmpdir, v
     corruption_percentages = []
     index_filter = []
     for variant_index in range(variant_count):
-        corruption_percentages.append(variant_index * (0.1 / (variant_count - 1) + 0.9))
+        corruption_percentages.append(variant_index * (0.5 / variant_count) + 0.5)
         index_filter.append(1 + 2 * variant_index)
 
     def corruption(pandas_df):
