@@ -1,8 +1,8 @@
 repetition,optimization,scenario,variant_counts,scale_factors,original_pipeline,analysis_result_with_opt_rule,analysis_result_without_opt_rule,analysis_result_without_any_opt
-0,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,127.33054161071777,971.9958305358887,944.537878036499,963.1998538970947
-1,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,113.13462257385254,897.6361751556396,891.9250965118408,922.6369857788086
-2,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,118.38126182556152,904.1719436645508,913.1131172180176,1070.3589916229248
-3,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,116.62507057189941,921.3290214538574,910.8250141143799,930.344820022583
-4,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,107.10263252258301,891.542911529541,884.0382099151611,906.1770439147949
-5,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,124.24635887145996,915.3420925140381,916.823148727417,932.4121475219727
-6,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,128.71980667114258,950.2010345458984,952.4321556091309,967.8850173950195
+0,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,120.38588523864746,922.888994216919,920.5899238586426,919.2969799041748
+1,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,145.9512710571289,991.5511608123779,992.048978805542,1000.8289813995361
+2,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,116.97244644165039,902.5552272796631,1070.8608627319336,909.9481105804443
+3,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,122.79820442199707,939.9890899658203,941.8330192565918,979.59303855896
+4,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,125.01835823059082,920.8261966705322,953.7858963012695,970.3109264373779
+5,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,124.72057342529297,927.2167682647705,919.374942779541,934.4220161437988
+6,operator_deletion_filter_push_up,worst_safety_too_defensive,4,1.0,135.0998878479004,955.8892250061035,954.8029899597168,988.3720874786377

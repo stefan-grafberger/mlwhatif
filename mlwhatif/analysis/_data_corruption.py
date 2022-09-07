@@ -155,7 +155,7 @@ class DataCorruption(WhatIfAnalysis):
             return_df = pandas_df.copy()
             corrupted_df = return_df.loc[indexes_to_corrupt, :]
             completely_corrupted_df = corruption_function(corrupted_df)
-            return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[:, column]
+            return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df[column]
             return return_df
 
         # We need to use partial here to avoid problems with late bindings, see

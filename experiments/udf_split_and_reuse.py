@@ -348,7 +348,7 @@ def execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(scale_facto
 
 
 def execute_udf_split_and_reuse_worst_case_with_constant(scale_factor, tmpdir, variant_count):
-    data_size = int(850000 * scale_factor)
+    data_size = int(1050000 * scale_factor)
     df_a_train, _ = get_test_df(int(data_size * 0.8))
     df_a_path_train = os.path.join(tmpdir, "udf_split_and_reuse_df_a_worst_case_constant_train.csv")
     df_a_train.to_csv(df_a_path_train, index=False)
@@ -383,7 +383,9 @@ def execute_udf_split_and_reuse_worst_case_with_constant(scale_factor, tmpdir, v
     corruption_percentages = []
     index_filter = []
     for variant_index in range(variant_count):
-        corruption_percentages.append(variant_index * (0.5 / variant_count) + 0.5)
+        # set is used, so they need to be distinct, but the difference should be small enough not to make a
+        #  difference at all
+        corruption_percentages.append((1.0 / variant_count) - variant_index * 0.00000001)
         index_filter.append(1 + 2 * variant_index)
 
     def corruption(pandas_df):
