@@ -452,15 +452,15 @@ def execute_operator_deletion_filter_push_up_worst_case_only_some_filters_worth_
     filter_lines_train = []
     filter_lines_test = []
 
+    for variant_index in range(variant_count - 2):
+        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] != {99 - variant_index}]")
+        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] != {99 - variant_index}]")
     if variant_count >= 1:
         filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['B'] <= {100 * 1. / variant_count  + 3}]")
         filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['B'] <= {100 * 1. / variant_count  + 3}]")
     if variant_count >= 2:
         filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] <= {100 * 1. / variant_count + 3}]")
         filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] <= {100 * 1. / variant_count + 3}]")
-    for variant_index in range(variant_count - 2):
-        filter_lines_train.append(f"df_a_train = df_a_train[df_a_train['A'] != {99 - variant_index}]")
-        filter_lines_test.append(f"df_a_test = df_a_test[df_a_test['A'] != {99 - variant_index}]")
 
     filter_line_train = '\n        '.join(filter_lines_train)
     filter_line_test = '\n        '.join(filter_lines_test)
