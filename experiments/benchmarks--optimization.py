@@ -1,9 +1,11 @@
 # pylint: disable=invalid-name,missing-module-docstring
 import os
+import random
 import sys
 import tempfile
 import warnings
 
+import numpy
 import pandas
 
 from example_pipelines import HEALTHCARE_PY
@@ -40,6 +42,8 @@ optimizations_benchmark_funcs = {
 print('optimization, scenario, variant_count, data_size')
 
 num_repetitions = 7
+seeds = [42, 43, 44, 45, 46, 47, 48]
+assert len(seeds) == num_repetitions
 
 # Warm-up run to ignore effect of imports
 _ = PipelineAnalyzer \
@@ -59,7 +63,9 @@ result_df_variant_counts = []
 result_df_scale_factors = []
 result_df_original_pipeline = []
 result_df_metrics = {}
-for repetition in range(num_repetitions):
+for repetition, seed in enumerate(seeds):
+    numpy.random.seed(seed)
+    random.seed(seed)
     print(f'# Optimization benchmark for {optimization} with args [{sys.argv[2:]}] '
           f'-- repetition {repetition + 1} of {num_repetitions}')
     if optimization not in optimizations_benchmark_funcs:
