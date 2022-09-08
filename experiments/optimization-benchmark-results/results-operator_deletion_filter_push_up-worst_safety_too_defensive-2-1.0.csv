@@ -1,8 +1,8 @@
 repetition,optimization,scenario,variant_counts,scale_factors,original_pipeline,analysis_result_with_opt_rule,analysis_result_without_opt_rule,analysis_result_without_any_opt
-0,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,338.5441303253174,969.1159725189209,983.7617874145508,944.4270133972168
-1,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,301.38492584228516,942.4130916595459,934.6523284912109,946.0768699645996
-2,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,316.58411026000977,935.3630542755127,962.0940685272217,974.9739170074463
-3,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,325.9706497192383,949.1000175476074,973.9418029785156,1145.538091659546
-4,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,321.6714859008789,937.2379779815674,945.1231956481934,936.0167980194092
-5,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,321.8884468078613,940.7041072845459,984.940767288208,961.4119529724121
-6,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,327.0533084869385,963.005781173706,1011.221170425415,956.758975982666
+0,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,300.6012439727783,916.7201519012451,894.3624496459961,905.6527614593506
+1,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,295.3145503997803,906.0328006744385,903.4547805786133,903.5611152648926
+2,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,292.3879623413086,896.8234062194824,898.5104560852051,903.1927585601807
+3,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,282.76848793029785,893.2130336761475,890.1927471160889,1105.398178100586
+4,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,281.9185256958008,878.288984298706,874.8495578765869,885.2584362030029
+5,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,274.51372146606445,869.0226078033447,870.3513145446777,885.5371475219727
+6,operator_deletion_filter_push_up,worst_safety_too_defensive,2,1.0,287.3342037200928,881.2117576599121,881.9036483764648,894.3097591400146
