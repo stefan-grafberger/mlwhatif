@@ -111,7 +111,7 @@ def execute_projection_push_up_average_case(scale_factor, tmpdir, variant_count)
     df_b_test.to_csv(df_b_path_test, index=False)
     test_code = cleandoc(f"""
         import pandas as pd
-        from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
+        from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder, RobustScaler
         from sklearn.dummy import DummyClassifier
         import numpy as np
         from sklearn.model_selection import train_test_split
@@ -130,7 +130,7 @@ def execute_projection_push_up_average_case(scale_factor, tmpdir, variant_count)
         df_test = df_a_test.merge(df_b_test, on=['str_id'])
 
         column_transformer = ColumnTransformer(transformers=[
-                    ('numeric', StandardScaler(), ['A', 'B']),
+                    ('numeric', RobustScaler(), ['A', 'B']),
                     ('cat', OneHotEncoder(sparse=True, handle_unknown='ignore'), ['group_col_1'])
                 ])
         pipeline = Pipeline(steps=[
