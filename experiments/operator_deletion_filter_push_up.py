@@ -272,8 +272,8 @@ def execute_operator_deletion_filter_push_up_average_case(scale_factor, tmpdir, 
     filter_lines_train = []
     filter_lines_test = []
     for variant_index in range(variant_count):
-        lower_bound = 80 + 20 / variant_count * variant_index
-        upper_bound = 80 + 20 / variant_count * (variant_index + 1)
+        lower_bound = 85 + 15 / variant_count * variant_index
+        upper_bound = 85 + 15 / variant_count * (variant_index + 1)
 
         filter_lines_train.append(f"df_a_train = df_a_train[(df_a_train['A'] <= {lower_bound}) "
                                   f"| (df_a_train['A'] >= {upper_bound})]")
