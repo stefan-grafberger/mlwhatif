@@ -1,0 +1,8 @@
+repetition,optimization,scenario,variant_counts,scale_factors,original_pipeline,analysis_result_with_opt,analysis_result_without_any_opt
+0,common_subexpression_elimination,ideal,4,2.0,3545.5191135406494,3800.603151321411,13890.490770339966
+1,common_subexpression_elimination,ideal,4,2.0,3850.1062393188477,4125.932931900024,15439.238548278809
+2,common_subexpression_elimination,ideal,4,2.0,3595.959424972534,3624.4192123413086,14609.464645385742
+3,common_subexpression_elimination,ideal,4,2.0,3772.9852199554443,3761.655807495117,15526.639223098755
+4,common_subexpression_elimination,ideal,4,2.0,3510.1354122161865,3525.157690048218,14948.988914489746
+5,common_subexpression_elimination,ideal,4,2.0,3865.6091690063477,3867.572546005249,15764.646291732788
+6,common_subexpression_elimination,ideal,4,2.0,3654.7977924346924,3678.9324283599854,14759.618520736694
