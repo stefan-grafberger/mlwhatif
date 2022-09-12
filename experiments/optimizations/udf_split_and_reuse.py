@@ -6,7 +6,7 @@ Tests whether the optimization works
 import os
 from inspect import cleandoc
 
-from experiments._benchmark_utils import get_test_df, WhatIfWrapper
+from experiments.optimizations._benchmark_utils import get_test_df, WhatIfWrapper
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
 from mlwhatif.execution._pipeline_executor import singleton

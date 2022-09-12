@@ -5,7 +5,7 @@ Tests whether the optimization works
 # TODO: Clean up these tests
 import os
 
-from experiments.common_subexpression_elimination import execute_common_subexpression_elimination_worst_case, \
+from experiments.optimizations.common_subexpression_elimination import execute_common_subexpression_elimination_worst_case, \
     execute_common_subexpression_elimunation_average_case, execute_common_subexpression_elimination_ideal_case
 
 

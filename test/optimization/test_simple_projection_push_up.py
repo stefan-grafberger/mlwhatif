@@ -5,7 +5,7 @@ Tests whether the optimization works
 # TODO: Clean up these tests
 import os
 
-from experiments.simple_projection_push_up import execute_projection_push_up_ideal_case, \
+from experiments.optimizations.simple_projection_push_up import execute_projection_push_up_ideal_case, \
     execute_projection_push_up_average_case, execute_projection_push_up_worst_case
 
 

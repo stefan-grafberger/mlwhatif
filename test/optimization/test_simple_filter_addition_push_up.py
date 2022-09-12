@@ -5,7 +5,7 @@ Tests whether the optimization works
 # TODO: Clean up these tests
 import os
 
-from experiments.simple_filter_addition_push_up import execute_filter_addition_push_up_ideal_case, \
+from experiments.optimizations.simple_filter_addition_push_up import execute_filter_addition_push_up_ideal_case, \
     execute_filter_addition_push_up_average_case, execute_filter_addition_push_up_worst_case_no_original_pipeline, \
     execute_filter_addition_push_up_worst_case_original_pipeline
 

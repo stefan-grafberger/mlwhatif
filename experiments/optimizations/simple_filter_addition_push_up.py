@@ -7,7 +7,7 @@ import os
 from functools import partial
 from inspect import cleandoc
 
-from experiments._benchmark_utils import get_test_df
+from experiments.optimizations._benchmark_utils import get_test_df
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp

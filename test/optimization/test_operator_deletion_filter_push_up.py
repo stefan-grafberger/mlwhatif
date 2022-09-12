@@ -5,7 +5,7 @@ Tests whether the optimization works
 # TODO: Clean up these tests
 import os
 
-from experiments.operator_deletion_filter_push_up import execute_operator_deletion_filter_push_up_ideal_case, \
+from experiments.optimizations.operator_deletion_filter_push_up import execute_operator_deletion_filter_push_up_ideal_case, \
     execute_operator_deletion_filter_push_up_worst_case_safety_inactive, \
     execute_operator_deletion_filter_push_up_worst_case_safety_active, \
     execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario, \

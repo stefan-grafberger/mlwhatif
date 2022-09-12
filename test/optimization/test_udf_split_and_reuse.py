@@ -5,7 +5,7 @@ Tests whether the optimization works
 # TODO: Clean up these tests
 import os
 
-from experiments.udf_split_and_reuse import execute_udf_split_and_reuse_ideal_case, \
+from experiments.optimizations.udf_split_and_reuse import execute_udf_split_and_reuse_ideal_case, \
     execute_udf_split_and_reuse_average_case, execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active, \
     execute_udf_split_and_reuse_worst_case_with_selectivity_inactive, \
     execute_udf_split_and_reuse_worst_case_with_constant

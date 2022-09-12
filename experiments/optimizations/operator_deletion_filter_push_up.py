@@ -6,7 +6,7 @@ Tests whether the optimization works
 import os
 from inspect import cleandoc
 
-from experiments._benchmark_utils import get_test_df
+from experiments.optimizations._benchmark_utils import get_test_df
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._operator_fairness import OperatorFairness
 from mlwhatif.execution._pipeline_executor import singleton
