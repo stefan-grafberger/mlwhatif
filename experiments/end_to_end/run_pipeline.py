@@ -111,7 +111,7 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
     if featurization_name == 'fast':
         assert len(text_columns) == 1
         transformers = [('num', StandardScaler(), numerical_columns),
-                        ('text', HashingVectorizer(n_features=2 ** 4), text_columns[0])
+                        #('text', HashingVectorizer(n_features=2 ** 4), text_columns[0])
                         # FIXME include this again: ('text', HashingVectorizer(n_features=2**4), text_columns[0])
                         ]
         for cat_column in categorical_columns:
@@ -137,8 +137,6 @@ def get_model(model_name):
 
 # Make sure this code is not executed during imports
 if sys.argv[0] == "mlwhatif" or __name__ == "__main__":
-
-    test_argv = sys.argv
 
     dataset_name = 'reviews'
     if len(sys.argv) > 1:

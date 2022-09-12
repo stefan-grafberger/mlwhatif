@@ -32,18 +32,14 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
 
-    if len(sys.argv) < 7:
-        print("scenario_name dataset_name data_loading_name featurization_name model_name scale_factor")
+    if len(sys.argv) < 6:
+        print("scenario_name dataset_name data_loading_name featurization_name model_name")
 
     scenario_name = sys.argv[1]
     dataset_name = sys.argv[2]
     data_loading_name = sys.argv[3]
     featurization_name = sys.argv[4]
     model_name = sys.argv[5]
-
-    cmd_args = sys.argv[2:]
-
-    print("scenario_name dataset_name data_loading_name featurization_name model_name scale_factor")
 
     num_repetitions = 7
     seeds = [42, 43, 44, 45, 46, 47, 48]
@@ -52,6 +48,7 @@ if __name__ == "__main__":
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     # Warm-up run to ignore effect of imports
     synthetic_cmd_args = ['mlwhatif']
+    cmd_args = sys.argv[2:].copy()
     synthetic_cmd_args.extend(cmd_args)
 
     analysis = get_analysis_for_scenario_and_dataset(scenario_name, dataset_name)
@@ -63,11 +60,11 @@ if __name__ == "__main__":
         os.makedirs(output_directory)
 
     with patch.object(sys, 'argv', synthetic_cmd_args):
-        analysis_result = PipelineAnalyzer \
+        _ = PipelineAnalyzer \
             .on_pipeline_from_py_file(pipeline_run_file) \
             .add_custom_monkey_patching_modules([custom_monkeypatching]) \
             .execute()
-        analysis_result.save_original_dag_to_path(os.path.join(output_directory, "test"))
+        # analysis_result.save_original_dag_to_path(os.path.join(output_directory, "test"))
 
     result_df_repetitions = []
     result_df_scenarios = []
