@@ -6,7 +6,6 @@ from inspect import cleandoc
 from example_pipelines import HEALTHCARE_PY, COMPAS_PY, ADULT_COMPLEX_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
-from mlwhatif.analysis._data_corruption import CorruptionType
 from mlwhatif.analysis._permutation_feature_importance import PermutationFeatureImportance
 from mlwhatif.testing._testing_helper_utils import visualize_dags
 
@@ -37,20 +36,13 @@ def test_permutation_feature_importance_mini_example_with_transformer_processing
         assert test_score == 1.0
         """)
 
-    def corruption(pandas_df):
-        pandas_df['B'] = 0
-        return pandas_df
-
-    data_corruption = PermutationFeatureImportance({'A': CorruptionType.SCALING, 'B': corruption},
-                                                   also_corrupt_train=True)
-
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
-        .add_what_if_analysis(data_corruption) \
+        .add_what_if_analysis(PermutationFeatureImportance()) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (7, 4)
+    report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance()]
+    assert report.shape == (3, 2)
 
     visualize_dags(analysis_result, tmpdir)
 
@@ -84,24 +76,13 @@ def test_permutation_feature_importance_mini_example_with_projection_modify(tmpd
         assert test_score == 1.0
         """)
 
-    def corruption(pandas_df):
-        pandas_df['B'] = 0
-        return pandas_df
-
-    def custom_index_selection_func(pandas_df):
-        return pandas_df['B'] >= 3
-
-    data_corruption = PermutationFeatureImportance({'A': CorruptionType.SCALING, 'B': corruption},
-                                                   also_corrupt_train=True,
-                                                   corruption_percentages=[0.2, custom_index_selection_func])
-
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
-        .add_what_if_analysis(data_corruption) \
+        .add_what_if_analysis(PermutationFeatureImportance()) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (5, 4)
+    report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance()]
+    assert report.shape == (3, 2)
 
     visualize_dags(analysis_result, tmpdir)
 
@@ -133,25 +114,18 @@ def test_permutation_feature_importance_mini_example_only_train_test_split(tmpdi
         assert test_score == 1.0
         """)
 
-    def corruption(pandas_df):
-        pandas_df['B'] = 0
-        return pandas_df
-
-    data_corruption = PermutationFeatureImportance({'A': CorruptionType.SCALING, 'B': corruption},
-                                                   also_corrupt_train=True)
-
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
-        .add_what_if_analysis(data_corruption) \
+        .add_what_if_analysis(PermutationFeatureImportance()) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (7, 4)
+    report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance()]
+    assert report.shape == (3, 2)
 
     visualize_dags(analysis_result, tmpdir)
 
 
-def test_permutation_feature_importance_mini_example_only_train_test_split_without_optimizer(tmpdir):
+def test_permutation_feature_importance_mini_example_only_train_test_split_with_restricts(tmpdir):
     """
     Tests whether the Permutation Feature Importance analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -178,21 +152,14 @@ def test_permutation_feature_importance_mini_example_only_train_test_split_witho
         assert test_score == 1.0
         """)
 
-    def corruption(pandas_df):
-        pandas_df['B'] = 0
-        return pandas_df
-
-    data_corruption = PermutationFeatureImportance({'A': CorruptionType.SCALING, 'B': corruption},
-                                                   also_corrupt_train=True)
-
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
-        .add_what_if_analysis(data_corruption) \
+        .add_what_if_analysis(PermutationFeatureImportance(['A'])) \
         .skip_multi_query_optimization(True) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (7, 4)
+    report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance(['A'])]
+    assert report.shape == (2, 2)
 
     visualize_dags(analysis_result, tmpdir)
 
@@ -225,20 +192,13 @@ def test_permutation_feature_importance_mini_example_manual_split(tmpdir):
         assert test_score == 1.0
         """)
 
-    def corruption(pandas_df):
-        pandas_df['B'] = 0
-        return pandas_df
-
-    data_corruption = PermutationFeatureImportance({'A': CorruptionType.SCALING, 'B': corruption},
-                                                   also_corrupt_train=True)
-
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
-        .add_what_if_analysis(data_corruption) \
+        .add_what_if_analysis(PermutationFeatureImportance()) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (7, 4)
+    report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance()]
+    assert report.shape == (3, 2)
 
     visualize_dags(analysis_result, tmpdir)
 
@@ -248,23 +208,15 @@ def test_permutation_feature_importance_healthcare(tmpdir):
     Tests whether the Permutation Feature Importance analysis works for a very simple pipeline with a DecisionTree score
     """
 
-    def corruption(pandas_df):
-        pandas_df['num_children'] = 0
-        return pandas_df
-
-    data_corruption = PermutationFeatureImportance({'income': CorruptionType.SCALING, 'num_children': corruption},
-                                                   corruption_percentages=[0.3, 0.6],
-                                                   also_corrupt_train=True)
-
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(HEALTHCARE_PY) \
         .skip_multi_query_optimization(False) \
         .add_custom_monkey_patching_module(custom_monkeypatching) \
-        .add_what_if_analysis(data_corruption) \
+        .add_what_if_analysis(PermutationFeatureImportance()) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (5, 8)
+    report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance()]
+    assert report.shape == (7, 4)
 
     visualize_dags(analysis_result, tmpdir)
 
@@ -274,20 +226,13 @@ def test_permutation_feature_importance_compas(tmpdir):
     Tests whether the Permutation Feature Importance analysis works for a very simple pipeline with a DecisionTree score
     """
 
-    def corruption(pandas_df):
-        pandas_df['is_recid'] = 1
-        return pandas_df
-
-    data_corruption = PermutationFeatureImportance({'age': CorruptionType.SCALING, 'is_recid': corruption},
-                                                   also_corrupt_train=False)
-
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(COMPAS_PY) \
-        .add_what_if_analysis(data_corruption) \
+        .add_what_if_analysis(PermutationFeatureImportance()) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (7, 3)
+    report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance()]
+    assert report.shape == (3, 2)
 
     visualize_dags(analysis_result, tmpdir)
 
@@ -297,20 +242,10 @@ def test_permutation_feature_importance_adult_complex():
     Tests whether the Permutation Feature Importance analysis works for a very simple pipeline with a DecisionTree score
     """
 
-    def corruption(pandas_df):
-        pandas_df['hours-per-week'] = 400
-        return pandas_df
-
-    data_corruption = PermutationFeatureImportance({'education': CorruptionType.CATEGORICAL_SHIFT,
-                                                    'workclass': CorruptionType.CATEGORICAL_SHIFT,
-                                                    'hours-per-week': corruption},
-                                                   corruption_percentages=[0.25, 0.5, 0.75, 1.0],
-                                                   also_corrupt_train=True)
-
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(ADULT_COMPLEX_PY) \
-        .add_what_if_analysis(data_corruption) \
+        .add_what_if_analysis(PermutationFeatureImportance()) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[data_corruption]
-    assert report.shape == (13, 4)
+    report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance()]
+    assert report.shape == (5, 2)
