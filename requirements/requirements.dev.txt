@@ -13,3 +13,4 @@ importnb==0.6.2
 seaborn==0.11.0
 humanize==4.2.3
 dill==0.3.5.1
+folktables==0.0.11
