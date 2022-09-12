@@ -2,19 +2,16 @@
 The Permutation Feature Importance What-If Analysis
 """
 from functools import partial
-from types import FunctionType
-from typing import Iterable, Dict, Callable, Union, List
+from typing import Iterable, Dict, List
 
 import networkx
-import numpy
 import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_sorted_parent_nodes
-from mlwhatif.analysis._data_corruption import CorruptionType, CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
-from mlwhatif.execution._patches import DataProjection, PipelinePatch, UdfSplitInfo
+from mlwhatif.execution._patches import DataProjection, PipelinePatch
 from mlwhatif.execution._pipeline_executor import singleton
 
 
@@ -122,6 +119,7 @@ class PermutationFeatureImportance(WhatIfAnalysis):
 
     @staticmethod
     def get_columns_used_as_feature(dag) -> List[str]:
+        """Get all columns for which we want to test the feature importance"""
         test_data_operator = find_nodes_by_type(dag, OperatorType.TEST_DATA)[0]
         if test_data_operator.details.columns != ["array"]:
             feature_columns = test_data_operator.details.columns
