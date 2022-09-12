@@ -6,11 +6,11 @@ from inspect import cleandoc
 from example_pipelines import HEALTHCARE_PY, ADULT_COMPLEX_PY, COMPAS_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
-from mlwhatif.analysis._operator_fairness import OperatorFairness
+from mlwhatif.analysis._operator_impact import OperatorImpact
 from mlwhatif.testing._testing_helper_utils import visualize_dags
 
 
-def test_operator_fairness_mini_example_with_transformer_processing_multiple_columns(tmpdir):
+def test_operator_impact_mini_example_with_transformer_processing_multiple_columns(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -39,16 +39,16 @@ def test_operator_fairness_mini_example_with_transformer_processing_multiple_col
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
-        .add_what_if_analysis(OperatorFairness(True, True)) \
+        .add_what_if_analysis(OperatorImpact(True, True)) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
+    report = analysis_result.analysis_to_result_reports[OperatorImpact(True, True)]
     assert report.shape == (2, 5)
 
     visualize_dags(analysis_result, tmpdir)
 
 
-def test_operator_fairness_healthcare(tmpdir):
+def test_operator_impact_healthcare(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
@@ -56,89 +56,89 @@ def test_operator_fairness_healthcare(tmpdir):
         .on_pipeline_from_py_file(HEALTHCARE_PY) \
         .skip_multi_query_optimization(False) \
         .add_custom_monkey_patching_module(custom_monkeypatching) \
-        .add_what_if_analysis(OperatorFairness(True, True)) \
+        .add_what_if_analysis(OperatorImpact(True, True)) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
+    report = analysis_result.analysis_to_result_reports[OperatorImpact(True, True)]
     assert report.shape == (5, 7)
 
     visualize_dags(analysis_result, tmpdir)
 
 
-def test_operator_fairness_compas(tmpdir):
+def test_operator_impact_compas(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(COMPAS_PY) \
-        .add_what_if_analysis(OperatorFairness(True, True)) \
+        .add_what_if_analysis(OperatorImpact(True, True)) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
+    report = analysis_result.analysis_to_result_reports[OperatorImpact(True, True)]
     assert report.shape == (8, 5)
 
     visualize_dags(analysis_result, tmpdir)
 
 
-def test_operator_fairness_restrict_to_linenos(tmpdir):
+def test_operator_impact_restrict_to_linenos(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(COMPAS_PY) \
-        .add_what_if_analysis(OperatorFairness(True, True, [41, 29])) \
+        .add_what_if_analysis(OperatorImpact(True, True, [41, 29])) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
+    report = analysis_result.analysis_to_result_reports[OperatorImpact(True, True)]
     assert report.shape == (3, 5)
 
     visualize_dags(analysis_result, tmpdir)
 
 
-def test_operator_fairness_test_transformers(tmpdir):
+def test_operator_impact_test_transformers(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(COMPAS_PY) \
-        .add_what_if_analysis(OperatorFairness(True, False)) \
+        .add_what_if_analysis(OperatorImpact(True, False)) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[OperatorFairness(True, False)]
+    report = analysis_result.analysis_to_result_reports[OperatorImpact(True, False)]
     assert report.shape == (4, 5)
 
     visualize_dags(analysis_result, tmpdir)
 
 
-def test_operator_fairness_test_selections(tmpdir):
+def test_operator_impact_test_selections(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(COMPAS_PY) \
-        .add_what_if_analysis(OperatorFairness(False, True)) \
+        .add_what_if_analysis(OperatorImpact(False, True)) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[OperatorFairness(False, True)]
+    report = analysis_result.analysis_to_result_reports[OperatorImpact(False, True)]
     assert report.shape == (5, 5)
 
     visualize_dags(analysis_result, tmpdir)
 
 
-def test_operator_fairness_adult_complex(tmpdir):
+def test_operator_impact_adult_complex(tmpdir):
     """
     Tests whether the Operator Fairness analysis works for a very simple pipeline with a DecisionTree score
     """
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(ADULT_COMPLEX_PY) \
-        .add_what_if_analysis(OperatorFairness(True, True)) \
+        .add_what_if_analysis(OperatorImpact(True, True)) \
         .execute()
 
-    report = analysis_result.analysis_to_result_reports[OperatorFairness(True, True)]
+    report = analysis_result.analysis_to_result_reports[OperatorImpact(True, True)]
     assert report.shape == (3, 5)
 
     visualize_dags(analysis_result, tmpdir)

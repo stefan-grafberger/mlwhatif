@@ -1,5 +1,5 @@
 """
-The Operator Fairness What-If Analysis
+The Operator Impact What-If Analysis
 """
 from collections import defaultdict
 from functools import partial
@@ -22,9 +22,9 @@ from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import wrap_in_mlinspect_array_if_necessary
 
 
-class OperatorFairness(WhatIfAnalysis):
+class OperatorImpact(WhatIfAnalysis):
     """
-    The Operator Fairness What-If Analysis
+    The Operator Impact What-If Analysis
     """
 
     def __init__(self, test_transformers=True, test_selections=False, restrict_to_linenos: List[int] or None = None):

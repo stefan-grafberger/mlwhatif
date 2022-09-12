@@ -8,7 +8,7 @@ from inspect import cleandoc
 
 from experiments.optimizations._benchmark_utils import get_test_df
 from mlwhatif import PipelineAnalyzer
-from mlwhatif.analysis._operator_fairness import OperatorFairness
+from mlwhatif.analysis._operator_impact import OperatorImpact
 from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
 
@@ -70,7 +70,7 @@ def execute_operator_deletion_filter_push_up_ideal_case(scale_factor, tmpdir, va
         test_score = clf.score(test_data, test_target)
         assert 0. <= test_score <= 1.
         """)
-    data_corruption = OperatorFairness(test_transformers=False, test_selections=True)
+    data_corruption = OperatorImpact(test_transformers=False, test_selections=True)
     dag_extraction_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .execute() \
@@ -151,7 +151,7 @@ def execute_operator_deletion_filter_push_up_worst_case_safety_inactive(scale_fa
         test_score = clf.score(test_data, test_target)
         assert 0. <= test_score <= 1.
         """)
-    data_corruption = OperatorFairness(test_transformers=False, test_selections=True)
+    data_corruption = OperatorImpact(test_transformers=False, test_selections=True)
     dag_extraction_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .execute() \
@@ -231,7 +231,7 @@ def execute_operator_deletion_filter_push_up_worst_case_safety_active(scale_fact
         test_score = clf.score(test_data, test_target)
         assert 0. <= test_score <= 1.
         """)
-    data_corruption = OperatorFairness(test_transformers=False, test_selections=True)
+    data_corruption = OperatorImpact(test_transformers=False, test_selections=True)
     dag_extraction_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .execute() \
@@ -321,7 +321,7 @@ def execute_operator_deletion_filter_push_up_average_case(scale_factor, tmpdir, 
         test_score = clf.score(test_data, test_target)
         assert 0. <= test_score <= 1.
         """)
-    data_corruption = OperatorFairness(test_transformers=False, test_selections=True)
+    data_corruption = OperatorImpact(test_transformers=False, test_selections=True)
     dag_extraction_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .execute() \
@@ -408,7 +408,7 @@ def execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for
         test_score = clf.score(test_data, test_target)
         assert 0. <= test_score <= 1.
             """)
-    data_corruption = OperatorFairness(test_transformers=False, test_selections=True)
+    data_corruption = OperatorImpact(test_transformers=False, test_selections=True)
     dag_extraction_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .execute() \
@@ -492,7 +492,7 @@ def execute_operator_deletion_filter_push_up_worst_case_only_some_filters_worth_
         assert 0. <= test_score <= 1.
             """)
 
-    data_corruption = OperatorFairness(test_transformers=False, test_selections=True)
+    data_corruption = OperatorImpact(test_transformers=False, test_selections=True)
 
     dag_extraction_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
