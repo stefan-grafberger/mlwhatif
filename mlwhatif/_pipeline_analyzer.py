@@ -3,9 +3,10 @@ User-facing API for inspecting the pipeline
 """
 from typing import Iterable, List
 
+from .execution._pipeline_executor import singleton, logger
 from ._analysis_results import AnalysisResults, DagExtractionInfo
 from .analysis._what_if_analysis import WhatIfAnalysis
-from .instrumentation._pipeline_executor import singleton, logger
+from .optimization._query_optimization_rules import QueryOptimizationRule
 
 
 class PipelineInspectorBuilder:
@@ -31,6 +32,7 @@ class PipelineInspectorBuilder:
         self._prefix_analysis_dags = None
         self._prefix_optimised_analysis_dag = None
         self._skip_optimizer = False
+        self._force_optimization_rules = None
 
     def add_what_if_analysis(self, analysis: WhatIfAnalysis):
         """
@@ -69,10 +71,18 @@ class PipelineInspectorBuilder:
 
     def skip_multi_query_optimization(self, skip_optimizer: False):
         """
-        A convenience function to
+        A convenience function for benchmarking
         """
         logger.info("The skip_multi_query_optimization function is only intended for benchmarking!")
         self._skip_optimizer = skip_optimizer
+        return self
+
+    def overwrite_optimization_rules(self, optimizations: List[QueryOptimizationRule] or None):
+        """
+        A convenience function for benchmarking
+        """
+        logger.info("The overwrite_optimization_rules function is only intended for benchmarking!")
+        self._force_optimization_rules = optimizations
         return self
 
     def execute(self) -> AnalysisResults:
@@ -85,7 +95,8 @@ class PipelineInspectorBuilder:
                              extraction_info=self._extraction_info,
                              analyses=self._analyses,
                              custom_monkey_patching=self._monkey_patching_modules,
-                             skip_optimizer=self._skip_optimizer)
+                             skip_optimizer=self._skip_optimizer,
+                             force_optimization_rules=self._force_optimization_rules)
 
 
 class PipelineAnalyzer:

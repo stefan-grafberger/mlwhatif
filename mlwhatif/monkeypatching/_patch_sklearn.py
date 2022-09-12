@@ -11,7 +11,7 @@ import numpy
 import pandas
 import scipy
 import tensorflow
-from sklearn import preprocessing, compose, tree, impute, linear_model, model_selection, metrics
+from sklearn import preprocessing, compose, tree, impute, linear_model, model_selection, metrics, dummy, decomposition
 from sklearn.feature_extraction import text
 from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.metrics import accuracy_score
@@ -21,7 +21,7 @@ from tensorflow.python.keras.wrappers import scikit_learn as keras_sklearn_inter
 from mlwhatif.execution._stat_tracking import capture_optimizer_info, get_df_shape, get_df_memory
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails, CodeReference, OptimizerInfo
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.monkeypatching._mlinspect_ndarray import MlinspectNdarray
 from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, add_dag_node, \
     execute_patched_func_indirect_allowed, get_input_info, execute_patched_func_no_op_id, \
@@ -472,6 +472,233 @@ class SklearnStandardScalerPatching:
                                BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
                                operator_context,
                                DagNodeDetails("Standard Scaler: transform", ['array'], optimizer_info),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
+
+            function_call_result = FunctionCallResult(result)
+            transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
+            add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
+            new_result = function_call_result.function_result
+            assert isinstance(new_result, MlinspectNdarray)
+        else:
+            new_result = original(self, *args, **kwargs)
+        return new_result
+
+
+@gorilla.patches(preprocessing.RobustScaler)
+class SklearnRobustScalerPatching:
+    """ Patches for sklearn RobustScaler"""
+
+    # pylint: disable=too-few-public-methods
+
+    @gorilla.name('__init__')
+    @gorilla.settings(allow_hit=True)
+    def patched__init__(self, *, with_centering=True, with_scaling=True,
+                        quantile_range=(25.0, 75.0), copy=True,
+                        mlinspect_caller_filename=None, mlinspect_lineno=None,
+                        mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
+                        mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
+        """ Patch for ('sklearn.preprocessing._data', 'RobustScaler') """
+        # pylint: disable=no-method-argument, attribute-defined-outside-init
+        original = gorilla.get_original_attribute(preprocessing.RobustScaler, '__init__')
+
+        self.mlinspect_caller_filename = mlinspect_caller_filename
+        self.mlinspect_lineno = mlinspect_lineno
+        self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
+        self.mlinspect_optional_source_code = mlinspect_optional_source_code
+        self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+        self.mlinspect_transformer_node_id = mlinspect_transformer_node_id
+
+        self.mlinspect_non_data_func_args = {'with_centering': with_centering, 'with_scaling': with_scaling,
+                                             'quantile_range': quantile_range, 'copy': copy}
+
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            original(self, **self.mlinspect_non_data_func_args)
+
+            self.mlinspect_caller_filename = caller_filename
+            self.mlinspect_lineno = lineno
+            self.mlinspect_optional_code_reference = optional_code_reference
+            self.mlinspect_optional_source_code = optional_source_code
+
+        return execute_patched_func_no_op_id(original, execute_inspections, self, **self.mlinspect_non_data_func_args)
+
+    @gorilla.name('fit_transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_fit_transform(self, *args, **kwargs):
+        """ Patch for ('sklearn.preprocessing._data.RobustScaler', 'fit_transform') """
+        # pylint: disable=no-method-argument
+        self.mlinspect_fit_transform_active = True  # pylint: disable=attribute-defined-outside-init
+        original = gorilla.get_original_attribute(preprocessing.RobustScaler, 'fit_transform')
+        function_info = FunctionInfo('sklearn.preprocessing._data', 'RobustScaler')
+        input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
+                                    self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
+
+        def processing_func(input_df):
+            transformer = preprocessing.RobustScaler(**self.mlinspect_non_data_func_args)
+            transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+            transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+            return transformed_data
+
+        operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+        initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
+                           BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                           operator_context,
+                           DagNodeDetails("Robust Scaler: fit_transform", ['array'], optimizer_info),
+                           get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
+
+        function_call_result = FunctionCallResult(result)
+        add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+        new_result = function_call_result.function_result
+        assert isinstance(new_result, MlinspectNdarray)
+        self.mlinspect_fit_transform_active = False  # pylint: disable=attribute-defined-outside-init
+        return new_result
+
+    @gorilla.name('transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_transform(self, *args, **kwargs):
+        """ Patch for ('sklearn.preprocessing._data.RobustScaler', 'transform') """
+        # pylint: disable=no-method-argument
+        original = gorilla.get_original_attribute(preprocessing.RobustScaler, 'transform')
+        if not self.mlinspect_fit_transform_active:
+            function_info = FunctionInfo('sklearn.preprocessing._data', 'RobustScaler')
+            input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
+                                        self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
+
+            def processing_func(fit_data, input_df):
+                transformer = fit_data._mlinspect_annotation  # pylint: disable=protected-access
+                transformed_data = transformer.transform(input_df, *args[1:], **kwargs)
+                return transformed_data
+
+            operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+            initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
+            dag_node = DagNode(singleton.get_next_op_id(),
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("Robust Scaler: transform", ['array'], optimizer_info),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
+
+            function_call_result = FunctionCallResult(result)
+            transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
+            add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
+            new_result = function_call_result.function_result
+            assert isinstance(new_result, MlinspectNdarray)
+        else:
+            new_result = original(self, *args, **kwargs)
+        return new_result
+
+
+@gorilla.patches(decomposition.PCA)
+class SklearnPCAPatching:
+    """ Patches for sklearn PCA"""
+
+    # pylint: disable=too-few-public-methods
+
+    @gorilla.name('__init__')
+    @gorilla.settings(allow_hit=True)
+    def patched__init__(self, n_components=None, *, copy=True, whiten=False,
+                        svd_solver='auto', tol=0.0, iterated_power='auto',
+                        random_state=None,
+                        mlinspect_caller_filename=None, mlinspect_lineno=None,
+                        mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
+                        mlinspect_fit_transform_active=False):
+        """ Patch for ('sklearn.decomposition._pca', 'PCA') """
+        # pylint: disable=no-method-argument, attribute-defined-outside-init
+        original = gorilla.get_original_attribute(decomposition.PCA, '__init__')
+
+        self.mlinspect_caller_filename = mlinspect_caller_filename
+        self.mlinspect_lineno = mlinspect_lineno
+        self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
+        self.mlinspect_optional_source_code = mlinspect_optional_source_code
+        self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+
+        self.mlinspect_non_data_func_args = {'n_components': n_components, 'copy': copy, 'whiten': whiten,
+                                             'svd_solver': svd_solver, 'tol': tol, 'iterated_power': iterated_power,
+                                             'random_state': random_state}
+
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            original(self, **self.mlinspect_non_data_func_args)
+
+            self.mlinspect_caller_filename = caller_filename
+            self.mlinspect_lineno = lineno
+            self.mlinspect_optional_code_reference = optional_code_reference
+            self.mlinspect_optional_source_code = optional_source_code
+
+        return execute_patched_func_no_op_id(original, execute_inspections, self, **self.mlinspect_non_data_func_args)
+
+    @gorilla.name('fit_transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_fit_transform(self, *args, **kwargs):
+        """ Patch for ('sklearn.decomposition._pca.PCA', 'fit_transform') """
+        # pylint: disable=no-method-argument
+        self.mlinspect_fit_transform_active = True  # pylint: disable=attribute-defined-outside-init
+        original = gorilla.get_original_attribute(decomposition.PCA, 'fit_transform')
+        function_info = FunctionInfo('sklearn.decomposition._pca', 'PCA')
+        input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
+                                    self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
+
+        def processing_func(input_df):
+            transformer = decomposition.PCA(**self.mlinspect_non_data_func_args)
+            transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+            transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+            return transformed_data
+
+        operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+        initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
+                           BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                           operator_context,
+                           DagNodeDetails("PCA: fit_transform", ['array'], optimizer_info),
+                           get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
+
+        function_call_result = FunctionCallResult(result)
+        add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+        new_result = function_call_result.function_result
+        assert isinstance(new_result, MlinspectNdarray)
+        self.mlinspect_fit_transform_active = False  # pylint: disable=attribute-defined-outside-init
+        return new_result
+
+    @gorilla.name('transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_transform(self, *args, **kwargs):
+        """ Patch for ('sklearn.decomposition._pca.PCA', 'transform') """
+        # pylint: disable=no-method-argument
+        original = gorilla.get_original_attribute(decomposition.PCA, 'transform')
+        if not self.mlinspect_fit_transform_active:
+            function_info = FunctionInfo('sklearn.decomposition._pca', 'PCA')
+            input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
+                                        self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
+
+            def processing_func(fit_data, input_df):
+                transformer = fit_data._mlinspect_annotation  # pylint: disable=protected-access
+                transformed_data = transformer.transform(input_df, *args[1:], **kwargs)
+                return transformed_data
+
+            operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+            initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
+            dag_node = DagNode(singleton.get_next_op_id(),
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("PCA: transform", ['array'], optimizer_info),
                                get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
                                                               self.mlinspect_optional_source_code),
                                processing_func)
@@ -1990,3 +2217,214 @@ class MetricsPatching:
             return result
 
         return execute_patched_func_no_op_id(original, execute_inspections, y_true, y_pred, *args, **kwargs)
+
+
+@gorilla.patches(dummy.DummyClassifier)
+class SklearnDummyClassifierPatching:
+    """ Patches for sklearn LogisticRegression"""
+
+    # pylint: disable=too-few-public-methods
+
+    @gorilla.name('__init__')
+    @gorilla.settings(allow_hit=True)
+    def patched__init__(self, strategy="warn", random_state=None, constant=None, mlinspect_caller_filename=None,
+                        mlinspect_lineno=None, mlinspect_optional_code_reference=None,
+                        mlinspect_optional_source_code=None, mlinspect_estimator_node_id=None):
+        """ Patch for ('sklearn.dummy.DummyClassifier', 'LogisticRegression') """
+        # pylint: disable=no-method-argument, attribute-defined-outside-init, too-many-locals, too-many-arguments
+        original = gorilla.get_original_attribute(dummy.DummyClassifier, '__init__')
+
+        self.mlinspect_caller_filename = mlinspect_caller_filename
+        self.mlinspect_lineno = mlinspect_lineno
+        self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
+        self.mlinspect_optional_source_code = mlinspect_optional_source_code
+        self.mlinspect_estimator_node_id = mlinspect_estimator_node_id
+
+        self.mlinspect_non_data_func_args = {'strategy': strategy, 'random_state': random_state, 'constant': constant}
+
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            original(self, **self.mlinspect_non_data_func_args)
+
+            self.mlinspect_caller_filename = caller_filename
+            self.mlinspect_lineno = lineno
+            self.mlinspect_optional_code_reference = optional_code_reference
+            self.mlinspect_optional_source_code = optional_source_code
+
+        return execute_patched_func_no_op_id(original, execute_inspections, self, **self.mlinspect_non_data_func_args)
+
+    @gorilla.name('fit')
+    @gorilla.settings(allow_hit=True)
+    def patched_fit(self, *args, **kwargs):
+        """ Patch for ('sklearn.dummy.DummyClassifier', 'fit') """
+        # pylint: disable=no-method-argument, too-many-locals
+        original = gorilla.get_original_attribute(dummy.DummyClassifier, 'fit')
+        if not call_info_singleton.param_search_active:
+            function_info = FunctionInfo('sklearn.dummy', 'DummyClassifier')
+
+            _, train_data_node, train_data_result = add_train_data_node(self, args[0], function_info)
+            _, train_labels_node, train_labels_result = add_train_label_node(self, args[1], function_info)
+
+            if call_info_singleton.make_grid_search_func is None:
+                def processing_func(train_data, train_labels):
+                    estimator = dummy.DummyClassifier(**self.mlinspect_non_data_func_args)
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+                param_search_runtime = 0
+                create_func = partial(dummy.DummyClassifier, **self.mlinspect_non_data_func_args)
+            else:
+                def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
+                    estimator = make_grid_search_func(dummy.DummyClassifier(
+                        **self.mlinspect_non_data_func_args))
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+                processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
+
+                def create_func_with_grid_search(make_grid_search_func):
+                    return make_grid_search_func(dummy.DummyClassifier(**self.mlinspect_non_data_func_args))
+                create_func = partial(create_func_with_grid_search, call_info_singleton.make_grid_search_func)
+
+                call_info_singleton.make_grid_search_func = None
+                param_search_runtime = call_info_singleton.param_search_duration
+                call_info_singleton.param_search_duration = 0
+
+            # Estimator
+            operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
+            # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
+            initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
+            optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
+            optimizer_info_with_search = OptimizerInfo(optimizer_info.runtime + param_search_runtime,
+                                                       optimizer_info.shape, optimizer_info.memory)
+            self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
+            dag_node = DagNode(self.mlinspect_estimator_node_id,
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("Dummy Classifier", [], optimizer_info_with_search),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func,
+                               create_func)
+            function_call_result = FunctionCallResult(None)
+            add_dag_node(dag_node, [train_data_node, train_labels_node], function_call_result)
+        else:
+            original(self, *args, **kwargs)
+        return self
+
+    @gorilla.name('score')
+    @gorilla.settings(allow_hit=True)
+    def patched_score(self, *args, **kwargs):
+        """ Patch for ('sklearn.dummy.DummyClassifier', 'score') """
+
+        # pylint: disable=no-method-argument
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
+            if len(kwargs) != 0:
+                raise Exception("TODO: Support other metrics in model.score calls!")
+
+            function_info = FunctionInfo('sklearn.dummy.DummyClassifier', 'score')
+            # Test data
+            _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
+                                                                         function_info,
+                                                                         lineno,
+                                                                         optional_code_reference,
+                                                                         optional_source_code,
+                                                                         caller_filename)
+
+            # Test labels
+            _, test_labels_node, test_labels_result = add_test_label_node(args[1],
+                                                                          caller_filename,
+                                                                          function_info,
+                                                                          lineno,
+                                                                          optional_code_reference,
+                                                                          optional_source_code)
+
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            def processing_func_score(predictions, test_labels):
+                score = accuracy_score(predictions, test_labels)
+                return score
+
+            # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
+
+            original_predict = gorilla.get_original_attribute(dummy.DummyClassifier, 'predict')
+            initial_func_predict = partial(original_predict, self, test_data_result)
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("Dummy Classifier", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
+            estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
+
+            initial_func_score = partial(processing_func_score, result_predict, test_labels_result)
+            optimizer_info_score, result_score = capture_optimizer_info(initial_func_score)
+            operator_context_score = OperatorContext(OperatorType.SCORE, function_info)
+            dag_node_score = DagNode(singleton.get_next_op_id(),
+                                     BasicCodeLocation(caller_filename, lineno),
+                                     operator_context_score,
+                                     DagNodeDetails("Accuracy", [], optimizer_info_score),
+                                     get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                     processing_func_score)
+            function_call_result = FunctionCallResult(result_score)
+            add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
+                         function_call_result)
+            return result_score
+
+        if not call_info_singleton.param_search_active:
+            new_result = execute_patched_func_indirect_allowed(execute_inspections)
+        else:
+            original = gorilla.get_original_attribute(dummy.DummyClassifier, 'score')
+            new_result = original(self, *args, **kwargs)
+        return new_result
+
+    @gorilla.name('predict')
+    @gorilla.settings(allow_hit=True)
+    def patched_predict(self, *args):
+        """ Patch for ('sklearn.dummy.DummyClassifier', 'predict') """
+
+        # pylint: disable=no-method-argument
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
+            function_info = FunctionInfo('sklearn.dummy.DummyClassifier', 'predict')
+            # Test data
+            _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
+                                                                         function_info,
+                                                                         lineno,
+                                                                         optional_code_reference,
+                                                                         optional_source_code,
+                                                                         caller_filename)
+
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            original_predict = gorilla.get_original_attribute(dummy.DummyClassifier, 'predict')
+            initial_func_predict = partial(original_predict, self, test_data_result)
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("Dummy Classifier", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                       processing_func_predict)
+            estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
+            new_result = function_call_result.function_result
+            return new_result
+
+        if not call_info_singleton.param_search_active:
+            new_result = execute_patched_func_indirect_allowed(execute_inspections)
+        else:
+            original = gorilla.get_original_attribute(dummy.DummyClassifier, 'predict')
+            new_result = original(self, *args)
+        return new_result

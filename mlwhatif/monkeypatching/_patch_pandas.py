@@ -4,6 +4,7 @@ Monkey patching for pandas
 # pylint: disable=too-many-lines
 import operator
 import os
+import re
 from functools import partial
 
 import gorilla
@@ -13,7 +14,7 @@ from mlwhatif import OperatorType, DagNode, BasicCodeLocation, DagNodeDetails
 from mlwhatif.execution._stat_tracking import capture_optimizer_info
 from mlwhatif.instrumentation._dag_node import OptimizerInfo
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, get_input_info, add_dag_node, \
     get_dag_node_for_id, execute_patched_func_no_op_id, get_optional_code_info_or_none, FunctionCallResult, \
     execute_patched_internal_func_with_depth, get_dag_node_copy_with_optimizer_info
@@ -163,7 +164,16 @@ class DataFramePatching:
                 # FIXME: Add test to make sure that this DAG node is included as a parent correctly
                 dag_parents.append(selection_series_input_info.dag_node)
                 if optional_source_code:
-                    description = "Select by Series: {}".format(optional_source_code)
+                    description_code = optional_source_code
+                    if '[' in description_code:
+                        description_code = description_code[description_code.find('[')+1:]
+                    if ']' in description_code:
+                        description_code = description_code[:description_code.rfind(']')]
+                    df_names = re.findall(r"([^\W0-9]\w*)\[.*\]", description_code)
+                    if len(df_names) is not None:
+                        for df_name in df_names:
+                            description_code = description_code.replace(df_name, "df")
+                    description = "Select by Series: {}".format(description_code)
                 else:
                     description = "Select by Series"
                 processing_func = lambda df, filter_series: original(df, filter_series, *args[1:], **kwargs)

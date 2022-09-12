@@ -10,7 +10,7 @@ import pandas
 from testfixtures import compare, StringComparison, Comparison, RangeComparison
 
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
-from mlwhatif.instrumentation import _pipeline_executor
+from mlwhatif.execution import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
 
@@ -253,7 +253,7 @@ def test_frame__getitem__selection():
                                  BasicCodeLocation("<string-source>", 4),
                                  OperatorContext(OperatorType.SELECTION,
                                                  FunctionInfo('pandas.core.frame', '__getitem__')),
-                                 DagNodeDetails("Select by Series: df[df['A'] > 3]", ['A', 'B'],
+                                 DagNodeDetails("Select by Series: df['A'] > 3", ['A', 'B'],
                                                 OptimizerInfo(RangeComparison(0, 100), (3, 2),
                                                               RangeComparison(0, 500))),
                                  OptionalCodeInfo(CodeReference(4, 15, 4, 30), "df[df['A'] > 3]"),

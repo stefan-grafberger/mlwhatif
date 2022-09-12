@@ -2,9 +2,11 @@
 Simple Projection push-up optimization that ignores that data corruptions only corrupt subsets and that
 it is possible to corrupt the whole set at once and then only sample from the corrupted DF.
 """
+from math import prod
 from typing import List
 
 import networkx
+from numpy import argmin
 
 from mlwhatif.instrumentation._dag_node import DagNode
 from mlwhatif.instrumentation._operator_types import OperatorType
@@ -19,11 +21,14 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
 
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, pipeline_executor):
+    def __init__(self, pipeline_executor, disable_selectivity_safety=False):
         self._pipeline_executor = pipeline_executor
+        self._disable_selectivity_safety = disable_selectivity_safety
 
     def optimize_dag(self, dag: networkx.DiGraph, patches: List[List[PipelinePatch]]) -> \
             tuple[networkx.DiGraph, List[List[PipelinePatch]]]:
+        # pylint: disable=too-many-locals
+        # TODO: Clean this up a bit
         selectivity_and_filters_to_push_up = []
 
         for pipeline_variant_patches in patches:
@@ -35,8 +40,35 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                     # calculate selectivities
 
         # Sort filters by selectivity, the ones with the highest selectivity should be moved up first
-        selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0])
+        selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0],
+                                                    reverse=True)
 
+        sorted_selectivities = [selectivity for selectivity, _ in selectivity_and_filters_to_push_up]
+        selectivities_total = prod(sorted_selectivities)
+
+        if self._disable_selectivity_safety is False and len(selectivity_and_filters_to_push_up) >= 2:
+            min_selectivity, _ = selectivity_and_filters_to_push_up[-1]
+            if min_selectivity * len(selectivity_and_filters_to_push_up) <= 1.0:
+                return dag, patches
+
+        costs_with_filter_movement = []
+        cost_without_filter_movement = 0
+        for filter_index, (selectivity, _) in enumerate(selectivity_and_filters_to_push_up):
+            selectivities_until = prod(sorted_selectivities[filter_index + 1:])
+            cost_with_filter_movement = selectivities_until
+            for still_existing_filter in range(filter_index + 1, len(selectivity_and_filters_to_push_up)):
+                still_existing_filter_selectivity = selectivity_and_filters_to_push_up[still_existing_filter][0]
+                cost_with_filter_movement += (selectivities_until / still_existing_filter_selectivity)
+            cost_without_filter_movement += (selectivities_total / selectivity)
+            # If we move the filter, we loose its selectivity in the beginning in every run, but need one
+            # execution less
+            costs_with_filter_movement.append(cost_with_filter_movement)
+        costs_with_filter_movement.insert(0, cost_without_filter_movement)
+        # TODO: We can also add an additional combined or filter in the beginning to move even more filters up but
+        #  this is not always worth it if the filter computation is expensive.
+        do_filter_pushup_until = argmin(costs_with_filter_movement)
+        selectivity_and_filters_to_push_up = selectivity_and_filters_to_push_up[:do_filter_pushup_until]
+        selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0])
         for _, filter_removal_patch in selectivity_and_filters_to_push_up:
             using_columns_for_filter = self._get_columns_required_for_filter_eval(dag, filter_removal_patch)
 
@@ -84,7 +116,7 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
                 .filter_get_operator_after_which_cutoff_required(dag, filter_removal_patch.operator_to_remove)
             operator_after_which_cutoff_required_test = filter_removal_patch \
                 .filter_get_operator_after_which_cutoff_required(
-                    dag, filter_removal_patch.maybe_corresponding_test_set_operator)
+                dag, filter_removal_patch.maybe_corresponding_test_set_operator)
 
             self._move_filter_to_new_location(dag, filter_removal_patch, operator_after_which_cutoff_required_train,
                                               operator_to_add_node_after_train, filter_removal_patch.operator_to_remove)
@@ -217,13 +249,13 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
         # Remove the filter output from its previous location and make the previous filter results
         # use the unfiltered result
         for child_node in children_of_filter_to_be_removed:
-            edge_data = dag.get_edge_data(filter_removal_patch.operator_to_remove, child_node)
+            edge_data = dag.get_edge_data(operator_to_remove, child_node)
             dag.add_edge(operator_after_which_cutoff_required_train, child_node, **edge_data)
-            dag.remove_edge(filter_removal_patch.operator_to_remove, child_node)
+            dag.remove_edge(operator_to_remove, child_node)
         # Actually use the results from the pushed-up filters
         for child_node in children_of_operator_to_add_node_after_train:
             edge_data = dag.get_edge_data(operator_to_add_node_after_train, child_node)
-            dag.add_edge(filter_removal_patch.operator_to_remove, child_node, **edge_data)
+            dag.add_edge(operator_to_remove, child_node, **edge_data)
             dag.remove_edge(operator_to_add_node_after_train, child_node)
 
         ops_affected_by_move = self.get_all_ops_requiring_optimizer_info_update(

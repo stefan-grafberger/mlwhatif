@@ -18,7 +18,7 @@ from mlwhatif.analysis._analysis_utils import find_nodes_by_type
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import DataProjection, PipelinePatch, UdfSplitInfo
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 
 
 class CorruptionType(Enum):
@@ -155,7 +155,7 @@ class DataCorruption(WhatIfAnalysis):
             return_df = pandas_df.copy()
             corrupted_df = return_df.loc[indexes_to_corrupt, :]
             completely_corrupted_df = corruption_function(corrupted_df)
-            return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[:, column]
+            return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df[column]
             return return_df
 
         # We need to use partial here to avoid problems with late bindings, see

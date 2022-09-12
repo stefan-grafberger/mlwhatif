@@ -12,10 +12,10 @@ from scipy.sparse import csr_matrix
 
 from mlwhatif.execution._stat_tracking import get_df_shape, get_df_memory
 from mlwhatif.instrumentation._operator_types import OperatorContext, OperatorType
-from mlwhatif.instrumentation import _pipeline_executor
+from mlwhatif.execution import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.monkeypatching._mlinspect_ndarray import MlinspectNdarray
 
 

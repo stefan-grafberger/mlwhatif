@@ -16,7 +16,7 @@ from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import DataFiltering, DataTransformer, ModelPatch, PipelinePatch
 from mlwhatif.instrumentation._dag_node import OptimizerInfo
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 
 
 class ErrorType(Enum):

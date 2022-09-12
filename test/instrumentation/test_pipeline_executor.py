@@ -11,10 +11,10 @@ import networkx
 from testfixtures import compare, Comparison, RangeComparison
 
 from mlwhatif import OperatorType, OperatorContext, FunctionInfo
-from mlwhatif.instrumentation import _pipeline_executor
+from mlwhatif.execution import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import CodeReference, DagNode, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
-from mlwhatif.instrumentation._pipeline_executor import singleton
+from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.testing._testing_helper_utils import get_test_code_with_function_def_and_for_loop
 
 
@@ -143,7 +143,7 @@ def test_instrument_pipeline_with_code_reference_tracking():
     parsed_modified_ast = singleton.instrument_pipeline(parsed_ast, True)
     instrumented_code = astunparse.unparse(parsed_modified_ast)
     expected_code = cleandoc("""
-            from mlwhatif.instrumentation._pipeline_executor import set_code_reference_call, set_code_reference_subscript, monkey_patch, undo_monkey_patch
+            from mlwhatif.execution._pipeline_executor import set_code_reference_call, set_code_reference_subscript, monkey_patch, undo_monkey_patch
             monkey_patch()
             import pandas as pd
             
@@ -171,7 +171,7 @@ def test_instrument_pipeline_with_code_reference_tracking_comparison():
     parsed_modified_ast = singleton.instrument_pipeline(parsed_ast, True)
     instrumented_code = astunparse.unparse(parsed_modified_ast)
     expected_code = cleandoc("""
-            from mlwhatif.instrumentation._pipeline_executor import set_code_reference_call, set_code_reference_subscript, monkey_patch, undo_monkey_patch
+            from mlwhatif.execution._pipeline_executor import set_code_reference_call, set_code_reference_subscript, monkey_patch, undo_monkey_patch
             monkey_patch()
             import pandas as pd
             pd_series = pd.Series([0, 2, 4, None], **set_code_reference_call(2, 12, 2, 48, name='A'))
@@ -194,7 +194,7 @@ def test_instrument_pipeline_with_code_reference_tracking_bin_op():
     parsed_modified_ast = singleton.instrument_pipeline(parsed_ast, True)
     instrumented_code = astunparse.unparse(parsed_modified_ast)
     expected_code = cleandoc("""
-            from mlwhatif.instrumentation._pipeline_executor import set_code_reference_call, set_code_reference_subscript, monkey_patch, undo_monkey_patch
+            from mlwhatif.execution._pipeline_executor import set_code_reference_call, set_code_reference_subscript, monkey_patch, undo_monkey_patch
             monkey_patch()
             import pandas as pd
             pd_series = pd.Series([0, 2, 4, None], **set_code_reference_call(2, 12, 2, 48, name='A'))
@@ -218,7 +218,7 @@ def test_instrument_pipeline_with_code_reference_tracking_bool_op():
     parsed_modified_ast = singleton.instrument_pipeline(parsed_ast, True)
     instrumented_code = astunparse.unparse(parsed_modified_ast)
     expected_code = cleandoc("""
-            from mlwhatif.instrumentation._pipeline_executor import set_code_reference_call, set_code_reference_subscript, monkey_patch, undo_monkey_patch
+            from mlwhatif.execution._pipeline_executor import set_code_reference_call, set_code_reference_subscript, monkey_patch, undo_monkey_patch
             monkey_patch()
             import pandas as pd
             mask1 = pd.Series([True, False, True, None], **set_code_reference_call(2, 8, 2, 54, name='A'))
@@ -238,7 +238,7 @@ def test_instrument_pipeline_without_code_reference_tracking():
     parsed_modified_ast = singleton.instrument_pipeline(parsed_ast, False)
     instrumented_code = astunparse.unparse(parsed_modified_ast)
     expected_code = cleandoc("""
-            from mlwhatif.instrumentation._pipeline_executor import set_code_reference_call, set_code_reference_subscript, monkey_patch, undo_monkey_patch
+            from mlwhatif.execution._pipeline_executor import set_code_reference_call, set_code_reference_subscript, monkey_patch, undo_monkey_patch
             monkey_patch()
             import pandas as pd
 

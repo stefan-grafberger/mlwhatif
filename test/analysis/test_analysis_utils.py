@@ -1,17 +1,10 @@
 """
 Tests whether the analysis utils work
 """
-import os
 from inspect import cleandoc
 
 from mlwhatif import PipelineAnalyzer, OperatorType
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type
-from mlwhatif.utils import get_project_root
-
-INTERMEDIATE_EXTRACTION_ADD_BEFORE_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
-                                                       "test_add_intermediate_extraction_before.png")
-INTERMEDIATE_EXTRACTION_ADD_AFTER_PATH = os.path.join(str(get_project_root()), "test", "analysis", "debug-dags",
-                                                      "test_add_intermediate_extraction_after.png")
 
 
 def test_find_nodes_by_type():
