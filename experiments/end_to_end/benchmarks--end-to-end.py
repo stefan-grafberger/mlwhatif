@@ -60,11 +60,12 @@ if __name__ == "__main__":
         os.makedirs(output_directory)
 
     with patch.object(sys, 'argv', synthetic_cmd_args):
-        _ = PipelineAnalyzer \
+        analysis_result = PipelineAnalyzer \
             .on_pipeline_from_py_file(pipeline_run_file) \
             .add_custom_monkey_patching_modules([custom_monkeypatching]) \
             .execute()
-        # analysis_result.save_original_dag_to_path(os.path.join(output_directory, "test"))
+        analysis_result.save_original_dag_to_path(os.path.join(output_directory, "test"))
+        # FIXME: Remove this later
 
     result_df_repetitions = []
     result_df_scenarios = []

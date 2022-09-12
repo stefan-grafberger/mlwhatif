@@ -111,9 +111,7 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
     if featurization_name == 'fast':
         assert len(text_columns) == 1
         transformers = [('num', StandardScaler(), numerical_columns),
-                        #('text', HashingVectorizer(n_features=2 ** 4), text_columns[0])
-                        # FIXME include this again: ('text', HashingVectorizer(n_features=2**4), text_columns[0])
-                        ]
+                        ('text', HashingVectorizer(n_features=2 ** 4), text_columns[0])]
         for cat_column in categorical_columns:
             transformers.append((f"cat_{cat_column}", OneHotEncoder(handle_unknown='ignore'), [cat_column]))
 
@@ -144,7 +142,7 @@ if sys.argv[0] == "mlwhatif" or __name__ == "__main__":
 
     data_loading_name = 'fast'
     if len(sys.argv) > 2:
-        dataset_name = sys.argv[2]
+        data_loading_name = sys.argv[2]
 
     featurization_name = 'fast'
     if len(sys.argv) > 3:
