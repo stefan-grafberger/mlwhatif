@@ -95,7 +95,10 @@ class MultiQueryOptimizer:
                 patch.apply(what_if_dag, self.pipeline_executor)
             what_if_dags.append(what_if_dag)
         self._make_all_nodes_unique(what_if_dags)
-        big_execution_dag = networkx.compose_all(what_if_dags)
+        if len(what_if_dags) != 0:
+            big_execution_dag = networkx.compose_all(what_if_dags)
+        else:
+            big_execution_dag = networkx.DiGraph()
         return big_execution_dag, what_if_dags
 
     def _optimize_and_combine_dags_with_optimization(self, original_dag, patches):

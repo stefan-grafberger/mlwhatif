@@ -8,6 +8,7 @@ from faker import Faker
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.preprocessing import label_binarize
@@ -110,7 +111,9 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
     if featurization_name == 'fast':
         assert len(text_columns) == 1
         transformers = [('num', StandardScaler(), numerical_columns),
-                        ('text', HashingVectorizer(n_features=2**4), text_columns[0])]
+                        ('text', HashingVectorizer(n_features=2 ** 4), text_columns[0])
+                        # FIXME include this again: ('text', HashingVectorizer(n_features=2**4), text_columns[0])
+                        ]
         for cat_column in categorical_columns:
             transformers.append((f"cat_{cat_column}", OneHotEncoder(handle_unknown='ignore'), [cat_column]))
 
@@ -133,7 +136,9 @@ def get_model(model_name):
 
 
 # Make sure this code is not executed during imports
-if __name__ == "__main__":
+if sys.argv[0] == "mlwhatif" or __name__ == "__main__":
+
+    test_argv = sys.argv
 
     dataset_name = 'reviews'
     if len(sys.argv) > 1:
@@ -170,4 +175,5 @@ if __name__ == "__main__":
                          ('model', model)])
 
     pipeline = pipeline.fit(train, train_labels)
-    print('    Score: ', pipeline.score(test, test_labels))
+    predictions = pipeline.predict(test)
+    print('    Score: ', accuracy_score(predictions, test_labels))
