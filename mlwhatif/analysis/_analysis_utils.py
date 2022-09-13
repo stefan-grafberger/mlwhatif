@@ -140,7 +140,7 @@ def find_dag_location_for_new_filter_on_column(columns, dag, train_not_test) -> 
         ancestor_matches = [ancestor for ancestor in ancestors if set(ancestor.details.columns).issuperset(columns)
                             and ancestor.operator_info.operator != OperatorType.SUBSCRIPT
                             and list(dag.successors(ancestor))[0].operator_info.operator != OperatorType.SUBSCRIPT]
-        sorted_ancestor_matches = sorted(ancestor_matches, key=lambda dag_node: dag_node.node_id)
+        sorted_ancestor_matches = sorted(ancestor_matches, key=lambda dag_node: dag_node.node_id, reverse=True)
         first_op_requiring_corruption = sorted_ancestor_matches[0]
     return first_op_requiring_corruption
 

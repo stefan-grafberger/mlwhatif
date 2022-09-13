@@ -1,6 +1,6 @@
 #!/bin/bash
 # PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python is required on our Azure machine due to some dependency issues
-for scenario in "data_corruption"
+for scenario in "data_corruption" "feature_importance" "data_cleaning" "data_cleaning" "operator_impact"
 do
   for dataset in "reviews"
   do
