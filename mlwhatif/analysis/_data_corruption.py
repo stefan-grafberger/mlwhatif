@@ -33,7 +33,8 @@ class CorruptionType(Enum):
 
 
 CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES = {
-    CorruptionType.CATEGORICAL_SHIFT: lambda pandas_df, column: CategoricalShift('education', 1.).transform(pandas_df),
+    CorruptionType.CATEGORICAL_SHIFT:
+        lambda pandas_df, column: CategoricalShift(column=column, fraction=1.).transform(pandas_df),
     CorruptionType.MISSING_VALUES: lambda pandas_df, column: Scaling(column=column, fraction=1.).transform(pandas_df),
     CorruptionType.BROKEN_CHARACTERS:
         lambda pandas_df, column: BrokenCharacters(column=column, fraction=1.).transform(pandas_df),

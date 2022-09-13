@@ -20,7 +20,8 @@ from mlwhatif.utils import get_project_root
 def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
     analysis = None
     if scenario_name == 'data_corruption' and dataset_name == 'reviews':
-        analysis = DataCorruption({'text': CorruptionType.BROKEN_CHARACTERS,
+        analysis = DataCorruption({
+                                   # 'text': CorruptionType.BROKEN_CHARACTERS,
                                    'category': CorruptionType.CATEGORICAL_SHIFT,
                                    'total_votes': CorruptionType.SCALING,
                                    'star_rating': CorruptionType.GAUSSIAN_NOISE})

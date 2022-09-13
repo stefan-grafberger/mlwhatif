@@ -221,7 +221,9 @@ class DataFramePatching:
                     original(pandas_df, args[0], new_val, *args[2:], **kwargs)
                     return pandas_df
             else:
-                processing_func = lambda df: original(df, *args, **kwargs)
+                def processing_func(pandas_df):
+                    original(pandas_df, *args, **kwargs)
+                    return pandas_df
             if isinstance(args[0], str):
                 initial_func = partial(original, self, *args, **kwargs)
                 optimizer_info, result = capture_optimizer_info(initial_func, self)
@@ -559,6 +561,40 @@ class SeriesPatching:
             return new_result
 
         return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
+
+    @gorilla.name('fillna')
+    @gorilla.settings(allow_hit=True)
+    def patched_fillna(self, value=None, method=None, axis=None, inplace=False, limit=None, downcast=None):
+        """ Patch for ('pandas.core.series', 'fillna') """
+        # pylint: disable=too-many-locals
+        original = gorilla.get_original_attribute(pandas.Series, 'fillna')
+        func_args = {'value': value, 'method': method, 'axis': axis, 'inplace': inplace, 'limit': limit,
+                     'downcast': downcast}
+
+        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            function_info = FunctionInfo('pandas.core.series', 'fillna')
+            input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
+                                        optional_source_code)
+            operator_context = OperatorContext(OperatorType.PROJECTION_MODIFY, function_info)
+            description = f"fillna: {value}"
+            columns = [self.name]  # pylint: disable=no-member
+            processing_func = lambda df: original(df, **func_args)
+            initial_func = partial(original, input_info.annotated_dfobject.result_data, **func_args)
+            optimizer_info, result = capture_optimizer_info(initial_func)
+            dag_node = DagNode(op_id,
+                               BasicCodeLocation(caller_filename, lineno),
+                               operator_context,
+                               DagNodeDetails(description, columns, optimizer_info),
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
+            function_call_result = FunctionCallResult(result)
+            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            new_result = function_call_result.function_result
+
+            return new_result
+
+        return execute_patched_func(original, execute_inspections, self, **func_args)
 
     @gorilla.name('isin')
     @gorilla.settings(allow_hit=True)

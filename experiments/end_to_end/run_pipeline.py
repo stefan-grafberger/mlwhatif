@@ -41,14 +41,14 @@ def get_dataset(dataset_name, data_loading_name, seed):
             start_date = fake.date_between(start_date=datetime.date(year=2011, month=1, day=1),
                                            end_date=datetime.date(year=2013, month=6, day=1))
 
-            reviews = reviews[reviews.review_date >= start_date.strftime('%Y-%m-%d')]
+            reviews = reviews[reviews['review_date'] >= start_date.strftime('%Y-%m-%d')]
 
             reviews_with_ratings = reviews.merge(ratings, on='review_id')
             products_with_categories = products.merge(left_on='category_id', right_on='id', right=categories)
 
             random_categories = random_subset(list(categories.category))
             products_with_categories = products_with_categories[
-                products_with_categories.category.isin(random_categories)]
+                products_with_categories['category'].isin(random_categories)]
 
             reviews_with_products_and_ratings = reviews_with_ratings.merge(products_with_categories, on='product_id')
 
@@ -80,10 +80,10 @@ def get_dataset(dataset_name, data_loading_name, seed):
             split_date = fake.date_between(start_date=datetime.date(year=2013, month=12, day=1),
                                            end_date=datetime.date(year=2015, month=1, day=1))
 
-            train_data = projected_reviews[projected_reviews.review_date <= split_date.strftime('%Y-%m-%d')]
+            train_data = projected_reviews[projected_reviews['review_date'] <= split_date.strftime('%Y-%m-%d')]
             train_labels = label_binarize(train_data['is_helpful'], classes=[True, False]).ravel()
 
-            test_data = projected_reviews[projected_reviews.review_date > split_date.strftime('%Y-%m-%d')]
+            test_data = projected_reviews[projected_reviews['review_date'] > split_date.strftime('%Y-%m-%d')]
             test_labels = label_binarize(test_data['is_helpful'], classes=[True, False]).ravel()
 
             return train_data, train_labels, test_data, test_labels
