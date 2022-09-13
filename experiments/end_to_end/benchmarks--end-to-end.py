@@ -20,8 +20,7 @@ from mlwhatif.utils import get_project_root
 def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
     analysis = None
     if scenario_name == 'data_corruption' and dataset_name == 'reviews':
-        analysis = DataCorruption({
-                                   # 'text': CorruptionType.BROKEN_CHARACTERS,
+        analysis = DataCorruption({'review_headline': CorruptionType.BROKEN_CHARACTERS,
                                    'category': CorruptionType.CATEGORICAL_SHIFT,
                                    'total_votes': CorruptionType.SCALING,
                                    'star_rating': CorruptionType.GAUSSIAN_NOISE})
@@ -121,7 +120,10 @@ if __name__ == "__main__":
                                   'dataset': result_df_dataset,
                                   'data_loading': result_df_data_loading,
                                   'featurization': result_df_featurization,
-                                  'model': result_df_model})
+                                  'model': result_df_model,
+                                  'exec_duration_with_opt': result_df_total_exec_opt,
+                                  'exec_duration_without_opt': result_df_total_exec_no_opt,
+                                  })
     result_df_path = os.path.join(output_directory, f"results-{scenario_name}-"
                                                     f"{dataset_name}-{data_loading_name}-"
                                                     f"{featurization_name}-{model_name}.csv")
