@@ -1,4 +1,5 @@
 import datetime
+import os
 import random
 import sys
 
@@ -12,6 +13,10 @@ from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.preprocessing import label_binarize
+
+from mlwhatif.utils import get_project_root
+
+data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets")
 
 
 def get_dataset(dataset_name, data_loading_name, seed):
@@ -30,10 +35,10 @@ def get_dataset(dataset_name, data_loading_name, seed):
             return [str(item) for item in choice]
 
         def load_data():
-            reviews = pd.read_csv('datasets/reviews/reviews.csv.gz', compression='gzip', index_col=0)
-            ratings = pd.read_csv('datasets/reviews/ratings.csv', index_col=0)
-            products = pd.read_csv('datasets/reviews/products.csv', index_col=0)
-            categories = pd.read_csv('datasets/reviews/categories.csv', index_col=0)
+            reviews = pd.read_csv(os.path.join(data_root, "reviews", "reviews.csv.gz"), compression='gzip', index_col=0)
+            ratings = pd.read_csv(os.path.join(data_root, "reviews", "ratings.csv"), index_col=0)
+            products = pd.read_csv(os.path.join(data_root, "reviews", "products.csv"), index_col=0)
+            categories = pd.read_csv(os.path.join(data_root, "reviews", "categories.csv"), index_col=0)
 
             return reviews, ratings, products, categories
 
@@ -55,41 +60,35 @@ def get_dataset(dataset_name, data_loading_name, seed):
             return reviews_with_products_and_ratings
 
         def compute_feature_and_label_data(reviews_with_products_and_ratings, final_columns, fake):
+            reviews_with_products_and_ratings['product_title'] = \
+                reviews_with_products_and_ratings['product_title'].fillna(value='')
+
+            reviews_with_products_and_ratings['review_headline'] = \
+                reviews_with_products_and_ratings['review_headline'].fillna(value='')
+
+            reviews_with_products_and_ratings['review_body'] = \
+                reviews_with_products_and_ratings['review_body'].fillna(value='')
+
             num_text_columns = np.random.randint(low=1, high=4)
             random_text_columns = np.random.choice(['product_title', 'review_headline', 'review_body'],
                                                    size=num_text_columns, replace=False)
+            reviews_with_products_and_ratings['text'] = ' '
+            for text_column in random_text_columns:
+                reviews_with_products_and_ratings['text'] = reviews_with_products_and_ratings['text'] + ' ' \
+                                                            + reviews_with_products_and_ratings[text_column]
 
             reviews_with_products_and_ratings['is_helpful'] = reviews_with_products_and_ratings['helpful_votes'] > 0
+
+            projected_reviews = reviews_with_products_and_ratings[final_columns]
 
             split_date = fake.date_between(start_date=datetime.date(year=2013, month=12, day=1),
                                            end_date=datetime.date(year=2015, month=1, day=1))
 
-            train_data = reviews_with_products_and_ratings[reviews_with_products_and_ratings['review_date']
-                                                           <= split_date.strftime('%Y-%m-%d')]
+            train_data = projected_reviews[projected_reviews['review_date'] <= split_date.strftime('%Y-%m-%d')]
             train_labels = label_binarize(train_data['is_helpful'], classes=[True, False]).ravel()
 
-            test_data = reviews_with_products_and_ratings[reviews_with_products_and_ratings['review_date']
-                                                          > split_date.strftime('%Y-%m-%d')]
+            test_data = projected_reviews[projected_reviews['review_date'] > split_date.strftime('%Y-%m-%d')]
             test_labels = label_binarize(test_data['is_helpful'], classes=[True, False]).ravel()
-
-            train_data['product_title'] = train_data['product_title'].fillna(value='')
-            train_data['review_headline'] = train_data['review_headline'].fillna(value='')
-            train_data['review_body'] = train_data['review_body'].fillna(value='')
-
-            test_data['product_title'] = test_data['product_title'].fillna(value='')
-            test_data['review_headline'] = test_data['review_headline'].fillna(value='')
-            test_data['review_body'] = test_data['review_body'].fillna(value='')
-
-            train_data['text'] = ' '
-            for text_column in random_text_columns:
-                train_data['text'] = train_data['text'] + ' ' + train_data[text_column]
-
-            test_data['text'] = ' '
-            for text_column in random_text_columns:
-                test_data['text'] = test_data['text'] + ' ' + test_data[text_column]
-
-            train_data = train_data[final_columns]
-            test_data = test_data[final_columns]
 
             return train_data, train_labels, test_data, test_labels
 

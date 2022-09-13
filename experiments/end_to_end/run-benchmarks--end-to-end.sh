@@ -8,9 +8,9 @@ do
     do
       for featization in "fast"
       do
-        for model in "logistinc_regression"
+        for model in "logistic_regression"
         do
-          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks--end-to-end.py "$scenario" "$dataset" "$data_loading" "$featization" "$model"
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py "$scenario" "$dataset" "$data_loading" "$featization" "$model"
         done
       done
     done

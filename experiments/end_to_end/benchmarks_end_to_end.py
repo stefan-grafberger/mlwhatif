@@ -11,7 +11,7 @@ import numpy
 import pandas
 
 from example_pipelines.healthcare import custom_monkeypatching
-from mlwhatif import PipelineAnalyzer, AnalysisResults
+from mlwhatif import PipelineAnalyzer
 # Make sure this code is not executed during imports
 from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
 from mlwhatif.utils import get_project_root
@@ -20,7 +20,7 @@ from mlwhatif.utils import get_project_root
 def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
     analysis = None
     if scenario_name == 'data_corruption' and dataset_name == 'reviews':
-        analysis = DataCorruption({'review_headline': CorruptionType.BROKEN_CHARACTERS,
+        analysis = DataCorruption({'vine': CorruptionType.BROKEN_CHARACTERS,
                                    'category': CorruptionType.CATEGORICAL_SHIFT,
                                    'total_votes': CorruptionType.SCALING,
                                    'star_rating': CorruptionType.GAUSSIAN_NOISE})

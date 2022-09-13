@@ -31,13 +31,21 @@ class CorruptionType(Enum):
     GAUSSIAN_NOISE = "gaussian noise"
     SCALING = "scaling"
 
+def corrupt_broken_characters(pandas_df, column):
+    if isinstance(pandas_df, pandas.DataFrame):
+        result = BrokenCharacters(column=column, fraction=1.).transform(pandas_df)
+    else:
+        pandas_df = pandas.DataFrame(pandas_df)
+        result = BrokenCharacters(column=column, fraction=1.).transform(pandas_df)
+        result = result[column]
+    return result
+
 
 CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES = {
     CorruptionType.CATEGORICAL_SHIFT:
         lambda pandas_df, column: CategoricalShift(column=column, fraction=1.).transform(pandas_df),
     CorruptionType.MISSING_VALUES: lambda pandas_df, column: Scaling(column=column, fraction=1.).transform(pandas_df),
-    CorruptionType.BROKEN_CHARACTERS:
-        lambda pandas_df, column: BrokenCharacters(column=column, fraction=1.).transform(pandas_df),
+    CorruptionType.BROKEN_CHARACTERS: corrupt_broken_characters,
     CorruptionType.GAUSSIAN_NOISE:
         lambda pandas_df, column: GaussianNoise(column=column, fraction=1.).transform(pandas_df),
     CorruptionType.SCALING: lambda pandas_df, column: Scaling(column=column, fraction=1.).transform(pandas_df)
