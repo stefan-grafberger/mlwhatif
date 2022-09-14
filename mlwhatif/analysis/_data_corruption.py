@@ -160,11 +160,18 @@ class DataCorruption(WhatIfAnalysis):
             return indexes_to_corrupt
 
         def corrupt_df(pandas_df, corruption_index_selection_func, corruption_function, column):
+            if isinstance(pandas_df, pandas.Series):
+                pandas_df = pandas.DataFrame(pandas_df)
+                was_series = True
+            else:
+                was_series = False
             indexes_to_corrupt = corruption_index_selection_func(pandas_df)
             return_df = pandas_df.copy()
             corrupted_df = return_df.loc[indexes_to_corrupt, :]
             completely_corrupted_df = corruption_function(corrupted_df)
             return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df[column]
+            if was_series is True:
+                return_df = return_df[column]
             return return_df
 
         # We need to use partial here to avoid problems with late bindings, see

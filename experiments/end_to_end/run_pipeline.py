@@ -8,37 +8,47 @@ import pandas as pd
 from faker import Faker
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.preprocessing import label_binarize
+from tensorflow.keras.layers import Dense  # pylint: disable=no-name-in-module
+from tensorflow.keras.models import Sequential  # pylint: disable=no-name-in-module
+from tensorflow.python.keras.optimizer_v2.gradient_descent import SGD  # pylint: disable=no-name-in-module
+from xgboost import XGBClassifier
 
+from example_pipelines.healthcare.healthcare_utils import MyKerasClassifier
 from mlwhatif.utils import get_project_root
 
 data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets")
 
 
 def get_dataset(dataset_name, data_loading_name, seed):
-    numerical_columns = []
-    categorical_columns = []
-    text_columns = []
-    train = None
-    train_labels = None
-    test = None
-    test_labels = None
-
-    if dataset_name == 'reviews' and data_loading_name == 'fast':
+    if dataset_name == 'reviews':
         def random_subset(arr):
             size = np.random.randint(low=1, high=len(arr) + 1)
             choice = np.random.choice(arr, size=size, replace=False)
             return [str(item) for item in choice]
 
         def load_data():
-            reviews = pd.read_csv(os.path.join(data_root, "reviews", "reviews.csv.gz"), compression='gzip', index_col=0)
-            ratings = pd.read_csv(os.path.join(data_root, "reviews", "ratings.csv"), index_col=0)
-            products = pd.read_csv(os.path.join(data_root, "reviews", "products.csv"), index_col=0)
-            categories = pd.read_csv(os.path.join(data_root, "reviews", "categories.csv"), index_col=0)
+            if data_loading_name == 'fast_loading':
+                reviews = pd.read_csv(os.path.join(data_root, "reviews", "reviews.csv.gz"), compression='gzip',
+                                      index_col=0)
+                ratings = pd.read_csv(os.path.join(data_root, "reviews", "ratings.csv"), index_col=0)
+                products = pd.read_csv(os.path.join(data_root, "reviews", "products.csv"), index_col=0)
+                categories = pd.read_csv(os.path.join(data_root, "reviews", "categories.csv"), index_col=0)
+            elif data_loading_name == 'slow_loading':
+                reviews = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                      "main/datasets/reviews/reviews.csv.gz", compression='gzip', index_col=0)
+                ratings = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                      "main/datasets/reviews/ratings.csv", index_col=0)
+                products = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                       "main/datasets/reviews/products.csv", index_col=0)
+                categories = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                         "main/datasets/reviews/categories.csv", index_col=0)
+            else:
+                raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
 
             return reviews, ratings, products, categories
 
@@ -60,23 +70,6 @@ def get_dataset(dataset_name, data_loading_name, seed):
             return reviews_with_products_and_ratings
 
         def compute_feature_and_label_data(reviews_with_products_and_ratings, final_columns, fake):
-            reviews_with_products_and_ratings['product_title'] = \
-                reviews_with_products_and_ratings['product_title'].fillna(value='')
-
-            reviews_with_products_and_ratings['review_headline'] = \
-                reviews_with_products_and_ratings['review_headline'].fillna(value='')
-
-            reviews_with_products_and_ratings['review_body'] = \
-                reviews_with_products_and_ratings['review_body'].fillna(value='')
-
-            num_text_columns = np.random.randint(low=1, high=4)
-            random_text_columns = np.random.choice(['product_title', 'review_headline', 'review_body'],
-                                                   size=num_text_columns, replace=False)
-            reviews_with_products_and_ratings['text'] = ' '
-            for text_column in random_text_columns:
-                reviews_with_products_and_ratings['text'] = reviews_with_products_and_ratings['text'] + ' ' \
-                                                            + reviews_with_products_and_ratings[text_column]
-
             reviews_with_products_and_ratings['is_helpful'] = reviews_with_products_and_ratings['helpful_votes'] > 0
 
             projected_reviews = reviews_with_products_and_ratings[final_columns]
@@ -94,8 +87,8 @@ def get_dataset(dataset_name, data_loading_name, seed):
 
         numerical_columns = ['total_votes', 'star_rating']
         categorical_columns = ['vine', 'category']
-        text_columns = ["text"]
-        final_columns = numerical_columns + categorical_columns + ['text', 'is_helpful', 'review_date']
+        text_columns = ["review_body"]
+        final_columns = numerical_columns + categorical_columns + text_columns + ['is_helpful', 'review_date']
 
         reviews, ratings, products, categories = load_data()
 
@@ -104,14 +97,12 @@ def get_dataset(dataset_name, data_loading_name, seed):
         integrated_data = integrate_data(reviews, ratings, products, categories, fake)
         train, train_labels, test, test_labels = compute_feature_and_label_data(integrated_data, final_columns, fake)
     else:
-        raise ValueError(f"Invalid dataset or data loading speed: {dataset_name} {data_loading_name}!")
+        raise ValueError(f"Invalid dataset: {dataset_name}!")
 
     return train, train_labels, test, test_labels, numerical_columns, categorical_columns, text_columns
 
 
 def get_featurization(featurization_name, numerical_columns, categorical_columns, text_columns):
-    featurization = None
-
     if featurization_name == 'fast':
         assert len(text_columns) == 1
         transformers = [('num', StandardScaler(), numerical_columns),
@@ -127,10 +118,21 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
 
 
 def get_model(model_name):
-    model = None
-
     if model_name == 'logistic_regression':
-        model = LogisticRegression()  # fix solver? solver='saga'
+        model = SGDClassifier(loss='log')
+    elif model_name == 'xgboost':
+        model = XGBClassifier(max_depth=12, tree_method='hist')
+    elif model_name == 'neural_network':
+        def create_model(input_dim=10):
+            """Create a simple neural network"""
+            clf = Sequential()
+            clf.add(Dense(16, kernel_initializer='normal', activation='relu', input_dim=input_dim))
+            clf.add(Dense(8, kernel_initializer='normal', activation='relu'))
+            clf.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
+            clf.compile(loss='binary_crossentropy', optimizer=SGD(), metrics=["accuracy"])
+            return clf
+
+        model = MyKerasClassifier(build_fn=create_model, epochs=7, batch_size=32, verbose=0)
     else:
         raise ValueError(f"Invalid model name: {model_name}!")
 
