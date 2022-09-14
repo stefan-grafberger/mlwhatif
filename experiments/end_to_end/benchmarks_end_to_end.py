@@ -74,11 +74,11 @@ if __name__ == "__main__":
         os.makedirs(output_directory)
 
     with patch.object(sys, 'argv', synthetic_cmd_args):
-        analysis_result = PipelineAnalyzer \
+        _ = PipelineAnalyzer \
             .on_pipeline_from_py_file(pipeline_run_file) \
             .add_custom_monkey_patching_modules([custom_monkeypatching]) \
             .execute()
-        analysis_result.save_original_dag_to_path(os.path.join(output_directory, "test"))
+        # analysis_result.save_original_dag_to_path(os.path.join(output_directory, "test"))
         # FIXME: Remove this later
 
     result_df_repetitions = []
@@ -89,13 +89,26 @@ if __name__ == "__main__":
     result_df_model = []
     result_df_total_exec_opt = []
     result_df_total_exec_no_opt = []
+    result_df_variant_counts = []
+
+    result_df_opt_what_if_optimized_estimated = []
+    result_df_opt_what_if_unoptimized_estimated = []
+    result_df_opt_what_if_optimization_saving_estimated = []
+    result_df_opt_original_pipeline_estimated = []
+    result_df_opt_original_pipeline_importing_and_monkeypatching = []
+    result_df_opt_original_pipeline_without_importing_and_monkeypatching = []
+    result_df_opt_what_if_plan_generation = []
+    result_df_opt_what_if_query_optimization_duration = []
+    result_df_opt_what_if_execution = []
+    result_df_no_opt_what_if_plan_generation = []
+    result_df_no_opt_what_if_query_optimization_duration = []
+    result_df_no_opt_what_if_execution = []
+
     for repetition, seed in enumerate(seeds):
         numpy.random.seed(seed)
         random.seed(seed)
         print(f'# Optimization benchmark for {scenario_name} with args [{sys.argv[2:]}] '
               f'-- repetition {repetition + 1} of {num_repetitions}')
-
-        # FIXME: We still need to get the what-if analyses and specify it
 
         total_opt_exec_start = time.time()
         with patch.object(sys, 'argv', synthetic_cmd_args):
@@ -125,6 +138,26 @@ if __name__ == "__main__":
         result_df_model.append(model_name)
         result_df_total_exec_opt.append(total_opt_exec_duration)
         result_df_total_exec_no_opt.append(total_no_opt_exec_duration)
+        result_df_variant_counts.append(len(analysis_result_no_opt.what_if_dags))
+
+        result_df_opt_what_if_optimized_estimated.append(analysis_result_opt.runtime_info.what_if_optimized_estimated)
+        result_df_opt_what_if_unoptimized_estimated.append(
+            analysis_result_opt.runtime_info.what_if_unoptimized_estimated)
+        result_df_opt_what_if_optimization_saving_estimated.append(
+            analysis_result_opt.runtime_info.what_if_optimization_saving_estimated)
+        result_df_opt_original_pipeline_estimated.append(analysis_result_opt.runtime_info.original_pipeline_estimated)
+        result_df_opt_original_pipeline_importing_and_monkeypatching.append(
+            analysis_result_opt.runtime_info.original_pipeline_importing_and_monkeypatching)
+        result_df_opt_original_pipeline_without_importing_and_monkeypatching.append(
+            analysis_result_opt.runtime_info.original_pipeline_without_importing_and_monkeypatching)
+        result_df_opt_what_if_plan_generation.append(analysis_result_opt.runtime_info.what_if_plan_generation)
+        result_df_opt_what_if_query_optimization_duration.append(
+            analysis_result_opt.runtime_info.what_if_query_optimization_duration)
+        result_df_opt_what_if_execution.append(analysis_result_opt.runtime_info.what_if_execution)
+        result_df_no_opt_what_if_plan_generation.append(analysis_result_no_opt.runtime_info.what_if_plan_generation)
+        result_df_no_opt_what_if_query_optimization_duration.append(
+            analysis_result_no_opt.runtime_info.what_if_query_optimization_duration)
+        result_df_no_opt_what_if_execution.append(analysis_result_no_opt.runtime_info.what_if_execution)
 
         print(f'# Finished -- repetition {repetition + 1} of {num_repetitions} ')
         # print(results_dict_items)
@@ -135,8 +168,27 @@ if __name__ == "__main__":
                                   'data_loading': result_df_data_loading,
                                   'featurization': result_df_featurization,
                                   'model': result_df_model,
-                                  'exec_duration_with_opt': result_df_total_exec_opt,
-                                  'exec_duration_without_opt': result_df_total_exec_no_opt,
+                                  'variant_count': result_df_variant_counts,
+                                  'total_exec_duration_with_opt': result_df_total_exec_opt,
+                                  'total_exec_duration_without_opt': result_df_total_exec_no_opt,
+                                  'opt_what_if_optimized_estimated':
+                                      result_df_opt_what_if_optimized_estimated,
+                                  'opt_what_if_unoptimized_estimated': result_df_opt_what_if_unoptimized_estimated,
+                                  'opt_what_if_optimization_saving_estimated':
+                                      result_df_opt_what_if_optimization_saving_estimated,
+                                  'opt_original_pipeline_estimated': result_df_opt_original_pipeline_estimated,
+                                  'opt_original_pipeline_importing_and_monkeypatching':
+                                      result_df_opt_original_pipeline_importing_and_monkeypatching,
+                                  'opt_original_pipeline_without_importing_and_monkeypatching':
+                                      result_df_opt_original_pipeline_without_importing_and_monkeypatching,
+                                  'opt_what_if_plan_generation': result_df_opt_what_if_plan_generation,
+                                  'opt_what_if_query_optimization_duration':
+                                      result_df_opt_what_if_query_optimization_duration,
+                                  'opt_what_if_execution': result_df_opt_what_if_execution,
+                                  'no_opt_what_if_plan_generation': result_df_no_opt_what_if_plan_generation,
+                                  'no_opt_what_if_query_optimization_duration':
+                                      result_df_no_opt_what_if_query_optimization_duration,
+                                  'no_opt_what_if_execution': result_df_no_opt_what_if_execution
                                   })
     result_df_path = os.path.join(output_directory, f"results-{scenario_name}-"
                                                     f"{dataset_name}-{data_loading_name}-"
