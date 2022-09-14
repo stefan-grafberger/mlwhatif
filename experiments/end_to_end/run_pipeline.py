@@ -1,24 +1,28 @@
 import datetime
 import os
 import random
+import re
+import string
 import sys
 
 import numpy as np
 import pandas as pd
 from faker import Faker
 from sklearn.compose import ColumnTransformer
-from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.feature_extraction.text import HashingVectorizer, CountVectorizer, TfidfTransformer
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransformer, RobustScaler
 from sklearn.preprocessing import label_binarize
 from tensorflow.keras.layers import Dense  # pylint: disable=no-name-in-module
 from tensorflow.keras.models import Sequential  # pylint: disable=no-name-in-module
 from tensorflow.python.keras.optimizer_v2.gradient_descent import SGD  # pylint: disable=no-name-in-module
 from xgboost import XGBClassifier
 
-from example_pipelines.healthcare.healthcare_utils import MyKerasClassifier
+from example_pipelines.healthcare.healthcare_utils import MyKerasClassifier, MyW2VTransformer
 from mlwhatif.utils import get_project_root
 
 data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets")
@@ -103,12 +107,96 @@ def get_dataset(dataset_name, data_loading_name, seed):
 
 
 def get_featurization(featurization_name, numerical_columns, categorical_columns, text_columns):
-    if featurization_name == 'fast':
+    if featurization_name == 'featurization_0':  # num preprocessing based on dspipes num_pipe_0
         assert len(text_columns) == 1
-        transformers = [('num', StandardScaler(), numerical_columns),
+
+        def identity(x):
+            return x
+
+        transformers = [('num', FunctionTransformer(identity), numerical_columns),
                         ('text', HashingVectorizer(n_features=2 ** 4), text_columns[0])]
         for cat_column in categorical_columns:
             transformers.append((f"cat_{cat_column}", OneHotEncoder(handle_unknown='ignore'), [cat_column]))
+
+        featurization = ColumnTransformer(transformers)
+    elif featurization_name == 'featurization_1':  # based on openml_id == '5055' and openml_id == '17322'
+        assert len(text_columns) == 1
+
+        transformers = [('num', RobustScaler(), numerical_columns),
+                        ('text', HashingVectorizer(n_features=2 ** 4), text_columns[0])]
+        for cat_column in categorical_columns:
+
+            def another_imputer(df_with_categorical_columns):
+                return df_with_categorical_columns.fillna('__missing__')
+
+            cat_pipe = Pipeline([('anothersimpleimputer', FunctionTransformer(another_imputer)),
+                                 ('onehotencoder', OneHotEncoder(handle_unknown='ignore'))])
+
+            transformers.append((f"cat_{cat_column}", cat_pipe, [cat_column]))
+
+        featurization = ColumnTransformer(transformers)
+    elif featurization_name == 'featurization_2':  # based on openml_id == '8774' and dspipes mode == 'txt_pipe_0'
+        num_pipe = Pipeline([('imputer', SimpleImputer(add_indicator=True)),
+                             ('standardscaler', StandardScaler())])
+        assert len(text_columns) == 1
+
+        text_pipe = Pipeline([('vect', CountVectorizer()),
+                              ('tfidf', TfidfTransformer())])
+        transformers = [('num', num_pipe, numerical_columns),
+                        ('text', text_pipe, text_columns[0])]
+        for cat_column in categorical_columns:
+            cat_pipe = Pipeline([('simpleimputer', SimpleImputer(strategy='most_frequent')),
+                                 ('onehotencoder', OneHotEncoder(handle_unknown='ignore'))])
+            transformers.append((f"cat_{cat_column}", cat_pipe, [cat_column]))
+
+        featurization = ColumnTransformer(transformers)
+    elif featurization_name == 'featurization_3':  # based on dspipes 'num_pipe_3' and 'txt_pipe_2'
+        union = FeatureUnion([("pca", PCA(n_components=(len(numerical_columns) - 1))),
+                              ("svd", TruncatedSVD(n_iter=1, n_components=(len(numerical_columns) - 1)))])
+        num_pipe = Pipeline([('union', union), ('scaler', StandardScaler())])
+
+        assert len(text_columns) == 1
+
+        def remove_numbers(text_array):
+            return [str(re.sub(r'\d+', '', text)) for text in text_array]
+
+        def remove_punctuation(text_array):
+            translator = str.maketrans('', '', string.punctuation)
+            return [text.translate(translator) for text in text_array]
+
+        def text_lowercase(text_array):
+            return list(map(lambda x: x.lower(), text_array))
+
+        def remove_urls(text_array):
+            return [str(' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)", " ", text).split()))
+                    for text in text_array]
+
+        text_pipe = Pipeline([('lower_case', FunctionTransformer(text_lowercase)),
+                              ('remove_url', FunctionTransformer(remove_urls)),
+                              ('remove_numbers', FunctionTransformer(remove_numbers)),
+                              ('remove_punctuation', FunctionTransformer(remove_punctuation)),
+                              ('vect', CountVectorizer()), ('tfidf', TfidfTransformer())])
+        transformers = [('num', num_pipe, numerical_columns),
+                        ('text', text_pipe, text_columns[0])]
+        for cat_column in categorical_columns:
+            transformers.append((f"cat_{cat_column}", OneHotEncoder(handle_unknown='ignore'), [cat_column]))
+
+        featurization = ColumnTransformer(transformers)
+    elif featurization_name == 'featurization_4':  # based on mlinspect healthcare pipeline and openml_id == '17322'
+
+        def another_imputer(df_with_categorical_columns):
+            return df_with_categorical_columns.fillna('__missing__')
+
+        num_pipe = Pipeline([('imputer', SimpleImputer()),
+                             ('standardscaler', StandardScaler())])
+
+        assert len(text_columns) == 1
+        transformers = [('num', num_pipe, numerical_columns),
+                        ('text', MyW2VTransformer(min_count=2), text_columns)]
+        for cat_column in categorical_columns:
+            cat_pipe = Pipeline([('anothersimpleimputer', FunctionTransformer(another_imputer)),
+                                 ('onehotencoder', OneHotEncoder())])
+            transformers.append((f"cat_{cat_column}", cat_pipe, [cat_column]))
 
         featurization = ColumnTransformer(transformers)
     else:

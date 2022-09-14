@@ -23,7 +23,7 @@ def test_data_corruption_reviews(tmpdir):
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     analysis = get_analysis_for_scenario_and_dataset(scenario, dataset)
 
-    with patch.object(sys, 'argv', ["mlwhatif", "reviews", "fast_loading", "fast", "logistic_regression"]):
+    with patch.object(sys, 'argv', ["mlwhatif", "reviews", "fast_loading", "featurization_0", "logistic_regression"]):
         analysis_result_no_opt = PipelineAnalyzer \
             .on_pipeline_from_py_file(pipeline_run_file) \
             .add_custom_monkey_patching_modules([custom_monkeypatching]) \
@@ -47,7 +47,7 @@ def test_permutation_feature_importance_reviews(tmpdir):
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     analysis = get_analysis_for_scenario_and_dataset(scenario, dataset)
 
-    with patch.object(sys, 'argv', ["mlwhatif", "reviews", "fast_loading", "fast", "logistic_regression"]):
+    with patch.object(sys, 'argv', ["mlwhatif", "reviews", "fast_loading", "featurization_0", "logistic_regression"]):
         analysis_result_no_opt = PipelineAnalyzer \
             .on_pipeline_from_py_file(pipeline_run_file) \
             .add_custom_monkey_patching_modules([custom_monkeypatching]) \
@@ -71,7 +71,7 @@ def test_data_cleaning_reviews(tmpdir):
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     analysis = get_analysis_for_scenario_and_dataset(scenario, dataset)
 
-    with patch.object(sys, 'argv', ["mlwhatif", "reviews", "fast_loading", "fast", "logistic_regression"]):
+    with patch.object(sys, 'argv', ["mlwhatif", "reviews", "fast_loading", "featurization_0", "logistic_regression"]):
         analysis_result_no_opt = PipelineAnalyzer \
             .on_pipeline_from_py_file(pipeline_run_file) \
             .add_custom_monkey_patching_modules([custom_monkeypatching]) \
@@ -95,7 +95,7 @@ def test_operator_impact_reviews(tmpdir):
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     analysis = get_analysis_for_scenario_and_dataset(scenario, dataset)
 
-    with patch.object(sys, 'argv', ["mlwhatif", "reviews", "fast_loading", "fast", "logistic_regression"]):
+    with patch.object(sys, 'argv', ["mlwhatif", "reviews", "fast_loading", "featurization_0", "logistic_regression"]):
         analysis_result_no_opt = PipelineAnalyzer \
             .on_pipeline_from_py_file(pipeline_run_file) \
             .add_custom_monkey_patching_modules([custom_monkeypatching]) \

@@ -6,7 +6,7 @@ do
   do
     for data_loading in "fast_loading" "slow_loading"
     do
-      for featurization in "fast"
+      for featurization in "featurization_0" "featurization_1" "featurization_2" "featurization_3" "featurization_4"
       do
         for model in "logistic_regression" "xgboost" "neural_network"
         do
