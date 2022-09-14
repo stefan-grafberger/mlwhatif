@@ -13,22 +13,20 @@ from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.preprocessing import label_binarize
+from sklearn.svm import SVC
+from xgboost import XGBClassifier
+from tensorflow.keras.layers import Dense  # pylint: disable=no-name-in-module
+from tensorflow.keras.models import Sequential  # pylint: disable=no-name-in-module
+from tensorflow.python.keras.optimizer_v2.gradient_descent import SGD  # pylint: disable=no-name-in-module
 
+from example_pipelines.healthcare.healthcare_utils import MyKerasClassifier
 from mlwhatif.utils import get_project_root
 
 data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets")
 
 
 def get_dataset(dataset_name, data_loading_name, seed):
-    numerical_columns = []
-    categorical_columns = []
-    text_columns = []
-    train = None
-    train_labels = None
-    test = None
-    test_labels = None
-
-    if dataset_name == 'reviews' and data_loading_name == 'fast':
+    if dataset_name == 'reviews' and data_loading_name == 'fast_loading':
         def random_subset(arr):
             size = np.random.randint(low=1, high=len(arr) + 1)
             choice = np.random.choice(arr, size=size, replace=False)
@@ -110,8 +108,6 @@ def get_dataset(dataset_name, data_loading_name, seed):
 
 
 def get_featurization(featurization_name, numerical_columns, categorical_columns, text_columns):
-    featurization = None
-
     if featurization_name == 'fast':
         assert len(text_columns) == 1
         transformers = [('num', StandardScaler(), numerical_columns),
@@ -127,10 +123,20 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
 
 
 def get_model(model_name):
-    model = None
-
     if model_name == 'logistic_regression':
         model = LogisticRegression()  # fix solver? solver='saga'
+    elif model_name == 'xgboost':
+        model = XGBClassifier(max_depth=12, tree_method='hist')
+    elif model_name == 'neural_network':
+        def create_model(input_dim=10):
+            """Create a simple neural network"""
+            clf = Sequential()
+            clf.add(Dense(16, kernel_initializer='normal', activation='relu', input_dim=input_dim))
+            clf.add(Dense(8, kernel_initializer='normal', activation='relu'))
+            clf.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
+            clf.compile(loss='binary_crossentropy', optimizer=SGD(), metrics=["accuracy"])
+            return clf
+        model = MyKerasClassifier(build_fn=create_model, epochs=7, batch_size=32, verbose=0)
     else:
         raise ValueError(f"Invalid model name: {model_name}!")
 

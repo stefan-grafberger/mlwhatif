@@ -344,7 +344,7 @@ def test_pca():
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A']),\n"
                                                "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"),
-                              Comparison(FunctionType)                              )
+                              Comparison(FunctionType))
     expected_transformer = DagNode(6,
                                    BasicCodeLocation("<string-source>", 14),
                                    OperatorContext(OperatorType.TRANSFORMER,
@@ -376,13 +376,13 @@ def test_pca():
     transform_node = list(inspector_result.original_dag.nodes)[2]
     pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2], 'B': [5, 1, 100, 2]})
     fit_transformed_result = fit_transform_node.processing_func(pandas_df)
-    expected_fit_transform_data = numpy.array([[-3.11126984e+01,  1.17350380e-14], [-3.67695526e+01, -2.15521568e-15],
-                                               [ 1.03237590e+02,  1.99309735e-15], [-3.53553391e+01, -2.26556491e-15]])
+    expected_fit_transform_data = numpy.array([[-3.11126984e+01, 1.17350380e-14], [-3.67695526e+01, -2.15521568e-15],
+                                               [1.03237590e+02, 1.99309735e-15], [-3.53553391e+01, -2.26556491e-15]])
     assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
 
     test_df = pandas.DataFrame({'A': [50, 2, 10, 1], 'B': [50, 2, 10, 1]})
     encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
-    expected = numpy.array([[ 3.25269119e+01,  4.88498131e-15], [-3.53553391e+01, -5.77315973e-15],
+    expected = numpy.array([[3.25269119e+01, 4.88498131e-15], [-3.53553391e+01, -5.77315973e-15],
                             [-2.40416306e+01, -3.99680289e-15], [-3.67695526e+01, -4.44089210e-15]])
     assert numpy.allclose(encoded_data, expected)
 
@@ -3744,32 +3744,30 @@ def test_svc():
     expected_train_data = DagNode(5,
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.TRAIN_DATA,
-                                                  FunctionInfo('xgboost.sklearn', 'XGBClassifier')),
+                                                  FunctionInfo('sklearn.svm._classes', 'SVC')),
                                   DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
                                                                                 RangeComparison(0, 800))),
-                                  OptionalCodeInfo(CodeReference(11, 6, 11, 53),
-                                                   "XGBClassifier(max_depth=12, tree_method='hist')"),
+                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'SVC(random_state=42)'),
                                   Comparison(FunctionType))
     expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
     expected_train_labels = DagNode(6,
                                     BasicCodeLocation("<string-source>", 11),
                                     OperatorContext(OperatorType.TRAIN_LABELS,
-                                                    FunctionInfo('xgboost.sklearn', 'XGBClassifier')),
+                                                    FunctionInfo('sklearn.svm._classes', 'SVC')),
                                     DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
                                                                                   RangeComparison(0, 800))),
-                                    OptionalCodeInfo(CodeReference(11, 6, 11, 53),
-                                                     "XGBClassifier(max_depth=12, tree_method='hist')"),
+                                    OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'SVC(random_state=42)'),
                                     Comparison(FunctionType))
     expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
     expected_decision_tree = DagNode(7,
                                      BasicCodeLocation("<string-source>", 11),
                                      OperatorContext(OperatorType.ESTIMATOR,
-                                                     FunctionInfo('xgboost.sklearn', 'XGBClassifier')),
-                                     DagNodeDetails('XGB Classifier', [],
+                                                     FunctionInfo('sklearn.svm._classes', 'SVC')),
+                                     DagNodeDetails('SVC', [],
                                                     OptimizerInfo(RangeComparison(0, 1000), None,
                                                                   RangeComparison(0, 10000))),
-                                     OptionalCodeInfo(CodeReference(11, 6, 11, 53),
-                                                      "XGBClassifier(max_depth=12, tree_method='hist')"),
+                                     OptionalCodeInfo(CodeReference(11, 6, 11, 26),
+                                                      'SVC(random_state=42)'),
                                      Comparison(FunctionType),
                                      Comparison(partial))
     expected_dag.add_edge(expected_train_data, expected_decision_tree, arg_index=0)
@@ -3835,7 +3833,7 @@ def test_svc_score():
     expected_test_data = DagNode(12,
                                  BasicCodeLocation("<string-source>", 16),
                                  OperatorContext(OperatorType.TEST_DATA,
-                                                 FunctionInfo('xgboost.sklearn.XGBClassifier', 'score')),
+                                                 FunctionInfo('sklearn.svm._classes.SVC', 'score')),
                                  DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
                                                                                 RangeComparison(0, 800))),
                                  OptionalCodeInfo(CodeReference(16, 13, 16, 56),
@@ -3855,7 +3853,7 @@ def test_svc_score():
     expected_test_labels = DagNode(13,
                                    BasicCodeLocation("<string-source>", 16),
                                    OperatorContext(OperatorType.TEST_LABELS,
-                                                   FunctionInfo('xgboost.sklearn.XGBClassifier', 'score')),
+                                                   FunctionInfo('sklearn.svm._classes.SVC', 'score')),
                                    DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (2, 1),
                                                                                  RangeComparison(0, 800))),
                                    OptionalCodeInfo(CodeReference(16, 13, 16, 56),
@@ -3865,19 +3863,18 @@ def test_svc_score():
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.ESTIMATOR,
-                                                  FunctionInfo('xgboost.sklearn', 'XGBClassifier')),
-                                  DagNodeDetails('XGB Classifier', [], OptimizerInfo(RangeComparison(0, 1000), None,
-                                                                                     RangeComparison(0, 10000))),
-                                  OptionalCodeInfo(CodeReference(11, 6, 11, 53),
-                                                   "XGBClassifier(max_depth=12, tree_method='hist')"),
+                                                  FunctionInfo('sklearn.svm._classes', 'SVC')),
+                                  DagNodeDetails('SVC', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                          RangeComparison(0, 10000))),
+                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'SVC(random_state=42)'),
                                   Comparison(FunctionType),
                                   Comparison(partial))
     expected_predict = DagNode(14,
                                BasicCodeLocation("<string-source>", 16),
                                OperatorContext(OperatorType.PREDICT,
-                                               FunctionInfo('xgboost.sklearn.XGBClassifier', 'score')),
-                               DagNodeDetails('XGB Classifier', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
-                                                                                  RangeComparison(0, 800))),
+                                               FunctionInfo('sklearn.svm._classes.SVC', 'score')),
+                               DagNodeDetails('SVC', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                       RangeComparison(0, 800))),
                                OptionalCodeInfo(CodeReference(16, 13, 16, 56),
                                                 "clf.score(test_df[['A', 'B']], test_labels)"),
                                Comparison(FunctionType))
@@ -3887,7 +3884,7 @@ def test_svc_score():
     expected_score = DagNode(15,
                              BasicCodeLocation("<string-source>", 16),
                              OperatorContext(OperatorType.SCORE,
-                                             FunctionInfo('xgboost.sklearn.XGBClassifier', 'score')),
+                                             FunctionInfo('sklearn.svm._classes.SVC', 'score')),
                              DagNodeDetails('Accuracy', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
                                                                           RangeComparison(0, 800))),
                              OptionalCodeInfo(CodeReference(16, 13, 16, 56),
@@ -3958,8 +3955,7 @@ def test_svc_predict():
     expected_test_data = DagNode(10,
                                  BasicCodeLocation("<string-source>", 15),
                                  OperatorContext(OperatorType.TEST_DATA,
-                                                 FunctionInfo('xgboost.sklearn.XGBClassifier',
-                                                              'predict')),
+                                                 FunctionInfo('sklearn.svm._classes.SVC', 'predict')),
                                  DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
                                                                                 RangeComparison(0, 800))),
                                  OptionalCodeInfo(CodeReference(15, 14, 15, 46),
@@ -3969,19 +3965,18 @@ def test_svc_predict():
     expected_classifier = DagNode(7,
                                   BasicCodeLocation("<string-source>", 11),
                                   OperatorContext(OperatorType.ESTIMATOR,
-                                                  FunctionInfo('xgboost.sklearn', 'XGBClassifier')),
-                                  DagNodeDetails('XGB Classifier', [], OptimizerInfo(RangeComparison(0, 1000), None,
-                                                                                     RangeComparison(0, 10000))),
-                                  OptionalCodeInfo(CodeReference(11, 6, 11, 53),
-                                                   "XGBClassifier(max_depth=12, tree_method='hist')"),
+                                                  FunctionInfo('sklearn.svm._classes', 'SVC')),
+                                  DagNodeDetails('SVC', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                          RangeComparison(0, 10000))),
+                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'SVC(random_state=42)'),
                                   Comparison(FunctionType),
                                   Comparison(partial))
     expected_predict = DagNode(11,
                                BasicCodeLocation("<string-source>", 15),
                                OperatorContext(OperatorType.PREDICT,
-                                               FunctionInfo('xgboost.sklearn.XGBClassifier', 'predict')),
-                               DagNodeDetails('XGB Classifier', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
-                                                                                  RangeComparison(0, 800))),
+                                               FunctionInfo('sklearn.svm._classes.SVC', 'predict')),
+                               DagNodeDetails('SVC', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                       RangeComparison(0, 800))),
                                OptionalCodeInfo(CodeReference(15, 14, 15, 46),
                                                 "clf.predict(test_df[['A', 'B']])"),
                                Comparison(FunctionType))
