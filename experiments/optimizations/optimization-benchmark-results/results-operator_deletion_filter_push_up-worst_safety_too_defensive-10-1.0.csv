@@ -1,8 +1,8 @@
 repetition,optimization,scenario,variant_counts,scale_factors,original_pipeline,analysis_result_with_opt_rule,analysis_result_without_opt_rule,analysis_result_without_any_opt
-0,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,40.799617767333984,881.6819190979004,857.1619987487793,1210.4864120483398
-1,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,41.155338287353516,874.7725486755371,871.9866275787354,955.0364017486572
-2,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,39.545536041259766,863.0757331848145,859.7149848937988,938.2922649383545
-3,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,39.11113739013672,868.5870170593262,864.588737487793,947.5009441375732
-4,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,40.38429260253906,888.657808303833,885.4148387908936,964.1737937927246
-5,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,40.48299789428711,884.8366737365723,882.9050064086914,957.2858810424805
-6,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,26.354312896728516,742.7146434783936,758.1791877746582,832.7581882476807
+0,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,39.9775505065918,885.7955932617188,864.1173839569092,1090.167760848999
+1,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,40.72117805480957,878.1328201293945,872.1296787261963,946.3298320770264
+2,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,39.438724517822266,858.9434623718262,856.2362194061279,932.5361251831055
+3,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,38.805484771728516,869.1525459289551,871.0932731628418,940.0982856750488
+4,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,39.97159004211426,885.0414752960205,885.3437900543213,960.6473445892334
+5,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,40.00425338745117,880.8627128601074,877.8374195098877,956.0587406158447
+6,operator_deletion_filter_push_up,worst_safety_too_defensive,10,1.0,26.106595993041992,754.5511722564697,765.967845916748,825.7720470428467
