@@ -68,7 +68,8 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
         #  this is not always worth it if the filter computation is expensive.
         do_filter_pushup_until = argmin(costs_with_filter_movement)
         selectivity_and_filters_to_push_up = selectivity_and_filters_to_push_up[:do_filter_pushup_until]
-        selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0])
+        selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0],
+                                                    reverse=True)
         for _, filter_removal_patch in selectivity_and_filters_to_push_up:
             using_columns_for_filter = self._get_columns_required_for_filter_eval(dag, filter_removal_patch)
 
