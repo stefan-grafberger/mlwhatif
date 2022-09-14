@@ -58,23 +58,6 @@ def get_dataset(dataset_name, data_loading_name, seed):
             return reviews_with_products_and_ratings
 
         def compute_feature_and_label_data(reviews_with_products_and_ratings, final_columns, fake):
-            reviews_with_products_and_ratings['product_title'] = \
-                reviews_with_products_and_ratings['product_title'].fillna(value='')
-
-            reviews_with_products_and_ratings['review_headline'] = \
-                reviews_with_products_and_ratings['review_headline'].fillna(value='')
-
-            reviews_with_products_and_ratings['review_body'] = \
-                reviews_with_products_and_ratings['review_body'].fillna(value='')
-
-            num_text_columns = np.random.randint(low=1, high=4)
-            random_text_columns = np.random.choice(['product_title', 'review_headline', 'review_body'],
-                                                   size=num_text_columns, replace=False)
-            reviews_with_products_and_ratings['text'] = ' '
-            for text_column in random_text_columns:
-                reviews_with_products_and_ratings['text'] = reviews_with_products_and_ratings['text'] + ' ' \
-                                                            + reviews_with_products_and_ratings[text_column]
-
             reviews_with_products_and_ratings['is_helpful'] = reviews_with_products_and_ratings['helpful_votes'] > 0
 
             projected_reviews = reviews_with_products_and_ratings[final_columns]
@@ -92,8 +75,8 @@ def get_dataset(dataset_name, data_loading_name, seed):
 
         numerical_columns = ['total_votes', 'star_rating']
         categorical_columns = ['vine', 'category']
-        text_columns = ["text"]
-        final_columns = numerical_columns + categorical_columns + ['text', 'is_helpful', 'review_date']
+        text_columns = ["review_body"]
+        final_columns = numerical_columns + categorical_columns + text_columns + ['is_helpful', 'review_date']
 
         reviews, ratings, products, categories = load_data()
 

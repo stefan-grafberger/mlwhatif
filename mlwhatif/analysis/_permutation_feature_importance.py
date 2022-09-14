@@ -72,8 +72,15 @@ class PermutationFeatureImportance(WhatIfAnalysis):
         """Create the node that applies the permutation"""
 
         def permute_columns(pandas_df, column):
+            if isinstance(pandas_df, pandas.Series):
+                pandas_df = pandas.DataFrame(pandas_df)
+                was_series = True
+            else:
+                was_series = False
             return_df = pandas_df.copy()
             return_df[column] = return_df[column].sample(frac=1.).values
+            if was_series is True:
+                return_df = return_df[column]
             return return_df
 
         # We need to use partial here to avoid problems with late bindings, see

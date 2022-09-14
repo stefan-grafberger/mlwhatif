@@ -22,13 +22,14 @@ from mlwhatif.utils import get_project_root
 def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
     analysis = None
     if scenario_name == 'data_corruption' and dataset_name == 'reviews':
-        analysis = DataCorruption({'vine': CorruptionType.BROKEN_CHARACTERS,
+        analysis = DataCorruption({'vine': CorruptionType.CATEGORICAL_SHIFT,
+                                   'review_body': CorruptionType.BROKEN_CHARACTERS,
                                    'category': CorruptionType.CATEGORICAL_SHIFT,
                                    'total_votes': CorruptionType.SCALING,
                                    'star_rating': CorruptionType.GAUSSIAN_NOISE},
                                   corruption_percentages=[0.2, 0.4, 0.6, 0.8, 1.0])
     elif scenario_name == 'feature_importance' and dataset_name == 'reviews':
-        analysis = PermutationFeatureImportance(['vine', 'category', 'total_votes', 'star_rating'])
+        analysis = PermutationFeatureImportance()
     elif scenario_name == 'data_cleaning' and dataset_name == 'reviews':
         analysis = DataCleaning({'category': ErrorType.CAT_MISSING_VALUES,
                                  'vine': ErrorType.CAT_MISSING_VALUES,

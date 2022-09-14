@@ -7,6 +7,7 @@ from functools import partial
 from typing import List
 
 import networkx
+import pandas
 
 from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, OperatorContext, DagNodeDetails
 from mlwhatif.instrumentation._operator_types import OperatorType
@@ -185,6 +186,8 @@ class UdfSplitAndReuse(QueryOptimizationRule):
         """Create the DAG node that corrupts the whole df at once"""
 
         def corrupt_full_df(pandas_df, corruption_function):
+            if isinstance(pandas_df, pandas.Series):
+                pandas_df = pandas.DataFrame(pandas_df)
             completely_corrupted_df = pandas_df.copy()
             completely_corrupted_df = corruption_function(completely_corrupted_df)
             return completely_corrupted_df
@@ -217,8 +220,15 @@ class UdfSplitAndReuse(QueryOptimizationRule):
         """
 
         def corrupt_df(pandas_df, completely_corrupted_df, indexes_to_corrupt, column):
+            if isinstance(pandas_df, pandas.Series):
+                pandas_df = pandas.DataFrame(pandas_df)
+                was_series = True
+            else:
+                was_series = False
             return_df = pandas_df.copy()
             return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df.loc[indexes_to_corrupt, column]
+            if was_series is True:
+                return_df = return_df[column]
             return return_df
 
         corrupt_df_with_proper_bindings = partial(corrupt_df,
