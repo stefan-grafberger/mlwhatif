@@ -37,7 +37,7 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                  'review_id': ErrorType.DUPLICATES,
                                  None: ErrorType.MISLABEL})
     elif scenario_name == 'operator_impact' and dataset_name == 'reviews':
-        analysis = OperatorImpact(test_selections=True, restrict_to_linenos=[46, 52, 95])
+        analysis = OperatorImpact(test_selections=True)
     else:
         raise ValueError(f"Invalid scenario or dataset: {scenario_name} {dataset_name}!")
     return analysis

@@ -25,17 +25,30 @@ data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "
 
 
 def get_dataset(dataset_name, data_loading_name, seed):
-    if dataset_name == 'reviews' and data_loading_name == 'fast_loading':
+    if dataset_name == 'reviews':
         def random_subset(arr):
             size = np.random.randint(low=1, high=len(arr) + 1)
             choice = np.random.choice(arr, size=size, replace=False)
             return [str(item) for item in choice]
 
         def load_data():
-            reviews = pd.read_csv(os.path.join(data_root, "reviews", "reviews.csv.gz"), compression='gzip', index_col=0)
-            ratings = pd.read_csv(os.path.join(data_root, "reviews", "ratings.csv"), index_col=0)
-            products = pd.read_csv(os.path.join(data_root, "reviews", "products.csv"), index_col=0)
-            categories = pd.read_csv(os.path.join(data_root, "reviews", "categories.csv"), index_col=0)
+            if data_loading_name == 'fast_loading':
+                reviews = pd.read_csv(os.path.join(data_root, "reviews", "reviews.csv.gz"), compression='gzip',
+                                      index_col=0)
+                ratings = pd.read_csv(os.path.join(data_root, "reviews", "ratings.csv"), index_col=0)
+                products = pd.read_csv(os.path.join(data_root, "reviews", "products.csv"), index_col=0)
+                categories = pd.read_csv(os.path.join(data_root, "reviews", "categories.csv"), index_col=0)
+            elif data_loading_name == 'slow_loading':
+                reviews = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                      "main/datasets/reviews/reviews.csv.gz", compression='gzip', index_col=0)
+                ratings = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                      "main/datasets/reviews/ratings.csv", index_col=0)
+                products = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                       "main/datasets/reviews/products.csv", index_col=0)
+                categories = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                         "main/datasets/reviews/categories.csv", index_col=0)
+            else:
+                raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
 
             return reviews, ratings, products, categories
 
@@ -84,7 +97,7 @@ def get_dataset(dataset_name, data_loading_name, seed):
         integrated_data = integrate_data(reviews, ratings, products, categories, fake)
         train, train_labels, test, test_labels = compute_feature_and_label_data(integrated_data, final_columns, fake)
     else:
-        raise ValueError(f"Invalid dataset or data loading speed: {dataset_name} {data_loading_name}!")
+        raise ValueError(f"Invalid dataset: {dataset_name}!")
 
     return train, train_labels, test, test_labels, numerical_columns, categorical_columns, text_columns
 
@@ -118,6 +131,7 @@ def get_model(model_name):
             clf.add(Dense(1, kernel_initializer='normal', activation='sigmoid'))
             clf.compile(loss='binary_crossentropy', optimizer=SGD(), metrics=["accuracy"])
             return clf
+
         model = MyKerasClassifier(build_fn=create_model, epochs=7, batch_size=32, verbose=0)
     else:
         raise ValueError(f"Invalid model name: {model_name}!")

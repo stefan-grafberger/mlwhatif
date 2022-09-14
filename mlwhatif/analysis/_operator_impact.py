@@ -246,10 +246,17 @@ class OperatorImpact(WhatIfAnalysis):
         nodes_to_search_train = set(networkx.ancestors(dag, search_start_node_train))
         nodes_to_search_test = set(networkx.ancestors(dag, search_start_node_test))
         nodes_to_search = set(nodes_to_search_train).union(nodes_to_search_test)
+
+        # Filter out filters that are the train test split
+        dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
+        last_op_before_train_test_split = networkx.lowest_common_ancestor(dag_to_consider, search_start_node_train,
+                                                                          search_start_node_test)
+
         all_nodes_to_test = []
         if self._test_selections is True:
             selections_to_replace = [node for node in nodes_to_search if
-                                     node.operator_info.operator == OperatorType.SELECTION]
+                                     node.operator_info.operator == OperatorType.SELECTION
+                                     and dag.has_edge(last_op_before_train_test_split, node) is False]
             all_nodes_to_test.extend(selections_to_replace)
             # TODO: We need to process filters that are present on both test and train side at the same time
         if self._restrict_to_linenos is not None:
