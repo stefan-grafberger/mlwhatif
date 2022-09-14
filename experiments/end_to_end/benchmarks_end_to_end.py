@@ -20,7 +20,6 @@ from mlwhatif.utils import get_project_root
 
 
 def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
-    analysis = None
     if scenario_name == 'data_corruption' and dataset_name == 'reviews':
         analysis = DataCorruption({'vine': CorruptionType.CATEGORICAL_SHIFT,
                                    'review_body': CorruptionType.BROKEN_CHARACTERS,
@@ -38,7 +37,7 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                  'review_id': ErrorType.DUPLICATES,
                                  None: ErrorType.MISLABEL})
     elif scenario_name == 'operator_impact' and dataset_name == 'reviews':
-        analysis = OperatorImpact(test_selections=True, restrict_to_linenos=[49, 55, 117])
+        analysis = OperatorImpact(test_selections=True, restrict_to_linenos=[46, 52, 95])
     else:
         raise ValueError(f"Invalid scenario or dataset: {scenario_name} {dataset_name}!")
     return analysis

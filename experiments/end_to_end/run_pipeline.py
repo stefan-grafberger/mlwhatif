@@ -8,16 +8,15 @@ import pandas as pd
 from faker import Faker
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.preprocessing import label_binarize
-from sklearn.svm import SVC
-from xgboost import XGBClassifier
 from tensorflow.keras.layers import Dense  # pylint: disable=no-name-in-module
 from tensorflow.keras.models import Sequential  # pylint: disable=no-name-in-module
 from tensorflow.python.keras.optimizer_v2.gradient_descent import SGD  # pylint: disable=no-name-in-module
+from xgboost import XGBClassifier
 
 from example_pipelines.healthcare.healthcare_utils import MyKerasClassifier
 from mlwhatif.utils import get_project_root
@@ -107,7 +106,7 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
 
 def get_model(model_name):
     if model_name == 'logistic_regression':
-        model = LogisticRegression()  # fix solver? solver='saga'
+        model = SGDClassifier(loss='log')
     elif model_name == 'xgboost':
         model = XGBClassifier(max_depth=12, tree_method='hist')
     elif model_name == 'neural_network':
