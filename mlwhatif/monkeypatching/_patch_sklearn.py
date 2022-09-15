@@ -1723,8 +1723,9 @@ class SklearnFunctionTransformerPatching:
                                     self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
 
         def processing_func(input_df):
+            input_df_copy = input_df.copy()
             transformer = preprocessing.FunctionTransformer(**self.mlinspect_non_data_func_args)
-            transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+            transformed_data = transformer.fit_transform(input_df_copy, *args[1:], **kwargs)
             transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
             transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
             return transformed_data

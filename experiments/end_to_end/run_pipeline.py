@@ -191,7 +191,7 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
 
         assert len(text_columns) == 1
         transformers = [('num', num_pipe, numerical_columns),
-                        ('text', MyW2VTransformer(min_count=2), text_columns)]
+                        ('text', MyW2VTransformer(min_count=1), text_columns)]
 
         def another_imputer(df_with_categorical_columns):
             return df_with_categorical_columns.fillna('__missing__')

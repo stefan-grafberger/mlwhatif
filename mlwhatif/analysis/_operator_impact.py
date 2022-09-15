@@ -227,7 +227,9 @@ class OperatorImpact(WhatIfAnalysis):
                                        node.operator_info.operator == OperatorType.TRANSFORMER
                                        and ": fit_transform" in node.details.description
                                        and "One-Hot" not in node.details.description
-                                       and "Hashing Vectorizer" not in node.details.description]
+                                       and "Hashing Vectorizer" not in node.details.description
+                                       and "Count Vectorizer" not in node.details.description
+                                       and "Word2Vec" not in node.details.description]
             # TODO: We exclude text operators for now. It is a bit unclear what a fair default for text would be.
             all_nodes_to_test.extend(transformers_to_replace)
         if self._restrict_to_linenos is not None:

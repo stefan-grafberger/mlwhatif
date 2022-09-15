@@ -10,7 +10,7 @@ import networkx
 import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_columns_used_as_feature
 from mlwhatif.analysis._cleaning_methods import MissingValueCleaner, DuplicateCleaner, OutlierCleaner, MislabelCleaner
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
@@ -165,6 +165,10 @@ class DataCleaning(WhatIfAnalysis):
                                                                                        self._score_nodes_and_linenos)
                 patches_for_variant.extend(extraction_nodes)
                 if cleaning_method.patch_type == PatchType.DATA_FILTER_PATCH:
+                    feature_cols = get_columns_used_as_feature(dag)
+                    required_cols = set(feature_cols)
+                    required_cols.add(column)
+                    required_cols = list(required_cols)
                     filter_func = partial(cleaning_method.filter_func, column=column)
 
                     new_train_cleaning_node = DagNode(singleton.get_next_op_id(),
@@ -175,7 +179,7 @@ class DataCleaning(WhatIfAnalysis):
                                                       None,
                                                       filter_func)
                     filter_patch_train = DataFiltering(singleton.get_next_patch_id(), self, True,
-                                                       new_train_cleaning_node, True, [column])
+                                                       new_train_cleaning_node, True, required_cols)
                     patches_for_variant.append(filter_patch_train)
 
                     new_test_cleaning_node = DagNode(singleton.get_next_op_id(),
@@ -186,7 +190,7 @@ class DataCleaning(WhatIfAnalysis):
                                                      None,
                                                      filter_func)
                     filter_patch_test = DataFiltering(singleton.get_next_patch_id(), self, True,
-                                                      new_test_cleaning_node, False, [column])
+                                                      new_test_cleaning_node, False, required_cols)
                     patches_for_variant.append(filter_patch_test)
                 elif cleaning_method.patch_type == PatchType.DATA_TRANSFORMER_PATCH:
                     fit_transform = partial(cleaning_method.fit_or_fit_transform_func, column=column)

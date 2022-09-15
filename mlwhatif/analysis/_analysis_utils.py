@@ -249,3 +249,19 @@ def find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, o
         raise Exception("Either a column was changed by a transformer or project_modify or we can apply"
                         "the corruption right before the estimator operation!")
     return first_op_requiring_corruption, operator_to_apply_corruption_after
+
+
+def get_columns_used_as_feature(dag) -> List[str]:
+    """Get all columns for which we want to test the feature importance"""
+    test_data_operator = find_nodes_by_type(dag, OperatorType.TEST_DATA)[0]
+    if test_data_operator.details.columns != ["array"]:
+        feature_columns = test_data_operator.details.columns
+    else:
+        feature_columns = set()
+        transformer_ops = find_nodes_by_type(dag, OperatorType.TRANSFORMER)
+        for transformer in transformer_ops:
+            transformer_parent = get_sorted_parent_nodes(dag, transformer)[-1]
+            feature_columns.update(transformer_parent.details.columns)
+        feature_columns.discard("array")
+        feature_columns = list(feature_columns)
+    return feature_columns

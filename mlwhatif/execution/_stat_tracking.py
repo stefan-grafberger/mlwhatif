@@ -120,11 +120,14 @@ def get_df_shape(result_or_inplace_obj):
         shape = None  # Not needed because we only consider combined groupby/agg nodes
     elif isinstance(result_or_inplace_obj, list):
         # A few operations like train_test_split return a list
-        assert len(result_or_inplace_obj) == 2
-        shape_a = get_df_shape(result_or_inplace_obj[0])
-        shape_b = get_df_shape(result_or_inplace_obj[1])
-        assert shape_a[1] == shape_b[1]
-        shape = shape_a[0] + shape_b[0], shape_a[1]
+        if len(result_or_inplace_obj) > 1 and isinstance(result_or_inplace_obj[0], str):
+            shape = (len(result_or_inplace_obj), 1)
+        else:
+            assert len(result_or_inplace_obj) == 2
+            shape_a = get_df_shape(result_or_inplace_obj[0])
+            shape_b = get_df_shape(result_or_inplace_obj[1])
+            assert shape_a[1] == shape_b[1]
+            shape = shape_a[0] + shape_b[0], shape_a[1]
     elif isinstance(result_or_inplace_obj, csr_matrix):
         # Here we use the csr_matrix column count as width instead of treating it as 1 column only as we do logically.
         #  This is because we might need it for optimisation purposes to choose whether dense or sparse matrices are

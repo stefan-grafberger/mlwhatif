@@ -8,7 +8,7 @@ import networkx
 import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_sorted_parent_nodes
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_columns_used_as_feature
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._patches import DataProjection, PipelinePatch
@@ -46,7 +46,7 @@ class PermutationFeatureImportance(WhatIfAnalysis):
                             "be uniquely identified by the line number in the code!")
 
         if self._columns_to_test is None:
-            self._columns_to_test = self.get_columns_used_as_feature(dag)
+            self._columns_to_test = get_columns_used_as_feature(dag)
         # TODO: Performance optimisation: deduplication for transformers that process multiple columns at once
         #  For project_modify, we can think about a similar deduplication: splitting operations on multiple columns and
         #  then using a concat in the end. Then we can perform additional optimizations.
@@ -123,19 +123,3 @@ class PermutationFeatureImportance(WhatIfAnalysis):
                 result_df_metrics[test_result_column_name] = test_column_values
         result_df = pandas.DataFrame({'column': result_df_columns, **result_df_metrics})
         return result_df
-
-    @staticmethod
-    def get_columns_used_as_feature(dag) -> List[str]:
-        """Get all columns for which we want to test the feature importance"""
-        test_data_operator = find_nodes_by_type(dag, OperatorType.TEST_DATA)[0]
-        if test_data_operator.details.columns != ["array"]:
-            feature_columns = test_data_operator.details.columns
-        else:
-            feature_columns = set()
-            transformer_ops = find_nodes_by_type(dag, OperatorType.TRANSFORMER)
-            for transformer in transformer_ops:
-                transformer_parent = get_sorted_parent_nodes(dag, transformer)[-1]
-                feature_columns.update(transformer_parent.details.columns)
-            feature_columns.discard("array")
-            feature_columns = list(feature_columns)
-        return feature_columns
