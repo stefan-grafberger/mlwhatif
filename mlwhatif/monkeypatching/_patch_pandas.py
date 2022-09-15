@@ -598,7 +598,7 @@ class SeriesPatching:
 
     @gorilla.name('to_numpy')
     @gorilla.settings(allow_hit=True)
-    def patched_fillna(self,  *args, **kwargs):
+    def patched_to_numpy(self,  *args, **kwargs):
         """ Patch for ('pandas.core.series', 'to_numpy') """
         # pylint: disable=too-many-locals
         original = gorilla.get_original_attribute(pandas.Series, 'to_numpy')
