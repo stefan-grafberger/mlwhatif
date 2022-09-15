@@ -1,8 +1,0 @@
-repetition,scenario,dataset,data_loading,featurization,model
-0,data_corruption,reviews,fast,fast,logistic_regression
-1,data_corruption,reviews,fast,fast,logistic_regression
-2,data_corruption,reviews,fast,fast,logistic_regression
-3,data_corruption,reviews,fast,fast,logistic_regression
-4,data_corruption,reviews,fast,fast,logistic_regression
-5,data_corruption,reviews,fast,fast,logistic_regression
-6,data_corruption,reviews,fast,fast,logistic_regression
