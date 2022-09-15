@@ -4046,7 +4046,7 @@ def test_count_vectorizer():
                                OptionalCodeInfo(CodeReference(5, 5, 5, 73),
                                                 "pd.Series(['cat_a', 'cat_b', 'cat_a', 'cat_c'], name='A').to_numpy()"),
                                Comparison(FunctionType))
-    expected_dag.add_edge(expected_data_source, expected_project)
+    expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
     expected_transformer = DagNode(2,
                                    BasicCodeLocation("<string-source>", 6),
                                    OperatorContext(OperatorType.TRANSFORMER,
@@ -4057,7 +4057,7 @@ def test_count_vectorizer():
                                    OptionalCodeInfo(CodeReference(6, 14, 6, 31),
                                                     'CountVectorizer()'),
                                    Comparison(FunctionType))
-    expected_dag.add_edge(expected_project, expected_transformer)
+    expected_dag.add_edge(expected_project, expected_transformer, arg_index=0)
     expected_transform_test = DagNode(3,
                                       BasicCodeLocation("<string-source>", 6),
                                       OperatorContext(OperatorType.TRANSFORMER,
@@ -4067,20 +4067,23 @@ def test_count_vectorizer():
                                       OptionalCodeInfo(CodeReference(6, 14, 6, 31),
                                                        'CountVectorizer()'),
                                       Comparison(FunctionType))
-    expected_dag.add_edge(expected_project, expected_transform_test)
+    expected_dag.add_edge(expected_transformer, expected_transform_test, arg_index=0)
+    expected_dag.add_edge(expected_project, expected_transform_test, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    fit_transform_node = list(inspector_result.original_dag.nodes)[2]
     transform_node = list(inspector_result.original_dag.nodes)[3]
-    pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2]})
+    pandas_df = pandas.Series(['cat_a', 'cat_b', 'cat_c', 'cat_c'], name='A').to_numpy()
     fit_transformed_result = fit_transform_node.processing_func(pandas_df)
-    expected_fit_transform_data = numpy.array([[-0.52166986], [-0.61651893], [1.73099545], [-0.59280666]])
-    assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
+    expected_fit_transform_data = csr_matrix([[1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [0., 0., 1.]])
+    assert numpy.allclose(fit_transformed_result.A, expected_fit_transform_data.A) and \
+           isinstance(fit_transformed_result, csr_matrix)
 
-    test_df = pandas.DataFrame({'A': [50, 2, 10, 1]})
+    test_df = pandas.Series(['cat_c', 'cat_c', 'cat_b', 'cat_c'], name='A').to_numpy()
     encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
-    expected = numpy.array([[0.54538213], [-0.59280666], [-0.40310853], [-0.61651893]])
-    assert numpy.allclose(encoded_data, expected)
+    expected = csr_matrix([[0., 0., 1.], [0., 0., 1.], [0., 1., 0.], [0., 0., 1.]])
+    assert numpy.allclose(encoded_data.A, expected.A) and \
+           isinstance(encoded_data, csr_matrix)
 
 
 def test_tfidf_vectorizer():
