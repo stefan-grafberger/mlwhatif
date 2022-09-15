@@ -6,6 +6,7 @@ from inspect import cleandoc
 from types import FunctionType
 
 import networkx
+import numpy
 import pandas
 from testfixtures import compare, StringComparison, Comparison, RangeComparison
 
@@ -969,3 +970,44 @@ def test_series__logical_method():
     extracted_func_result = extracted_node.processing_func(pd_series1, pd_series2)
     expected = pandas.Series([False, False, False, True], name=None)
     pandas.testing.assert_series_equal(extracted_func_result.reset_index(drop=True), expected.reset_index(drop=True))
+
+
+def test_series_as_numpy():
+    """
+    Tests whether the monkey patching of ('pandas.core.series', 'Series') works
+    """
+    test_code = cleandoc("""
+        import pandas as pd
+        
+        pd_series = pd.Series([0, 2, 4, None], name='A')
+        as_numpy = pd_series.to_numpy() 
+        assert len(as_numpy) == 4
+        """)
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 3),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.series', 'Series')),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(3, 12, 3, 48),
+                                                    "pd.Series([0, 2, 4, None], name='A')"),
+                                   Comparison(partial))
+    expected_project = DagNode(1,
+                               BasicCodeLocation("<string-source>", 4),
+                               OperatorContext(OperatorType.PROJECTION,
+                                               FunctionInfo('pandas.core.series.Series', 'to_numpy')),
+                               DagNodeDetails('numpy conversion', ['array'],
+                                              OptimizerInfo(RangeComparison(0, 200), (4, 1), RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(4, 11, 4, 31), 'pd_series.to_numpy()'),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_node = list(inspector_result.original_dag.nodes)[1]
+    pd_series1 = pandas.Series([0, 4, 10, 2], name='C')
+    extracted_func_result = extracted_node.processing_func(pd_series1)
+    expected = numpy.array([0, 4, 10, 2])
+    assert numpy.allclose(extracted_func_result, expected)

@@ -596,6 +596,38 @@ class SeriesPatching:
 
         return execute_patched_func(original, execute_inspections, self, **func_args)
 
+    @gorilla.name('to_numpy')
+    @gorilla.settings(allow_hit=True)
+    def patched_fillna(self,  *args, **kwargs):
+        """ Patch for ('pandas.core.series', 'to_numpy') """
+        # pylint: disable=too-many-locals
+        original = gorilla.get_original_attribute(pandas.Series, 'to_numpy')
+        func_args = kwargs
+
+        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            function_info = FunctionInfo('pandas.core.series.Series', 'to_numpy')
+            input_info = get_input_info(self, caller_filename, lineno, function_info, optional_code_reference,
+                                        optional_source_code)
+            operator_context = OperatorContext(OperatorType.PROJECTION, function_info)
+            description = "numpy conversion"
+            processing_func = lambda df: original(df, *args, **kwargs)
+            initial_func = partial(original, input_info.annotated_dfobject.result_data, **func_args)
+            optimizer_info, result = capture_optimizer_info(initial_func)
+            dag_node = DagNode(op_id,
+                               BasicCodeLocation(caller_filename, lineno),
+                               operator_context,
+                               DagNodeDetails(description, ['array'], optimizer_info),
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
+            function_call_result = FunctionCallResult(result)
+            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            new_result = function_call_result.function_result
+
+            return new_result
+
+        return execute_patched_func(original, execute_inspections, self, **func_args)
+
     @gorilla.name('isin')
     @gorilla.settings(allow_hit=True)
     def patched_isin(self, *args, **kwargs):

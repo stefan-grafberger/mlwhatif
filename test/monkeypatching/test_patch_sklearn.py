@@ -3998,3 +3998,407 @@ def test_svc_predict():
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
     test_predict = predict_node.processing_func(fitted_estimator, test_data)
     assert len(test_predict) == 2
+
+
+def test_count_vectorizer():
+    """
+    Tests whether the monkey patching of ('sklearn.compose._column_transformer', 'ColumnTransformer') works with
+    multiple transformers with dense output
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.feature_extraction.text import CountVectorizer
+                import numpy
+                from scipy.sparse import csr_matrix
+                df = pd.Series(['cat_a', 'cat_b', 'cat_a', 'cat_c'], name='A').to_numpy()
+                transformer = CountVectorizer()
+                transformed_data = transformer.fit_transform(df)
+                test_transform_function = transformer.transform(df)
+                print(transformed_data)
+                expected = numpy.array([[1., 0., 0.],
+                                        [0., 1., 0.],
+                                        [1., 0., 0.],
+                                        [0., 0., 1.]])
+                expected = csr_matrix([[1., 0., 0.], [0., 1., 0.], [1., 0., 0.], [0., 0., 1.]])
+                assert numpy.allclose(transformed_data.A, expected.A) and isinstance(transformed_data, csr_matrix)
+                assert numpy.allclose(test_transform_function.A, expected.A) and isinstance(test_transform_function, 
+                    csr_matrix)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 5),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.series', 'Series')),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(5, 5, 5, 62),
+                                                    "pd.Series(['cat_a', 'cat_b', 'cat_a', 'cat_c'], name='A')"),
+                                   Comparison(partial))
+    expected_project = DagNode(1,
+                               BasicCodeLocation('<string-source>', 5),
+                               OperatorContext(OperatorType.PROJECTION,
+                                               FunctionInfo('pandas.core.series.Series', 'to_numpy')),
+                               DagNodeDetails('numpy conversion', ['array'], OptimizerInfo(RangeComparison(0, 200),
+                                                                                           (4, 1),
+                                                                                           RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(5, 5, 5, 73),
+                                                "pd.Series(['cat_a', 'cat_b', 'cat_a', 'cat_c'], name='A').to_numpy()"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_project)
+    expected_transformer = DagNode(2,
+                                   BasicCodeLocation("<string-source>", 6),
+                                   OperatorContext(OperatorType.TRANSFORMER,
+                                                   FunctionInfo('sklearn.feature_extraction.text', 'CountVectorizer')),
+                                   DagNodeDetails('Count Vectorizer: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(6, 14, 6, 31),
+                                                    'CountVectorizer()'),
+                                   Comparison(FunctionType))
+    expected_dag.add_edge(expected_project, expected_transformer)
+    expected_transform_test = DagNode(3,
+                                      BasicCodeLocation("<string-source>", 6),
+                                      OperatorContext(OperatorType.TRANSFORMER,
+                                                      FunctionInfo('sklearn.feature_extraction.text',
+                                                                   'CountVectorizer')),
+                                      DagNodeDetails('Count Vectorizer: transform', ['array']),
+                                      OptionalCodeInfo(CodeReference(6, 14, 6, 31),
+                                                       'CountVectorizer()'),
+                                      Comparison(FunctionType))
+    expected_dag.add_edge(expected_project, expected_transform_test)
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    transform_node = list(inspector_result.original_dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2]})
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df)
+    expected_fit_transform_data = numpy.array([[-0.52166986], [-0.61651893], [1.73099545], [-0.59280666]])
+    assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
+
+    test_df = pandas.DataFrame({'A': [50, 2, 10, 1]})
+    encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
+    expected = numpy.array([[0.54538213], [-0.59280666], [-0.40310853], [-0.61651893]])
+    assert numpy.allclose(encoded_data, expected)
+
+
+def test_tfidf_vectorizer():
+    """
+    Tests whether the monkey patching of ('sklearn.compose._column_transformer', 'ColumnTransformer') works with
+    multiple transformers with dense output
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.feature_extraction.text import  CountVectorizer, TfidfTransformer
+                import numpy
+                from scipy.sparse import csr_matrix
+                df = CountVectorizer().fit_transform(
+                    pd.Series(['cat_a', 'cat_b', 'cat_a', 'cat_c'], name='A').to_numpy())
+                transformer = TfidfTransformer()
+                transformed_data = transformer.fit_transform(df)
+                test_transform_function = transformer.transform(df)
+                print(transformed_data)
+                expected = numpy.array([[1., 0., 0.],
+                                        [0., 1., 0.],
+                                        [1., 0., 0.],
+                                        [0., 0., 1.]])
+                expected = csr_matrix([[1., 0., 0.], [0., 1., 0.], [1., 0., 0.], [0., 0., 1.]])
+                assert numpy.allclose(transformed_data.A, expected.A) and isinstance(transformed_data, csr_matrix)
+                assert numpy.allclose(test_transform_function.A, expected.A) and isinstance(test_transform_function, 
+                    csr_matrix)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 6),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.series', 'Series')),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(6, 4, 6, 61),
+                                                    "pd.Series(['cat_a', 'cat_b', 'cat_a', 'cat_c'], name='A')"),
+                                   Comparison(partial))
+    expected_project = DagNode(1,
+                               BasicCodeLocation('<string-source>', 6),
+                               OperatorContext(OperatorType.PROJECTION,
+                                               FunctionInfo('pandas.core.series.Series', 'to_numpy')),
+                               DagNodeDetails('numpy conversion', ['array'],
+                                              OptimizerInfo(RangeComparison(0, 200), (4, 1), RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(6, 4, 6, 72),
+                                                "pd.Series(['cat_a', 'cat_b', 'cat_a', 'cat_c'], name='A').to_numpy()"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_project)
+    expected_count_vectorizer = DagNode(2,
+                                        BasicCodeLocation("<string-source>", 5),
+                                        OperatorContext(OperatorType.TRANSFORMER,
+                                                        FunctionInfo('sklearn.feature_extraction.text',
+                                                                     'CountVectorizer')),
+                                        DagNodeDetails('Count Vectorizer: fit_transform', ['array'],
+                                                       OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                     RangeComparison(0, 800))),
+                                        OptionalCodeInfo(CodeReference(5, 5, 5, 22),
+                                                         'CountVectorizer()'),
+                                        Comparison(FunctionType))
+    expected_dag.add_edge(expected_project, expected_count_vectorizer)
+    expected_transformer = DagNode(3,
+                                   BasicCodeLocation("<string-source>", 7),
+                                   OperatorContext(OperatorType.TRANSFORMER,
+                                                   FunctionInfo('sklearn.feature_extraction.text', 'TfidfTransformer')),
+                                   DagNodeDetails('Tfidf Transformer: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(7, 14, 7, 32),
+                                                    'TfidfTransformer()'),
+                                   Comparison(FunctionType))
+    expected_dag.add_edge(expected_count_vectorizer, expected_transformer)
+    expected_transform_test = DagNode(4,
+                                      BasicCodeLocation("<string-source>", 7),
+                                      OperatorContext(OperatorType.TRANSFORMER,
+                                                      FunctionInfo('sklearn.feature_extraction.text',
+                                                                   'TfidfTransformer')),
+                                      DagNodeDetails('Tfidf Transformer: transform', ['array'],
+                                                     OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                   RangeComparison(0, 800))),
+                                      OptionalCodeInfo(CodeReference(7, 14, 7, 32), 'TfidfTransformer()'),
+                                      Comparison(FunctionType))
+    expected_dag.add_edge(expected_count_vectorizer, expected_transform_test)
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    transform_node = list(inspector_result.original_dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2]})
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df)
+    expected_fit_transform_data = numpy.array([[-0.52166986], [-0.61651893], [1.73099545], [-0.59280666]])
+    assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
+
+    test_df = pandas.DataFrame({'A': [50, 2, 10, 1]})
+    encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
+    expected = numpy.array([[0.54538213], [-0.59280666], [-0.40310853], [-0.61651893]])
+    assert numpy.allclose(encoded_data, expected)
+
+
+def test_truncated_svd():
+    """
+    Tests whether the monkey patching of ('sklearn.compose._column_transformer', 'ColumnTransformer') works with
+    multiple transformers with dense output
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
+                from sklearn.compose import ColumnTransformer
+                from sklearn.decomposition import TruncatedSVD
+                from scipy.sparse import csr_matrix
+                import numpy
+
+                df = pd.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})
+                column_transformer = ColumnTransformer(transformers=[
+                    ('numeric', StandardScaler(), ['A']),
+                    ('categorical', OneHotEncoder(sparse=False), ['B'])
+                ])
+                encoded_data = column_transformer.fit_transform(df)
+                transformer = TruncatedSVD(n_iter=1, random_state=42)
+                reduced_data = transformer.fit_transform(encoded_data)
+                test_transform_function = transformer.transform(encoded_data)
+                expected = numpy.array([[-0.7135186,   1.16732311],
+                                        [-0.88316363,  0.30897343],
+                                        [ 1.72690506,  0.64664575],
+                                        [ 0.17663273, -0.06179469]])
+                assert numpy.allclose(reduced_data, expected)
+                assert numpy.allclose(test_transform_function, expected)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, [5, 6, 7], 8)
+
+    expected_dag = networkx.DiGraph()
+    expected_concat = DagNode(5,
+                              BasicCodeLocation("<string-source>", 9),
+                              OperatorContext(OperatorType.CONCATENATION,
+                                              FunctionInfo('sklearn.compose._column_transformer', 'ColumnTransformer')),
+                              DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                            RangeComparison(0, 800))),
+                              OptionalCodeInfo(CodeReference(9, 21, 12, 2),
+                                               "ColumnTransformer(transformers=[\n"
+                                               "    ('numeric', StandardScaler(), ['A']),\n"
+                                               "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"),
+                              Comparison(partial))
+    expected_transformer = DagNode(6,
+                                   BasicCodeLocation("<string-source>", 14),
+                                   OperatorContext(OperatorType.TRANSFORMER,
+                                                   FunctionInfo('sklearn.decomposition._truncated_svd',
+                                                                'TruncatedSVD')),
+                                   DagNodeDetails('Truncated SVD: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(14, 14, 14, 53),
+                                                    'TruncatedSVD(n_iter=1, random_state=42)'),
+                                   Comparison(FunctionType))
+    expected_dag.add_edge(expected_concat, expected_transformer)
+    expected_transform_test = DagNode(7,
+                                      BasicCodeLocation("<string-source>", 14),
+                                      OperatorContext(OperatorType.TRANSFORMER,
+                                                      FunctionInfo('sklearn.decomposition._truncated_svd',
+                                                                   'TruncatedSVD')),
+                                      DagNodeDetails('Truncated SVD: transform', ['array'],
+                                                     OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                   RangeComparison(0, 800))),
+                                      OptionalCodeInfo(CodeReference(14, 14, 14, 53),
+                                                       'TruncatedSVD(n_iter=1, random_state=42)'),
+                                      Comparison(FunctionType))
+    expected_dag.add_edge(expected_concat, expected_transform_test)
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    transform_node = list(inspector_result.original_dag.nodes)[3]
+    pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2]})
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df)
+    expected_fit_transform_data = numpy.array([[-0.52166986], [-0.61651893], [1.73099545], [-0.59280666]])
+    assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
+
+    test_df = pandas.DataFrame({'A': [50, 2, 10, 1]})
+    encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
+    expected = numpy.array([[0.54538213], [-0.59280666], [-0.40310853], [-0.61651893]])
+    assert numpy.allclose(encoded_data, expected)
+
+
+def test_feature_union():
+    """
+    Tests whether the monkey patching of ('sklearn.preprocessing._data', 'StandardScaler') works
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
+                from sklearn.compose import ColumnTransformer
+                from sklearn.pipeline import FeatureUnion
+                from sklearn.decomposition import PCA
+                from sklearn.decomposition import TruncatedSVD
+                from scipy.sparse import csr_matrix
+                import numpy
+                df = pd.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})
+                column_transformer = ColumnTransformer(transformers=[
+                    ('numeric', StandardScaler(), ['A']),
+                    ('categorical', OneHotEncoder(sparse=False), ['B'])
+                ])
+                encoded_data = column_transformer.fit_transform(df)
+                transformer = FeatureUnion([('pca', PCA(n_components=2, random_state=42)),
+                                            ('svd', TruncatedSVD(n_iter=1, random_state=42))])
+                reduced_data = transformer.fit_transform(encoded_data)
+                test_transform_function = transformer.transform(encoded_data)
+                print(reduced_data)
+                expected = numpy.array([[-0.80795996, -0.75406407, -0.7135186,   1.16732311],
+                                        [-0.953227,    0.23384447, -0.88316363,  0.30897343],
+                                        [ 1.64711991, -0.29071836,  1.72690506,  0.64664575],
+                                        [ 0.11406705,  0.81093796,  0.17663273, -0.06179469]])
+                assert numpy.allclose(reduced_data, expected)
+                assert numpy.allclose(test_transform_function, expected)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    filter_dag_for_nodes_with_ids(inspector_result, [5, 6, 7, 8, 9, 10, 11], 12)
+
+    expected_dag = networkx.DiGraph()
+    expected_concat = DagNode(5,
+                              BasicCodeLocation("<string-source>", 11),
+                              OperatorContext(OperatorType.CONCATENATION,
+                                              FunctionInfo('sklearn.compose._column_transformer', 'ColumnTransformer')),
+                              DagNodeDetails(None, ['array']),
+                              OptionalCodeInfo(CodeReference(11, 21, 14, 2),
+                                               "ColumnTransformer(transformers=[\n"
+                                               "    ('numeric', StandardScaler(), ['A']),\n"
+                                               "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"),
+                              Comparison(partial))
+    expected_transformer_pca = DagNode(6,
+                                       BasicCodeLocation("<string-source>", 16),
+                                       OperatorContext(OperatorType.TRANSFORMER,
+                                                       FunctionInfo('sklearn.decomposition._pca',
+                                                                    'PCA')),
+                                       DagNodeDetails('PCA: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(16, 36, 16, 72),
+                                                        'PCA(n_components=2, random_state=42)'),
+                                       Comparison(FunctionType))
+    expected_dag.add_edge(expected_concat, expected_transformer_pca)
+    expected_transformer_svd = DagNode(7,
+                                       BasicCodeLocation("<string-source>", 17),
+                                       OperatorContext(OperatorType.TRANSFORMER,
+                                                       FunctionInfo('sklearn.decomposition._truncated_svd',
+                                                                    'TruncatedSVD')),
+                                       DagNodeDetails('Truncated SVD: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(17, 36, 17, 75),
+                                                        'TruncatedSVD(n_iter=1, random_state=42)'),
+                                       Comparison(FunctionType))
+    expected_dag.add_edge(expected_concat, expected_transformer_svd)
+    expected_transformer_concat = DagNode(8,
+                                          BasicCodeLocation("<string-source>", 16),
+                                          OperatorContext(OperatorType.CONCATENATION,
+                                                          FunctionInfo('sklearn.pipeline', 'FeatureUnion')),
+                                          DagNodeDetails('Feature Union', ['array'],
+                                                         OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                       RangeComparison(0, 800))),
+                                          OptionalCodeInfo(CodeReference(16, 14, 17, 78),
+                                                           "FeatureUnion([('pca', PCA(n_components=2, "
+                                                           "random_state=42)),\n                            "
+                                                           "('svd', TruncatedSVD(n_iter=1, random_state=42))])"),
+                                          Comparison(FunctionType))
+    expected_dag.add_edge(expected_transformer_pca, expected_transformer_concat)
+    expected_dag.add_edge(expected_transformer_svd, expected_transformer_concat)
+    expected_transform_test_pca = DagNode(9,
+                                          BasicCodeLocation("<string-source>", 16),
+                                          OperatorContext(OperatorType.TRANSFORMER,
+                                                          FunctionInfo('sklearn.decomposition._pca',
+                                                                       'PCA')),
+                                          DagNodeDetails('PCA: transform', ['array'],
+                                                         OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                       RangeComparison(0, 800))),
+                                          OptionalCodeInfo(CodeReference(16, 36, 16, 72),
+                                                           'PCA(n_components=2, random_state=42)'),
+                                          Comparison(FunctionType))
+    expected_dag.add_edge(expected_concat, expected_transform_test_pca)
+    expected_transform_test_svd = DagNode(10,
+                                          BasicCodeLocation("<string-source>", 17),
+                                          OperatorContext(OperatorType.TRANSFORMER,
+                                                          FunctionInfo('sklearn.decomposition._truncated_svd',
+                                                                       'TruncatedSVD')),
+                                          DagNodeDetails('Truncated SVD: transform', ['array'],
+                                                         OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                       RangeComparison(0, 800))),
+                                          OptionalCodeInfo(CodeReference(17, 36, 17, 75),
+                                                           'TruncatedSVD(n_iter=1, random_state=42)'),
+                                          Comparison(FunctionType))
+    expected_dag.add_edge(expected_concat, expected_transform_test_svd)
+    expected_transform_test_concat = DagNode(11,
+                                             BasicCodeLocation("<string-source>", 16),
+                                             OperatorContext(OperatorType.CONCATENATION,
+                                                             FunctionInfo('sklearn.pipeline', 'FeatureUnion')),
+                                             DagNodeDetails('Feature Union', ['array'],
+                                                            OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                          RangeComparison(0, 800))),
+                                             OptionalCodeInfo(CodeReference(16, 14, 17, 78),
+                                                              "FeatureUnion([('pca', PCA(n_components=2, "
+                                                              "random_state=42)),\n                            "
+                                                              "('svd', TruncatedSVD(n_iter=1, random_state=42))])"),
+                                             Comparison(FunctionType))
+    expected_dag.add_edge(expected_transform_test_pca, expected_transform_test_concat)
+    expected_dag.add_edge(expected_transform_test_svd, expected_transform_test_concat)
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    project1_node = list(inspector_result.original_dag.nodes)[1]
+    project2_node = list(inspector_result.original_dag.nodes)[3]
+    transformer1_node = list(inspector_result.original_dag.nodes)[2]
+    transformer2_node = list(inspector_result.original_dag.nodes)[4]
+    concat_node = list(inspector_result.original_dag.nodes)[5]
+    pandas_df = pandas.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_b', 'cat_c']})
+    projected_data1 = project1_node.processing_func(pandas_df)
+    projected_data2 = project2_node.processing_func(pandas_df)
+    transformed_data1 = transformer1_node.processing_func(projected_data1)
+    transformed_data2 = transformer2_node.processing_func(projected_data2)
+    concatenated_data = concat_node.processing_func(transformed_data1, transformed_data2)
+    expected = numpy.array([[-1., 1., 0., 0.], [-0.71428571, 0., 1., 0.], [1.57142857, 0., 1., 0.],
+                            [0.14285714, 0., 0., 1.]])
+    assert numpy.allclose(concatenated_data, expected)

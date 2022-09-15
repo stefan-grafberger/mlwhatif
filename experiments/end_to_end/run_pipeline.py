@@ -123,7 +123,7 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
         assert len(text_columns) == 1
 
         transformers = [('num', RobustScaler(), numerical_columns),
-                        ('text', HashingVectorizer(n_features=2 ** 4), text_columns[0])]
+                        ('text', HashingVectorizer(n_features=2 ** 5), text_columns[0])]
         for cat_column in categorical_columns:
 
             def another_imputer(df_with_categorical_columns):
@@ -179,16 +179,19 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
         transformers = [('num', num_pipe, numerical_columns),
                         ('text', text_pipe, text_columns[0])]
         for cat_column in categorical_columns:
-            transformers.append((f"cat_{cat_column}", OneHotEncoder(handle_unknown='ignore'), [cat_column]))
+            cat_pipe = Pipeline([('simpleimputer', SimpleImputer(strategy='most_frequent')),
+                                 ('onehotencoder', OneHotEncoder(handle_unknown='ignore'))])
+            transformers.append((f"cat_{cat_column}", cat_pipe, [cat_column]))
 
         featurization = ColumnTransformer(transformers)
-    elif featurization_name == 'featurization_4':  # based on mlinspect healthcare pipeline and openml_id == '17322'
+    elif featurization_name == 'featurization_4':  # based on healthcare, openml_id == '17322', dspipes 'num_pipe_3'
 
         def another_imputer(df_with_categorical_columns):
             return df_with_categorical_columns.fillna('__missing__')
 
-        num_pipe = Pipeline([('imputer', SimpleImputer()),
-                             ('standardscaler', StandardScaler())])
+        union = FeatureUnion([("pca", PCA(n_components=(len(numerical_columns) - 1))),
+                              ("svd", TruncatedSVD(n_iter=1, n_components=(len(numerical_columns) - 1)))])
+        num_pipe = Pipeline([('union', union), ('scaler', StandardScaler())])
 
         assert len(text_columns) == 1
         transformers = [('num', num_pipe, numerical_columns),
