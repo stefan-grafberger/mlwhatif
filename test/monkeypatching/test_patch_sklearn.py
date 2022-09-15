@@ -4294,6 +4294,7 @@ def test_feature_union():
                 from sklearn.decomposition import TruncatedSVD
                 from scipy.sparse import csr_matrix
                 import numpy
+                
                 df = pd.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})
                 column_transformer = ColumnTransformer(transformers=[
                     ('numeric', StandardScaler(), ['A']),
@@ -4322,12 +4323,13 @@ def test_feature_union():
                               BasicCodeLocation("<string-source>", 11),
                               OperatorContext(OperatorType.CONCATENATION,
                                               FunctionInfo('sklearn.compose._column_transformer', 'ColumnTransformer')),
-                              DagNodeDetails(None, ['array']),
+                              DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 2000), (4, 4),
+                                                                            RangeComparison(0, 2000))),
                               OptionalCodeInfo(CodeReference(11, 21, 14, 2),
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A']),\n"
                                                "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"),
-                              Comparison(partial))
+                              Comparison(FunctionType))
     expected_transformer_pca = DagNode(6,
                                        BasicCodeLocation("<string-source>", 16),
                                        OperatorContext(OperatorType.TRANSFORMER,
@@ -4339,7 +4341,7 @@ def test_feature_union():
                                        OptionalCodeInfo(CodeReference(16, 36, 16, 72),
                                                         'PCA(n_components=2, random_state=42)'),
                                        Comparison(FunctionType))
-    expected_dag.add_edge(expected_concat, expected_transformer_pca)
+    expected_dag.add_edge(expected_concat, expected_transformer_pca, arg_index=0)
     expected_transformer_svd = DagNode(7,
                                        BasicCodeLocation("<string-source>", 17),
                                        OperatorContext(OperatorType.TRANSFORMER,
@@ -4351,21 +4353,21 @@ def test_feature_union():
                                        OptionalCodeInfo(CodeReference(17, 36, 17, 75),
                                                         'TruncatedSVD(n_iter=1, random_state=42)'),
                                        Comparison(FunctionType))
-    expected_dag.add_edge(expected_concat, expected_transformer_svd)
+    expected_dag.add_edge(expected_concat, expected_transformer_svd, arg_index=0)
     expected_transformer_concat = DagNode(8,
                                           BasicCodeLocation("<string-source>", 16),
                                           OperatorContext(OperatorType.CONCATENATION,
                                                           FunctionInfo('sklearn.pipeline', 'FeatureUnion')),
                                           DagNodeDetails('Feature Union', ['array'],
-                                                         OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                         OptimizerInfo(RangeComparison(0, 200), (4, 4),
                                                                        RangeComparison(0, 800))),
                                           OptionalCodeInfo(CodeReference(16, 14, 17, 78),
                                                            "FeatureUnion([('pca', PCA(n_components=2, "
                                                            "random_state=42)),\n                            "
                                                            "('svd', TruncatedSVD(n_iter=1, random_state=42))])"),
                                           Comparison(FunctionType))
-    expected_dag.add_edge(expected_transformer_pca, expected_transformer_concat)
-    expected_dag.add_edge(expected_transformer_svd, expected_transformer_concat)
+    expected_dag.add_edge(expected_transformer_pca, expected_transformer_concat, arg_index=0)
+    expected_dag.add_edge(expected_transformer_svd, expected_transformer_concat, arg_index=1)
     expected_transform_test_pca = DagNode(9,
                                           BasicCodeLocation("<string-source>", 16),
                                           OperatorContext(OperatorType.TRANSFORMER,
@@ -4377,7 +4379,8 @@ def test_feature_union():
                                           OptionalCodeInfo(CodeReference(16, 36, 16, 72),
                                                            'PCA(n_components=2, random_state=42)'),
                                           Comparison(FunctionType))
-    expected_dag.add_edge(expected_concat, expected_transform_test_pca)
+    expected_dag.add_edge(expected_transformer_pca, expected_transform_test_pca, arg_index=0)
+    expected_dag.add_edge(expected_concat, expected_transform_test_pca, arg_index=1)
     expected_transform_test_svd = DagNode(10,
                                           BasicCodeLocation("<string-source>", 17),
                                           OperatorContext(OperatorType.TRANSFORMER,
@@ -4389,34 +4392,48 @@ def test_feature_union():
                                           OptionalCodeInfo(CodeReference(17, 36, 17, 75),
                                                            'TruncatedSVD(n_iter=1, random_state=42)'),
                                           Comparison(FunctionType))
-    expected_dag.add_edge(expected_concat, expected_transform_test_svd)
+    expected_dag.add_edge(expected_transformer_svd, expected_transform_test_svd, arg_index=0)
+    expected_dag.add_edge(expected_concat, expected_transform_test_svd, arg_index=1)
     expected_transform_test_concat = DagNode(11,
                                              BasicCodeLocation("<string-source>", 16),
                                              OperatorContext(OperatorType.CONCATENATION,
                                                              FunctionInfo('sklearn.pipeline', 'FeatureUnion')),
                                              DagNodeDetails('Feature Union', ['array'],
-                                                            OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                            OptimizerInfo(RangeComparison(0, 200), (4, 4),
                                                                           RangeComparison(0, 800))),
                                              OptionalCodeInfo(CodeReference(16, 14, 17, 78),
                                                               "FeatureUnion([('pca', PCA(n_components=2, "
                                                               "random_state=42)),\n                            "
                                                               "('svd', TruncatedSVD(n_iter=1, random_state=42))])"),
                                              Comparison(FunctionType))
-    expected_dag.add_edge(expected_transform_test_pca, expected_transform_test_concat)
-    expected_dag.add_edge(expected_transform_test_svd, expected_transform_test_concat)
+    expected_dag.add_edge(expected_transform_test_pca, expected_transform_test_concat, arg_index=0)
+    expected_dag.add_edge(expected_transform_test_svd, expected_transform_test_concat, arg_index=1)
+    compare(list(inspector_result.original_dag)[6], expected_transform_test_concat)
     compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
-    project1_node = list(inspector_result.original_dag.nodes)[1]
-    project2_node = list(inspector_result.original_dag.nodes)[3]
-    transformer1_node = list(inspector_result.original_dag.nodes)[2]
-    transformer2_node = list(inspector_result.original_dag.nodes)[4]
-    concat_node = list(inspector_result.original_dag.nodes)[5]
-    pandas_df = pandas.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_b', 'cat_c']})
-    projected_data1 = project1_node.processing_func(pandas_df)
-    projected_data2 = project2_node.processing_func(pandas_df)
-    transformed_data1 = transformer1_node.processing_func(projected_data1)
-    transformed_data2 = transformer2_node.processing_func(projected_data2)
-    concatenated_data = concat_node.processing_func(transformed_data1, transformed_data2)
-    expected = numpy.array([[-1., 1., 0., 0.], [-0.71428571, 0., 1., 0.], [1.57142857, 0., 1., 0.],
-                            [0.14285714, 0., 0., 1.]])
+    transformer1_node_fit = list(inspector_result.original_dag.nodes)[1]
+    transformer2_node_fit = list(inspector_result.original_dag.nodes)[2]
+    concat_node_fit = list(inspector_result.original_dag.nodes)[3]
+    num_array = numpy.array([[0., 2., 2., 2.], [0., 0., 1., 2.], [4., 4., 3., 2.], [2., 4., 3., 200.]])
+    transformed_data1 = transformer1_node_fit.processing_func(num_array)
+    transformed_data2 = transformer2_node_fit.processing_func(num_array)
+    concatenated_data = concat_node_fit.processing_func(transformed_data1, transformed_data2)
+    expected = numpy.array([[-4.95079323e+01, -9.59880042e-01,  2.07047289e+00,  2.28904433e+00],
+                            [-4.95331939e+01, -2.51111219e+00,  2.01455480e+00,  4.68660159e-01],
+                            [-4.94691849e+01,  3.47199196e+00,  2.16722945e+00,  6.31931174e+00],
+                            [ 1.48510311e+02, -9.99733102e-04,  2.00072463e+02, -9.68596279e-02]])
     assert numpy.allclose(concatenated_data, expected)
+
+    transformer1_node_transform = list(inspector_result.original_dag.nodes)[4]
+    transformer2_node_transform = list(inspector_result.original_dag.nodes)[5]
+    concat_node_transform = list(inspector_result.original_dag.nodes)[6]
+    num_array_transform = numpy.array([[5., 2., 2., 2.], [0., 0., 0., 0.], [4., 4., 3., 5.], [2., 4., 3., 2.]])
+    transformed_data1_transform = transformer1_node_transform.processing_func(transformed_data1, num_array_transform)
+    transformed_data2_transform = transformer2_node_transform.processing_func(transformed_data2, num_array_transform)
+    concatenated_data_transform = concat_node_transform.processing_func(transformed_data1_transform,
+                                                                        transformed_data2_transform)
+    expected = numpy.array([[-49.49107512,   2.64091978,   2.12152098,   5.05139838],
+                            [-51.53810725,  -2.80082658,   0.,           0.        ],
+                            [-46.4693934,    3.44119391,   5.16610297,   6.23883856],
+                            [-49.47592776,   2.03167203,   2.14681021,   5.21437012]])
+    assert numpy.allclose(concatenated_data_transform, expected)

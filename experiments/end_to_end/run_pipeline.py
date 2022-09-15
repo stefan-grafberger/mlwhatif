@@ -185,10 +185,6 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
 
         featurization = ColumnTransformer(transformers)
     elif featurization_name == 'featurization_4':  # based on healthcare, openml_id == '17322', dspipes 'num_pipe_3'
-
-        def another_imputer(df_with_categorical_columns):
-            return df_with_categorical_columns.fillna('__missing__')
-
         union = FeatureUnion([("pca", PCA(n_components=(len(numerical_columns) - 1))),
                               ("svd", TruncatedSVD(n_iter=1, n_components=(len(numerical_columns) - 1)))])
         num_pipe = Pipeline([('union', union), ('scaler', StandardScaler())])
@@ -196,6 +192,10 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
         assert len(text_columns) == 1
         transformers = [('num', num_pipe, numerical_columns),
                         ('text', MyW2VTransformer(min_count=2), text_columns)]
+
+        def another_imputer(df_with_categorical_columns):
+            return df_with_categorical_columns.fillna('__missing__')
+
         for cat_column in categorical_columns:
             cat_pipe = Pipeline([('anothersimpleimputer', FunctionTransformer(another_imputer)),
                                  ('onehotencoder', OneHotEncoder())])

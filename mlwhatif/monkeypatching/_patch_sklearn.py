@@ -3,6 +3,7 @@ Monkey patching for sklearn
 """
 # pylint: disable=too-many-lines
 import dataclasses
+import warnings
 from functools import partial
 from typing import Callable
 
@@ -11,12 +12,15 @@ import numpy
 import pandas
 import scipy
 import tensorflow
+from joblib import Parallel, delayed
+from scipy import sparse
 from scipy.sparse import csr_matrix
 from sklearn import preprocessing, compose, tree, impute, linear_model, model_selection, metrics, dummy, decomposition, \
-    svm
+    svm, pipeline
 from sklearn.feature_extraction import text
 from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.metrics import accuracy_score
+from sklearn.pipeline import _fit_transform_one, _transform_one
 from tensorflow.keras.wrappers import scikit_learn as keras_sklearn_external  # pylint: disable=no-name-in-module
 from tensorflow.python.keras.wrappers import scikit_learn as keras_sklearn_internal  # pylint: disable=no-name-in-module
 
@@ -1060,6 +1064,158 @@ class SklearnPCAPatching:
             assert isinstance(new_result, MlinspectNdarray)
         else:
             new_result = original(self, *args, **kwargs)
+        return new_result
+
+
+@gorilla.patches(pipeline.FeatureUnion)
+class SklearnFeatureUnionPatching:
+    """ Patches for sklearn StandardScaler"""
+
+    # pylint: disable=too-few-public-methods
+
+    @gorilla.name('__init__')
+    @gorilla.settings(allow_hit=True)
+    def patched__init__(self, transformer_list, *, n_jobs=None,
+                        transformer_weights=None, verbose=False,
+                        mlinspect_caller_filename=None, mlinspect_lineno=None,
+                        mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
+                        mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
+        """ Patch for ('sklearn.pipeline', 'FeatureUnion') """
+        # pylint: disable=no-method-argument, attribute-defined-outside-init
+        original = gorilla.get_original_attribute(pipeline.FeatureUnion, '__init__')
+
+        self.mlinspect_caller_filename = mlinspect_caller_filename
+        self.mlinspect_lineno = mlinspect_lineno
+        self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
+        self.mlinspect_optional_source_code = mlinspect_optional_source_code
+        self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+        self.mlinspect_transformer_node_id = mlinspect_transformer_node_id
+
+        self.mlinspect_non_data_func_args = {'transformer_list': transformer_list, 'n_jobs': n_jobs,
+                                             'transformer_weights': transformer_weights, 'verbose': verbose}
+
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            original(self, **self.mlinspect_non_data_func_args)
+
+            self.mlinspect_caller_filename = caller_filename
+            self.mlinspect_lineno = lineno
+            self.mlinspect_optional_code_reference = optional_code_reference
+            self.mlinspect_optional_source_code = optional_source_code
+
+        return execute_patched_func_no_op_id(original, execute_inspections, self, **self.mlinspect_non_data_func_args)
+
+    @gorilla.name('fit_transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_fit_transform(self, X, y=None, **fit_params):
+        """ Patch for ('sklearn.pipeline.FeatureUnion', 'fit_transform') """
+        # pylint: disable=no-method-argument
+        results = self._parallel_func(X, y, fit_params, _fit_transform_one)
+        if not results:
+            # All transformers are None
+            raise Exception("TODO: Implement support for FeatureUnion without transformers")
+            # return numpy.zeros((X.shape[0], 0))
+
+        Xs, transformers = zip(*results)
+        self._update_transformer_list(transformers)
+
+        self.mlinspect_fit_transform_active = True  # pylint: disable=attribute-defined-outside-init
+        function_info = FunctionInfo('sklearn.pipeline', 'FeatureUnion')
+        input_infos = []
+        for input_df_obj in Xs:
+            input_info = get_input_info(input_df_obj, self.mlinspect_caller_filename, self.mlinspect_lineno,
+                                        function_info, self.mlinspect_optional_code_reference,
+                                        self.mlinspect_optional_source_code)
+            input_infos.append(input_info)
+
+        def processing_func(*input_dfs):
+            # Rest of orignal fit_transform
+            if any(sparse.issparse(f) for f in input_dfs):
+                hstack_result = sparse.hstack(input_dfs).tocsr()
+            else:
+                hstack_result = numpy.hstack(input_dfs)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(hstack_result)
+            return transformed_data
+
+        operator_context = OperatorContext(OperatorType.CONCATENATION, function_info)
+        initial_func = partial(processing_func, *Xs)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
+                           BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                           operator_context,
+                           DagNodeDetails("Feature Union", ['array'], optimizer_info),
+                           get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
+
+        function_call_result = FunctionCallResult(result)
+        input_dag_nodes = [input_info.dag_node for input_info in input_infos]
+        add_dag_node(dag_node, input_dag_nodes, function_call_result)
+        new_result = function_call_result.function_result
+        assert isinstance(new_result, (MlinspectNdarray, csr_matrix))
+        self.mlinspect_fit_transform_active = False  # pylint: disable=attribute-defined-outside-init
+        return new_result
+
+    @gorilla.name('transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_transform(self, X):
+        """ Patch for ('sklearn.pipeline.FeatureUnion', 'transform') """
+        # pylint: disable=no-method-argument
+        original = gorilla.get_original_attribute(pipeline.FeatureUnion, 'transform')
+        if not self.mlinspect_fit_transform_active:
+            # First part up to concat of the original transform
+            for _, t in self.transformer_list:
+                # TODO: Remove in 0.24 when None is removed
+                if t is None:
+                    warnings.warn("Using None as a transformer is deprecated "
+                                  "in version 0.22 and will be removed in "
+                                  "version 0.24. Please use 'drop' instead.",
+                                  FutureWarning)
+                    continue
+            Xs = Parallel(n_jobs=self.n_jobs)(
+                delayed(_transform_one)(trans, X, None, weight)
+                for name, trans, weight in self._iter())
+            if not Xs:
+                # All transformers are None
+                raise Exception("TODO: Implement support for FeatureUnion without transformers")
+                # return numpy.zeros((X.shape[0], 0))
+
+            function_info = FunctionInfo('sklearn.pipeline', 'FeatureUnion')
+            input_infos = []
+            for input_df_obj in Xs:
+                input_info = get_input_info(input_df_obj, self.mlinspect_caller_filename, self.mlinspect_lineno,
+                                            function_info, self.mlinspect_optional_code_reference,
+                                            self.mlinspect_optional_source_code)
+                input_infos.append(input_info)
+
+            def processing_func(*input_dfs):
+                if any(sparse.issparse(f) for f in input_dfs):
+                    hstack_result = sparse.hstack(input_dfs).tocsr()
+                else:
+                    hstack_result = numpy.hstack(input_dfs)
+                transformed_data = wrap_in_mlinspect_array_if_necessary(hstack_result)
+                return transformed_data
+
+            operator_context = OperatorContext(OperatorType.CONCATENATION, function_info)
+            initial_func = partial(processing_func, *Xs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
+            dag_node = DagNode(singleton.get_next_op_id(),
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("Feature Union", ['array'], optimizer_info),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
+
+            function_call_result = FunctionCallResult(result)
+            input_dag_nodes = [input_info.dag_node for input_info in input_infos]
+            add_dag_node(dag_node, input_dag_nodes, function_call_result)
+            new_result = function_call_result.function_result
+            assert isinstance(new_result, (MlinspectNdarray, csr_matrix))
+        else:
+            new_result = original(self, X)
         return new_result
 
 
