@@ -4228,49 +4228,56 @@ def test_truncated_svd():
                               BasicCodeLocation("<string-source>", 9),
                               OperatorContext(OperatorType.CONCATENATION,
                                               FunctionInfo('sklearn.compose._column_transformer', 'ColumnTransformer')),
-                              DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
-                                                                            RangeComparison(0, 800))),
+                              DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 2000), (4, 4),
+                                                                            RangeComparison(0, 2000))),
                               OptionalCodeInfo(CodeReference(9, 21, 12, 2),
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A']),\n"
                                                "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"),
-                              Comparison(partial))
+                              Comparison(FunctionType))
     expected_transformer = DagNode(6,
                                    BasicCodeLocation("<string-source>", 14),
                                    OperatorContext(OperatorType.TRANSFORMER,
                                                    FunctionInfo('sklearn.decomposition._truncated_svd',
                                                                 'TruncatedSVD')),
                                    DagNodeDetails('Truncated SVD: fit_transform', ['array'],
-                                                  OptimizerInfo(RangeComparison(0, 200), (4, 2),
-                                                                RangeComparison(0, 800))),
+                                                  OptimizerInfo(RangeComparison(0, 2000), (4, 2),
+                                                                RangeComparison(0, 2000))),
                                    OptionalCodeInfo(CodeReference(14, 14, 14, 53),
                                                     'TruncatedSVD(n_iter=1, random_state=42)'),
                                    Comparison(FunctionType))
-    expected_dag.add_edge(expected_concat, expected_transformer)
+    expected_dag.add_edge(expected_concat, expected_transformer, arg_index=0)
     expected_transform_test = DagNode(7,
                                       BasicCodeLocation("<string-source>", 14),
                                       OperatorContext(OperatorType.TRANSFORMER,
                                                       FunctionInfo('sklearn.decomposition._truncated_svd',
                                                                    'TruncatedSVD')),
                                       DagNodeDetails('Truncated SVD: transform', ['array'],
-                                                     OptimizerInfo(RangeComparison(0, 200), (4, 2),
-                                                                   RangeComparison(0, 800))),
+                                                     OptimizerInfo(RangeComparison(0, 2000), (4, 2),
+                                                                   RangeComparison(0, 2000))),
                                       OptionalCodeInfo(CodeReference(14, 14, 14, 53),
                                                        'TruncatedSVD(n_iter=1, random_state=42)'),
                                       Comparison(FunctionType))
-    expected_dag.add_edge(expected_concat, expected_transform_test)
+    expected_dag.add_edge(expected_transformer, expected_transform_test, arg_index=0)
+    expected_dag.add_edge(expected_concat, expected_transform_test, arg_index=1)
     compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
 
     fit_transform_node = list(inspector_result.original_dag.nodes)[1]
-    transform_node = list(inspector_result.original_dag.nodes)[3]
-    pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2]})
+    transform_node = list(inspector_result.original_dag.nodes)[2]
+    pandas_df = numpy.array([[2., 4., 3.], [0., 2., 2.], [0., 0., 1.], [4., 4., 3.]])
     fit_transformed_result = fit_transform_node.processing_func(pandas_df)
-    expected_fit_transform_data = numpy.array([[-0.52166986], [-0.61651893], [1.73099545], [-0.59280666]])
+    expected_fit_transform_data = numpy.array([[5.34468848, 0.60472355],
+                                               [2.46206848, 1.3921952],
+                                               [0.54114431, 0.47790364],
+                                               [6.30638433, -1.09703966]])
     assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
 
-    test_df = pandas.DataFrame({'A': [50, 2, 10, 1]})
+    test_df = numpy.array([[0., 2., 2.], [0., 0., 1.], [4., 4., 3.], [2., 4., 3.]])
     encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
-    expected = numpy.array([[0.54538213], [-0.59280666], [-0.40310853], [-0.61651893]])
+    expected = numpy.array([[2.46206848, 1.3921952],
+                            [0.54114431, 0.47790364],
+                            [6.30638433, -1.09703966],
+                            [5.34468848, 0.60472355]])
     assert numpy.allclose(encoded_data, expected)
 
 
