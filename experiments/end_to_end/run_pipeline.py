@@ -5,6 +5,7 @@ import re
 import string
 import sys
 
+import fuzzy_pandas
 import numpy as np
 import pandas as pd
 from faker import Faker
@@ -14,6 +15,7 @@ from sklearn.feature_extraction.text import HashingVectorizer, CountVectorizer, 
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransformer, RobustScaler
 from sklearn.preprocessing import label_binarize
@@ -28,7 +30,7 @@ from mlwhatif.utils import get_project_root
 data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets")
 
 
-def get_dataset(dataset_name, data_loading_name, seed):
+def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
     if dataset_name == 'reviews':
         def random_subset(arr):
             size = np.random.randint(low=1, high=len(arr) + 1)
@@ -100,6 +102,41 @@ def get_dataset(dataset_name, data_loading_name, seed):
         fake.seed_instance(seed)
         integrated_data = integrate_data(reviews, ratings, products, categories, fake)
         train, train_labels, test, test_labels = compute_feature_and_label_data(integrated_data, final_columns, fake)
+    elif dataset_name == 'healthcare':
+        COUNTIES_OF_INTEREST = ['county2', 'county3']
+
+        if data_loading_name == 'fast_loading':
+            patients = pd.read_csv(
+                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "healthcare",
+                             "patients.csv"), na_values='?')
+            histories = pd.read_csv(
+                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "healthcare",
+                             "histories.csv"), na_values='?')
+        elif data_loading_name == 'slow_loading':
+            patients = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                   "main/datasets/healthcare/patients.csv", na_values='?')
+            histories = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                    "main/datasets/healthcare/histories.csv", na_values='?')
+        else:
+            raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
+
+        data = fuzzy_pandas.fuzzy_merge(patients, histories, on='full_name', method='levenshtein',
+                                        keep_right=['smoker', 'complications'], threshold=0.95)
+        complications = data.groupby('age_group') \
+            .agg(mean_complications=('complications', 'mean'))
+        data = data.merge(complications, on=['age_group'])
+        data['label'] = data['complications'] > 1.2 * data['mean_complications']
+        data = data[['smoker', 'last_name', 'county', 'num_children', 'race', 'income', 'label']]
+        data = data[data['county'].isin(COUNTIES_OF_INTEREST)]
+        numerical_columns = ['num_children', 'income']
+        categorical_columns = ['smoker', 'county', 'race']
+        text_columns = ['last_name']
+        train, test = train_test_split(data)
+        if featurization_name == "featurization_0":
+            train = train.dropna(subset=categorical_columns)
+            test = test.dropna(subset=categorical_columns)
+        train_labels = train['label']
+        test_labels = test['label']
     else:
         raise ValueError(f"Invalid dataset: {dataset_name}!")
 
@@ -115,8 +152,11 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
 
         transformers = [('num', FunctionTransformer(identity), numerical_columns),
                         ('text', HashingVectorizer(n_features=2 ** 4), text_columns[0])]
+
         for cat_column in categorical_columns:
-            transformers.append((f"cat_{cat_column}", OneHotEncoder(handle_unknown='ignore'), [cat_column]))
+            # Pipelines with categorical missing values need to, e.g., call dropna during dataset loading for
+            # featurization_0 which has no missing value imputation. The other featurization options have imputation.
+            transformers.append((f"cat_{cat_column}", OneHotEncoder(handle_unknown='ignore', sparse=False), [cat_column]))
 
         featurization = ColumnTransformer(transformers)
     elif featurization_name == 'featurization_1':  # based on openml_id == '5055' and openml_id == '17322'
@@ -125,7 +165,6 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
         transformers = [('num', RobustScaler(), numerical_columns),
                         ('text', HashingVectorizer(n_features=2 ** 5), text_columns[0])]
         for cat_column in categorical_columns:
-
             def another_imputer(df_with_categorical_columns):
                 return df_with_categorical_columns.fillna('__missing__')
 
@@ -259,7 +298,7 @@ if sys.argv[0] == "mlwhatif" or __name__ == "__main__":
     print(f'Running {data_loading_name} featurization {featurization_name} on dataset {dataset_name} with model '
           f'{model_name}')
     train, train_labels, test, test_labels, numerical_columns, categorical_columns, text_columns = \
-        get_dataset(dataset_name, data_loading_name, seed)
+        get_dataset(dataset_name, data_loading_name, seed, featurization_name)
 
     featurization = get_featurization(featurization_name, numerical_columns, categorical_columns, text_columns)
     model = get_model(model_name)

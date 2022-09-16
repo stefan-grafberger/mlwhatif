@@ -261,7 +261,8 @@ class OperatorImpact(WhatIfAnalysis):
         if self._test_selections is True:
             selections_to_replace = [node for node in nodes_to_search if
                                      node.operator_info.operator == OperatorType.SELECTION
-                                     and dag.has_edge(last_op_before_train_test_split, node) is False]
+                                     and dag.has_edge(last_op_before_train_test_split, node) is False
+                                     and node.details.description != "dropna"]
             all_nodes_to_test.extend(selections_to_replace)
             # TODO: We need to process filters that are present on both test and train side at the same time
         if self._restrict_to_linenos is not None:

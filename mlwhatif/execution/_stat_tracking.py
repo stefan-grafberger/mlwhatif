@@ -139,6 +139,8 @@ def get_df_shape(result_or_inplace_obj):
     elif isinstance(result_or_inplace_obj, (float, MetricFrame)):
         # E.g., a score metric output from estimator.score
         shape = (1, 1)
+    elif type(result_or_inplace_obj).__name__ == "TrainTestSplitResult":  # TODO: Clean up, currently circular import
+        shape = None
     else:
         raise Exception(f"Result type {type(result_or_inplace_obj).__name__} not supported yet!")
     return shape

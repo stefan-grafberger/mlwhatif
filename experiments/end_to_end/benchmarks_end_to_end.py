@@ -41,6 +41,32 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                  None: ErrorType.MISLABEL})
     elif scenario_name == 'operator_impact' and dataset_name == 'reviews':
         analysis = OperatorImpact(test_selections=True)
+    elif scenario_name == 'data_corruption' and dataset_name == 'healthcare':
+        def corruption(pandas_df):
+            df_copy = pandas_df.copy()
+            df_copy['num_children'] = 0
+            return df_copy
+
+        analysis = DataCorruption({'income': CorruptionType.SCALING,
+                                   'num_children': corruption,
+                                   'last_name': CorruptionType.BROKEN_CHARACTERS,
+                                   'smoker': CorruptionType.CATEGORICAL_SHIFT,
+                                   'county': CorruptionType.CATEGORICAL_SHIFT,
+                                   'race': CorruptionType.CATEGORICAL_SHIFT
+                                   },
+                                  corruption_percentages=[0.2, 0.4, 0.6, 0.8, 1.0])
+    elif scenario_name == 'feature_importance' and dataset_name == 'healthcare':
+        analysis = PermutationFeatureImportance()
+    elif scenario_name == 'data_cleaning' and dataset_name == 'healthcare':
+        analysis = DataCleaning({'smoker': ErrorType.CAT_MISSING_VALUES,
+                                 'county': ErrorType.CAT_MISSING_VALUES,
+                                 'race': ErrorType.CAT_MISSING_VALUES,
+                                 'num_children': ErrorType.NUM_MISSING_VALUES,
+                                 'income': ErrorType.OUTLIERS,
+                                 'full_name': ErrorType.DUPLICATES,
+                                 None: ErrorType.MISLABEL})
+    elif scenario_name == 'operator_impact' and dataset_name == 'healthcare':
+        analysis = OperatorImpact(test_selections=True)
     else:
         raise ValueError(f"Invalid scenario or dataset: {scenario_name} {dataset_name}!")
     return analysis

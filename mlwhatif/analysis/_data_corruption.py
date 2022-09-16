@@ -31,6 +31,7 @@ class CorruptionType(Enum):
     GAUSSIAN_NOISE = "gaussian noise"
     SCALING = "scaling"
 
+
 def corrupt_broken_characters(pandas_df, column):
     if isinstance(pandas_df, pandas.DataFrame):
         result = BrokenCharacters(column=column, fraction=1.).transform(pandas_df)

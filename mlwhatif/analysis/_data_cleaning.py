@@ -165,10 +165,11 @@ class DataCleaning(WhatIfAnalysis):
                                                                                        self._score_nodes_and_linenos)
                 patches_for_variant.extend(extraction_nodes)
                 if cleaning_method.patch_type == PatchType.DATA_FILTER_PATCH:
-                    feature_cols = get_columns_used_as_feature(dag)
-                    required_cols = set(feature_cols)
-                    required_cols.add(column)
-                    required_cols = list(required_cols)
+                    feature_cols = set(get_columns_used_as_feature(dag))
+                    if column in feature_cols:
+                        required_cols = list(feature_cols)
+                    else:
+                        required_cols = [column]
                     filter_func = partial(cleaning_method.filter_func, column=column)
 
                     new_train_cleaning_node = DagNode(singleton.get_next_op_id(),

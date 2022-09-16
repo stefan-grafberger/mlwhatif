@@ -2,7 +2,7 @@
 # PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python is required on our Azure machine due to some dependency issues
 for scenario in "data_corruption" "feature_importance" "data_cleaning" "operator_impact"
 do
-  for dataset in "reviews"
+  for dataset in "reviews" "healthcare"
   do
     for data_loading in "fast_loading" "slow_loading"
     do
