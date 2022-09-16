@@ -60,6 +60,7 @@ class PipelineExecutor:
     monkey_patch_duration = 0
     skip_optimizer = False
     force_optimization_rules = None
+    estimate_only = False
 
     def run(self, *,
             notebook_path: str or None = None,
@@ -71,7 +72,8 @@ class PipelineExecutor:
             track_code_references: bool = True,
             custom_monkey_patching: List[any] = None,
             skip_optimizer=False,
-            force_optimization_rules: List[QueryOptimizationRule] or None=None
+            force_optimization_rules: List[QueryOptimizationRule] or None = None,
+            estimate_only=False
             ) -> AnalysisResults:
         """
         Instrument and execute the pipeline and evaluate all checks
@@ -93,6 +95,7 @@ class PipelineExecutor:
         self.analyses = analyses
         self.skip_optimizer = skip_optimizer
         self.force_optimization_rules = force_optimization_rules
+        self.estimate_only = estimate_only
 
         if extraction_info is None:
             logger.info(f'Running instrumented original pipeline...')
@@ -146,17 +149,18 @@ class PipelineExecutor:
         MultiQueryOptimizer(self, self.force_optimization_rules)\
             .create_optimized_plan(self.analysis_results, self.skip_optimizer)
 
-        logger.info(f"Executing generated plans")
-        execution_start = time.time()
-        DagExecutor().execute(self.analysis_results.combined_optimized_dag)
-        execution_duration = time.time() - execution_start
-        logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
-        self.analysis_results.runtime_info.what_if_execution = execution_duration * 1000
+        if self.estimate_only is False:
+            logger.info(f"Executing generated plans")
+            execution_start = time.time()
+            DagExecutor().execute(self.analysis_results.combined_optimized_dag)
+            execution_duration = time.time() - execution_start
+            logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
+            self.analysis_results.runtime_info.what_if_execution = execution_duration * 1000
 
-        self.labels_to_extracted_plan_results.update(self.original_pipeline_labels_to_extracted_plan_results)
-        for analysis in self.analyses:
-            report = analysis.generate_final_report(self.labels_to_extracted_plan_results)
-            self.analysis_results.analysis_to_result_reports[analysis] = report
+            self.labels_to_extracted_plan_results.update(self.original_pipeline_labels_to_extracted_plan_results)
+            for analysis in self.analyses:
+                report = analysis.generate_final_report(self.labels_to_extracted_plan_results)
+                self.analysis_results.analysis_to_result_reports[analysis] = report
 
     def run_instrumented_pipeline(self, notebook_path, python_code, python_path):
         """
@@ -218,6 +222,7 @@ class PipelineExecutor:
         self.monkey_patch_duration = 0
         self.skip_optimizer = False
         self.force_optimization_rules = None
+        self.estimate_only = False
 
     @staticmethod
     def instrument_pipeline(parsed_ast, track_code_references):

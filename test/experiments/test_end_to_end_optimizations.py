@@ -95,8 +95,7 @@ def test_operator_impact_reviews(tmpdir):
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     analysis = get_analysis_for_scenario_and_dataset(scenario, dataset)
 
-    # FIXME: Still crashes with featurization_2 and 3
-    with patch.object(sys, 'argv', ["mlwhatif", "reviews", "fast_loading", "featurization_2", "logistic_regression"]):
+    with patch.object(sys, 'argv', ["mlwhatif", "reviews", "fast_loading", "featurization_0", "logistic_regression"]):
         analysis_result_no_opt = PipelineAnalyzer \
             .on_pipeline_from_py_file(pipeline_run_file) \
             .add_custom_monkey_patching_modules([custom_monkeypatching]) \

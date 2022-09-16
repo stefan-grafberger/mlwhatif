@@ -4,7 +4,7 @@ User-facing API for inspecting the pipeline
 from typing import Iterable, List
 
 from .execution._pipeline_executor import singleton, logger
-from ._analysis_results import AnalysisResults, DagExtractionInfo
+from ._analysis_results import AnalysisResults, DagExtractionInfo, EstimationResults
 from .analysis._what_if_analysis import WhatIfAnalysis
 from .optimization._query_optimization_rules import QueryOptimizationRule
 
@@ -13,6 +13,7 @@ class PipelineInspectorBuilder:
     """
     The fluent API builder to build an inspection run
     """
+
     # pylint: disable=too-many-instance-attributes
 
     def __init__(self, notebook_path: str or None = None,
@@ -96,13 +97,35 @@ class PipelineInspectorBuilder:
                              analyses=self._analyses,
                              custom_monkey_patching=self._monkey_patching_modules,
                              skip_optimizer=self._skip_optimizer,
-                             force_optimization_rules=self._force_optimization_rules)
+                             force_optimization_rules=self._force_optimization_rules,
+                             estimate_only=False)
+
+    def estimate(self) -> EstimationResults:
+        """
+        Instrument and execute the pipeline
+        """
+        analysis_result_with_empty_result = singleton.run(notebook_path=self._notebook_path,
+                                                          python_path=self._python_path,
+                                                          python_code=self._python_code,
+                                                          extraction_info=self._extraction_info,
+                                                          analyses=self._analyses,
+                                                          custom_monkey_patching=self._monkey_patching_modules,
+                                                          skip_optimizer=self._skip_optimizer,
+                                                          force_optimization_rules=self._force_optimization_rules,
+                                                          estimate_only=True)
+        return EstimationResults(
+            analysis_result_with_empty_result.original_dag,
+            analysis_result_with_empty_result.what_if_dags,
+            analysis_result_with_empty_result.combined_optimized_dag,
+            analysis_result_with_empty_result.runtime_info,
+            analysis_result_with_empty_result.dag_extraction_info)
 
 
 class PipelineAnalyzer:
     """
     The entry point to the fluent API to build an inspection run
     """
+
     @staticmethod
     def on_pipeline_from_py_file(path: str) -> PipelineInspectorBuilder:
         """Inspect a pipeline from a .py file."""

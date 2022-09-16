@@ -11,7 +11,7 @@ from numpy import argmin
 from mlwhatif.instrumentation._dag_node import DagNode
 from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.analysis._analysis_utils import find_dag_location_for_new_filter_on_column, get_sorted_parent_nodes, \
-    get_sorted_children_nodes
+    get_sorted_children_nodes, get_columns_used_as_feature
 from mlwhatif.execution._patches import PipelinePatch, OperatorRemoval
 from mlwhatif.optimization._query_optimization_rules import QueryOptimizationRule
 
@@ -71,11 +71,14 @@ class OperatorDeletionFilterPushUp(QueryOptimizationRule):
         selectivity_and_filters_to_push_up = sorted(selectivity_and_filters_to_push_up, key=lambda x: x[0])
         for _, filter_removal_patch in selectivity_and_filters_to_push_up:
             using_columns_for_filter = self._get_columns_required_for_filter_eval(dag, filter_removal_patch)
+            feature_cols = get_columns_used_as_feature(dag)
+            required_cols = set(feature_cols)
+            required_cols = list(required_cols.union(using_columns_for_filter))
 
             operator_to_add_node_after_train = find_dag_location_for_new_filter_on_column(
-                using_columns_for_filter, dag, True)
+                required_cols, dag, True)
             operator_to_add_node_after_test = find_dag_location_for_new_filter_on_column(
-                using_columns_for_filter, dag, False)
+                required_cols, dag, False)
 
             dag = self._move_filters_and_duplicate_if_required(dag, filter_removal_patch,
                                                                operator_to_add_node_after_test,

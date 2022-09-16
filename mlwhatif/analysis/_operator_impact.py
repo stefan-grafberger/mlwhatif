@@ -93,8 +93,9 @@ class OperatorImpact(WhatIfAnalysis):
         """Replace a transformer with an alternative that does nothing."""
 
         def onehot_transformer_processing_func(input_df):
+            input_df_copy = input_df.copy()
             transformer = OneHotEncoder(sparse=False, handle_unknown='ignore')
-            transformed_data = transformer.fit_transform(input_df)
+            transformed_data = transformer.fit_transform(input_df_copy)
             transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
             transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
             return transformed_data
@@ -102,8 +103,9 @@ class OperatorImpact(WhatIfAnalysis):
         def passthrough_transformer_processing_func(input_df):
             # This is the passthrough transformer the sklearn ColumnTransformer uses internally, a FunctionTransformer
             #  that uses the identity function
+            input_df_copy = input_df.copy()
             transformer = FunctionTransformer(accept_sparse=True, check_inverse=False)
-            transformed_data = transformer.fit_transform(input_df)
+            transformed_data = transformer.fit_transform(input_df_copy)
             transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
             transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
             return transformed_data
@@ -112,6 +114,7 @@ class OperatorImpact(WhatIfAnalysis):
             # TODO: Is converting numpy to pandas df necessary or not?
             # if not isinstance(input_df, pandas.DataFrame):
             #     input_df = pandas.DataFrame.from_records(input_df)
+            input_df_copy = input_df.copy()
             stringify_and_impute = Pipeline([
                 ('stringify_bool',
                  FunctionTransformer(func=lambda maybe_bool: maybe_bool.astype(str), check_inverse=False)),
@@ -123,7 +126,7 @@ class OperatorImpact(WhatIfAnalysis):
                     ("non_num", stringify_and_impute, make_column_selector(dtype_exclude="number"))
                 ]
             )
-            transformed_data = transformer.fit_transform(input_df)
+            transformed_data = transformer.fit_transform(input_df_copy)
             transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
             transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
             return transformed_data

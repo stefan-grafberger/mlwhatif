@@ -60,7 +60,7 @@ def test_operator_impact_healthcare(tmpdir):
         .execute()
 
     report = analysis_result.analysis_to_result_reports[OperatorImpact(True, True)]
-    assert report.shape == (5, 7)
+    assert report.shape == (4, 7)
 
     visualize_dags(analysis_result, tmpdir)
 
