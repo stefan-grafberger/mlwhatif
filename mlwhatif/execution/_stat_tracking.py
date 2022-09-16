@@ -133,14 +133,9 @@ def get_df_shape(result_or_inplace_obj):
         #  This is because we might need it for optimisation purposes to choose whether dense or sparse matrices are
         #  better. We might want to potentially change this in the future.
         shape = result_or_inplace_obj.shape
-    elif isinstance(result_or_inplace_obj, (sklearn.base.BaseEstimator, History)):
-        # Estimator fit only, not fit_transform
-        shape = None
     elif isinstance(result_or_inplace_obj, (float, MetricFrame)):
         # E.g., a score metric output from estimator.score
         shape = (1, 1)
-    elif type(result_or_inplace_obj).__name__ == "TrainTestSplitResult":  # TODO: Clean up, currently circular import
-        shape = None
     else:
-        raise Exception(f"Result type {type(result_or_inplace_obj).__name__} not supported yet!")
+        shape = None
     return shape

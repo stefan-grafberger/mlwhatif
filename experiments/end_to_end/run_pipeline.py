@@ -166,7 +166,7 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
                         ('text', HashingVectorizer(n_features=2 ** 5), text_columns[0])]
         for cat_column in categorical_columns:
             def another_imputer(df_with_categorical_columns):
-                return df_with_categorical_columns.fillna('__missing__')
+                return df_with_categorical_columns.fillna('__missing__').astype(str)
 
             cat_pipe = Pipeline([('anothersimpleimputer', FunctionTransformer(another_imputer)),
                                  ('onehotencoder', OneHotEncoder(handle_unknown='ignore'))])
@@ -233,7 +233,7 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
                         ('text', MyW2VTransformer(min_count=1), text_columns)]
 
         def another_imputer(df_with_categorical_columns):
-            return df_with_categorical_columns.fillna('__missing__')
+            return df_with_categorical_columns.fillna('__missing__').astype(str)
 
         for cat_column in categorical_columns:
             cat_pipe = Pipeline([('anothersimpleimputer', FunctionTransformer(another_imputer)),
