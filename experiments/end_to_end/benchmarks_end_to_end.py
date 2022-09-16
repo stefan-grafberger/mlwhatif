@@ -97,12 +97,15 @@ if __name__ == "__main__":
     result_df_opt_original_pipeline_estimated = []
     result_df_opt_original_pipeline_importing_and_monkeypatching = []
     result_df_opt_original_pipeline_without_importing_and_monkeypatching = []
+    result_df_opt_original_pipeline_model_training = []
     result_df_opt_what_if_plan_generation = []
     result_df_opt_what_if_query_optimization_duration = []
     result_df_opt_what_if_execution = []
+    result_df_opt_what_if_execution_combined_model_training = []
     result_df_no_opt_what_if_plan_generation = []
     result_df_no_opt_what_if_query_optimization_duration = []
     result_df_no_opt_what_if_execution = []
+    result_df_no_opt_what_if_execution_combined_model_training = []
 
     for repetition, seed in enumerate(seeds):
         numpy.random.seed(seed)
@@ -150,14 +153,20 @@ if __name__ == "__main__":
             analysis_result_opt.runtime_info.original_pipeline_importing_and_monkeypatching)
         result_df_opt_original_pipeline_without_importing_and_monkeypatching.append(
             analysis_result_opt.runtime_info.original_pipeline_without_importing_and_monkeypatching)
+        result_df_opt_original_pipeline_model_training.append(analysis_result_opt.runtime_info.original_model_training)
         result_df_opt_what_if_plan_generation.append(analysis_result_opt.runtime_info.what_if_plan_generation)
         result_df_opt_what_if_query_optimization_duration.append(
             analysis_result_opt.runtime_info.what_if_query_optimization_duration)
         result_df_opt_what_if_execution.append(analysis_result_opt.runtime_info.what_if_execution)
+        result_df_opt_what_if_execution_combined_model_training.append(
+            analysis_result_opt.runtime_info.what_if_execution_combined_model_training)
         result_df_no_opt_what_if_plan_generation.append(analysis_result_no_opt.runtime_info.what_if_plan_generation)
         result_df_no_opt_what_if_query_optimization_duration.append(
             analysis_result_no_opt.runtime_info.what_if_query_optimization_duration)
         result_df_no_opt_what_if_execution.append(analysis_result_no_opt.runtime_info.what_if_execution)
+        result_df_no_opt_what_if_execution_combined_model_training.append(
+            analysis_result_no_opt.runtime_info.what_if_execution_combined_model_training)
+
 
         print(f'# Finished -- repetition {repetition + 1} of {num_repetitions} ')
         # print(results_dict_items)
@@ -181,14 +190,20 @@ if __name__ == "__main__":
                                       result_df_opt_original_pipeline_importing_and_monkeypatching,
                                   'opt_original_pipeline_without_importing_and_monkeypatching':
                                       result_df_opt_original_pipeline_without_importing_and_monkeypatching,
+                                  'opt_original_pipeline_model_training.append':
+                                      result_df_opt_original_pipeline_model_training,
                                   'opt_what_if_plan_generation': result_df_opt_what_if_plan_generation,
                                   'opt_what_if_query_optimization_duration':
                                       result_df_opt_what_if_query_optimization_duration,
                                   'opt_what_if_execution': result_df_opt_what_if_execution,
+                                  'opt_what_if_execution_combined_model_training':
+                                      result_df_opt_what_if_execution_combined_model_training,
                                   'no_opt_what_if_plan_generation': result_df_no_opt_what_if_plan_generation,
                                   'no_opt_what_if_query_optimization_duration':
                                       result_df_no_opt_what_if_query_optimization_duration,
-                                  'no_opt_what_if_execution': result_df_no_opt_what_if_execution
+                                  'no_opt_what_if_execution': result_df_no_opt_what_if_execution,
+                                  'no_opt_what_if_execution_combined_model_training':
+                                      result_df_no_opt_what_if_execution_combined_model_training
                                   })
     result_df_path = os.path.join(output_directory, f"results-{scenario_name}-"
                                                     f"{dataset_name}-{data_loading_name}-"

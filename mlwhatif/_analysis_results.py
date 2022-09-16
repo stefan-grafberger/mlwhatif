@@ -19,12 +19,14 @@ class RuntimeInfo:
     original_pipeline_importing_and_monkeypatching: int
     original_pipeline_without_importing_and_monkeypatching: int
     original_pipeline_estimated: int
+    original_model_training: int
     what_if_plan_generation: int
     what_if_unoptimized_estimated: int
     what_if_optimized_estimated: int
     what_if_optimization_saving_estimated: int
     what_if_query_optimization_duration: int
     what_if_execution: int
+    what_if_execution_combined_model_training: int
 
 
 @dataclasses.dataclass
