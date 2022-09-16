@@ -1,4 +1,5 @@
 # pylint: disable=invalid-name,missing-module-docstring
+import logging
 import os
 import random
 import sys
@@ -17,6 +18,8 @@ from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
 from mlwhatif.analysis._operator_impact import OperatorImpact
 from mlwhatif.analysis._permutation_feature_importance import PermutationFeatureImportance
 from mlwhatif.utils import get_project_root
+
+logger = logging.getLogger(__name__)
 
 
 def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
@@ -47,7 +50,7 @@ if __name__ == "__main__":
     warnings.filterwarnings("ignore")
 
     if len(sys.argv) < 6:
-        print("scenario_name dataset_name data_loading_name featurization_name model_name")
+        logger.info("scenario_name dataset_name data_loading_name featurization_name model_name")
 
     scenario_name = sys.argv[1]
     dataset_name = sys.argv[2]
@@ -67,7 +70,7 @@ if __name__ == "__main__":
 
     analysis = get_analysis_for_scenario_and_dataset(scenario_name, dataset_name)
 
-    print(f'Patching sys.argv with {synthetic_cmd_args}')
+    logging.info(f'Patching sys.argv with {synthetic_cmd_args}')
     current_directory = os.getcwd()
     output_directory = os.path.join(current_directory, r'end-to-end-benchmark-results')
     if not os.path.exists(output_directory):
@@ -110,8 +113,8 @@ if __name__ == "__main__":
     for repetition, seed in enumerate(seeds):
         numpy.random.seed(seed)
         random.seed(seed)
-        print(f'# Optimization benchmark for {scenario_name} with args [{sys.argv[2:]}] '
-              f'-- repetition {repetition + 1} of {num_repetitions}')
+        logger.info(f'# Optimization benchmark for {scenario_name} with args [{sys.argv[2:]}] '
+                    f'-- repetition {repetition + 1} of {num_repetitions}')
 
         total_opt_exec_start = time.time()
         with patch.object(sys, 'argv', synthetic_cmd_args):
@@ -167,8 +170,7 @@ if __name__ == "__main__":
         result_df_no_opt_what_if_execution_combined_model_training.append(
             analysis_result_no_opt.runtime_info.what_if_execution_combined_model_training)
 
-
-        print(f'# Finished -- repetition {repetition + 1} of {num_repetitions} ')
+        logger.info(f'# Finished -- repetition {repetition + 1} of {num_repetitions} ')
         # print(results_dict_items)
 
     result_df = pandas.DataFrame({'repetition': result_df_repetitions,
@@ -209,5 +211,5 @@ if __name__ == "__main__":
                                                     f"{dataset_name}-{data_loading_name}-"
                                                     f"{featurization_name}-{model_name}.csv")
     result_df.to_csv(result_df_path, index=False)
-    print(f'# Final results after all repetitions')
-    print(result_df)
+    logger.info(f'# Final results after all repetitions')
+    logger.info(result_df)
