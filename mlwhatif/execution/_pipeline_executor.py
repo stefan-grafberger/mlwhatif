@@ -25,7 +25,9 @@ from mlwhatif.execution._dag_executor import DagExecutor
 from mlwhatif.optimization._multi_query_optimizer import MultiQueryOptimizer
 from mlwhatif.optimization._query_optimization_rules import QueryOptimizationRule
 
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(levelname)-5s %(message)s',
+                    level=logging.INFO,
+                    datefmt='%Y-%m-%d %H:%M:%S')
 for _ in ("gensim", "tensorflow", "h5py"):
     logging.getLogger(_).setLevel(logging.CRITICAL)
 
