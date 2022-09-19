@@ -118,6 +118,8 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                  None: ErrorType.MISLABEL})
     elif scenario_name == 'operator_impact' and dataset_name == 'cardio':
         analysis = OperatorImpact(test_selections=True)
+    elif scenario_name == 'data_cleaning' and dataset_name == 'sneakers':
+        analysis = DataCleaning({None: ErrorType.MISLABEL})
     else:
         raise ValueError(f"Invalid scenario or dataset: {scenario_name} {dataset_name}!")
     return analysis

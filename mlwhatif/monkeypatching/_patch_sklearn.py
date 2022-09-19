@@ -2460,7 +2460,7 @@ class SklearnKerasClassifierPatching:
 
     # pylint: disable=too-few-public-methods
     @gorilla.patch(keras_sklearn_internal.BaseWrapper, name='__init__', settings=gorilla.Settings(allow_hit=True))
-    def patched__init__(self, mlinspect_caller_filename=None, mlinspect_lineno=None,
+    def patched__init__(self, build_fn, mlinspect_caller_filename=None, mlinspect_lineno=None,
                         mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
                         mlinspect_estimator_node_id=None, **sk_params):
         """ Patch for ('tensorflow.python.keras.wrappers.scikit_learn', 'KerasClassifier') """
@@ -2473,11 +2473,11 @@ class SklearnKerasClassifierPatching:
         self.mlinspect_optional_source_code = mlinspect_optional_source_code
         self.mlinspect_estimator_node_id = mlinspect_estimator_node_id
 
-        self.mlinspect_non_data_func_args = sk_params
+        self.mlinspect_non_data_func_args = {'build_fn': build_fn, **sk_params}
 
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
-            original(self, **sk_params)
+            original(self, **self.mlinspect_non_data_func_args)
 
             self.mlinspect_caller_filename = caller_filename
             self.mlinspect_lineno = lineno
