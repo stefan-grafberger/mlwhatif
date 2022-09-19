@@ -24,6 +24,10 @@ from tensorflow.keras.models import Sequential  # pylint: disable=no-name-in-mod
 from tensorflow.python.keras.optimizer_v2.gradient_descent import SGD  # pylint: disable=no-name-in-module
 from xgboost import XGBClassifier
 
+from tensorflow.python.keras.wrappers.scikit_learn import KerasClassifier
+from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Dropout, Flatten
+from tensorflow.keras.models import Sequential
+
 from example_pipelines.healthcare.healthcare_utils import MyKerasClassifier, MyW2VTransformer
 from mlwhatif.utils import get_project_root
 
@@ -196,6 +200,43 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
             test = test.dropna(subset=categorical_columns)
         train_labels = train['cardio']
         test_labels = test['cardio']
+    elif dataset_name == 'sneakers':
+        def decode_image(img_str):
+            return np.array([int(val) for val in img_str.split(':')])
+
+        if data_loading_name == 'fast_loading':
+            train_data = pd.read_csv(
+                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "sneakers",
+                             "product_images.csv"), converters={'image': decode_image})
+            product_categories = pd.read_csv(
+                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "sneakers",
+                             "product_categories.csv"))
+        elif data_loading_name == 'slow_loading':
+            train_data = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                     "main/datasets/sneakers/product_images.csv", converters={'image': decode_image})
+            product_categories = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/"
+                                             "ml-pipeline-datasets/main/datasets/sneakers/"
+                                             "product_categories.csv")
+        else:
+            raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
+        with_categories = train_data.merge(product_categories, on='category_id')
+
+        categories_to_distinguish = ['Sneaker', 'Ankle boot']
+
+        images_of_interest = with_categories[with_categories['category_name'].isin(categories_to_distinguish)]
+
+        random_seed_for_splitting = 1337
+
+        train_with_labels, test_with_labels = train_test_split(
+            images_of_interest, test_size=0.2, random_state=random_seed_for_splitting)
+
+        train = train_with_labels[['image']]
+        test = test_with_labels[['image']]
+        train_labels = label_binarize(train_with_labels['category_name'], classes=categories_to_distinguish)
+        test_labels = label_binarize(test_with_labels['category_name'], classes=categories_to_distinguish)
+        numerical_columns = ['image']
+        categorical_columns = []
+        text_columns = []
     else:
         raise ValueError(f"Invalid dataset: {dataset_name}!")
 
@@ -309,6 +350,17 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
             transformers.append((f"cat_{cat_column}", cat_pipe, [cat_column]))
 
         featurization = ColumnTransformer(transformers)
+    elif featurization_name == 'image':
+        def normalise_image(images):
+            return images / 255.0
+
+        def reshape_images(images):
+            return np.concatenate(images['image'].values) \
+                .reshape(images.shape[0], 28, 28, 1)
+        featurization = Pipeline([
+            ('normalisation', FunctionTransformer(normalise_image)),
+            ('reshaping', FunctionTransformer(reshape_images))
+        ])
     else:
         raise ValueError(f"Invalid featurization name: {featurization_name}!")
 
@@ -331,6 +383,23 @@ def get_model(model_name):
             return clf
 
         model = MyKerasClassifier(build_fn=create_model, epochs=7, batch_size=32, verbose=0)
+    elif model_name == 'image':
+        def create_cnn():
+            model = Sequential([
+                Conv2D(filters=64, kernel_size=2, padding='same', activation='relu', input_shape=(28, 28, 1)),
+                MaxPooling2D(pool_size=2),
+                Dropout(0.3),
+                Conv2D(filters=32, kernel_size=2, padding='same', activation='relu'),
+                MaxPooling2D(pool_size=2),
+                Dropout(0.3),
+                Flatten(),
+                Dense(256, activation='relu'),
+                Dropout(0.5),
+                Dense(2, activation='softmax')
+            ])
+            model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+            return model
+        model = KerasClassifier(create_cnn, epochs=10, verbose=0)
     else:
         raise ValueError(f"Invalid model name: {model_name}!")
 
@@ -362,6 +431,10 @@ if sys.argv[0] == "mlwhatif" or __name__ == "__main__":
 
     np.random.seed(seed)
     random.seed(seed)
+
+    if dataset_name == "sneakers":
+        assert featurization_name == "image"
+        assert model_name == "image"
 
     print(f'Running {data_loading_name} featurization {featurization_name} on dataset {dataset_name} with model '
           f'{model_name}')
