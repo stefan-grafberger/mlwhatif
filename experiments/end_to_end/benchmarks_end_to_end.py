@@ -218,7 +218,7 @@ if __name__ == "__main__":
                                       result_df_opt_original_pipeline_importing_and_monkeypatching,
                                   'opt_original_pipeline_without_importing_and_monkeypatching':
                                       result_df_opt_original_pipeline_without_importing_and_monkeypatching,
-                                  'opt_original_pipeline_model_training.append':
+                                  'opt_original_pipeline_model_training':
                                       result_df_opt_original_pipeline_model_training,
                                   'opt_what_if_plan_generation': result_df_opt_what_if_plan_generation,
                                   'opt_what_if_query_optimization_duration':
