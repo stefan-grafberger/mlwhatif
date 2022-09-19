@@ -39,8 +39,6 @@ class PandasPatching:
             function_info = FunctionInfo('pandas.io.parsers', 'read_csv')
 
             operator_context = OperatorContext(OperatorType.DATA_SOURCE, function_info)
-            result = original(*args, **kwargs)
-            # TODO: We should also capture the execution time, the output shape, and the memory size of each operator
             processing_func = partial(original, *args, **kwargs)
             optimizer_info, result = capture_optimizer_info(processing_func)
 

@@ -52,7 +52,7 @@ def test_data_corruption_healthcare(tmpdir):
     scenario = "data_corruption"
     dataset = "healthcare"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
-    assert analysis_output.shape == (25, 3)
+    assert analysis_output.shape == (31, 3)
 
 
 def test_feature_importance_healthcare(tmpdir):
