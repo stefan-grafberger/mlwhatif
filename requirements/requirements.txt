@@ -24,3 +24,4 @@ numba==0.53
 fuzzy_pandas==0.1
 xgboost==1.6.2
 imagecorruptions==1.1
+imgaug==0.4.0

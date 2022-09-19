@@ -7,9 +7,9 @@ import time
 import warnings
 from unittest.mock import patch
 
-import imagecorruptions
 import numpy
 import pandas
+from imgaug.augmenters import GaussianBlur
 
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
@@ -125,10 +125,9 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
             image_count = df_copy.shape[0]
             image_np_array = numpy.concatenate(df_copy['image'].values).reshape(image_count, 28, 28, 1) \
                 .astype(numpy.uint8)
-            for image_index in range(image_count):
-                image_np_array[image_index, :, :, :] = imagecorruptions.corrupt(image_np_array[image_index, :, :, :],
-                                                                                corruption_name='gaussian_blur',
-                                                                                severity=3)
+            # corrupter = GaussianNoise(severity=3)
+            corrupter = GaussianBlur(sigma=(0.0, 3.0))
+            image_np_array = corrupter.augment_images(image_np_array)
             df_copy['image'] = pandas.Series(image_np_array.reshape(image_count, -1), dtype="object")
             return df_copy
 
