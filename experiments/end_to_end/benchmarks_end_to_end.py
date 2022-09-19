@@ -7,6 +7,7 @@ import time
 import warnings
 from unittest.mock import patch
 
+import imagecorruptions
 import numpy
 import pandas
 
@@ -118,6 +119,20 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                  None: ErrorType.MISLABEL})
     elif scenario_name == 'operator_impact' and dataset_name == 'cardio':
         analysis = OperatorImpact(test_selections=True)
+    elif scenario_name == 'data_corruption' and dataset_name == 'sneakers':
+        def corruption(pandas_df):
+            df_copy = pandas_df.copy()
+            image_count = df_copy.shape[0]
+            image_np_array = numpy.concatenate(df_copy['image'].values).reshape(image_count, 28, 28, 1) \
+                .astype(numpy.uint8)
+            for image_index in range(image_count):
+                image_np_array[image_index, :, :, :] = imagecorruptions.corrupt(image_np_array[image_index, :, :, :],
+                                                                                corruption_name='gaussian_blur',
+                                                                                severity=3)
+            df_copy['image'] = pandas.Series(image_np_array.reshape(image_count, -1), dtype="object")
+            return df_copy
+
+        analysis = DataCorruption({'image': corruption})
     elif scenario_name == 'data_cleaning' and dataset_name == 'sneakers':
         analysis = DataCleaning({None: ErrorType.MISLABEL})
     else:
