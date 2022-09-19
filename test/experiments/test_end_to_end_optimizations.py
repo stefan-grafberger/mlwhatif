@@ -2,8 +2,6 @@
 Tests whether the optimization works
 """
 # pylint: disable=too-many-locals,invalid-name
-# TODO: Clean up these tests
-
 from mlwhatif.testing._testing_helper_utils import run_scenario_and_visualize_dags
 
 
@@ -34,7 +32,7 @@ def test_data_cleaning_reviews(tmpdir):
     scenario = "data_cleaning"
     dataset = "reviews"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
-    assert analysis_output.shape.shape == (23, 4)
+    assert analysis_output.shape == (23, 4)
 
 
 def test_operator_impact_reviews(tmpdir):
@@ -44,7 +42,7 @@ def test_operator_impact_reviews(tmpdir):
     scenario = "operator_impact"
     dataset = "reviews"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
-    assert analysis_output.shape.shape == (4, 5)
+    assert analysis_output.shape == (4, 5)
 
 
 def test_data_corruption_healthcare(tmpdir):
@@ -54,7 +52,7 @@ def test_data_corruption_healthcare(tmpdir):
     scenario = "data_corruption"
     dataset = "healthcare"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
-    assert analysis_output.shape.shape == (25, 3)
+    assert analysis_output.shape == (25, 3)
 
 
 def test_feature_importance_healthcare(tmpdir):
@@ -64,7 +62,7 @@ def test_feature_importance_healthcare(tmpdir):
     scenario = "feature_importance"
     dataset = "healthcare"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
-    assert analysis_output.shape.shape == (7, 2)
+    assert analysis_output.shape == (7, 2)
 
 
 def test_data_cleaning_healthcare(tmpdir):
@@ -74,7 +72,7 @@ def test_data_cleaning_healthcare(tmpdir):
     scenario = "data_cleaning"
     dataset = "healthcare"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
-    assert analysis_output.shape.shape == (26, 4)
+    assert analysis_output.shape == (26, 4)
 
 
 def test_operator_impact_healthcare(tmpdir):
@@ -84,7 +82,7 @@ def test_operator_impact_healthcare(tmpdir):
     scenario = "operator_impact"
     dataset = "healthcare"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
-    assert analysis_output.shape.shape == (3, 5)
+    assert analysis_output.shape == (3, 5)
 
 
 def test_data_corruption_folktables(tmpdir):
@@ -123,5 +121,45 @@ def test_operator_impact_folktables(tmpdir):
     """
     scenario = "operator_impact"
     dataset = "folktables"
+    analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
+    assert analysis_output.shape == (2, 5)
+
+
+def test_data_corruption_cardio(tmpdir):
+    """
+    Tests whether the .py version of the inspector works
+    """
+    scenario = "data_corruption"
+    dataset = "cardio"
+    analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
+    assert analysis_output.shape == (34, 3)
+
+
+def test_feature_importance_cardio(tmpdir):
+    """
+    Tests whether the .py version of the inspector works
+    """
+    scenario = "feature_importance"
+    dataset = "cardio"
+    analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
+    assert analysis_output.shape == (12, 2)
+
+
+def test_data_cleaning_cardio(tmpdir):
+    """
+    Tests whether the .py version of the inspector works
+    """
+    scenario = "data_cleaning"
+    dataset = "cardio"
+    analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
+    assert analysis_output.shape == (43, 4)
+
+
+def test_operator_impact_cardio(tmpdir):
+    """
+    Tests whether the .py version of the inspector works
+    """
+    scenario = "operator_impact"
+    dataset = "cardio"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
     assert analysis_output.shape == (2, 5)

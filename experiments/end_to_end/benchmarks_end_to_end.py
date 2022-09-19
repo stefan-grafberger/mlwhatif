@@ -91,6 +91,33 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                  None: ErrorType.MISLABEL})
     elif scenario_name == 'operator_impact' and dataset_name == 'folktables':
         analysis = OperatorImpact(test_selections=True)
+    elif scenario_name == 'data_corruption' and dataset_name == 'cardio':
+        analysis = DataCorruption({'age': CorruptionType.SCALING,
+                                   'height': CorruptionType.SCALING,
+                                   'weight': CorruptionType.GAUSSIAN_NOISE,
+                                   'ap_hi': CorruptionType.GAUSSIAN_NOISE,
+                                   'ap_lo': CorruptionType.GAUSSIAN_NOISE,
+                                   'gender': CorruptionType.MISSING_VALUES,
+                                   'cholesterol': CorruptionType.BROKEN_CHARACTERS,
+                                   'gluc': CorruptionType.MISSING_VALUES,
+                                   'smoke': CorruptionType.MISSING_VALUES,
+                                   'alco': CorruptionType.MISSING_VALUES,
+                                   'active': CorruptionType.MISSING_VALUES})
+    elif scenario_name == 'feature_importance' and dataset_name == 'cardio':
+        analysis = PermutationFeatureImportance()
+    elif scenario_name == 'data_cleaning' and dataset_name == 'cardio':
+        analysis = DataCleaning({'smoke': ErrorType.CAT_MISSING_VALUES,
+                                 'alco': ErrorType.CAT_MISSING_VALUES,
+                                 'active': ErrorType.CAT_MISSING_VALUES,
+                                 'height': ErrorType.OUTLIERS,
+                                 'weight': ErrorType.OUTLIERS,
+                                 'age': ErrorType.NUM_MISSING_VALUES,
+                                 'gender': ErrorType.CAT_MISSING_VALUES,
+                                 'cholesterol': ErrorType.CAT_MISSING_VALUES,
+                                 'gluc': ErrorType.CAT_MISSING_VALUES,
+                                 None: ErrorType.MISLABEL})
+    elif scenario_name == 'operator_impact' and dataset_name == 'cardio':
+        analysis = OperatorImpact(test_selections=True)
     else:
         raise ValueError(f"Invalid scenario or dataset: {scenario_name} {dataset_name}!")
     return analysis

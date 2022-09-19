@@ -159,6 +159,43 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
             test = test.dropna(subset=categorical_columns)
         train_labels = train['PINCP']
         test_labels = test['PINCP']
+    elif dataset_name == 'cardio':
+        if data_loading_name == 'fast_loading':
+            cardio_main = pd.read_csv(
+                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "cardio",
+                             "cardio-main.csv"), delimiter=';')
+            cardio_first_additional_table = pd.read_csv(
+                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "cardio",
+                             "cardio-add-one.csv"), delimiter=';')
+            cardio_second_additional_table = pd.read_csv(
+                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "cardio",
+                             "cardio-add-two.csv"), delimiter=';')
+        elif data_loading_name == 'slow_loading':
+            cardio_main = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                      "main/datasets/cardio/cardio-main.csv", delimiter=';')
+            cardio_first_additional_table = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/"
+                                                        "ml-pipeline-datasets/main/datasets/cardio/cardio-add-one.csv",
+                                                        delimiter=';')
+            cardio_second_additional_table = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/"
+                                                         "ml-pipeline-datasets/main/datasets/cardio/cardio-add-two.csv",
+                                                         delimiter=';')
+        else:
+            raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
+        main_and_one = cardio_main.merge(cardio_first_additional_table, on="id")
+        cardio_data = main_and_one.merge(cardio_second_additional_table, on="id")
+        numerical_columns = ['age', 'height', 'weight', 'ap_hi', 'ap_lo']
+        categorical_columns = ['gender', 'cholesterol', 'gluc', 'smoke', 'alco', 'active']
+        text_columns = []
+
+        columns = numerical_columns + categorical_columns + ["cardio"]
+        cardio_data = cardio_data[columns]
+
+        train, test = train_test_split(cardio_data, test_size=0.20, random_state=42)
+        if featurization_name == "featurization_0":
+            train = train.dropna(subset=categorical_columns)
+            test = test.dropna(subset=categorical_columns)
+        train_labels = train['cardio']
+        test_labels = test['cardio']
     else:
         raise ValueError(f"Invalid dataset: {dataset_name}!")
 
@@ -262,6 +299,7 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
         if len(text_columns) >= 1:
             assert len(text_columns) == 1
             transformers.append(('text', MyW2VTransformer(min_count=1), text_columns))
+
         def another_imputer(df_with_categorical_columns):
             return df_with_categorical_columns.fillna('__missing__').astype(str)
 
