@@ -2,18 +2,23 @@
 Some util functions used in other tests
 """
 import os
+import sys
 from functools import partial
 from inspect import cleandoc
 from types import FunctionType
+from unittest.mock import patch
 
 import networkx
 from pandas import DataFrame
 from testfixtures import Comparison, RangeComparison
 
+from example_pipelines.healthcare import custom_monkeypatching
+from experiments.end_to_end.benchmarks_end_to_end import get_analysis_for_scenario_and_dataset
 from mlwhatif import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif._pipeline_analyzer import PipelineAnalyzer
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
+from mlwhatif.utils import get_project_root
 from mlwhatif.visualisation._visualisation import save_fig_to_path
 
 
@@ -269,3 +274,19 @@ def visualize_dags(analysis_result, tmpdir):
     analysis_result.save_original_dag_to_path(os.path.join(str(tmpdir), "orig"))
     analysis_result.save_what_if_dags_to_path(os.path.join(str(tmpdir), "what-if"))
     analysis_result.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir), "what-if-optimised"))
+
+
+def run_scenario_and_visualize_dags(dataset, scenario, tmpdir):
+    pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
+    analysis = get_analysis_for_scenario_and_dataset(scenario, dataset)
+    with patch.object(sys, 'argv', ["mlwhatif", dataset, "fast_loading", "featurization_0", "logistic_regression"]):
+        analysis_result_no_opt = PipelineAnalyzer \
+            .on_pipeline_from_py_file(pipeline_run_file) \
+            .add_custom_monkey_patching_modules([custom_monkeypatching]) \
+            .add_what_if_analysis(analysis) \
+            .execute()
+    analysis_result_no_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "with-opt-orig"))
+    analysis_result_no_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "with-opt-what-if"))
+    analysis_result_no_opt.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir), "with-opt-what-if-optimised"))
+    analysis_output = analysis_result_no_opt.analysis_to_result_reports[analysis]
+    return analysis_output

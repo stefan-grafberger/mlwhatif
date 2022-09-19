@@ -67,6 +67,30 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                  None: ErrorType.MISLABEL})
     elif scenario_name == 'operator_impact' and dataset_name == 'healthcare':
         analysis = OperatorImpact(test_selections=True)
+    elif scenario_name == 'data_corruption' and dataset_name == 'folktables':
+        analysis = DataCorruption({'AGEP': CorruptionType.SCALING,
+                                   'WKHP': CorruptionType.GAUSSIAN_NOISE,
+                                   'COW': CorruptionType.CATEGORICAL_SHIFT,
+                                   'SCHL': CorruptionType.BROKEN_CHARACTERS,
+                                   'MAR': CorruptionType.CATEGORICAL_SHIFT,
+                                   'OCCP': CorruptionType.MISSING_VALUES,
+                                   'POBP': CorruptionType.MISSING_VALUES,
+                                   'RELP': CorruptionType.MISSING_VALUES},
+                                  corruption_percentages=[0.25, 0.5, 0.75, 1.0])
+    elif scenario_name == 'feature_importance' and dataset_name == 'folktables':
+        analysis = PermutationFeatureImportance()
+    elif scenario_name == 'data_cleaning' and dataset_name == 'folktables':
+        analysis = DataCleaning({'OCCP': ErrorType.CAT_MISSING_VALUES,
+                                 'POBP': ErrorType.CAT_MISSING_VALUES,
+                                 'RELP': ErrorType.CAT_MISSING_VALUES,
+                                 'AGEP': ErrorType.OUTLIERS,
+                                 'WKHP': ErrorType.NUM_MISSING_VALUES,
+                                 'COW': ErrorType.CAT_MISSING_VALUES,
+                                 'MAR': ErrorType.CAT_MISSING_VALUES,
+                                 'SCHL': ErrorType.CAT_MISSING_VALUES,
+                                 None: ErrorType.MISLABEL})
+    elif scenario_name == 'operator_impact' and dataset_name == 'folktables':
+        analysis = OperatorImpact(test_selections=True)
     else:
         raise ValueError(f"Invalid scenario or dataset: {scenario_name} {dataset_name}!")
     return analysis
