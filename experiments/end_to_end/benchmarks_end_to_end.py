@@ -102,7 +102,7 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                    ('ap_hi', CorruptionType.GAUSSIAN_NOISE),
                                    ('ap_lo', CorruptionType.GAUSSIAN_NOISE),
                                    ('gender', CorruptionType.MISSING_VALUES),
-                                   ('cholesterol', CorruptionType.BROKEN_CHARACTERS),
+                                   ('cholesterol', CorruptionType.MISSING_VALUES),
                                    ('gluc', CorruptionType.MISSING_VALUES),
                                    ('smoke', CorruptionType.MISSING_VALUES),
                                    ('alco', CorruptionType.MISSING_VALUES),
