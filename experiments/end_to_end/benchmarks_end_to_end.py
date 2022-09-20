@@ -10,7 +10,6 @@ from unittest.mock import patch
 
 import numpy
 import pandas
-from imgaug.augmenters import GaussianBlur
 from jenga.corruptions.image import GaussianNoiseCorruption, GlassBlurCorruption, DefocusBlurCorruption, FogCorruption, \
     ContrastCorruption
 
