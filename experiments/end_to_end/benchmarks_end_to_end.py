@@ -41,7 +41,8 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                  'star_rating': ErrorType.NUM_MISSING_VALUES,
                                  'total_votes': ErrorType.OUTLIERS,
                                  'review_id': ErrorType.DUPLICATES,
-                                 None: ErrorType.MISLABEL})
+                                 # None: ErrorType.MISLABEL  # Very slow, not doing this makes experiments much faster
+                                 })
     elif scenario_name == 'operator_impact' and dataset_name == 'reviews':
         analysis = OperatorImpact(test_selections=True)
     elif scenario_name == 'data_corruption' and dataset_name == 'healthcare':
@@ -130,6 +131,7 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
             image_np_array = corruptor.transform(image_np_array)
             df_copy['image'] = list(image_np_array.reshape(image_count, -1))
             return df_copy
+
         gaussion_noise_corruption = partial(corruption, corruptor=GaussianNoiseCorruption(fraction=1., severity=3))
         gaussion_blur_corruption = partial(corruption, corruptor=GlassBlurCorruption(fraction=1., severity=3))
         defocus_blur_corruption = partial(corruption, corruptor=DefocusBlurCorruption(fraction=1., severity=3))

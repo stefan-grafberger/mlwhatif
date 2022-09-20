@@ -40,7 +40,7 @@ def test_data_cleaning_reviews(tmpdir):
     scenario = "data_cleaning"
     dataset = "reviews"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
-    assert analysis_output.shape == (23, 4)
+    assert analysis_output.shape == (21, 4)
 
 
 def test_operator_impact_reviews(tmpdir):
