@@ -26,11 +26,11 @@ logger = logging.getLogger(__name__)
 
 def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
     if scenario_name == 'data_corruption' and dataset_name == 'reviews':
-        analysis = DataCorruption({'vine': CorruptionType.CATEGORICAL_SHIFT,
-                                   'review_body': CorruptionType.BROKEN_CHARACTERS,
-                                   'category': CorruptionType.CATEGORICAL_SHIFT,
-                                   'total_votes': CorruptionType.SCALING,
-                                   'star_rating': CorruptionType.GAUSSIAN_NOISE},
+        analysis = DataCorruption([('vine', CorruptionType.CATEGORICAL_SHIFT),
+                                   ('review_body', CorruptionType.BROKEN_CHARACTERS),
+                                   ('category', CorruptionType.CATEGORICAL_SHIFT),
+                                   ('total_votes', CorruptionType.SCALING),
+                                   ('star_rating', CorruptionType.GAUSSIAN_NOISE)],
                                   corruption_percentages=[0.2, 0.4, 0.6, 0.8, 1.0])
     elif scenario_name == 'feature_importance' and dataset_name == 'reviews':
         analysis = PermutationFeatureImportance()
@@ -49,13 +49,13 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
             df_copy['num_children'] = 0
             return df_copy
 
-        analysis = DataCorruption({'income': CorruptionType.SCALING,
-                                   'num_children': corruption,
-                                   'last_name': CorruptionType.BROKEN_CHARACTERS,
-                                   'smoker': CorruptionType.CATEGORICAL_SHIFT,
-                                   'county': CorruptionType.CATEGORICAL_SHIFT,
-                                   'race': CorruptionType.CATEGORICAL_SHIFT
-                                   },
+        analysis = DataCorruption([('income', CorruptionType.SCALING),
+                                   ('num_children', corruption),
+                                   ('last_name', CorruptionType.BROKEN_CHARACTERS),
+                                   ('smoker', CorruptionType.CATEGORICAL_SHIFT),
+                                   ('county', CorruptionType.CATEGORICAL_SHIFT),
+                                   ('race', CorruptionType.CATEGORICAL_SHIFT)
+                                   ],
                                   corruption_percentages=[0.2, 0.4, 0.6, 0.8, 1.0])
     elif scenario_name == 'feature_importance' and dataset_name == 'healthcare':
         analysis = PermutationFeatureImportance()
@@ -70,14 +70,14 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
     elif scenario_name == 'operator_impact' and dataset_name == 'healthcare':
         analysis = OperatorImpact(test_selections=True)
     elif scenario_name == 'data_corruption' and dataset_name == 'folktables':
-        analysis = DataCorruption({'AGEP': CorruptionType.SCALING,
-                                   'WKHP': CorruptionType.GAUSSIAN_NOISE,
-                                   'COW': CorruptionType.CATEGORICAL_SHIFT,
-                                   'SCHL': CorruptionType.BROKEN_CHARACTERS,
-                                   'MAR': CorruptionType.CATEGORICAL_SHIFT,
-                                   'OCCP': CorruptionType.MISSING_VALUES,
-                                   'POBP': CorruptionType.MISSING_VALUES,
-                                   'RELP': CorruptionType.MISSING_VALUES},
+        analysis = DataCorruption([('AGEP', CorruptionType.SCALING),
+                                   ('WKHP', CorruptionType.GAUSSIAN_NOISE),
+                                   ('COW', CorruptionType.CATEGORICAL_SHIFT),
+                                   ('SCHL', CorruptionType.BROKEN_CHARACTERS),
+                                   ('MAR', CorruptionType.CATEGORICAL_SHIFT),
+                                   ('OCCP', CorruptionType.MISSING_VALUES),
+                                   ('POBP', CorruptionType.MISSING_VALUES),
+                                   ('RELP', CorruptionType.MISSING_VALUES)],
                                   corruption_percentages=[0.25, 0.5, 0.75, 1.0])
     elif scenario_name == 'feature_importance' and dataset_name == 'folktables':
         analysis = PermutationFeatureImportance()
@@ -94,17 +94,17 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
     elif scenario_name == 'operator_impact' and dataset_name == 'folktables':
         analysis = OperatorImpact(test_selections=True)
     elif scenario_name == 'data_corruption' and dataset_name == 'cardio':
-        analysis = DataCorruption({'age': CorruptionType.SCALING,
-                                   'height': CorruptionType.SCALING,
-                                   'weight': CorruptionType.GAUSSIAN_NOISE,
-                                   'ap_hi': CorruptionType.GAUSSIAN_NOISE,
-                                   'ap_lo': CorruptionType.GAUSSIAN_NOISE,
-                                   'gender': CorruptionType.MISSING_VALUES,
-                                   'cholesterol': CorruptionType.BROKEN_CHARACTERS,
-                                   'gluc': CorruptionType.MISSING_VALUES,
-                                   'smoke': CorruptionType.MISSING_VALUES,
-                                   'alco': CorruptionType.MISSING_VALUES,
-                                   'active': CorruptionType.MISSING_VALUES})
+        analysis = DataCorruption([('age', CorruptionType.SCALING),
+                                   ('height', CorruptionType.SCALING),
+                                   ('weight', CorruptionType.GAUSSIAN_NOISE),
+                                   ('ap_hi', CorruptionType.GAUSSIAN_NOISE),
+                                   ('ap_lo', CorruptionType.GAUSSIAN_NOISE),
+                                   ('gender', CorruptionType.MISSING_VALUES),
+                                   ('cholesterol', CorruptionType.BROKEN_CHARACTERS),
+                                   ('gluc', CorruptionType.MISSING_VALUES),
+                                   ('smoke', CorruptionType.MISSING_VALUES),
+                                   ('alco', CorruptionType.MISSING_VALUES),
+                                   ('active', CorruptionType.MISSING_VALUES)])
     elif scenario_name == 'feature_importance' and dataset_name == 'cardio':
         analysis = PermutationFeatureImportance()
     elif scenario_name == 'data_cleaning' and dataset_name == 'cardio':
@@ -132,7 +132,7 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
             df_copy['image'] = list(image_np_array.reshape(image_count, -1))
             return df_copy
 
-        analysis = DataCorruption({'image': corruption})
+        analysis = DataCorruption([('image', corruption)])
     elif scenario_name == 'data_cleaning' and dataset_name == 'sneakers':
         analysis = DataCleaning({None: ErrorType.MISLABEL})
     else:
