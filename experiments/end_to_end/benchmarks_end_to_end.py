@@ -10,6 +10,7 @@ from unittest.mock import patch
 import numpy
 import pandas
 from imgaug.augmenters import GaussianBlur
+from jenga.corruptions.image import GaussianNoiseCorruption
 
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
@@ -123,12 +124,12 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
         def corruption(pandas_df):
             df_copy = pandas_df.copy()
             image_count = df_copy.shape[0]
-            image_np_array = numpy.concatenate(df_copy['image'].values).reshape(image_count, 28, 28, 1) \
+            image_np_array = numpy.concatenate(df_copy['image'].values).reshape(image_count, 28, 28) \
                 .astype(numpy.uint8)
             # corrupter = GaussianNoise(severity=3)
-            corrupter = GaussianBlur(sigma=(0.0, 3.0))
-            image_np_array = corrupter.augment_images(image_np_array)
-            df_copy['image'] = pandas.Series(image_np_array.reshape(image_count, -1), dtype="object")
+            corrupter = GaussianNoiseCorruption(fraction=1., severity=3)
+            image_np_array = corrupter.transform(image_np_array)
+            df_copy['image'] = list(image_np_array.reshape(image_count, -1))
             return df_copy
 
         analysis = DataCorruption({'image': corruption})
