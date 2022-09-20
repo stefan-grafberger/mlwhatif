@@ -2,7 +2,7 @@
 Data class used as result of the PipelineExecutor
 """
 import dataclasses
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import networkx
 
@@ -20,6 +20,7 @@ class RuntimeInfo:
     original_pipeline_without_importing_and_monkeypatching: int
     original_pipeline_estimated: int
     original_model_training: int
+    original_pipeline_train_data_shape: Tuple[int, int] or None
     what_if_plan_generation: int
     what_if_unoptimized_estimated: int
     what_if_optimized_estimated: int
