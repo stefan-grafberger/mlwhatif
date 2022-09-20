@@ -35741,3 +35741,1554 @@ To enable them in other operations, rebuild TensorFlow with the appropriate comp
 2022-09-20 08:27:44 INFO  Estimated optimisation runtime saving is 161732.08355903625ms
 2022-09-20 08:27:44 INFO  ---RUNTIME: Multi-Query Optimization took 113.36088180541992 ms
 2022-09-20 08:27:44 INFO  Executing generated plans
+2022-09-20 08:31:54 INFO  ---RUNTIME: Execution took 249586.27319335938 ms
+2022-09-20 08:31:54 INFO  Done!
+2022-09-20 08:31:54 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-20 08:31:54 INFO  Running instrumented original pipeline...
+2022-09-20 08:31:54 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-20 08:31:54 INFO  ---RUNTIME: Importing and monkey-patching took 6.550788879394531 ms
+2022-09-20 08:32:14 INFO  ---RUNTIME: Original pipeline execution took 20368.04699897766 ms (excluding imports and monkey-patching)
+2022-09-20 08:32:14 INFO  Starting execution of 1 what-if analyses...
+2022-09-20 08:32:14 INFO  Start plan generation for analysis DataCleaning...
+2022-09-20 08:32:14 INFO  ---RUNTIME: Plan generation took 0.7033348083496094 ms
+2022-09-20 08:32:14 INFO  Estimated runtime of original DAG is 15109.542846679688ms
+2022-09-20 08:32:14 WARNING Skipping Multi-Query Optimization (instead, only combine execution DAGs)
+2022-09-20 08:32:14 WARNING Columns ['review_id'] not present in train DAG after the train test split, only before!
+2022-09-20 08:32:14 WARNING This could hint at data leakage!
+2022-09-20 08:32:14 INFO  Estimated unoptimised what-if runtime is 367821.2685585022ms
+2022-09-20 08:32:14 INFO  ---RUNTIME: Multi-Query Optimization took 132.53068923950195 ms
+2022-09-20 08:32:14 INFO  Executing generated plans
+2022-09-20 08:38:58 INFO  ---RUNTIME: Execution took 403520.2600955963 ms
+2022-09-20 08:38:58 INFO  Done!
+2022-09-20 08:38:58 INFO  # Finished -- repetition 6 of 7 
+2022-09-20 08:38:58 INFO  # Optimization benchmark for data_cleaning with args [['reviews', 'fast_loading', 'featurization_4', 'xgboost']] -- repetition 7 of 7
+2022-09-20 08:38:58 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-20 08:38:58 INFO  Running instrumented original pipeline...
+2022-09-20 08:38:58 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-20 08:38:58 INFO  ---RUNTIME: Importing and monkey-patching took 6.4830780029296875 ms
+2022-09-20 08:39:18 INFO  ---RUNTIME: Original pipeline execution took 20444.29874420166 ms (excluding imports and monkey-patching)
+2022-09-20 08:39:18 INFO  Starting execution of 1 what-if analyses...
+2022-09-20 08:39:18 INFO  Start plan generation for analysis DataCleaning...
+2022-09-20 08:39:18 INFO  ---RUNTIME: Plan generation took 0.7064342498779297 ms
+2022-09-20 08:39:18 INFO  Estimated runtime of original DAG is 15036.237239837646ms
+2022-09-20 08:39:18 INFO  Performing Multi-Query Optimization
+2022-09-20 08:39:18 INFO  Estimated unoptimized what-if runtime is 366455.4057121277ms
+2022-09-20 08:39:18 INFO  Estimated optimised what-if runtime is 204148.7159729004ms
+2022-09-20 08:39:18 INFO  Estimated optimisation runtime saving is 162306.6897392273ms
+2022-09-20 08:39:18 INFO  ---RUNTIME: Multi-Query Optimization took 112.89381980895996 ms
+2022-09-20 08:39:18 INFO  Executing generated plans
+2022-09-20 08:43:46 INFO  ---RUNTIME: Execution took 267992.9392337799 ms
+2022-09-20 08:43:46 INFO  Done!
+2022-09-20 08:43:46 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-20 08:43:46 INFO  Running instrumented original pipeline...
+2022-09-20 08:43:46 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-20 08:43:46 INFO  ---RUNTIME: Importing and monkey-patching took 6.46519660949707 ms
+2022-09-20 08:44:06 INFO  ---RUNTIME: Original pipeline execution took 20132.96365737915 ms (excluding imports and monkey-patching)
+2022-09-20 08:44:06 INFO  Starting execution of 1 what-if analyses...
+2022-09-20 08:44:06 INFO  Start plan generation for analysis DataCleaning...
+2022-09-20 08:44:06 INFO  ---RUNTIME: Plan generation took 0.6780624389648438 ms
+2022-09-20 08:44:06 INFO  Estimated runtime of original DAG is 14749.92299079895ms
+2022-09-20 08:44:06 WARNING Skipping Multi-Query Optimization (instead, only combine execution DAGs)
+2022-09-20 08:44:06 WARNING Columns ['review_id'] not present in train DAG after the train test split, only before!
+2022-09-20 08:44:06 WARNING This could hint at data leakage!
+2022-09-20 08:44:07 INFO  Estimated unoptimised what-if runtime is 358518.3262825012ms
+2022-09-20 08:44:07 INFO  ---RUNTIME: Multi-Query Optimization took 133.68701934814453 ms
+2022-09-20 08:44:07 INFO  Executing generated plans
+2022-09-20 08:51:01 INFO  ---RUNTIME: Execution took 414689.32580947876 ms
+2022-09-20 08:51:01 INFO  Done!
+2022-09-20 08:51:01 INFO  # Finished -- repetition 7 of 7 
+2022-09-20 08:51:01 INFO  # Final results after all repetitions
+2022-09-20 08:51:01 INFO     repetition  ... no_opt_what_if_execution_combined_model_training
+0           0  ...                                    216089.019775
+1           1  ...                                    195198.140860
+2           2  ...                                    166258.950233
+3           3  ...                                    173390.543222
+4           4  ...                                    183182.117224
+5           5  ...                                    180673.886776
+6           6  ...                                    192266.179085
+
+[7 rows x 24 columns]
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 12, in <module>
+    from imgaug.augmenters import GaussianBlur
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/__init__.py", line 7, in <module>
+    from imgaug.imgaug import *  # pylint: disable=redefined-builtin
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/imgaug/imgaug.py", line 18, in <module>
+    import cv2
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 181, in <module>
+    bootstrap()
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/cv2/__init__.py", line 153, in bootstrap
+    native_module = importlib.import_module("cv2")
+  File "/usr/lib64/python3.9/importlib/__init__.py", line 127, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+ImportError: libGL.so.1: cannot open shared object file: No such file or directory
