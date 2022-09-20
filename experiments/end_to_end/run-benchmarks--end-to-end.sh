@@ -16,3 +16,11 @@ do
     done
   done
 done
+
+for scenario in "data_corruption" "data_cleaning"
+do
+  for data_loading in "fast_loading" "slow_loading"
+  do
+    PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py "$scenario" sneakers "$data_loading" image image
+  done
+done
