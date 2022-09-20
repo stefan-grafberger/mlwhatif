@@ -24,6 +24,10 @@ from tensorflow.keras.models import Sequential  # pylint: disable=no-name-in-mod
 from tensorflow.python.keras.optimizer_v2.gradient_descent import SGD  # pylint: disable=no-name-in-module
 from xgboost import XGBClassifier
 
+from tensorflow.python.keras.wrappers.scikit_learn import KerasClassifier
+from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Dropout, Flatten
+from tensorflow.keras.models import Sequential
+
 from example_pipelines.healthcare.healthcare_utils import MyKerasClassifier, MyW2VTransformer
 from mlwhatif.utils import get_project_root
 
@@ -137,6 +141,102 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
             test = test.dropna(subset=categorical_columns)
         train_labels = train['label']
         test_labels = test['label']
+    elif dataset_name == 'folktables':
+        if data_loading_name == 'fast_loading':
+            acs_data = pd.read_csv(
+                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "folktables",
+                             "acs_income_RI_2017_5y.csv"), delimiter=";")
+        elif data_loading_name == 'slow_loading':
+            acs_data = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                   "main/datasets/folktables/acs_income_RI_2017_5y.csv", delimiter=";")
+        else:
+            raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
+        columns = ['AGEP', 'COW', 'SCHL', 'MAR', 'OCCP', 'POBP', 'RELP', 'WKHP', 'SEX', 'RAC1P', 'PINCP']
+        acs_data = acs_data[columns]
+
+        numerical_columns = ['AGEP', 'WKHP']
+        categorical_columns = ['COW', 'SCHL', 'MAR', 'OCCP', 'POBP', 'RELP']
+        text_columns = []
+        train, test = train_test_split(acs_data)
+        if featurization_name == "featurization_0":
+            train = train.dropna(subset=categorical_columns)
+            test = test.dropna(subset=categorical_columns)
+        train_labels = train['PINCP']
+        test_labels = test['PINCP']
+    elif dataset_name == 'cardio':
+        if data_loading_name == 'fast_loading':
+            cardio_main = pd.read_csv(
+                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "cardio",
+                             "cardio-main.csv"), delimiter=';')
+            cardio_first_additional_table = pd.read_csv(
+                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "cardio",
+                             "cardio-add-one.csv"), delimiter=';')
+            cardio_second_additional_table = pd.read_csv(
+                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "cardio",
+                             "cardio-add-two.csv"), delimiter=';')
+        elif data_loading_name == 'slow_loading':
+            cardio_main = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                      "main/datasets/cardio/cardio-main.csv", delimiter=';')
+            cardio_first_additional_table = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/"
+                                                        "ml-pipeline-datasets/main/datasets/cardio/cardio-add-one.csv",
+                                                        delimiter=';')
+            cardio_second_additional_table = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/"
+                                                         "ml-pipeline-datasets/main/datasets/cardio/cardio-add-two.csv",
+                                                         delimiter=';')
+        else:
+            raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
+        main_and_one = cardio_main.merge(cardio_first_additional_table, on="id")
+        cardio_data = main_and_one.merge(cardio_second_additional_table, on="id")
+        numerical_columns = ['age', 'height', 'weight', 'ap_hi', 'ap_lo']
+        categorical_columns = ['gender', 'cholesterol', 'gluc', 'smoke', 'alco', 'active']
+        text_columns = []
+
+        columns = numerical_columns + categorical_columns + ["cardio"]
+        cardio_data = cardio_data[columns]
+
+        train, test = train_test_split(cardio_data, test_size=0.20, random_state=42)
+        if featurization_name == "featurization_0":
+            train = train.dropna(subset=categorical_columns)
+            test = test.dropna(subset=categorical_columns)
+        train_labels = train['cardio']
+        test_labels = test['cardio']
+    elif dataset_name == 'sneakers':
+        def decode_image(img_str):
+            return np.array([int(val) for val in img_str.split(':')])
+
+        if data_loading_name == 'fast_loading':
+            train_data = pd.read_csv(
+                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "sneakers",
+                             "product_images.csv"), converters={'image': decode_image})
+            product_categories = pd.read_csv(
+                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "sneakers",
+                             "product_categories.csv"))
+        elif data_loading_name == 'slow_loading':
+            train_data = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
+                                     "main/datasets/sneakers/product_images.csv", converters={'image': decode_image})
+            product_categories = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/"
+                                             "ml-pipeline-datasets/main/datasets/sneakers/"
+                                             "product_categories.csv")
+        else:
+            raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
+        with_categories = train_data.merge(product_categories, on='category_id')
+
+        categories_to_distinguish = ['Sneaker', 'Ankle boot']
+
+        images_of_interest = with_categories[with_categories['category_name'].isin(categories_to_distinguish)]
+
+        random_seed_for_splitting = 1337
+
+        train_with_labels, test_with_labels = train_test_split(
+            images_of_interest, test_size=0.2, random_state=random_seed_for_splitting)
+
+        train = train_with_labels[['image']]
+        test = test_with_labels[['image']]
+        train_labels = label_binarize(train_with_labels['category_name'], classes=categories_to_distinguish)
+        test_labels = label_binarize(test_with_labels['category_name'], classes=categories_to_distinguish)
+        numerical_columns = ['image']
+        categorical_columns = []
+        text_columns = []
     else:
         raise ValueError(f"Invalid dataset: {dataset_name}!")
 
@@ -145,25 +245,32 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
 
 def get_featurization(featurization_name, numerical_columns, categorical_columns, text_columns):
     if featurization_name == 'featurization_0':  # num preprocessing based on dspipes num_pipe_0
-        assert len(text_columns) == 1
-
         def identity(x):
             return x
 
-        transformers = [('num', FunctionTransformer(identity), numerical_columns),
-                        ('text', HashingVectorizer(n_features=2 ** 4), text_columns[0])]
+        transformers = [('num', FunctionTransformer(identity), numerical_columns)]
+
+        if len(text_columns) >= 1:
+            assert len(text_columns) == 1
+            transformers.append(('text', HashingVectorizer(n_features=2 ** 4), text_columns[0]))
+
+        # TODO: This works too, if there was a bug at some point with this its fixed now. Change this back?
+        # transformers = [('num', FunctionTransformer(identity), numerical_columns),
+        #                 ('text', HashingVectorizer(n_features=2 ** 4), text_columns[0]),
+        #                 ('cat', OneHotEncoder(handle_unknown='ignore', sparse=False), categorical_columns)]
 
         for cat_column in categorical_columns:
             # Pipelines with categorical missing values need to, e.g., call dropna during dataset loading for
             # featurization_0 which has no missing value imputation. The other featurization options have imputation.
-            transformers.append((f"cat_{cat_column}", OneHotEncoder(handle_unknown='ignore', sparse=False), [cat_column]))
+            transformers.append((f"cat_{cat_column}", OneHotEncoder(handle_unknown='ignore', sparse=False),
+                                 [cat_column]))
 
         featurization = ColumnTransformer(transformers)
     elif featurization_name == 'featurization_1':  # based on openml_id == '5055' and openml_id == '17322'
-        assert len(text_columns) == 1
-
-        transformers = [('num', RobustScaler(), numerical_columns),
-                        ('text', HashingVectorizer(n_features=2 ** 5), text_columns[0])]
+        transformers = [('num', RobustScaler(), numerical_columns)]
+        if len(text_columns) >= 1:
+            assert len(text_columns) == 1
+            transformers.append(('text', HashingVectorizer(n_features=2 ** 5), text_columns[0]))
         for cat_column in categorical_columns:
             def another_imputer(df_with_categorical_columns):
                 return df_with_categorical_columns.fillna('__missing__').astype(str)
@@ -177,12 +284,12 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
     elif featurization_name == 'featurization_2':  # based on openml_id == '8774' and dspipes mode == 'txt_pipe_0'
         num_pipe = Pipeline([('imputer', SimpleImputer(add_indicator=True)),
                              ('standardscaler', StandardScaler())])
-        assert len(text_columns) == 1
-
-        text_pipe = Pipeline([('vect', CountVectorizer()),
-                              ('tfidf', TfidfTransformer())])
-        transformers = [('num', num_pipe, numerical_columns),
-                        ('text', text_pipe, text_columns[0])]
+        transformers = [('num', num_pipe, numerical_columns)]
+        if len(text_columns) >= 1:
+            assert len(text_columns) == 1
+            text_pipe = Pipeline([('vect', CountVectorizer()),
+                                  ('tfidf', TfidfTransformer())])
+            transformers.append(('text', text_pipe, text_columns[0]))
         for cat_column in categorical_columns:
             cat_pipe = Pipeline([('simpleimputer', SimpleImputer(strategy='most_frequent')),
                                  ('onehotencoder', OneHotEncoder(handle_unknown='ignore'))])
@@ -194,29 +301,30 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
                               ("svd", TruncatedSVD(n_iter=1, n_components=(len(numerical_columns) - 1)))])
         num_pipe = Pipeline([('union', union), ('scaler', StandardScaler())])
 
-        assert len(text_columns) == 1
+        transformers = [('num', num_pipe, numerical_columns)]
+        if len(text_columns) >= 1:
+            assert len(text_columns) == 1
 
-        def remove_numbers(text_array):
-            return [str(re.sub(r'\d+', '', text)) for text in text_array]
+            def remove_numbers(text_array):
+                return [str(re.sub(r'\d+', '', text)) for text in text_array]
 
-        def remove_punctuation(text_array):
-            translator = str.maketrans('', '', string.punctuation)
-            return [text.translate(translator) for text in text_array]
+            def remove_punctuation(text_array):
+                translator = str.maketrans('', '', string.punctuation)
+                return [text.translate(translator) for text in text_array]
 
-        def text_lowercase(text_array):
-            return list(map(lambda x: x.lower(), text_array))
+            def text_lowercase(text_array):
+                return list(map(lambda x: x.lower(), text_array))
 
-        def remove_urls(text_array):
-            return [str(' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)", " ", text).split()))
-                    for text in text_array]
+            def remove_urls(text_array):
+                return [str(' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)", " ", text).split()))
+                        for text in text_array]
 
-        text_pipe = Pipeline([('lower_case', FunctionTransformer(text_lowercase)),
-                              ('remove_url', FunctionTransformer(remove_urls)),
-                              ('remove_numbers', FunctionTransformer(remove_numbers)),
-                              ('remove_punctuation', FunctionTransformer(remove_punctuation)),
-                              ('vect', CountVectorizer()), ('tfidf', TfidfTransformer())])
-        transformers = [('num', num_pipe, numerical_columns),
-                        ('text', text_pipe, text_columns[0])]
+            text_pipe = Pipeline([('lower_case', FunctionTransformer(text_lowercase)),
+                                  ('remove_url', FunctionTransformer(remove_urls)),
+                                  ('remove_numbers', FunctionTransformer(remove_numbers)),
+                                  ('remove_punctuation', FunctionTransformer(remove_punctuation)),
+                                  ('vect', CountVectorizer()), ('tfidf', TfidfTransformer())])
+            transformers.append(('text', text_pipe, text_columns[0]))
         for cat_column in categorical_columns:
             cat_pipe = Pipeline([('simpleimputer', SimpleImputer(strategy='most_frequent')),
                                  ('onehotencoder', OneHotEncoder(handle_unknown='ignore'))])
@@ -228,19 +336,31 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
                               ("svd", TruncatedSVD(n_iter=1, n_components=(len(numerical_columns) - 1)))])
         num_pipe = Pipeline([('union', union), ('scaler', StandardScaler())])
 
-        assert len(text_columns) == 1
-        transformers = [('num', num_pipe, numerical_columns),
-                        ('text', MyW2VTransformer(min_count=1), text_columns)]
+        transformers = [('num', num_pipe, numerical_columns)]
+        if len(text_columns) >= 1:
+            assert len(text_columns) == 1
+            transformers.append(('text', MyW2VTransformer(min_count=1), text_columns))
 
         def another_imputer(df_with_categorical_columns):
             return df_with_categorical_columns.fillna('__missing__').astype(str)
 
         for cat_column in categorical_columns:
             cat_pipe = Pipeline([('anothersimpleimputer', FunctionTransformer(another_imputer)),
-                                 ('onehotencoder', OneHotEncoder())])
+                                 ('onehotencoder', OneHotEncoder(handle_unknown='ignore'))])
             transformers.append((f"cat_{cat_column}", cat_pipe, [cat_column]))
 
         featurization = ColumnTransformer(transformers)
+    elif featurization_name == 'image':
+        def normalise_image(images):
+            return images / 255.0
+
+        def reshape_images(images):
+            return np.concatenate(images['image'].values) \
+                .reshape(images.shape[0], 28, 28, 1)
+        featurization = Pipeline([
+            ('normalisation', FunctionTransformer(normalise_image)),
+            ('reshaping', FunctionTransformer(reshape_images))
+        ])
     else:
         raise ValueError(f"Invalid featurization name: {featurization_name}!")
 
@@ -249,7 +369,7 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
 
 def get_model(model_name):
     if model_name == 'logistic_regression':
-        model = SGDClassifier(loss='log')
+        model = SGDClassifier(loss='log', max_iter=100)
     elif model_name == 'xgboost':
         model = XGBClassifier(max_depth=12, tree_method='hist')
     elif model_name == 'neural_network':
@@ -263,6 +383,23 @@ def get_model(model_name):
             return clf
 
         model = MyKerasClassifier(build_fn=create_model, epochs=7, batch_size=32, verbose=0)
+    elif model_name == 'image':
+        def create_cnn():
+            model = Sequential([
+                Conv2D(filters=64, kernel_size=2, padding='same', activation='relu', input_shape=(28, 28, 1)),
+                MaxPooling2D(pool_size=2),
+                Dropout(0.3),
+                Conv2D(filters=32, kernel_size=2, padding='same', activation='relu'),
+                MaxPooling2D(pool_size=2),
+                Dropout(0.3),
+                Flatten(),
+                Dense(256, activation='relu'),
+                Dropout(0.5),
+                Dense(2, activation='softmax')
+            ])
+            model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+            return model
+        model = KerasClassifier(create_cnn, epochs=10, verbose=0)
     else:
         raise ValueError(f"Invalid model name: {model_name}!")
 
@@ -294,6 +431,10 @@ if sys.argv[0] == "mlwhatif" or __name__ == "__main__":
 
     np.random.seed(seed)
     random.seed(seed)
+
+    if dataset_name == "sneakers":
+        assert featurization_name == "image"
+        assert model_name == "image"
 
     print(f'Running {data_loading_name} featurization {featurization_name} on dataset {dataset_name} with model '
           f'{model_name}')

@@ -112,8 +112,10 @@ def get_df_shape(result_or_inplace_obj):
             shape = result_or_inplace_obj.shape
         elif result_or_inplace_obj.ndim == 1:
             shape = len(result_or_inplace_obj), 1
+        elif 3 <= result_or_inplace_obj.ndim <= 4:
+            shape = result_or_inplace_obj.shape  # Image pipeline
         else:
-            raise Exception("Currently only numpy arrays with 1 and 2 dims are supported!")
+            raise Exception("Currently only numpy arrays with 1-4 dims are supported!")
     elif isinstance(result_or_inplace_obj, pandas.Series):
         shape = len(result_or_inplace_obj), 1
     elif isinstance(result_or_inplace_obj, pandas.core.groupby.generic.DataFrameGroupBy):
