@@ -206,6 +206,7 @@ if __name__ == "__main__":
     result_df_opt_original_pipeline_without_importing_and_monkeypatching = []
     result_df_opt_original_pipeline_model_training = []
     result_df_opt_original_pipeline_train_shape = []
+    result_df_opt_original_pipeline_test_shape = []
     result_df_opt_what_if_plan_generation = []
     result_df_opt_what_if_query_optimization_duration = []
     result_df_opt_what_if_execution = []
@@ -263,6 +264,8 @@ if __name__ == "__main__":
             analysis_result_opt.runtime_info.original_pipeline_without_importing_and_monkeypatching)
         result_df_opt_original_pipeline_train_shape.append(
             analysis_result_opt.runtime_info.original_pipeline_train_data_shape)
+        result_df_opt_original_pipeline_test_shape.append(
+            analysis_result_opt.runtime_info.original_pipeline_test_data_shape)
         result_df_opt_original_pipeline_model_training.append(analysis_result_opt.runtime_info.original_model_training)
         result_df_opt_what_if_plan_generation.append(analysis_result_opt.runtime_info.what_if_plan_generation)
         result_df_opt_what_if_query_optimization_duration.append(
@@ -302,6 +305,7 @@ if __name__ == "__main__":
                                   'opt_original_pipeline_model_training':
                                       result_df_opt_original_pipeline_model_training,
                                   'opt_original_pipeline_train_data_shape': result_df_opt_original_pipeline_train_shape,
+                                  'opt_original_pipeline_test_data_shape': result_df_opt_original_pipeline_test_shape,
                                   'opt_what_if_plan_generation': result_df_opt_what_if_plan_generation,
                                   'opt_what_if_query_optimization_duration':
                                       result_df_opt_what_if_query_optimization_duration,

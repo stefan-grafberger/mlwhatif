@@ -21,6 +21,7 @@ class RuntimeInfo:
     original_pipeline_estimated: int
     original_model_training: int
     original_pipeline_train_data_shape: Tuple[int, int] or None
+    original_pipeline_test_data_shape: Tuple[int, int] or None
     what_if_plan_generation: int
     what_if_unoptimized_estimated: int
     what_if_optimized_estimated: int
