@@ -287,7 +287,7 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
         transformers = [('num', num_pipe, numerical_columns)]
         if len(text_columns) >= 1:
             assert len(text_columns) == 1
-            text_pipe = Pipeline([('vect', CountVectorizer(min_df=50, max_df=0.5)),
+            text_pipe = Pipeline([('vect', CountVectorizer(min_df=0.01, max_df=0.5)),
                                   ('tfidf', TfidfTransformer())])
             transformers.append(('text', text_pipe, text_columns[0]))
         for cat_column in categorical_columns:
@@ -323,7 +323,7 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
                                   ('remove_url', FunctionTransformer(remove_urls)),
                                   ('remove_numbers', FunctionTransformer(remove_numbers)),
                                   ('remove_punctuation', FunctionTransformer(remove_punctuation)),
-                                  ('vect', CountVectorizer(min_df=50, max_df=0.5)), ('tfidf', TfidfTransformer())])
+                                  ('vect', CountVectorizer(min_df=0.01, max_df=0.5)), ('tfidf', TfidfTransformer())])
             transformers.append(('text', text_pipe, text_columns[0]))
         for cat_column in categorical_columns:
             cat_pipe = Pipeline([('simpleimputer', SimpleImputer(strategy='most_frequent')),
