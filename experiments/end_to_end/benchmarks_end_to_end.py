@@ -5,12 +5,14 @@ import random
 import sys
 import time
 import warnings
+from functools import partial
 from unittest.mock import patch
 
 import numpy
 import pandas
 from imgaug.augmenters import GaussianBlur
-from jenga.corruptions.image import GaussianNoiseCorruption
+from jenga.corruptions.image import GaussianNoiseCorruption, GlassBlurCorruption, DefocusBlurCorruption, FogCorruption, \
+    ContrastCorruption
 
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
@@ -121,18 +123,26 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
     elif scenario_name == 'operator_impact' and dataset_name == 'cardio':
         analysis = OperatorImpact(test_selections=True)
     elif scenario_name == 'data_corruption' and dataset_name == 'sneakers':
-        def corruption(pandas_df):
+        def corruption(pandas_df, corruptor):
             df_copy = pandas_df.copy()
             image_count = df_copy.shape[0]
             image_np_array = numpy.concatenate(df_copy['image'].values).reshape(image_count, 28, 28) \
                 .astype(numpy.uint8)
-            # corrupter = GaussianNoise(severity=3)
-            corrupter = GaussianNoiseCorruption(fraction=1., severity=3)
-            image_np_array = corrupter.transform(image_np_array)
+            image_np_array = corruptor.transform(image_np_array)
             df_copy['image'] = list(image_np_array.reshape(image_count, -1))
             return df_copy
+        gaussion_noise_corruption = partial(corruption, corruptor=GaussianNoiseCorruption(fraction=1., severity=3))
+        gaussion_blur_corruption = partial(corruption, corruptor=GlassBlurCorruption(fraction=1., severity=3))
+        defocus_blur_corruption = partial(corruption, corruptor=DefocusBlurCorruption(fraction=1., severity=3))
+        fog_corruption = partial(corruption, corruptor=FogCorruption(fraction=1., severity=3))
+        contrast_blur_corruption = partial(corruption, corruptor=ContrastCorruption(fraction=1., severity=3))
 
-        analysis = DataCorruption([('image', corruption)])
+        analysis = DataCorruption([('image', gaussion_noise_corruption),
+                                   ('image', gaussion_blur_corruption),
+                                   ('image', defocus_blur_corruption),
+                                   ('image', fog_corruption),
+                                   ('image', contrast_blur_corruption)],
+                                  corruption_percentages=[0.25, 0.5, 0.75, 1.0])
     elif scenario_name == 'data_cleaning' and dataset_name == 'sneakers':
         analysis = DataCleaning({None: ErrorType.MISLABEL})
     else:
