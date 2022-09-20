@@ -192,7 +192,7 @@ def test_data_corruption_sneakers(tmpdir):
     analysis_result_no_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "with-opt-what-if"))
     analysis_result_no_opt.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir), "with-opt-what-if-optimised"))
     analysis_output = analysis_result_no_opt.analysis_to_result_reports[analysis]
-    assert analysis_output.shape == (2, 5)
+    assert analysis_output.shape == (21, 3)
 
 
 def test_data_cleaning_sneakers(tmpdir):

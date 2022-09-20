@@ -40,7 +40,7 @@ def test_data_corruption_mini_example_with_transformer_processing_multiple_colum
         pandas_df['B'] = 0
         return pandas_df
 
-    data_corruption = DataCorruption({'A': CorruptionType.SCALING, 'B': corruption}, also_corrupt_train=True)
+    data_corruption = DataCorruption([('A', CorruptionType.SCALING), ('B', corruption)], also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -89,7 +89,7 @@ def test_data_corruption_mini_example_with_projection_modify(tmpdir):
     def custom_index_selection_func(pandas_df):
         return pandas_df['B'] >= 3
 
-    data_corruption = DataCorruption({'A': CorruptionType.SCALING, 'B': corruption}, also_corrupt_train=True,
+    data_corruption = DataCorruption([('A', CorruptionType.SCALING), ('B', corruption)], also_corrupt_train=True,
                                      corruption_percentages=[0.2, custom_index_selection_func])
 
     analysis_result = PipelineAnalyzer \
@@ -134,7 +134,7 @@ def test_data_corruption_mini_example_only_train_test_split(tmpdir):
         pandas_df['B'] = 0
         return pandas_df
 
-    data_corruption = DataCorruption({'A': CorruptionType.SCALING, 'B': corruption}, also_corrupt_train=True)
+    data_corruption = DataCorruption([('A', CorruptionType.SCALING), ('B', corruption)], also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -178,7 +178,7 @@ def test_data_corruption_mini_example_only_train_test_split_without_optimizer(tm
         pandas_df['B'] = 0
         return pandas_df
 
-    data_corruption = DataCorruption({'A': CorruptionType.SCALING, 'B': corruption}, also_corrupt_train=True)
+    data_corruption = DataCorruption([('A', CorruptionType.SCALING), ('B', corruption)], also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -224,7 +224,7 @@ def test_data_corruption_mini_example_manual_split(tmpdir):
         pandas_df['B'] = 0
         return pandas_df
 
-    data_corruption = DataCorruption({'A': CorruptionType.SCALING, 'B': corruption}, also_corrupt_train=True)
+    data_corruption = DataCorruption([('A', CorruptionType.SCALING), ('B', corruption)], also_corrupt_train=True)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
@@ -245,7 +245,7 @@ def test_data_corruption_healthcare(tmpdir):
         pandas_df['num_children'] = 0
         return pandas_df
 
-    data_corruption = DataCorruption({'income': CorruptionType.SCALING, 'num_children': corruption},
+    data_corruption = DataCorruption([('income', CorruptionType.SCALING), ('num_children', corruption)],
                                      corruption_percentages=[0.3, 0.6],
                                      also_corrupt_train=True)
 
@@ -271,7 +271,8 @@ def test_data_corruption_compas(tmpdir):
         pandas_df['is_recid'] = 1
         return pandas_df
 
-    data_corruption = DataCorruption({'age': CorruptionType.SCALING, 'is_recid': corruption}, also_corrupt_train=False)
+    data_corruption = DataCorruption([('age', CorruptionType.SCALING), ('is_recid', corruption)],
+                                     also_corrupt_train=False)
 
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(COMPAS_PY) \
@@ -293,9 +294,9 @@ def test_data_corruption_adult_complex():
         pandas_df['hours-per-week'] = 400
         return pandas_df
 
-    data_corruption = DataCorruption({'education': CorruptionType.CATEGORICAL_SHIFT,
-                                      'workclass': CorruptionType.CATEGORICAL_SHIFT,
-                                      'hours-per-week': corruption},
+    data_corruption = DataCorruption([('education', CorruptionType.CATEGORICAL_SHIFT),
+                                      ('workclass', CorruptionType.CATEGORICAL_SHIFT),
+                                      ('hours-per-week', corruption)],
                                      corruption_percentages=[0.25, 0.5, 0.75, 1.0],
                                      also_corrupt_train=True)
 

@@ -71,7 +71,7 @@ def execute_udf_split_and_reuse_ideal_case(scale_factor, tmpdir, variant_count):
         corruption_percentages.append(variant_index * (0.1 / (variant_count - 1)) + 0.9)
         index_filter.append(1 + 2 * variant_index)
     data_corruption = WhatIfWrapper(
-        DataCorruption({'group_col_1': CorruptionType.BROKEN_CHARACTERS}, also_corrupt_train=True,
+        DataCorruption([('group_col_1', CorruptionType.BROKEN_CHARACTERS)], also_corrupt_train=True,
                        corruption_percentages=corruption_percentages),
         index_filter=index_filter)
     dag_extraction_result = PipelineAnalyzer \
@@ -163,7 +163,7 @@ def execute_udf_split_and_reuse_average_case(scale_factor, tmpdir, variant_count
         corruption_percentages.append((variant_index + 1) * (1.0 / variant_count))
         index_filter.append(1 + 2 * variant_index)
     data_corruption = WhatIfWrapper(
-        DataCorruption({'B': CorruptionType.GAUSSIAN_NOISE}, also_corrupt_train=True,
+        DataCorruption([('B', CorruptionType.GAUSSIAN_NOISE)], also_corrupt_train=True,
                        corruption_percentages=corruption_percentages),
         index_filter=index_filter)
     dag_extraction_result = PipelineAnalyzer \
@@ -243,7 +243,7 @@ def execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(scale_
         corruption_percentages.append(variant_index * (0.1 / (variant_count - 1)))
         index_filter.append(1 + 2 * variant_index)
     data_corruption = WhatIfWrapper(
-        DataCorruption({'A': CorruptionType.BROKEN_CHARACTERS}, also_corrupt_train=True,
+        DataCorruption([('A', CorruptionType.BROKEN_CHARACTERS)], also_corrupt_train=True,
                        corruption_percentages=corruption_percentages),
         index_filter=index_filter)
     dag_extraction_result = PipelineAnalyzer \
@@ -323,7 +323,7 @@ def execute_udf_split_and_reuse_worst_case_with_selectivity_inactive(scale_facto
         corruption_percentages.append(variant_index * (0.1 / (variant_count - 1)))
         index_filter.append(1 + 2 * variant_index)
     data_corruption = WhatIfWrapper(
-        DataCorruption({'A': CorruptionType.BROKEN_CHARACTERS}, also_corrupt_train=True,
+        DataCorruption([('A', CorruptionType.BROKEN_CHARACTERS)], also_corrupt_train=True,
                        corruption_percentages=corruption_percentages),
         index_filter=index_filter)
     dag_extraction_result = PipelineAnalyzer \
@@ -404,7 +404,7 @@ def execute_udf_split_and_reuse_worst_case_with_constant(scale_factor, tmpdir, v
         return pandas_df
 
     data_corruption = WhatIfWrapper(
-        DataCorruption({'B': corruption}, also_corrupt_train=True,
+        DataCorruption([('B', corruption)], also_corrupt_train=True,
                        corruption_percentages=corruption_percentages),
         index_filter=index_filter)
     dag_extraction_result = PipelineAnalyzer \

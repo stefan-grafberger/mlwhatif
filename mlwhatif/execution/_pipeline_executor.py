@@ -58,7 +58,7 @@ class PipelineExecutor:
     original_pipeline_labels_to_extracted_plan_results = dict()
     labels_to_extracted_plan_results = dict()
     analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
-                                       RuntimeInfo(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+                                       RuntimeInfo(0, 0, 0, 0, None, None, 0, 0, 0, 0, 0, 0, 0),
                                        DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0))
     monkey_patch_duration = 0
     skip_optimizer = False
@@ -120,6 +120,15 @@ class PipelineExecutor:
                                           for node in self.analysis_results.original_dag.nodes
                                           if node.operator_info.operator == OperatorType.ESTIMATOR]
             self.analysis_results.runtime_info.original_model_training = sum(original_estimator_runtime)
+            train_data_node = [node for node in self.analysis_results.original_dag.nodes
+                               if node.operator_info.operator == OperatorType.TRAIN_DATA][0]
+            self.analysis_results.runtime_info.original_pipeline_train_data_shape = \
+                train_data_node.details.optimizer_info.shape
+            test_data_node = [node for node in self.analysis_results.original_dag.nodes
+                               if node.operator_info.operator == OperatorType.TEST_DATA][0]
+            self.analysis_results.runtime_info.original_pipeline_test_data_shape = \
+                test_data_node.details.optimizer_info.shape
+            # FIXME: Training Data Matrix shape
             logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms '
                         f'(excluding imports and monkey-patching)')
         else:
@@ -228,7 +237,7 @@ class PipelineExecutor:
         self.track_code_references = True
         self.op_id_to_dag_node = dict()
         self.analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
-                                                RuntimeInfo(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+                                                RuntimeInfo(0, 0, 0, 0, None, None, 0, 0, 0, 0, 0, 0, 0),
                                                 DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0))
         self.analyses = []
         self.original_pipeline_labels_to_extracted_plan_results = dict()

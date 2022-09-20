@@ -5,11 +5,14 @@ import random
 import sys
 import time
 import warnings
+from functools import partial
 from unittest.mock import patch
 
 import numpy
 import pandas
 from imgaug.augmenters import GaussianBlur
+from jenga.corruptions.image import GaussianNoiseCorruption, GlassBlurCorruption, DefocusBlurCorruption, FogCorruption, \
+    ContrastCorruption
 
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
@@ -25,11 +28,11 @@ logger = logging.getLogger(__name__)
 
 def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
     if scenario_name == 'data_corruption' and dataset_name == 'reviews':
-        analysis = DataCorruption({'vine': CorruptionType.CATEGORICAL_SHIFT,
-                                   'review_body': CorruptionType.BROKEN_CHARACTERS,
-                                   'category': CorruptionType.CATEGORICAL_SHIFT,
-                                   'total_votes': CorruptionType.SCALING,
-                                   'star_rating': CorruptionType.GAUSSIAN_NOISE},
+        analysis = DataCorruption([('vine', CorruptionType.CATEGORICAL_SHIFT),
+                                   ('review_body', CorruptionType.BROKEN_CHARACTERS),
+                                   ('category', CorruptionType.CATEGORICAL_SHIFT),
+                                   ('total_votes', CorruptionType.SCALING),
+                                   ('star_rating', CorruptionType.GAUSSIAN_NOISE)],
                                   corruption_percentages=[0.2, 0.4, 0.6, 0.8, 1.0])
     elif scenario_name == 'feature_importance' and dataset_name == 'reviews':
         analysis = PermutationFeatureImportance()
@@ -48,13 +51,13 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
             df_copy['num_children'] = 0
             return df_copy
 
-        analysis = DataCorruption({'income': CorruptionType.SCALING,
-                                   'num_children': corruption,
-                                   'last_name': CorruptionType.BROKEN_CHARACTERS,
-                                   'smoker': CorruptionType.CATEGORICAL_SHIFT,
-                                   'county': CorruptionType.CATEGORICAL_SHIFT,
-                                   'race': CorruptionType.CATEGORICAL_SHIFT
-                                   },
+        analysis = DataCorruption([('income', CorruptionType.SCALING),
+                                   ('num_children', corruption),
+                                   ('last_name', CorruptionType.BROKEN_CHARACTERS),
+                                   ('smoker', CorruptionType.CATEGORICAL_SHIFT),
+                                   ('county', CorruptionType.CATEGORICAL_SHIFT),
+                                   ('race', CorruptionType.CATEGORICAL_SHIFT)
+                                   ],
                                   corruption_percentages=[0.2, 0.4, 0.6, 0.8, 1.0])
     elif scenario_name == 'feature_importance' and dataset_name == 'healthcare':
         analysis = PermutationFeatureImportance()
@@ -69,14 +72,14 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
     elif scenario_name == 'operator_impact' and dataset_name == 'healthcare':
         analysis = OperatorImpact(test_selections=True)
     elif scenario_name == 'data_corruption' and dataset_name == 'folktables':
-        analysis = DataCorruption({'AGEP': CorruptionType.SCALING,
-                                   'WKHP': CorruptionType.GAUSSIAN_NOISE,
-                                   'COW': CorruptionType.CATEGORICAL_SHIFT,
-                                   'SCHL': CorruptionType.BROKEN_CHARACTERS,
-                                   'MAR': CorruptionType.CATEGORICAL_SHIFT,
-                                   'OCCP': CorruptionType.MISSING_VALUES,
-                                   'POBP': CorruptionType.MISSING_VALUES,
-                                   'RELP': CorruptionType.MISSING_VALUES},
+        analysis = DataCorruption([('AGEP', CorruptionType.SCALING),
+                                   ('WKHP', CorruptionType.GAUSSIAN_NOISE),
+                                   ('COW', CorruptionType.CATEGORICAL_SHIFT),
+                                   ('SCHL', CorruptionType.BROKEN_CHARACTERS),
+                                   ('MAR', CorruptionType.CATEGORICAL_SHIFT),
+                                   ('OCCP', CorruptionType.MISSING_VALUES),
+                                   ('POBP', CorruptionType.MISSING_VALUES),
+                                   ('RELP', CorruptionType.MISSING_VALUES)],
                                   corruption_percentages=[0.25, 0.5, 0.75, 1.0])
     elif scenario_name == 'feature_importance' and dataset_name == 'folktables':
         analysis = PermutationFeatureImportance()
@@ -93,17 +96,17 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
     elif scenario_name == 'operator_impact' and dataset_name == 'folktables':
         analysis = OperatorImpact(test_selections=True)
     elif scenario_name == 'data_corruption' and dataset_name == 'cardio':
-        analysis = DataCorruption({'age': CorruptionType.SCALING,
-                                   'height': CorruptionType.SCALING,
-                                   'weight': CorruptionType.GAUSSIAN_NOISE,
-                                   'ap_hi': CorruptionType.GAUSSIAN_NOISE,
-                                   'ap_lo': CorruptionType.GAUSSIAN_NOISE,
-                                   'gender': CorruptionType.MISSING_VALUES,
-                                   'cholesterol': CorruptionType.BROKEN_CHARACTERS,
-                                   'gluc': CorruptionType.MISSING_VALUES,
-                                   'smoke': CorruptionType.MISSING_VALUES,
-                                   'alco': CorruptionType.MISSING_VALUES,
-                                   'active': CorruptionType.MISSING_VALUES})
+        analysis = DataCorruption([('age', CorruptionType.SCALING),
+                                   ('height', CorruptionType.SCALING),
+                                   ('weight', CorruptionType.GAUSSIAN_NOISE),
+                                   ('ap_hi', CorruptionType.GAUSSIAN_NOISE),
+                                   ('ap_lo', CorruptionType.GAUSSIAN_NOISE),
+                                   ('gender', CorruptionType.MISSING_VALUES),
+                                   ('cholesterol', CorruptionType.BROKEN_CHARACTERS),
+                                   ('gluc', CorruptionType.MISSING_VALUES),
+                                   ('smoke', CorruptionType.MISSING_VALUES),
+                                   ('alco', CorruptionType.MISSING_VALUES),
+                                   ('active', CorruptionType.MISSING_VALUES)])
     elif scenario_name == 'feature_importance' and dataset_name == 'cardio':
         analysis = PermutationFeatureImportance()
     elif scenario_name == 'data_cleaning' and dataset_name == 'cardio':
@@ -120,18 +123,26 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
     elif scenario_name == 'operator_impact' and dataset_name == 'cardio':
         analysis = OperatorImpact(test_selections=True)
     elif scenario_name == 'data_corruption' and dataset_name == 'sneakers':
-        def corruption(pandas_df):
+        def corruption(pandas_df, corruptor):
             df_copy = pandas_df.copy()
             image_count = df_copy.shape[0]
-            image_np_array = numpy.concatenate(df_copy['image'].values).reshape(image_count, 28, 28, 1) \
+            image_np_array = numpy.concatenate(df_copy['image'].values).reshape(image_count, 28, 28) \
                 .astype(numpy.uint8)
-            # corrupter = GaussianNoise(severity=3)
-            corrupter = GaussianBlur(sigma=(0.0, 3.0))
-            image_np_array = corrupter.augment_images(image_np_array)
-            df_copy['image'] = pandas.Series(image_np_array.reshape(image_count, -1), dtype="object")
+            image_np_array = corruptor.transform(image_np_array)
+            df_copy['image'] = list(image_np_array.reshape(image_count, -1))
             return df_copy
+        gaussion_noise_corruption = partial(corruption, corruptor=GaussianNoiseCorruption(fraction=1., severity=3))
+        gaussion_blur_corruption = partial(corruption, corruptor=GlassBlurCorruption(fraction=1., severity=3))
+        defocus_blur_corruption = partial(corruption, corruptor=DefocusBlurCorruption(fraction=1., severity=3))
+        fog_corruption = partial(corruption, corruptor=FogCorruption(fraction=1., severity=3))
+        contrast_blur_corruption = partial(corruption, corruptor=ContrastCorruption(fraction=1., severity=3))
 
-        analysis = DataCorruption({'image': corruption})
+        analysis = DataCorruption([('image', gaussion_noise_corruption),
+                                   ('image', gaussion_blur_corruption),
+                                   ('image', defocus_blur_corruption),
+                                   ('image', fog_corruption),
+                                   ('image', contrast_blur_corruption)],
+                                  corruption_percentages=[0.25, 0.5, 0.75, 1.0])
     elif scenario_name == 'data_cleaning' and dataset_name == 'sneakers':
         analysis = DataCleaning({None: ErrorType.MISLABEL})
     else:
@@ -194,6 +205,8 @@ if __name__ == "__main__":
     result_df_opt_original_pipeline_importing_and_monkeypatching = []
     result_df_opt_original_pipeline_without_importing_and_monkeypatching = []
     result_df_opt_original_pipeline_model_training = []
+    result_df_opt_original_pipeline_train_shape = []
+    result_df_opt_original_pipeline_test_shape = []
     result_df_opt_what_if_plan_generation = []
     result_df_opt_what_if_query_optimization_duration = []
     result_df_opt_what_if_execution = []
@@ -249,6 +262,10 @@ if __name__ == "__main__":
             analysis_result_opt.runtime_info.original_pipeline_importing_and_monkeypatching)
         result_df_opt_original_pipeline_without_importing_and_monkeypatching.append(
             analysis_result_opt.runtime_info.original_pipeline_without_importing_and_monkeypatching)
+        result_df_opt_original_pipeline_train_shape.append(
+            analysis_result_opt.runtime_info.original_pipeline_train_data_shape)
+        result_df_opt_original_pipeline_test_shape.append(
+            analysis_result_opt.runtime_info.original_pipeline_test_data_shape)
         result_df_opt_original_pipeline_model_training.append(analysis_result_opt.runtime_info.original_model_training)
         result_df_opt_what_if_plan_generation.append(analysis_result_opt.runtime_info.what_if_plan_generation)
         result_df_opt_what_if_query_optimization_duration.append(
@@ -287,6 +304,8 @@ if __name__ == "__main__":
                                       result_df_opt_original_pipeline_without_importing_and_monkeypatching,
                                   'opt_original_pipeline_model_training':
                                       result_df_opt_original_pipeline_model_training,
+                                  'opt_original_pipeline_train_data_shape': result_df_opt_original_pipeline_train_shape,
+                                  'opt_original_pipeline_test_data_shape': result_df_opt_original_pipeline_test_shape,
                                   'opt_what_if_plan_generation': result_df_opt_what_if_plan_generation,
                                   'opt_what_if_query_optimization_duration':
                                       result_df_opt_what_if_query_optimization_duration,

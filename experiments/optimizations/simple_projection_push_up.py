@@ -69,7 +69,7 @@ def execute_projection_push_up_ideal_case(scale_factor, tmpdir, variant_count):
         corruption_percentages.append(variant_index * (1. / (variant_count - 1)))
         index_filter.append(1 + 2 * variant_index)
     data_corruption = WhatIfWrapper(
-        DataCorruption({'B': CorruptionType.SCALING}, also_corrupt_train=True,
+        DataCorruption([('B', CorruptionType.SCALING)], also_corrupt_train=True,
                        corruption_percentages=corruption_percentages),
         index_filter=index_filter)
     dag_extraction_result = PipelineAnalyzer \
@@ -154,7 +154,7 @@ def execute_projection_push_up_average_case(scale_factor, tmpdir, variant_count)
         corruption_percentages.append(variant_index * (1. / (variant_count - 1)))
         index_filter.append(1 + 2 * variant_index)
     data_corruption = WhatIfWrapper(
-        DataCorruption({'B': CorruptionType.SCALING}, also_corrupt_train=True,
+        DataCorruption([('B', CorruptionType.SCALING)], also_corrupt_train=True,
                        corruption_percentages=corruption_percentages),
         index_filter=index_filter)
     dag_extraction_result = PipelineAnalyzer \
@@ -230,7 +230,7 @@ def execute_projection_push_up_worst_case(scale_factor, tmpdir, variant_count):
         corruption_percentages.append(variant_index * (1. / (variant_count - 1)))
         index_filter.append(1 + 2 * variant_index)
     data_corruption = WhatIfWrapper(
-        DataCorruption({'B': CorruptionType.SCALING}, also_corrupt_train=True,
+        DataCorruption([('B', CorruptionType.SCALING)], also_corrupt_train=True,
                        corruption_percentages=corruption_percentages),
         index_filter=index_filter)
     dag_extraction_result = PipelineAnalyzer \
