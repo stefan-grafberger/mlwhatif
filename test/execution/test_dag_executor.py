@@ -75,6 +75,6 @@ def execute_dag_and_get_final_pipeline_result(extracted_dag):
     label = "dag-exec-test"
     patch = get_intermediate_extraction_patch_after_node(singleton, None, final_result_op, label)
     patch.apply(extracted_dag, singleton)
-    DagExecutor().execute(extracted_dag)
+    DagExecutor(singleton).execute(extracted_dag)
     extracted_final_pipeline_result = singleton.labels_to_extracted_plan_results[label]
     return extracted_final_pipeline_result

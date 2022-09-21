@@ -34,8 +34,6 @@ def test_common_subexpression_elimination_ideal_case(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_common_subexpression_elimination_average_case(tmpdir):

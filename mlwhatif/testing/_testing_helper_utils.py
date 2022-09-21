@@ -269,11 +269,12 @@ def get_test_code_with_function_def_and_for_loop():
     return test_code
 
 
-def visualize_dags(analysis_result, tmpdir):
+def visualize_dags(analysis_result, tmpdir, skip_combined_dag=False):
     """Visualise the intermediate DAGs"""
     analysis_result.save_original_dag_to_path(os.path.join(str(tmpdir), "orig"))
     analysis_result.save_what_if_dags_to_path(os.path.join(str(tmpdir), "what-if"))
-    analysis_result.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir), "what-if-optimised"))
+    if skip_combined_dag is False:
+        analysis_result.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir), "what-if-optimised"))
 
 
 def run_scenario_and_visualize_dags(dataset, scenario, tmpdir):

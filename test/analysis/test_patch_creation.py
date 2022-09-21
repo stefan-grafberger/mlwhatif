@@ -40,7 +40,7 @@ def test_add_intermediate_extraction_after_node_intermediate_df(tmpdir):
     patch = get_intermediate_extraction_patch_after_node(singleton, None, intermediate_pdf_result_value, label)
     patch.apply(dag, singleton)
     save_fig_to_path(dag, os.path.join(str(tmpdir), "test_add_intermediate_extraction_after.png"))
-    DagExecutor().execute(dag)
+    DagExecutor(singleton).execute(dag)
     extracted_value = singleton.labels_to_extracted_plan_results[label]
 
     df_expected = pandas.DataFrame([0, 2, 4, 5.], columns=['A'])
@@ -81,6 +81,6 @@ def test_add_intermediate_extraction_after_node_final_score(tmpdir):
     patch = get_intermediate_extraction_patch_after_node(singleton, None, final_result_value, label)
     patch.apply(dag, singleton)
     save_fig_to_path(dag, os.path.join(str(tmpdir), "test_add_intermediate_extraction_after.png"))
-    DagExecutor().execute(dag)
+    DagExecutor(singleton).execute(dag)
     extracted_value = singleton.labels_to_extracted_plan_results[label]
     assert isinstance(extracted_value, float) and 0. <= extracted_value <= 1.

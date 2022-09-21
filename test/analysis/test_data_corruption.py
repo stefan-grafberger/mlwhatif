@@ -189,7 +189,7 @@ def test_data_corruption_mini_example_only_train_test_split_without_optimizer(tm
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (7, 4)
 
-    visualize_dags(analysis_result, tmpdir)
+    visualize_dags(analysis_result, tmpdir, skip_combined_dag=True)
 
 
 def test_data_corruption_mini_example_manual_split(tmpdir):

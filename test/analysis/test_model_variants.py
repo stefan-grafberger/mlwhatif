@@ -181,7 +181,7 @@ def test_model_variants_mini_example_only_train_test_split_without_optimizer(tmp
     report = analysis_result.analysis_to_result_reports[model_variants]
     assert report.shape == (3, 2)
 
-    visualize_dags(analysis_result, tmpdir)
+    visualize_dags(analysis_result, tmpdir, skip_combined_dag=True)
 
 
 def test_model_variants_mini_example_manual_split(tmpdir):

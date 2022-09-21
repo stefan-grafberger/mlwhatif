@@ -161,7 +161,7 @@ def test_permutation_feature_importance_mini_example_only_train_test_split_with_
     report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance(['A'])]
     assert report.shape == (2, 2)
 
-    visualize_dags(analysis_result, tmpdir)
+    visualize_dags(analysis_result, tmpdir, skip_combined_dag=True)
 
 
 def test_permutation_feature_importance_mini_example_manual_split(tmpdir):

@@ -120,14 +120,18 @@ class PipelineExecutor:
                                           for node in self.analysis_results.original_dag.nodes
                                           if node.operator_info.operator == OperatorType.ESTIMATOR]
             self.analysis_results.runtime_info.original_model_training = sum(original_estimator_runtime)
-            train_data_node = [node for node in self.analysis_results.original_dag.nodes
-                               if node.operator_info.operator == OperatorType.TRAIN_DATA][0]
-            self.analysis_results.runtime_info.original_pipeline_train_data_shape = \
-                train_data_node.details.optimizer_info.shape
-            test_data_node = [node for node in self.analysis_results.original_dag.nodes
-                               if node.operator_info.operator == OperatorType.TEST_DATA][0]
-            self.analysis_results.runtime_info.original_pipeline_test_data_shape = \
-                test_data_node.details.optimizer_info.shape
+            train_data_nodes = [node for node in self.analysis_results.original_dag.nodes
+                                if node.operator_info.operator == OperatorType.TRAIN_DATA]
+            if len(train_data_nodes) != 0:
+                train_data_node = train_data_nodes[0]
+                self.analysis_results.runtime_info.original_pipeline_train_data_shape = \
+                    train_data_node.details.optimizer_info.shape
+            test_data_nodes = [node for node in self.analysis_results.original_dag.nodes
+                               if node.operator_info.operator == OperatorType.TEST_DATA]
+            if len(test_data_nodes) != 0:
+                test_data_node = test_data_nodes[0]
+                self.analysis_results.runtime_info.original_pipeline_test_data_shape = \
+                    test_data_node.details.optimizer_info.shape
             # FIXME: Training Data Matrix shape
             logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms '
                         f'(excluding imports and monkey-patching)')
