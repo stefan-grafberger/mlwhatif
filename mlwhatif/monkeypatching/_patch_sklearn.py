@@ -2490,6 +2490,14 @@ class SklearnKerasClassifierPatching:
     def patched_fit(self, *args, **kwargs):
         """ Patch for ('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'fit') """
         # pylint: disable=no-method-argument, too-many-locals
+        class KerasClassifierAdjustableInputDims(keras_sklearn_external.KerasClassifier):
+            """A Keras Wrapper that sets input_dim on fit"""
+
+            def fit(self, x, y, **kwargs):
+                """Create and fit a simple neural network"""
+                self.sk_params['input_dim'] = x.shape[1]
+                super().fit(x, y, **kwargs)
+
         original = gorilla.get_original_attribute(keras_sklearn_external.KerasClassifier, 'fit')
         if not call_info_singleton.param_search_active:
             function_info = FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn', 'KerasClassifier')
@@ -2506,8 +2514,7 @@ class SklearnKerasClassifierPatching:
                     estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return estimator
                 param_search_runtime = 0
-                create_func = partial(tensorflow.keras.wrappers.scikit_learn.KerasClassifier,
-                                      **self.mlinspect_non_data_func_args)
+                create_func = partial(KerasClassifierAdjustableInputDims, **self.mlinspect_non_data_func_args)
             else:
                 def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
                     estimator = make_grid_search_func(tensorflow.keras.wrappers.scikit_learn.KerasClassifier(
@@ -2518,8 +2525,8 @@ class SklearnKerasClassifierPatching:
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
                 def create_func_with_grid_search(make_grid_search_func):
-                    return make_grid_search_func(tensorflow.keras.wrappers.scikit_learn.
-                                                 KerasClassifier(**self.mlinspect_non_data_func_args))
+                    return make_grid_search_func(KerasClassifierAdjustableInputDims(
+                        **self.mlinspect_non_data_func_args))
                 create_func = partial(create_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
                 call_info_singleton.make_grid_search_func = None
