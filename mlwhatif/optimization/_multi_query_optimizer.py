@@ -75,10 +75,11 @@ class MultiQueryOptimizer:
             analysis_results.runtime_info.what_if_optimization_saving_estimated = estimated_saving
         else:
             patches = [patches for patches, _ in analysis_results.what_if_dags]
-            logger.warning("Skipping Multi-Query Optimization (instead, only combine execution DAGs)")
-            big_execution_dag, what_if_dags = self._optimize_and_combine_dags_without_optimization(
+            logger.warning("Skipping Multi-Query Optimization (instead, only applying patches)")
+            what_if_dags = self._optimize_and_combine_dags_without_optimization(
                 analysis_results.original_dag, patches)
-            estimate_combined_runtime = self._estimate_runtime_of_dag(big_execution_dag)
+            estimate_combined_runtime = sum(self._estimate_runtime_of_dag(what_if_dag) for what_if_dag in what_if_dags)
+            big_execution_dag = None
             logger.info(f"Estimated unoptimised what-if runtime is {estimate_combined_runtime}ms")
             analysis_results.runtime_info.what_if_unoptimized_estimated = estimate_combined_runtime
 
@@ -94,12 +95,7 @@ class MultiQueryOptimizer:
             for patch in patch_set:
                 patch.apply(what_if_dag, self.pipeline_executor)
             what_if_dags.append(what_if_dag)
-        self._make_all_nodes_unique(what_if_dags)
-        if len(what_if_dags) != 0:
-            big_execution_dag = networkx.compose_all(what_if_dags)
-        else:
-            big_execution_dag = networkx.DiGraph()
-        return big_execution_dag, what_if_dags
+        return what_if_dags
 
     def _optimize_and_combine_dags_with_optimization(self, original_dag, patches):
         """Here, the actual optimization happens"""

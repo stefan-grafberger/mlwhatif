@@ -170,7 +170,11 @@ class PipelineExecutor:
         if self.estimate_only is False:
             logger.info(f"Executing generated plans")
             execution_start = time.time()
-            DagExecutor(self).execute(self.analysis_results.combined_optimized_dag)
+            if self.skip_optimizer is False:
+                DagExecutor(self).execute(self.analysis_results.combined_optimized_dag)
+            else:
+                for _, what_if_dag in self.analysis_results.what_if_dags:
+                    DagExecutor(self).execute(what_if_dag)
             execution_duration = time.time() - execution_start
             logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
             self.analysis_results.runtime_info.what_if_execution = execution_duration * 1000
