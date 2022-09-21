@@ -57,8 +57,6 @@ def test_udf_split_and_reuse_ideal_case(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_udf_split_and_reuse_average_case(tmpdir):
@@ -111,8 +109,6 @@ def test_udf_split_and_reuse_average_case(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_udf_split_and_reuse_worst_case_with_selectivity_safety_active(tmpdir):
@@ -162,8 +158,6 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_active(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_udf_split_and_reuse_worst_case_with_selectivity_safety_inactive(tmpdir):
@@ -213,8 +207,6 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_inactive(tmpdir)
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_udf_split_and_reuse_worst_case_with_constant(tmpdir):
@@ -263,5 +255,3 @@ def test_udf_split_and_reuse_worst_case_with_constant(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
