@@ -52,7 +52,7 @@ class DagExecutor:
         current_nodes = [node for node in graph.nodes if len(list(graph.predecessors(node))) == 0]
         processed_nodes = set()
         while len(current_nodes) != 0:
-            node = current_nodes.pop()
+            node = current_nodes.pop(0)
             processed_nodes.add(node.node_id)
             result_node = func(node)
             if result_node is not None:
