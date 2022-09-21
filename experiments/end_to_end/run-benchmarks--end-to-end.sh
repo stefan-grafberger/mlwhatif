@@ -26,9 +26,9 @@ fi
 
 if (( (($1 % 8)) < 4 ))
 then
-  scenarios=("data_corruption" "feature_importance")
+  scenarios=("feature_importance" "data_corruption")
 else
-  scenarios=("data_cleaning" "operator_impact")
+  scenarios=("operator_impact" "data_cleaning")
 fi
 
 if (( (($1)) < 8 ))
