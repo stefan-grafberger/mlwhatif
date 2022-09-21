@@ -1,0 +1,1502 @@
+Variant name from 1-8: 1
+Cores to use: 32-39
+taskset -c 32-39 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py data_corruption reviews fast_loading featurization_0 logistic_regression
+2022-09-21 14:21:04.045053: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
+2022-09-21 14:21:04.045111: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-09-21 14:21:05 INFO  Patching sys.argv with ['mlwhatif', 'reviews', 'fast_loading', 'featurization_0', 'logistic_regression']
+2022-09-21 14:21:05 INFO  Running instrumented original pipeline...
+2022-09-21 14:21:05 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:21:05 INFO  ---RUNTIME: Importing and monkey-patching took 120.88990211486816 ms
+2022-09-21 14:21:11 INFO  ---RUNTIME: Original pipeline execution took 6456.727027893066 ms (excluding imports and monkey-patching)
+2022-09-21 14:21:11 INFO  Starting execution of 0 what-if analyses...
+2022-09-21 14:21:11 INFO  Estimated runtime of original DAG is 4802.563667297363ms
+2022-09-21 14:21:11 INFO  Performing Multi-Query Optimization
+2022-09-21 14:21:11 INFO  Estimated unoptimized what-if runtime is 0ms
+2022-09-21 14:21:11 INFO  Estimated optimised what-if runtime is 0ms
+2022-09-21 14:21:11 INFO  Estimated optimisation runtime saving is 0ms
+2022-09-21 14:21:11 INFO  ---RUNTIME: Multi-Query Optimization took 0.48661231994628906 ms
+2022-09-21 14:21:11 INFO  Executing generated plans
+2022-09-21 14:21:11 INFO  ---RUNTIME: Execution took 0.029325485229492188 ms
+2022-09-21 14:21:11 INFO  Done!
+2022-09-21 14:21:11 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'logistic_regression']] -- repetition 1 of 7
+2022-09-21 14:21:11 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:21:11 INFO  Running instrumented original pipeline...
+2022-09-21 14:21:12 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:21:12 INFO  ---RUNTIME: Importing and monkey-patching took 5.686283111572266 ms
+2022-09-21 14:21:18 INFO  ---RUNTIME: Original pipeline execution took 6576.242208480835 ms (excluding imports and monkey-patching)
+2022-09-21 14:21:18 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:21:18 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:21:18 INFO  ---RUNTIME: Plan generation took 0.4258155822753906 ms
+2022-09-21 14:21:18 INFO  Estimated runtime of original DAG is 4801.483631134033ms
+2022-09-21 14:21:18 INFO  Performing Multi-Query Optimization
+2022-09-21 14:21:18 INFO  Estimated unoptimized what-if runtime is 120037.09077835083ms
+2022-09-21 14:21:18 INFO  Estimated optimised what-if runtime is 11303.983926773071ms
+2022-09-21 14:21:18 INFO  Estimated optimisation runtime saving is 108733.10685157776ms
+2022-09-21 14:21:18 INFO  ---RUNTIME: Multi-Query Optimization took 58.798789978027344 ms
+2022-09-21 14:21:18 INFO  Executing generated plans
+2022-09-21 14:21:35 INFO  ---RUNTIME: Execution took 17289.20269012451 ms
+2022-09-21 14:21:35 INFO  Done!
+2022-09-21 14:21:35 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:21:35 INFO  Running instrumented original pipeline...
+2022-09-21 14:21:35 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:21:35 INFO  ---RUNTIME: Importing and monkey-patching took 6.107330322265625 ms
+2022-09-21 14:21:42 INFO  ---RUNTIME: Original pipeline execution took 6416.778564453125 ms (excluding imports and monkey-patching)
+2022-09-21 14:21:42 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:21:42 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:21:42 INFO  ---RUNTIME: Plan generation took 0.4439353942871094 ms
+2022-09-21 14:21:42 INFO  Estimated runtime of original DAG is 4802.544116973877ms
+2022-09-21 14:21:42 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 14:21:42 INFO  Estimated unoptimised what-if runtime is 120063.60292434692ms
+2022-09-21 14:21:42 INFO  ---RUNTIME: Multi-Query Optimization took 17.438173294067383 ms
+2022-09-21 14:21:42 INFO  Executing generated plans
+2022-09-21 14:24:17 INFO  ---RUNTIME: Execution took 155639.79172706604 ms
+2022-09-21 14:24:17 INFO  Done!
+2022-09-21 14:24:17 INFO  # Finished -- repetition 1 of 7 
+2022-09-21 14:24:17 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'logistic_regression']] -- repetition 2 of 7
+2022-09-21 14:24:17 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:24:17 INFO  Running instrumented original pipeline...
+2022-09-21 14:24:17 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:24:17 INFO  ---RUNTIME: Importing and monkey-patching took 6.903409957885742 ms
+2022-09-21 14:24:24 INFO  ---RUNTIME: Original pipeline execution took 6444.827556610107 ms (excluding imports and monkey-patching)
+2022-09-21 14:24:24 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:24:24 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:24:24 INFO  ---RUNTIME: Plan generation took 0.5316734313964844 ms
+2022-09-21 14:24:24 INFO  Estimated runtime of original DAG is 4797.672986984253ms
+2022-09-21 14:24:24 INFO  Performing Multi-Query Optimization
+2022-09-21 14:24:24 INFO  Estimated unoptimized what-if runtime is 119941.82467460632ms
+2022-09-21 14:24:24 INFO  Estimated optimised what-if runtime is 11341.998100280762ms
+2022-09-21 14:24:24 INFO  Estimated optimisation runtime saving is 108599.82657432556ms
+2022-09-21 14:24:24 INFO  ---RUNTIME: Multi-Query Optimization took 59.1890811920166 ms
+2022-09-21 14:24:24 INFO  Executing generated plans
+2022-09-21 14:24:41 INFO  ---RUNTIME: Execution took 17427.84857749939 ms
+2022-09-21 14:24:41 INFO  Done!
+2022-09-21 14:24:41 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:24:41 INFO  Running instrumented original pipeline...
+2022-09-21 14:24:41 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:24:41 INFO  ---RUNTIME: Importing and monkey-patching took 6.162405014038086 ms
+2022-09-21 14:24:48 INFO  ---RUNTIME: Original pipeline execution took 6419.816255569458 ms (excluding imports and monkey-patching)
+2022-09-21 14:24:48 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:24:48 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:24:48 INFO  ---RUNTIME: Plan generation took 0.4134178161621094 ms
+2022-09-21 14:24:48 INFO  Estimated runtime of original DAG is 4792.205810546875ms
+2022-09-21 14:24:48 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 14:24:48 INFO  Estimated unoptimised what-if runtime is 119805.14526367188ms
+2022-09-21 14:24:48 INFO  ---RUNTIME: Multi-Query Optimization took 17.614126205444336 ms
+2022-09-21 14:24:48 INFO  Executing generated plans
+2022-09-21 14:27:24 INFO  ---RUNTIME: Execution took 156591.14575386047 ms
+2022-09-21 14:27:24 INFO  Done!
+2022-09-21 14:27:24 INFO  # Finished -- repetition 2 of 7 
+2022-09-21 14:27:24 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'logistic_regression']] -- repetition 3 of 7
+2022-09-21 14:27:24 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:27:24 INFO  Running instrumented original pipeline...
+2022-09-21 14:27:24 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:27:24 INFO  ---RUNTIME: Importing and monkey-patching took 6.108283996582031 ms
+2022-09-21 14:27:31 INFO  ---RUNTIME: Original pipeline execution took 6446.406602859497 ms (excluding imports and monkey-patching)
+2022-09-21 14:27:31 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:27:31 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:27:31 INFO  ---RUNTIME: Plan generation took 0.4334449768066406 ms
+2022-09-21 14:27:31 INFO  Estimated runtime of original DAG is 4791.514873504639ms
+2022-09-21 14:27:31 INFO  Performing Multi-Query Optimization
+2022-09-21 14:27:31 INFO  Estimated unoptimized what-if runtime is 119787.87183761597ms
+2022-09-21 14:27:31 INFO  Estimated optimised what-if runtime is 11311.670303344727ms
+2022-09-21 14:27:31 INFO  Estimated optimisation runtime saving is 108476.20153427124ms
+2022-09-21 14:27:31 INFO  ---RUNTIME: Multi-Query Optimization took 58.770179748535156 ms
+2022-09-21 14:27:31 INFO  Executing generated plans
+2022-09-21 14:27:48 INFO  ---RUNTIME: Execution took 17379.11343574524 ms
+2022-09-21 14:27:48 INFO  Done!
+2022-09-21 14:27:48 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:27:48 INFO  Running instrumented original pipeline...
+2022-09-21 14:27:49 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:27:49 INFO  ---RUNTIME: Importing and monkey-patching took 5.9795379638671875 ms
+2022-09-21 14:27:55 INFO  ---RUNTIME: Original pipeline execution took 6791.269540786743 ms (excluding imports and monkey-patching)
+2022-09-21 14:27:55 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:27:55 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:27:55 INFO  ---RUNTIME: Plan generation took 0.4620552062988281 ms
+2022-09-21 14:27:55 INFO  Estimated runtime of original DAG is 4873.008012771606ms
+2022-09-21 14:27:55 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 14:27:55 INFO  Estimated unoptimised what-if runtime is 121825.20031929016ms
+2022-09-21 14:27:55 INFO  ---RUNTIME: Multi-Query Optimization took 17.695188522338867 ms
+2022-09-21 14:27:55 INFO  Executing generated plans
+2022-09-21 14:30:33 INFO  ---RUNTIME: Execution took 158030.2495956421 ms
+2022-09-21 14:30:33 INFO  Done!
+2022-09-21 14:30:33 INFO  # Finished -- repetition 3 of 7 
+2022-09-21 14:30:33 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'logistic_regression']] -- repetition 4 of 7
+2022-09-21 14:30:33 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:30:33 INFO  Running instrumented original pipeline...
+2022-09-21 14:30:33 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:30:33 INFO  ---RUNTIME: Importing and monkey-patching took 6.32166862487793 ms
+2022-09-21 14:30:40 INFO  ---RUNTIME: Original pipeline execution took 6517.84348487854 ms (excluding imports and monkey-patching)
+2022-09-21 14:30:40 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:30:40 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:30:40 INFO  ---RUNTIME: Plan generation took 0.4820823669433594 ms
+2022-09-21 14:30:40 INFO  Estimated runtime of original DAG is 4853.707075119019ms
+2022-09-21 14:30:40 INFO  Performing Multi-Query Optimization
+2022-09-21 14:30:40 INFO  Estimated unoptimized what-if runtime is 121342.67687797546ms
+2022-09-21 14:30:40 INFO  Estimated optimised what-if runtime is 11354.539632797241ms
+2022-09-21 14:30:40 INFO  Estimated optimisation runtime saving is 109988.13724517822ms
+2022-09-21 14:30:40 INFO  ---RUNTIME: Multi-Query Optimization took 59.17024612426758 ms
+2022-09-21 14:30:40 INFO  Executing generated plans
+2022-09-21 14:30:57 INFO  ---RUNTIME: Execution took 17384.394884109497 ms
+2022-09-21 14:30:57 INFO  Done!
+2022-09-21 14:30:57 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:30:57 INFO  Running instrumented original pipeline...
+2022-09-21 14:30:57 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:30:57 INFO  ---RUNTIME: Importing and monkey-patching took 6.026029586791992 ms
+2022-09-21 14:31:04 INFO  ---RUNTIME: Original pipeline execution took 6529.060125350952 ms (excluding imports and monkey-patching)
+2022-09-21 14:31:04 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:31:04 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:31:04 INFO  ---RUNTIME: Plan generation took 0.41866302490234375 ms
+2022-09-21 14:31:04 INFO  Estimated runtime of original DAG is 4873.21400642395ms
+2022-09-21 14:31:04 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 14:31:04 INFO  Estimated unoptimised what-if runtime is 121830.35016059875ms
+2022-09-21 14:31:04 INFO  ---RUNTIME: Multi-Query Optimization took 17.401695251464844 ms
+2022-09-21 14:31:04 INFO  Executing generated plans
+2022-09-21 14:33:41 INFO  ---RUNTIME: Execution took 157497.72477149963 ms
+2022-09-21 14:33:41 INFO  Done!
+2022-09-21 14:33:41 INFO  # Finished -- repetition 4 of 7 
+2022-09-21 14:33:41 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'logistic_regression']] -- repetition 5 of 7
+2022-09-21 14:33:41 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:33:41 INFO  Running instrumented original pipeline...
+2022-09-21 14:33:41 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:33:41 INFO  ---RUNTIME: Importing and monkey-patching took 6.188392639160156 ms
+2022-09-21 14:33:48 INFO  ---RUNTIME: Original pipeline execution took 6534.266710281372 ms (excluding imports and monkey-patching)
+2022-09-21 14:33:48 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:33:48 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:33:48 INFO  ---RUNTIME: Plan generation took 0.4203319549560547 ms
+2022-09-21 14:33:48 INFO  Estimated runtime of original DAG is 4870.600700378418ms
+2022-09-21 14:33:48 INFO  Performing Multi-Query Optimization
+2022-09-21 14:33:48 INFO  Estimated unoptimized what-if runtime is 121765.01750946045ms
+2022-09-21 14:33:48 INFO  Estimated optimised what-if runtime is 11564.738035202026ms
+2022-09-21 14:33:48 INFO  Estimated optimisation runtime saving is 110200.27947425842ms
+2022-09-21 14:33:48 INFO  ---RUNTIME: Multi-Query Optimization took 101.1967658996582 ms
+2022-09-21 14:33:48 INFO  Executing generated plans
+2022-09-21 14:34:05 INFO  ---RUNTIME: Execution took 17421.162843704224 ms
+2022-09-21 14:34:05 INFO  Done!
+2022-09-21 14:34:05 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:34:05 INFO  Running instrumented original pipeline...
+2022-09-21 14:34:05 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:34:05 INFO  ---RUNTIME: Importing and monkey-patching took 5.827188491821289 ms
+2022-09-21 14:34:12 INFO  ---RUNTIME: Original pipeline execution took 6495.472431182861 ms (excluding imports and monkey-patching)
+2022-09-21 14:34:12 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:34:12 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:34:12 INFO  ---RUNTIME: Plan generation took 0.3974437713623047 ms
+2022-09-21 14:34:12 INFO  Estimated runtime of original DAG is 4846.275568008423ms
+2022-09-21 14:34:12 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 14:34:12 INFO  Estimated unoptimised what-if runtime is 121156.88920021057ms
+2022-09-21 14:34:12 INFO  ---RUNTIME: Multi-Query Optimization took 17.43626594543457 ms
+2022-09-21 14:34:12 INFO  Executing generated plans
+2022-09-21 14:36:49 INFO  ---RUNTIME: Execution took 157454.2853832245 ms
+2022-09-21 14:36:49 INFO  Done!
+2022-09-21 14:36:49 INFO  # Finished -- repetition 5 of 7 
+2022-09-21 14:36:49 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'logistic_regression']] -- repetition 6 of 7
+2022-09-21 14:36:49 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:36:49 INFO  Running instrumented original pipeline...
+2022-09-21 14:36:49 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:36:49 INFO  ---RUNTIME: Importing and monkey-patching took 18.98336410522461 ms
+2022-09-21 14:36:56 INFO  ---RUNTIME: Original pipeline execution took 6544.772386550903 ms (excluding imports and monkey-patching)
+2022-09-21 14:36:56 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:36:56 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:36:56 INFO  ---RUNTIME: Plan generation took 0.4506111145019531 ms
+2022-09-21 14:36:56 INFO  Estimated runtime of original DAG is 4866.9188022613525ms
+2022-09-21 14:36:56 INFO  Performing Multi-Query Optimization
+2022-09-21 14:36:56 INFO  Estimated unoptimized what-if runtime is 121672.97005653381ms
+2022-09-21 14:36:56 INFO  Estimated optimised what-if runtime is 11537.094831466675ms
+2022-09-21 14:36:56 INFO  Estimated optimisation runtime saving is 110135.87522506714ms
+2022-09-21 14:36:56 INFO  ---RUNTIME: Multi-Query Optimization took 59.21149253845215 ms
+2022-09-21 14:36:56 INFO  Executing generated plans
+2022-09-21 14:37:13 INFO  ---RUNTIME: Execution took 17319.32759284973 ms
+2022-09-21 14:37:13 INFO  Done!
+2022-09-21 14:37:13 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:37:13 INFO  Running instrumented original pipeline...
+2022-09-21 14:37:14 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:37:14 INFO  ---RUNTIME: Importing and monkey-patching took 6.052494049072266 ms
+2022-09-21 14:37:20 INFO  ---RUNTIME: Original pipeline execution took 6872.861623764038 ms (excluding imports and monkey-patching)
+2022-09-21 14:37:20 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:37:20 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:37:20 INFO  ---RUNTIME: Plan generation took 0.4031658172607422 ms
+2022-09-21 14:37:20 INFO  Estimated runtime of original DAG is 4891.532421112061ms
+2022-09-21 14:37:20 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 14:37:20 INFO  Estimated unoptimised what-if runtime is 122288.31052780151ms
+2022-09-21 14:37:20 INFO  ---RUNTIME: Multi-Query Optimization took 17.145156860351562 ms
+2022-09-21 14:37:20 INFO  Executing generated plans
+2022-09-21 14:39:59 INFO  ---RUNTIME: Execution took 158817.45266914368 ms
+2022-09-21 14:39:59 INFO  Done!
+2022-09-21 14:39:59 INFO  # Finished -- repetition 6 of 7 
+2022-09-21 14:39:59 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'logistic_regression']] -- repetition 7 of 7
+2022-09-21 14:39:59 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:39:59 INFO  Running instrumented original pipeline...
+2022-09-21 14:39:59 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:39:59 INFO  ---RUNTIME: Importing and monkey-patching took 6.212711334228516 ms
+2022-09-21 14:40:06 INFO  ---RUNTIME: Original pipeline execution took 6592.026472091675 ms (excluding imports and monkey-patching)
+2022-09-21 14:40:06 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:40:06 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:40:06 INFO  ---RUNTIME: Plan generation took 0.41675567626953125 ms
+2022-09-21 14:40:06 INFO  Estimated runtime of original DAG is 4906.911373138428ms
+2022-09-21 14:40:06 INFO  Performing Multi-Query Optimization
+2022-09-21 14:40:06 INFO  Estimated unoptimized what-if runtime is 122672.7843284607ms
+2022-09-21 14:40:06 INFO  Estimated optimised what-if runtime is 11629.91714477539ms
+2022-09-21 14:40:06 INFO  Estimated optimisation runtime saving is 111042.8671836853ms
+2022-09-21 14:40:06 INFO  ---RUNTIME: Multi-Query Optimization took 58.63642692565918 ms
+2022-09-21 14:40:06 INFO  Executing generated plans
+2022-09-21 14:40:23 INFO  ---RUNTIME: Execution took 17423.06423187256 ms
+2022-09-21 14:40:23 INFO  Done!
+2022-09-21 14:40:23 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:40:23 INFO  Running instrumented original pipeline...
+2022-09-21 14:40:23 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:40:23 INFO  ---RUNTIME: Importing and monkey-patching took 6.006956100463867 ms
+2022-09-21 14:40:30 INFO  ---RUNTIME: Original pipeline execution took 6599.733829498291 ms (excluding imports and monkey-patching)
+2022-09-21 14:40:30 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:40:30 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:40:30 INFO  ---RUNTIME: Plan generation took 0.3914833068847656 ms
+2022-09-21 14:40:30 INFO  Estimated runtime of original DAG is 4903.1054973602295ms
+2022-09-21 14:40:30 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 14:40:30 INFO  Estimated unoptimised what-if runtime is 122577.63743400574ms
+2022-09-21 14:40:30 INFO  ---RUNTIME: Multi-Query Optimization took 17.368078231811523 ms
+2022-09-21 14:40:30 INFO  Executing generated plans
+2022-09-21 14:43:15 INFO  ---RUNTIME: Execution took 165480.8385372162 ms
+2022-09-21 14:43:15 INFO  Done!
+2022-09-21 14:43:15 INFO  # Finished -- repetition 7 of 7 
+2022-09-21 14:43:15 INFO  # Final results after all repetitions
+2022-09-21 14:43:15 INFO     repetition  ... no_opt_what_if_execution_combined_model_training
+0           0  ...                                      3968.590975
+1           1  ...                                      3926.867247
+2           2  ...                                      3963.391781
+3           3  ...                                      3928.945303
+4           4  ...                                      3944.358826
+5           5  ...                                      3939.239502
+6           6  ...                                      4260.663748
+
+[7 rows x 26 columns]
+taskset -c 32-39 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py data_corruption reviews fast_loading featurization_0 xgboost
+2022-09-21 14:43:18.216061: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
+2022-09-21 14:43:18.216118: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-09-21 14:43:19 INFO  Patching sys.argv with ['mlwhatif', 'reviews', 'fast_loading', 'featurization_0', 'xgboost']
+2022-09-21 14:43:19 INFO  Running instrumented original pipeline...
+2022-09-21 14:43:19 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:43:19 INFO  ---RUNTIME: Importing and monkey-patching took 121.33264541625977 ms
+2022-09-21 14:43:27 INFO  ---RUNTIME: Original pipeline execution took 7551.094055175781 ms (excluding imports and monkey-patching)
+2022-09-21 14:43:27 INFO  Starting execution of 0 what-if analyses...
+2022-09-21 14:43:27 INFO  Estimated runtime of original DAG is 5618.145942687988ms
+2022-09-21 14:43:27 INFO  Performing Multi-Query Optimization
+2022-09-21 14:43:27 INFO  Estimated unoptimized what-if runtime is 0ms
+2022-09-21 14:43:27 INFO  Estimated optimised what-if runtime is 0ms
+2022-09-21 14:43:27 INFO  Estimated optimisation runtime saving is 0ms
+2022-09-21 14:43:27 INFO  ---RUNTIME: Multi-Query Optimization took 0.5002021789550781 ms
+2022-09-21 14:43:27 INFO  Executing generated plans
+2022-09-21 14:43:27 INFO  ---RUNTIME: Execution took 0.028133392333984375 ms
+2022-09-21 14:43:27 INFO  Done!
+2022-09-21 14:43:27 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'xgboost']] -- repetition 1 of 7
+2022-09-21 14:43:27 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:43:27 INFO  Running instrumented original pipeline...
+2022-09-21 14:43:27 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:43:27 INFO  ---RUNTIME: Importing and monkey-patching took 5.862236022949219 ms
+2022-09-21 14:43:34 INFO  ---RUNTIME: Original pipeline execution took 7589.035749435425 ms (excluding imports and monkey-patching)
+2022-09-21 14:43:34 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:43:34 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:43:34 INFO  ---RUNTIME: Plan generation took 0.40435791015625 ms
+2022-09-21 14:43:34 INFO  Estimated runtime of original DAG is 5622.150182723999ms
+2022-09-21 14:43:34 INFO  Performing Multi-Query Optimization
+2022-09-21 14:43:34 INFO  Estimated unoptimized what-if runtime is 140553.75456809998ms
+2022-09-21 14:43:34 INFO  Estimated optimised what-if runtime is 13262.22038269043ms
+2022-09-21 14:43:34 INFO  Estimated optimisation runtime saving is 127291.53418540955ms
+2022-09-21 14:43:34 INFO  ---RUNTIME: Multi-Query Optimization took 58.510541915893555 ms
+2022-09-21 14:43:34 INFO  Executing generated plans
+2022-09-21 14:43:54 INFO  ---RUNTIME: Execution took 19477.625846862793 ms
+2022-09-21 14:43:54 INFO  Done!
+2022-09-21 14:43:54 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:43:54 INFO  Running instrumented original pipeline...
+2022-09-21 14:43:54 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:43:54 INFO  ---RUNTIME: Importing and monkey-patching took 9.13238525390625 ms
+2022-09-21 14:44:01 INFO  ---RUNTIME: Original pipeline execution took 7377.541542053223 ms (excluding imports and monkey-patching)
+2022-09-21 14:44:01 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:44:01 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:44:01 INFO  ---RUNTIME: Plan generation took 0.5648136138916016 ms
+2022-09-21 14:44:01 INFO  Estimated runtime of original DAG is 5724.505662918091ms
+2022-09-21 14:44:01 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 14:44:01 INFO  Estimated unoptimised what-if runtime is 143112.64157295227ms
+2022-09-21 14:44:01 INFO  ---RUNTIME: Multi-Query Optimization took 24.2154598236084 ms
+2022-09-21 14:44:01 INFO  Executing generated plans
+2022-09-21 14:47:00 INFO  ---RUNTIME: Execution took 178933.14743041992 ms
+2022-09-21 14:47:00 INFO  Done!
+2022-09-21 14:47:00 INFO  # Finished -- repetition 1 of 7 
+2022-09-21 14:47:00 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'xgboost']] -- repetition 2 of 7
+2022-09-21 14:47:00 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:47:00 INFO  Running instrumented original pipeline...
+2022-09-21 14:47:00 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:47:00 INFO  ---RUNTIME: Importing and monkey-patching took 6.196260452270508 ms
+2022-09-21 14:47:07 INFO  ---RUNTIME: Original pipeline execution took 7280.035734176636 ms (excluding imports and monkey-patching)
+2022-09-21 14:47:07 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:47:07 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:47:07 INFO  ---RUNTIME: Plan generation took 0.5371570587158203 ms
+2022-09-21 14:47:07 INFO  Estimated runtime of original DAG is 5636.181592941284ms
+2022-09-21 14:47:07 INFO  Performing Multi-Query Optimization
+2022-09-21 14:47:08 INFO  Estimated unoptimized what-if runtime is 140904.5398235321ms
+2022-09-21 14:47:08 INFO  Estimated optimised what-if runtime is 13423.015832901001ms
+2022-09-21 14:47:08 INFO  Estimated optimisation runtime saving is 127481.5239906311ms
+2022-09-21 14:47:08 INFO  ---RUNTIME: Multi-Query Optimization took 57.92689323425293 ms
+2022-09-21 14:47:08 INFO  Executing generated plans
+2022-09-21 14:47:27 INFO  ---RUNTIME: Execution took 19473.917722702026 ms
+2022-09-21 14:47:27 INFO  Done!
+2022-09-21 14:47:27 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:47:27 INFO  Running instrumented original pipeline...
+2022-09-21 14:47:27 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:47:27 INFO  ---RUNTIME: Importing and monkey-patching took 6.407260894775391 ms
+2022-09-21 14:47:45 INFO  ---RUNTIME: Original pipeline execution took 17533.24246406555 ms (excluding imports and monkey-patching)
+2022-09-21 14:47:45 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:47:45 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:47:45 INFO  ---RUNTIME: Plan generation took 0.7421970367431641 ms
+2022-09-21 14:47:45 INFO  Estimated runtime of original DAG is 15883.100509643555ms
+2022-09-21 14:47:45 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 14:47:45 INFO  Estimated unoptimised what-if runtime is 397077.51274108887ms
+2022-09-21 14:47:45 INFO  ---RUNTIME: Multi-Query Optimization took 24.63531494140625 ms
+2022-09-21 14:47:45 INFO  Executing generated plans
+2022-09-21 14:50:44 INFO  ---RUNTIME: Execution took 179759.12618637085 ms
+2022-09-21 14:50:44 INFO  Done!
+2022-09-21 14:50:44 INFO  # Finished -- repetition 2 of 7 
+2022-09-21 14:50:44 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'xgboost']] -- repetition 3 of 7
+2022-09-21 14:50:44 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:50:44 INFO  Running instrumented original pipeline...
+2022-09-21 14:50:44 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:50:44 INFO  ---RUNTIME: Importing and monkey-patching took 6.200551986694336 ms
+2022-09-21 14:50:51 INFO  ---RUNTIME: Original pipeline execution took 7061.940431594849 ms (excluding imports and monkey-patching)
+2022-09-21 14:50:51 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:50:51 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:50:51 INFO  ---RUNTIME: Plan generation took 0.4546642303466797 ms
+2022-09-21 14:50:51 INFO  Estimated runtime of original DAG is 5430.156946182251ms
+2022-09-21 14:50:51 INFO  Performing Multi-Query Optimization
+2022-09-21 14:50:51 INFO  Estimated unoptimized what-if runtime is 135753.92365455627ms
+2022-09-21 14:50:51 INFO  Estimated optimised what-if runtime is 13169.917345046997ms
+2022-09-21 14:50:51 INFO  Estimated optimisation runtime saving is 122584.00630950928ms
+2022-09-21 14:50:51 INFO  ---RUNTIME: Multi-Query Optimization took 58.495521545410156 ms
+2022-09-21 14:50:51 INFO  Executing generated plans
+2022-09-21 14:51:14 INFO  ---RUNTIME: Execution took 22735.17680168152 ms
+2022-09-21 14:51:14 INFO  Done!
+2022-09-21 14:51:14 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:51:14 INFO  Running instrumented original pipeline...
+2022-09-21 14:51:14 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:51:14 INFO  ---RUNTIME: Importing and monkey-patching took 5.995273590087891 ms
+2022-09-21 14:51:22 INFO  ---RUNTIME: Original pipeline execution took 7613.7754917144775 ms (excluding imports and monkey-patching)
+2022-09-21 14:51:22 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:51:22 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:51:22 INFO  ---RUNTIME: Plan generation took 0.4298686981201172 ms
+2022-09-21 14:51:22 INFO  Estimated runtime of original DAG is 5674.074172973633ms
+2022-09-21 14:51:22 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 14:51:22 INFO  Estimated unoptimised what-if runtime is 141851.85432434082ms
+2022-09-21 14:51:22 INFO  ---RUNTIME: Multi-Query Optimization took 17.50636100769043 ms
+2022-09-21 14:51:22 INFO  Executing generated plans
+2022-09-21 14:54:28 INFO  ---RUNTIME: Execution took 185778.86247634888 ms
+2022-09-21 14:54:28 INFO  Done!
+2022-09-21 14:54:28 INFO  # Finished -- repetition 3 of 7 
+2022-09-21 14:54:28 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'xgboost']] -- repetition 4 of 7
+2022-09-21 14:54:28 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:54:28 INFO  Running instrumented original pipeline...
+2022-09-21 14:54:28 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:54:28 INFO  ---RUNTIME: Importing and monkey-patching took 6.262302398681641 ms
+2022-09-21 14:54:39 INFO  ---RUNTIME: Original pipeline execution took 10944.451332092285 ms (excluding imports and monkey-patching)
+2022-09-21 14:54:39 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:54:39 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:54:39 INFO  ---RUNTIME: Plan generation took 0.6647109985351562 ms
+2022-09-21 14:54:39 INFO  Estimated runtime of original DAG is 9081.588745117188ms
+2022-09-21 14:54:39 INFO  Performing Multi-Query Optimization
+2022-09-21 14:54:39 INFO  Estimated unoptimized what-if runtime is 227039.7186279297ms
+2022-09-21 14:54:39 INFO  Estimated optimised what-if runtime is 17409.90138053894ms
+2022-09-21 14:54:39 INFO  Estimated optimisation runtime saving is 209629.81724739075ms
+2022-09-21 14:54:39 INFO  ---RUNTIME: Multi-Query Optimization took 84.92708206176758 ms
+2022-09-21 14:54:39 INFO  Executing generated plans
+2022-09-21 14:54:58 INFO  ---RUNTIME: Execution took 19462.873935699463 ms
+2022-09-21 14:54:58 INFO  Done!
+2022-09-21 14:54:58 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:54:58 INFO  Running instrumented original pipeline...
+2022-09-21 14:54:58 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:54:58 INFO  ---RUNTIME: Importing and monkey-patching took 8.466482162475586 ms
+2022-09-21 14:55:06 INFO  ---RUNTIME: Original pipeline execution took 7439.014434814453 ms (excluding imports and monkey-patching)
+2022-09-21 14:55:06 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:55:06 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:55:06 INFO  ---RUNTIME: Plan generation took 0.41747093200683594 ms
+2022-09-21 14:55:06 INFO  Estimated runtime of original DAG is 5750.665187835693ms
+2022-09-21 14:55:06 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 14:55:06 INFO  Estimated unoptimised what-if runtime is 143766.62969589233ms
+2022-09-21 14:55:06 INFO  ---RUNTIME: Multi-Query Optimization took 17.362594604492188 ms
+2022-09-21 14:55:06 INFO  Executing generated plans
+2022-09-21 14:58:11 INFO  ---RUNTIME: Execution took 185540.33303260803 ms
+2022-09-21 14:58:11 INFO  Done!
+2022-09-21 14:58:11 INFO  # Finished -- repetition 4 of 7 
+2022-09-21 14:58:11 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'xgboost']] -- repetition 5 of 7
+2022-09-21 14:58:11 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:58:11 INFO  Running instrumented original pipeline...
+2022-09-21 14:58:11 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:58:11 INFO  ---RUNTIME: Importing and monkey-patching took 7.543087005615234 ms
+2022-09-21 14:58:19 INFO  ---RUNTIME: Original pipeline execution took 7325.216770172119 ms (excluding imports and monkey-patching)
+2022-09-21 14:58:19 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:58:19 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:58:19 INFO  ---RUNTIME: Plan generation took 0.42819976806640625 ms
+2022-09-21 14:58:19 INFO  Estimated runtime of original DAG is 5657.478809356689ms
+2022-09-21 14:58:19 INFO  Performing Multi-Query Optimization
+2022-09-21 14:58:19 INFO  Estimated unoptimized what-if runtime is 141436.97023391724ms
+2022-09-21 14:58:19 INFO  Estimated optimised what-if runtime is 14193.921566009521ms
+2022-09-21 14:58:19 INFO  Estimated optimisation runtime saving is 127243.04866790771ms
+2022-09-21 14:58:19 INFO  ---RUNTIME: Multi-Query Optimization took 58.50982666015625 ms
+2022-09-21 14:58:19 INFO  Executing generated plans
+2022-09-21 14:58:38 INFO  ---RUNTIME: Execution took 19357.906818389893 ms
+2022-09-21 14:58:38 INFO  Done!
+2022-09-21 14:58:38 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 14:58:38 INFO  Running instrumented original pipeline...
+2022-09-21 14:58:38 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 14:58:38 INFO  ---RUNTIME: Importing and monkey-patching took 5.886077880859375 ms
+2022-09-21 14:58:45 INFO  ---RUNTIME: Original pipeline execution took 7350.366592407227 ms (excluding imports and monkey-patching)
+2022-09-21 14:58:45 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 14:58:45 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 14:58:45 INFO  ---RUNTIME: Plan generation took 0.40459632873535156 ms
+2022-09-21 14:58:45 INFO  Estimated runtime of original DAG is 5682.084321975708ms
+2022-09-21 14:58:45 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 14:58:45 INFO  Estimated unoptimised what-if runtime is 142052.1080493927ms
+2022-09-21 14:58:45 INFO  ---RUNTIME: Multi-Query Optimization took 17.20452308654785 ms
+2022-09-21 14:58:45 INFO  Executing generated plans
+2022-09-21 15:01:46 INFO  ---RUNTIME: Execution took 180445.90044021606 ms
+2022-09-21 15:01:46 INFO  Done!
+2022-09-21 15:01:46 INFO  # Finished -- repetition 5 of 7 
+2022-09-21 15:01:46 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'xgboost']] -- repetition 6 of 7
+2022-09-21 15:01:46 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:01:46 INFO  Running instrumented original pipeline...
+2022-09-21 15:01:46 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:01:46 INFO  ---RUNTIME: Importing and monkey-patching took 6.268739700317383 ms
+2022-09-21 15:01:53 INFO  ---RUNTIME: Original pipeline execution took 7310.664415359497 ms (excluding imports and monkey-patching)
+2022-09-21 15:01:53 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:01:53 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:01:53 INFO  ---RUNTIME: Plan generation took 0.4286766052246094 ms
+2022-09-21 15:01:53 INFO  Estimated runtime of original DAG is 5585.366487503052ms
+2022-09-21 15:01:53 INFO  Performing Multi-Query Optimization
+2022-09-21 15:01:53 INFO  Estimated unoptimized what-if runtime is 139634.1621875763ms
+2022-09-21 15:01:53 INFO  Estimated optimised what-if runtime is 13228.617906570435ms
+2022-09-21 15:01:53 INFO  Estimated optimisation runtime saving is 126405.54428100586ms
+2022-09-21 15:01:53 INFO  ---RUNTIME: Multi-Query Optimization took 58.63046646118164 ms
+2022-09-21 15:01:53 INFO  Executing generated plans
+2022-09-21 15:02:13 INFO  ---RUNTIME: Execution took 19902.096271514893 ms
+2022-09-21 15:02:13 INFO  Done!
+2022-09-21 15:02:13 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:02:13 INFO  Running instrumented original pipeline...
+2022-09-21 15:02:13 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:02:13 INFO  ---RUNTIME: Importing and monkey-patching took 6.403207778930664 ms
+2022-09-21 15:02:21 INFO  ---RUNTIME: Original pipeline execution took 7789.283037185669 ms (excluding imports and monkey-patching)
+2022-09-21 15:02:21 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:02:21 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:02:21 INFO  ---RUNTIME: Plan generation took 0.46515464782714844 ms
+2022-09-21 15:02:21 INFO  Estimated runtime of original DAG is 5655.23624420166ms
+2022-09-21 15:02:21 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:02:21 INFO  Estimated unoptimised what-if runtime is 141380.9061050415ms
+2022-09-21 15:02:21 INFO  ---RUNTIME: Multi-Query Optimization took 17.304420471191406 ms
+2022-09-21 15:02:21 INFO  Executing generated plans
+2022-09-21 15:05:21 INFO  ---RUNTIME: Execution took 179696.51460647583 ms
+2022-09-21 15:05:21 INFO  Done!
+2022-09-21 15:05:21 INFO  # Finished -- repetition 6 of 7 
+2022-09-21 15:05:21 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'xgboost']] -- repetition 7 of 7
+2022-09-21 15:05:21 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:05:21 INFO  Running instrumented original pipeline...
+2022-09-21 15:05:21 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:05:21 INFO  ---RUNTIME: Importing and monkey-patching took 6.198406219482422 ms
+2022-09-21 15:05:28 INFO  ---RUNTIME: Original pipeline execution took 7429.219007492065 ms (excluding imports and monkey-patching)
+2022-09-21 15:05:28 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:05:28 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:05:28 INFO  ---RUNTIME: Plan generation took 0.41985511779785156 ms
+2022-09-21 15:05:28 INFO  Estimated runtime of original DAG is 5621.723890304565ms
+2022-09-21 15:05:28 INFO  Performing Multi-Query Optimization
+2022-09-21 15:05:28 INFO  Estimated unoptimized what-if runtime is 140543.09725761414ms
+2022-09-21 15:05:28 INFO  Estimated optimised what-if runtime is 13358.946561813354ms
+2022-09-21 15:05:28 INFO  Estimated optimisation runtime saving is 127184.15069580078ms
+2022-09-21 15:05:28 INFO  ---RUNTIME: Multi-Query Optimization took 57.944297790527344 ms
+2022-09-21 15:05:28 INFO  Executing generated plans
+2022-09-21 15:05:47 INFO  ---RUNTIME: Execution took 19436.21563911438 ms
+2022-09-21 15:05:47 INFO  Done!
+2022-09-21 15:05:48 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:05:48 INFO  Running instrumented original pipeline...
+2022-09-21 15:05:48 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:05:48 INFO  ---RUNTIME: Importing and monkey-patching took 6.128072738647461 ms
+2022-09-21 15:05:55 INFO  ---RUNTIME: Original pipeline execution took 7361.289978027344 ms (excluding imports and monkey-patching)
+2022-09-21 15:05:55 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:05:55 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:05:55 INFO  ---RUNTIME: Plan generation took 0.4894733428955078 ms
+2022-09-21 15:05:55 INFO  Estimated runtime of original DAG is 5677.11615562439ms
+2022-09-21 15:05:55 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:05:55 INFO  Estimated unoptimised what-if runtime is 141927.90389060974ms
+2022-09-21 15:05:55 INFO  ---RUNTIME: Multi-Query Optimization took 18.366336822509766 ms
+2022-09-21 15:05:55 INFO  Executing generated plans
+2022-09-21 15:09:16 INFO  ---RUNTIME: Execution took 201064.52012062073 ms
+2022-09-21 15:09:16 INFO  Done!
+2022-09-21 15:09:16 INFO  # Finished -- repetition 7 of 7 
+2022-09-21 15:09:16 INFO  # Final results after all repetitions
+2022-09-21 15:09:16 INFO     repetition  ... no_opt_what_if_execution_combined_model_training
+0           0  ...                                     18667.599916
+1           1  ...                                     19104.194403
+2           2  ...                                     24391.125917
+3           3  ...                                     25136.901617
+4           4  ...                                     19731.842279
+5           5  ...                                     19219.761133
+6           6  ...                                     43339.650869
+
+[7 rows x 26 columns]
+taskset -c 32-39 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py data_corruption reviews fast_loading featurization_0 neural_network
+2022-09-21 15:09:18.845797: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
+2022-09-21 15:09:18.845844: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-09-21 15:09:20 INFO  Patching sys.argv with ['mlwhatif', 'reviews', 'fast_loading', 'featurization_0', 'neural_network']
+2022-09-21 15:09:20 INFO  Running instrumented original pipeline...
+2022-09-21 15:09:20 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:09:20 INFO  ---RUNTIME: Importing and monkey-patching took 137.8612518310547 ms
+2022-09-21 15:09:25.739542: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
+2022-09-21 15:09:25.739580: W tensorflow/stream_executor/cuda/cuda_driver.cc:326] failed call to cuInit: UNKNOWN ERROR (303)
+2022-09-21 15:09:25.739604: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (angus): /proc/driver/nvidia/version does not exist
+2022-09-21 15:09:25.740120: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-09-21 15:09:25.989205: I tensorflow/compiler/mlir/mlir_graph_optimization_pass.cc:176] None of the MLIR Optimization Passes are enabled (registered 2)
+2022-09-21 15:09:26.001197: I tensorflow/core/platform/profile_utils/cpu_utils.cc:114] CPU Frequency: 2595130000 Hz
+2022-09-21 15:09:31 INFO  ---RUNTIME: Original pipeline execution took 11132.971048355103 ms (excluding imports and monkey-patching)
+2022-09-21 15:09:31 INFO  Starting execution of 0 what-if analyses...
+2022-09-21 15:09:31 INFO  Estimated runtime of original DAG is 9373.470783233643ms
+2022-09-21 15:09:31 INFO  Performing Multi-Query Optimization
+2022-09-21 15:09:31 INFO  Estimated unoptimized what-if runtime is 0ms
+2022-09-21 15:09:31 INFO  Estimated optimised what-if runtime is 0ms
+2022-09-21 15:09:31 INFO  Estimated optimisation runtime saving is 0ms
+2022-09-21 15:09:31 INFO  ---RUNTIME: Multi-Query Optimization took 0.5702972412109375 ms
+2022-09-21 15:09:31 INFO  Executing generated plans
+2022-09-21 15:09:31 INFO  ---RUNTIME: Execution took 0.025033950805664062 ms
+2022-09-21 15:09:31 INFO  Done!
+2022-09-21 15:09:31 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'neural_network']] -- repetition 1 of 7
+2022-09-21 15:09:31 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:09:31 INFO  Running instrumented original pipeline...
+2022-09-21 15:09:31 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:09:31 INFO  ---RUNTIME: Importing and monkey-patching took 6.045103073120117 ms
+2022-09-21 15:09:42 INFO  ---RUNTIME: Original pipeline execution took 10798.813581466675 ms (excluding imports and monkey-patching)
+2022-09-21 15:09:42 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:09:42 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:09:42 INFO  ---RUNTIME: Plan generation took 0.42128562927246094 ms
+2022-09-21 15:09:42 INFO  Estimated runtime of original DAG is 9082.092761993408ms
+2022-09-21 15:09:42 INFO  Performing Multi-Query Optimization
+2022-09-21 15:09:42 INFO  Estimated unoptimized what-if runtime is 227052.3190498352ms
+2022-09-21 15:09:42 INFO  Estimated optimised what-if runtime is 26572.35026359558ms
+2022-09-21 15:09:42 INFO  Estimated optimisation runtime saving is 200479.96878623962ms
+2022-09-21 15:09:42 INFO  ---RUNTIME: Multi-Query Optimization took 58.217763900756836 ms
+2022-09-21 15:09:42 INFO  Executing generated plans
+2022-09-21 15:10:14 INFO  ---RUNTIME: Execution took 32256.961345672607 ms
+2022-09-21 15:10:14 INFO  Done!
+2022-09-21 15:10:14 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:10:14 INFO  Running instrumented original pipeline...
+2022-09-21 15:10:14 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:10:14 INFO  ---RUNTIME: Importing and monkey-patching took 6.454944610595703 ms
+2022-09-21 15:10:25 INFO  ---RUNTIME: Original pipeline execution took 10545.013427734375 ms (excluding imports and monkey-patching)
+2022-09-21 15:10:25 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:10:25 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:10:25 INFO  ---RUNTIME: Plan generation took 0.4851818084716797 ms
+2022-09-21 15:10:25 INFO  Estimated runtime of original DAG is 8840.97671508789ms
+2022-09-21 15:10:25 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:10:25 INFO  Estimated unoptimised what-if runtime is 221024.41787719727ms
+2022-09-21 15:10:25 INFO  ---RUNTIME: Multi-Query Optimization took 17.993450164794922 ms
+2022-09-21 15:10:25 INFO  Executing generated plans
+2022-09-21 15:14:33 INFO  ---RUNTIME: Execution took 248577.7051448822 ms
+2022-09-21 15:14:33 INFO  Done!
+2022-09-21 15:14:33 INFO  # Finished -- repetition 1 of 7 
+2022-09-21 15:14:33 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'neural_network']] -- repetition 2 of 7
+2022-09-21 15:14:33 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:14:33 INFO  Running instrumented original pipeline...
+2022-09-21 15:14:33 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:14:33 INFO  ---RUNTIME: Importing and monkey-patching took 6.349325180053711 ms
+2022-09-21 15:14:44 INFO  ---RUNTIME: Original pipeline execution took 10718.471765518188 ms (excluding imports and monkey-patching)
+2022-09-21 15:14:44 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:14:44 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:14:44 INFO  ---RUNTIME: Plan generation took 0.4963874816894531 ms
+2022-09-21 15:14:44 INFO  Estimated runtime of original DAG is 8994.124174118042ms
+2022-09-21 15:14:44 INFO  Performing Multi-Query Optimization
+2022-09-21 15:14:44 INFO  Estimated unoptimized what-if runtime is 224853.10435295105ms
+2022-09-21 15:14:44 INFO  Estimated optimised what-if runtime is 27228.561401367188ms
+2022-09-21 15:14:44 INFO  Estimated optimisation runtime saving is 197624.54295158386ms
+2022-09-21 15:14:44 INFO  ---RUNTIME: Multi-Query Optimization took 65.98949432373047 ms
+2022-09-21 15:14:44 INFO  Executing generated plans
+2022-09-21 15:15:17 INFO  ---RUNTIME: Execution took 32413.848400115967 ms
+2022-09-21 15:15:17 INFO  Done!
+2022-09-21 15:15:17 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:15:17 INFO  Running instrumented original pipeline...
+2022-09-21 15:15:17 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:15:17 INFO  ---RUNTIME: Importing and monkey-patching took 7.195234298706055 ms
+2022-09-21 15:15:28 INFO  ---RUNTIME: Original pipeline execution took 11057.345628738403 ms (excluding imports and monkey-patching)
+2022-09-21 15:15:28 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:15:28 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:15:28 INFO  ---RUNTIME: Plan generation took 2.0635128021240234 ms
+2022-09-21 15:15:28 INFO  Estimated runtime of original DAG is 9336.267471313477ms
+2022-09-21 15:15:28 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:15:28 INFO  Estimated unoptimised what-if runtime is 233406.6867828369ms
+2022-09-21 15:15:28 INFO  ---RUNTIME: Multi-Query Optimization took 18.859148025512695 ms
+2022-09-21 15:15:28 INFO  Executing generated plans
+2022-09-21 15:19:37 INFO  ---RUNTIME: Execution took 249778.43308448792 ms
+2022-09-21 15:19:37 INFO  Done!
+2022-09-21 15:19:37 INFO  # Finished -- repetition 2 of 7 
+2022-09-21 15:19:37 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'neural_network']] -- repetition 3 of 7
+2022-09-21 15:19:37 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:19:37 INFO  Running instrumented original pipeline...
+2022-09-21 15:19:37 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:19:37 INFO  ---RUNTIME: Importing and monkey-patching took 5.9070587158203125 ms
+2022-09-21 15:19:47 INFO  ---RUNTIME: Original pipeline execution took 10041.749000549316 ms (excluding imports and monkey-patching)
+2022-09-21 15:19:47 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:19:47 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:19:47 INFO  ---RUNTIME: Plan generation took 0.4756450653076172 ms
+2022-09-21 15:19:47 INFO  Estimated runtime of original DAG is 8394.642114639282ms
+2022-09-21 15:19:47 INFO  Performing Multi-Query Optimization
+2022-09-21 15:19:48 INFO  Estimated unoptimized what-if runtime is 209866.05286598206ms
+2022-09-21 15:19:48 INFO  Estimated optimised what-if runtime is 27537.30034828186ms
+2022-09-21 15:19:48 INFO  Estimated optimisation runtime saving is 182328.7525177002ms
+2022-09-21 15:19:48 INFO  ---RUNTIME: Multi-Query Optimization took 66.4069652557373 ms
+2022-09-21 15:19:48 INFO  Executing generated plans
+2022-09-21 15:20:20 INFO  ---RUNTIME: Execution took 32479.102849960327 ms
+2022-09-21 15:20:20 INFO  Done!
+2022-09-21 15:20:20 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:20:20 INFO  Running instrumented original pipeline...
+2022-09-21 15:20:20 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:20:20 INFO  ---RUNTIME: Importing and monkey-patching took 6.660938262939453 ms
+2022-09-21 15:20:31 INFO  ---RUNTIME: Original pipeline execution took 10852.9691696167 ms (excluding imports and monkey-patching)
+2022-09-21 15:20:31 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:20:31 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:20:31 INFO  ---RUNTIME: Plan generation took 0.4990100860595703 ms
+2022-09-21 15:20:31 INFO  Estimated runtime of original DAG is 9081.333637237549ms
+2022-09-21 15:20:31 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:20:31 INFO  Estimated unoptimised what-if runtime is 227033.34093093872ms
+2022-09-21 15:20:31 INFO  ---RUNTIME: Multi-Query Optimization took 19.82593536376953 ms
+2022-09-21 15:20:31 INFO  Executing generated plans
+2022-09-21 15:24:43 INFO  ---RUNTIME: Execution took 251972.35131263733 ms
+2022-09-21 15:24:43 INFO  Done!
+2022-09-21 15:24:43 INFO  # Finished -- repetition 3 of 7 
+2022-09-21 15:24:43 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'neural_network']] -- repetition 4 of 7
+2022-09-21 15:24:43 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:24:43 INFO  Running instrumented original pipeline...
+2022-09-21 15:24:43 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:24:43 INFO  ---RUNTIME: Importing and monkey-patching took 6.155252456665039 ms
+2022-09-21 15:24:53 INFO  ---RUNTIME: Original pipeline execution took 9908.627986907959 ms (excluding imports and monkey-patching)
+2022-09-21 15:24:53 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:24:53 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:24:53 INFO  ---RUNTIME: Plan generation took 0.4115104675292969 ms
+2022-09-21 15:24:53 INFO  Estimated runtime of original DAG is 8264.934062957764ms
+2022-09-21 15:24:53 INFO  Performing Multi-Query Optimization
+2022-09-21 15:24:53 INFO  Estimated unoptimized what-if runtime is 206623.3515739441ms
+2022-09-21 15:24:53 INFO  Estimated optimised what-if runtime is 23900.874376296997ms
+2022-09-21 15:24:53 INFO  Estimated optimisation runtime saving is 182722.4771976471ms
+2022-09-21 15:24:53 INFO  ---RUNTIME: Multi-Query Optimization took 58.545827865600586 ms
+2022-09-21 15:24:53 INFO  Executing generated plans
+2022-09-21 15:25:25 INFO  ---RUNTIME: Execution took 32111.359119415283 ms
+2022-09-21 15:25:25 INFO  Done!
+2022-09-21 15:25:25 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:25:25 INFO  Running instrumented original pipeline...
+2022-09-21 15:25:25 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:25:25 INFO  ---RUNTIME: Importing and monkey-patching took 6.329536437988281 ms
+2022-09-21 15:25:36 INFO  ---RUNTIME: Original pipeline execution took 10808.630228042603 ms (excluding imports and monkey-patching)
+2022-09-21 15:25:36 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:25:36 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:25:36 INFO  ---RUNTIME: Plan generation took 0.45990943908691406 ms
+2022-09-21 15:25:36 INFO  Estimated runtime of original DAG is 9044.966459274292ms
+2022-09-21 15:25:36 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:25:36 INFO  Estimated unoptimised what-if runtime is 226124.1614818573ms
+2022-09-21 15:25:36 INFO  ---RUNTIME: Multi-Query Optimization took 18.053531646728516 ms
+2022-09-21 15:25:36 INFO  Executing generated plans
+2022-09-21 15:29:49 INFO  ---RUNTIME: Execution took 253279.14905548096 ms
+2022-09-21 15:29:49 INFO  Done!
+2022-09-21 15:29:49 INFO  # Finished -- repetition 4 of 7 
+2022-09-21 15:29:49 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'neural_network']] -- repetition 5 of 7
+2022-09-21 15:29:49 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:29:49 INFO  Running instrumented original pipeline...
+2022-09-21 15:29:49 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:29:49 INFO  ---RUNTIME: Importing and monkey-patching took 6.621360778808594 ms
+2022-09-21 15:30:00 INFO  ---RUNTIME: Original pipeline execution took 10471.985578536987 ms (excluding imports and monkey-patching)
+2022-09-21 15:30:00 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:30:00 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:30:00 INFO  ---RUNTIME: Plan generation took 0.37980079650878906 ms
+2022-09-21 15:30:00 INFO  Estimated runtime of original DAG is 8817.561149597168ms
+2022-09-21 15:30:00 INFO  Performing Multi-Query Optimization
+2022-09-21 15:30:00 INFO  Estimated unoptimized what-if runtime is 220439.0287399292ms
+2022-09-21 15:30:00 INFO  Estimated optimised what-if runtime is 24848.4308719635ms
+2022-09-21 15:30:00 INFO  Estimated optimisation runtime saving is 195590.5978679657ms
+2022-09-21 15:30:00 INFO  ---RUNTIME: Multi-Query Optimization took 58.70413780212402 ms
+2022-09-21 15:30:00 INFO  Executing generated plans
+2022-09-21 15:30:31 INFO  ---RUNTIME: Execution took 31447.01623916626 ms
+2022-09-21 15:30:31 INFO  Done!
+2022-09-21 15:30:31 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:30:31 INFO  Running instrumented original pipeline...
+2022-09-21 15:30:31 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:30:31 INFO  ---RUNTIME: Importing and monkey-patching took 5.935907363891602 ms
+2022-09-21 15:30:42 INFO  ---RUNTIME: Original pipeline execution took 10886.804103851318 ms (excluding imports and monkey-patching)
+2022-09-21 15:30:42 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:30:42 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:30:42 INFO  ---RUNTIME: Plan generation took 0.5779266357421875 ms
+2022-09-21 15:30:42 INFO  Estimated runtime of original DAG is 9124.030590057373ms
+2022-09-21 15:30:42 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:30:42 INFO  Estimated unoptimised what-if runtime is 228100.76475143433ms
+2022-09-21 15:30:42 INFO  ---RUNTIME: Multi-Query Optimization took 23.26226234436035 ms
+2022-09-21 15:30:42 INFO  Executing generated plans
+2022-09-21 15:34:56 INFO  ---RUNTIME: Execution took 254104.30359840393 ms
+2022-09-21 15:34:56 INFO  Done!
+2022-09-21 15:34:56 INFO  # Finished -- repetition 5 of 7 
+2022-09-21 15:34:56 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'neural_network']] -- repetition 6 of 7
+2022-09-21 15:34:56 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:34:56 INFO  Running instrumented original pipeline...
+2022-09-21 15:34:56 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:34:56 INFO  ---RUNTIME: Importing and monkey-patching took 7.513761520385742 ms
+2022-09-21 15:35:07 INFO  ---RUNTIME: Original pipeline execution took 10500.293016433716 ms (excluding imports and monkey-patching)
+2022-09-21 15:35:07 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:35:07 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:35:07 INFO  ---RUNTIME: Plan generation took 0.4527568817138672 ms
+2022-09-21 15:35:07 INFO  Estimated runtime of original DAG is 8821.253061294556ms
+2022-09-21 15:35:07 INFO  Performing Multi-Query Optimization
+2022-09-21 15:35:07 INFO  Estimated unoptimized what-if runtime is 220531.3265323639ms
+2022-09-21 15:35:07 INFO  Estimated optimised what-if runtime is 26315.550804138184ms
+2022-09-21 15:35:07 INFO  Estimated optimisation runtime saving is 194215.7757282257ms
+2022-09-21 15:35:07 INFO  ---RUNTIME: Multi-Query Optimization took 59.786319732666016 ms
+2022-09-21 15:35:07 INFO  Executing generated plans
+2022-09-21 15:35:38 INFO  ---RUNTIME: Execution took 30834.27381515503 ms
+2022-09-21 15:35:38 INFO  Done!
+2022-09-21 15:35:38 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:35:38 INFO  Running instrumented original pipeline...
+2022-09-21 15:35:38 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:35:38 INFO  ---RUNTIME: Importing and monkey-patching took 7.489204406738281 ms
+2022-09-21 15:35:48 INFO  ---RUNTIME: Original pipeline execution took 10843.565702438354 ms (excluding imports and monkey-patching)
+2022-09-21 15:35:48 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:35:48 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:35:48 INFO  ---RUNTIME: Plan generation took 2.5720596313476562 ms
+2022-09-21 15:35:48 INFO  Estimated runtime of original DAG is 9055.545568466187ms
+2022-09-21 15:35:48 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:35:48 INFO  Estimated unoptimised what-if runtime is 226388.63921165466ms
+2022-09-21 15:35:48 INFO  ---RUNTIME: Multi-Query Optimization took 19.155025482177734 ms
+2022-09-21 15:35:48 INFO  Executing generated plans
+2022-09-21 15:40:02 INFO  ---RUNTIME: Execution took 253478.86490821838 ms
+2022-09-21 15:40:02 INFO  Done!
+2022-09-21 15:40:02 INFO  # Finished -- repetition 6 of 7 
+2022-09-21 15:40:02 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_0', 'neural_network']] -- repetition 7 of 7
+2022-09-21 15:40:02 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:40:02 INFO  Running instrumented original pipeline...
+2022-09-21 15:40:02 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:40:02 INFO  ---RUNTIME: Importing and monkey-patching took 6.164073944091797 ms
+2022-09-21 15:40:12 INFO  ---RUNTIME: Original pipeline execution took 10445.160150527954 ms (excluding imports and monkey-patching)
+2022-09-21 15:40:12 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:40:12 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:40:12 INFO  ---RUNTIME: Plan generation took 0.6003379821777344 ms
+2022-09-21 15:40:12 INFO  Estimated runtime of original DAG is 8763.988971710205ms
+2022-09-21 15:40:12 INFO  Performing Multi-Query Optimization
+2022-09-21 15:40:12 INFO  Estimated unoptimized what-if runtime is 219099.72429275513ms
+2022-09-21 15:40:12 INFO  Estimated optimised what-if runtime is 24825.552225112915ms
+2022-09-21 15:40:12 INFO  Estimated optimisation runtime saving is 194274.1720676422ms
+2022-09-21 15:40:12 INFO  ---RUNTIME: Multi-Query Optimization took 85.8314037322998 ms
+2022-09-21 15:40:12 INFO  Executing generated plans
+2022-09-21 15:40:42 INFO  ---RUNTIME: Execution took 29389.256954193115 ms
+2022-09-21 15:40:42 INFO  Done!
+2022-09-21 15:40:42 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:40:42 INFO  Running instrumented original pipeline...
+2022-09-21 15:40:42 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:40:42 INFO  ---RUNTIME: Importing and monkey-patching took 6.028652191162109 ms
+2022-09-21 15:40:52 INFO  ---RUNTIME: Original pipeline execution took 10318.812847137451 ms (excluding imports and monkey-patching)
+2022-09-21 15:40:52 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:40:52 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:40:52 INFO  ---RUNTIME: Plan generation took 0.4379749298095703 ms
+2022-09-21 15:40:52 INFO  Estimated runtime of original DAG is 8183.619737625122ms
+2022-09-21 15:40:52 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:40:52 INFO  Estimated unoptimised what-if runtime is 204590.49344062805ms
+2022-09-21 15:40:52 INFO  ---RUNTIME: Multi-Query Optimization took 17.985820770263672 ms
+2022-09-21 15:40:52 INFO  Executing generated plans
+2022-09-21 15:44:54 INFO  ---RUNTIME: Execution took 241644.48618888855 ms
+2022-09-21 15:44:54 INFO  Done!
+2022-09-21 15:44:54 INFO  # Finished -- repetition 7 of 7 
+2022-09-21 15:44:54 INFO  # Final results after all repetitions
+2022-09-21 15:44:54 INFO     repetition  ... no_opt_what_if_execution_combined_model_training
+0           0  ...                                     83006.416082
+1           1  ...                                     83332.125425
+2           2  ...                                     85390.144110
+3           3  ...                                     85965.861320
+4           4  ...                                     86862.243176
+5           5  ...                                     85612.082005
+6           6  ...                                     78749.080896
+
+[7 rows x 26 columns]
+taskset -c 32-39 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py data_corruption reviews fast_loading featurization_1 logistic_regression
+2022-09-21 15:44:56.701926: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
+2022-09-21 15:44:56.701975: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-09-21 15:44:58 INFO  Patching sys.argv with ['mlwhatif', 'reviews', 'fast_loading', 'featurization_1', 'logistic_regression']
+2022-09-21 15:44:58 INFO  Running instrumented original pipeline...
+2022-09-21 15:44:58 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:44:58 INFO  ---RUNTIME: Importing and monkey-patching took 121.30951881408691 ms
+2022-09-21 15:45:05 INFO  ---RUNTIME: Original pipeline execution took 7297.943830490112 ms (excluding imports and monkey-patching)
+2022-09-21 15:45:05 INFO  Starting execution of 0 what-if analyses...
+2022-09-21 15:45:05 INFO  Estimated runtime of original DAG is 5007.610082626343ms
+2022-09-21 15:45:05 INFO  Performing Multi-Query Optimization
+2022-09-21 15:45:05 INFO  Estimated unoptimized what-if runtime is 0ms
+2022-09-21 15:45:05 INFO  Estimated optimised what-if runtime is 0ms
+2022-09-21 15:45:05 INFO  Estimated optimisation runtime saving is 0ms
+2022-09-21 15:45:05 INFO  ---RUNTIME: Multi-Query Optimization took 0.4878044128417969 ms
+2022-09-21 15:45:05 INFO  Executing generated plans
+2022-09-21 15:45:05 INFO  ---RUNTIME: Execution took 0.026702880859375 ms
+2022-09-21 15:45:05 INFO  Done!
+2022-09-21 15:45:05 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'logistic_regression']] -- repetition 1 of 7
+2022-09-21 15:45:05 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:45:05 INFO  Running instrumented original pipeline...
+2022-09-21 15:45:05 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:45:05 INFO  ---RUNTIME: Importing and monkey-patching took 6.168603897094727 ms
+2022-09-21 15:45:12 INFO  ---RUNTIME: Original pipeline execution took 7379.833698272705 ms (excluding imports and monkey-patching)
+2022-09-21 15:45:12 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:45:12 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:45:12 INFO  ---RUNTIME: Plan generation took 0.5445480346679688 ms
+2022-09-21 15:45:12 INFO  Estimated runtime of original DAG is 5020.241022109985ms
+2022-09-21 15:45:12 INFO  Performing Multi-Query Optimization
+2022-09-21 15:45:12 INFO  Estimated unoptimized what-if runtime is 125506.02555274963ms
+2022-09-21 15:45:12 INFO  Estimated optimised what-if runtime is 12098.663806915283ms
+2022-09-21 15:45:12 INFO  Estimated optimisation runtime saving is 113407.36174583435ms
+2022-09-21 15:45:12 INFO  ---RUNTIME: Multi-Query Optimization took 64.8648738861084 ms
+2022-09-21 15:45:12 INFO  Executing generated plans
+2022-09-21 15:45:31 INFO  ---RUNTIME: Execution took 18159.470081329346 ms
+2022-09-21 15:45:31 INFO  Done!
+2022-09-21 15:45:31 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:45:31 INFO  Running instrumented original pipeline...
+2022-09-21 15:45:31 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:45:31 INFO  ---RUNTIME: Importing and monkey-patching took 6.1779022216796875 ms
+2022-09-21 15:45:38 INFO  ---RUNTIME: Original pipeline execution took 7195.378303527832 ms (excluding imports and monkey-patching)
+2022-09-21 15:45:38 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:45:38 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:45:38 INFO  ---RUNTIME: Plan generation took 0.5373954772949219 ms
+2022-09-21 15:45:38 INFO  Estimated runtime of original DAG is 4990.914106369019ms
+2022-09-21 15:45:38 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:45:38 INFO  Estimated unoptimised what-if runtime is 124772.85265922546ms
+2022-09-21 15:45:38 INFO  ---RUNTIME: Multi-Query Optimization took 18.321990966796875 ms
+2022-09-21 15:45:38 INFO  Executing generated plans
+2022-09-21 15:48:18 INFO  ---RUNTIME: Execution took 160248.20947647095 ms
+2022-09-21 15:48:18 INFO  Done!
+2022-09-21 15:48:18 INFO  # Finished -- repetition 1 of 7 
+2022-09-21 15:48:18 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'logistic_regression']] -- repetition 2 of 7
+2022-09-21 15:48:18 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:48:18 INFO  Running instrumented original pipeline...
+2022-09-21 15:48:18 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:48:18 INFO  ---RUNTIME: Importing and monkey-patching took 6.244659423828125 ms
+2022-09-21 15:48:25 INFO  ---RUNTIME: Original pipeline execution took 7209.67435836792 ms (excluding imports and monkey-patching)
+2022-09-21 15:48:25 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:48:25 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:48:25 INFO  ---RUNTIME: Plan generation took 0.5562305450439453 ms
+2022-09-21 15:48:25 INFO  Estimated runtime of original DAG is 4979.151248931885ms
+2022-09-21 15:48:25 INFO  Performing Multi-Query Optimization
+2022-09-21 15:48:25 INFO  Estimated unoptimized what-if runtime is 124478.78122329712ms
+2022-09-21 15:48:25 INFO  Estimated optimised what-if runtime is 12049.366235733032ms
+2022-09-21 15:48:25 INFO  Estimated optimisation runtime saving is 112429.41498756409ms
+2022-09-21 15:48:25 INFO  ---RUNTIME: Multi-Query Optimization took 62.586307525634766 ms
+2022-09-21 15:48:25 INFO  Executing generated plans
+2022-09-21 15:48:43 INFO  ---RUNTIME: Execution took 17930.92441558838 ms
+2022-09-21 15:48:43 INFO  Done!
+2022-09-21 15:48:43 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:48:43 INFO  Running instrumented original pipeline...
+2022-09-21 15:48:43 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:48:43 INFO  ---RUNTIME: Importing and monkey-patching took 6.108522415161133 ms
+2022-09-21 15:48:50 INFO  ---RUNTIME: Original pipeline execution took 7181.246519088745 ms (excluding imports and monkey-patching)
+2022-09-21 15:48:50 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:48:50 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:48:50 INFO  ---RUNTIME: Plan generation took 0.49686431884765625 ms
+2022-09-21 15:48:50 INFO  Estimated runtime of original DAG is 4980.9815883636475ms
+2022-09-21 15:48:50 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:48:50 INFO  Estimated unoptimised what-if runtime is 124524.53970909119ms
+2022-09-21 15:48:50 INFO  ---RUNTIME: Multi-Query Optimization took 18.518686294555664 ms
+2022-09-21 15:48:50 INFO  Executing generated plans
+2022-09-21 15:51:31 INFO  ---RUNTIME: Execution took 160199.37252998352 ms
+2022-09-21 15:51:31 INFO  Done!
+2022-09-21 15:51:31 INFO  # Finished -- repetition 2 of 7 
+2022-09-21 15:51:31 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'logistic_regression']] -- repetition 3 of 7
+2022-09-21 15:51:31 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:51:31 INFO  Running instrumented original pipeline...
+2022-09-21 15:51:31 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:51:31 INFO  ---RUNTIME: Importing and monkey-patching took 17.0590877532959 ms
+2022-09-21 15:51:38 INFO  ---RUNTIME: Original pipeline execution took 7214.575290679932 ms (excluding imports and monkey-patching)
+2022-09-21 15:51:38 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:51:38 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:51:38 INFO  ---RUNTIME: Plan generation took 0.5564689636230469 ms
+2022-09-21 15:51:38 INFO  Estimated runtime of original DAG is 4986.525774002075ms
+2022-09-21 15:51:38 INFO  Performing Multi-Query Optimization
+2022-09-21 15:51:38 INFO  Estimated unoptimized what-if runtime is 124663.14435005188ms
+2022-09-21 15:51:38 INFO  Estimated optimised what-if runtime is 12035.881280899048ms
+2022-09-21 15:51:38 INFO  Estimated optimisation runtime saving is 112627.26306915283ms
+2022-09-21 15:51:38 INFO  ---RUNTIME: Multi-Query Optimization took 285.2194309234619 ms
+2022-09-21 15:51:38 INFO  Executing generated plans
+2022-09-21 15:51:56 INFO  ---RUNTIME: Execution took 18303.552627563477 ms
+2022-09-21 15:51:56 INFO  Done!
+2022-09-21 15:51:56 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:51:56 INFO  Running instrumented original pipeline...
+2022-09-21 15:51:57 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:51:57 INFO  ---RUNTIME: Importing and monkey-patching took 5.739450454711914 ms
+2022-09-21 15:52:04 INFO  ---RUNTIME: Original pipeline execution took 7315.986156463623 ms (excluding imports and monkey-patching)
+2022-09-21 15:52:04 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:52:04 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:52:04 INFO  ---RUNTIME: Plan generation took 0.5590915679931641 ms
+2022-09-21 15:52:04 INFO  Estimated runtime of original DAG is 5040.261268615723ms
+2022-09-21 15:52:04 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:52:04 INFO  Estimated unoptimised what-if runtime is 126006.53171539307ms
+2022-09-21 15:52:04 INFO  ---RUNTIME: Multi-Query Optimization took 18.49365234375 ms
+2022-09-21 15:52:04 INFO  Executing generated plans
+2022-09-21 15:54:45 INFO  ---RUNTIME: Execution took 161550.27723312378 ms
+2022-09-21 15:54:45 INFO  Done!
+2022-09-21 15:54:45 INFO  # Finished -- repetition 3 of 7 
+2022-09-21 15:54:45 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'logistic_regression']] -- repetition 4 of 7
+2022-09-21 15:54:45 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:54:45 INFO  Running instrumented original pipeline...
+2022-09-21 15:54:45 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:54:45 INFO  ---RUNTIME: Importing and monkey-patching took 16.933917999267578 ms
+2022-09-21 15:54:53 INFO  ---RUNTIME: Original pipeline execution took 7335.96658706665 ms (excluding imports and monkey-patching)
+2022-09-21 15:54:53 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:54:53 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:54:53 INFO  ---RUNTIME: Plan generation took 0.5595684051513672 ms
+2022-09-21 15:54:53 INFO  Estimated runtime of original DAG is 5069.78702545166ms
+2022-09-21 15:54:53 INFO  Performing Multi-Query Optimization
+2022-09-21 15:54:53 INFO  Estimated unoptimized what-if runtime is 126744.6756362915ms
+2022-09-21 15:54:53 INFO  Estimated optimised what-if runtime is 12090.648889541626ms
+2022-09-21 15:54:53 INFO  Estimated optimisation runtime saving is 114654.02674674988ms
+2022-09-21 15:54:53 INFO  ---RUNTIME: Multi-Query Optimization took 103.9268970489502 ms
+2022-09-21 15:54:53 INFO  Executing generated plans
+2022-09-21 15:55:11 INFO  ---RUNTIME: Execution took 18130.491256713867 ms
+2022-09-21 15:55:11 INFO  Done!
+2022-09-21 15:55:11 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:55:11 INFO  Running instrumented original pipeline...
+2022-09-21 15:55:11 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:55:11 INFO  ---RUNTIME: Importing and monkey-patching took 5.810737609863281 ms
+2022-09-21 15:55:18 INFO  ---RUNTIME: Original pipeline execution took 7306.741952896118 ms (excluding imports and monkey-patching)
+2022-09-21 15:55:18 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:55:18 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:55:18 INFO  ---RUNTIME: Plan generation took 0.5242824554443359 ms
+2022-09-21 15:55:18 INFO  Estimated runtime of original DAG is 5083.384275436401ms
+2022-09-21 15:55:18 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:55:18 INFO  Estimated unoptimised what-if runtime is 127084.60688591003ms
+2022-09-21 15:55:18 INFO  ---RUNTIME: Multi-Query Optimization took 18.37897300720215 ms
+2022-09-21 15:55:18 INFO  Executing generated plans
+2022-09-21 15:57:59 INFO  ---RUNTIME: Execution took 160631.94918632507 ms
+2022-09-21 15:57:59 INFO  Done!
+2022-09-21 15:57:59 INFO  # Finished -- repetition 4 of 7 
+2022-09-21 15:57:59 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'logistic_regression']] -- repetition 5 of 7
+2022-09-21 15:57:59 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:57:59 INFO  Running instrumented original pipeline...
+2022-09-21 15:57:59 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:57:59 INFO  ---RUNTIME: Importing and monkey-patching took 6.299495697021484 ms
+2022-09-21 15:58:06 INFO  ---RUNTIME: Original pipeline execution took 7288.319110870361 ms (excluding imports and monkey-patching)
+2022-09-21 15:58:06 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:58:06 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:58:06 INFO  ---RUNTIME: Plan generation took 0.5252361297607422 ms
+2022-09-21 15:58:06 INFO  Estimated runtime of original DAG is 5064.968824386597ms
+2022-09-21 15:58:06 INFO  Performing Multi-Query Optimization
+2022-09-21 15:58:06 INFO  Estimated unoptimized what-if runtime is 126624.22060966492ms
+2022-09-21 15:58:06 INFO  Estimated optimised what-if runtime is 12312.209367752075ms
+2022-09-21 15:58:06 INFO  Estimated optimisation runtime saving is 114312.01124191284ms
+2022-09-21 15:58:06 INFO  ---RUNTIME: Multi-Query Optimization took 62.10756301879883 ms
+2022-09-21 15:58:06 INFO  Executing generated plans
+2022-09-21 15:58:24 INFO  ---RUNTIME: Execution took 18148.531436920166 ms
+2022-09-21 15:58:24 INFO  Done!
+2022-09-21 15:58:24 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 15:58:24 INFO  Running instrumented original pipeline...
+2022-09-21 15:58:25 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 15:58:25 INFO  ---RUNTIME: Importing and monkey-patching took 5.745172500610352 ms
+2022-09-21 15:58:32 INFO  ---RUNTIME: Original pipeline execution took 7266.284942626953 ms (excluding imports and monkey-patching)
+2022-09-21 15:58:32 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 15:58:32 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 15:58:32 INFO  ---RUNTIME: Plan generation took 0.5385875701904297 ms
+2022-09-21 15:58:32 INFO  Estimated runtime of original DAG is 5017.817258834839ms
+2022-09-21 15:58:32 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 15:58:32 INFO  Estimated unoptimised what-if runtime is 125445.43147087097ms
+2022-09-21 15:58:32 INFO  ---RUNTIME: Multi-Query Optimization took 18.50104331970215 ms
+2022-09-21 15:58:32 INFO  Executing generated plans
+2022-09-21 16:01:21 INFO  ---RUNTIME: Execution took 169352.2880077362 ms
+2022-09-21 16:01:21 INFO  Done!
+2022-09-21 16:01:21 INFO  # Finished -- repetition 5 of 7 
+2022-09-21 16:01:21 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'logistic_regression']] -- repetition 6 of 7
+2022-09-21 16:01:21 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:01:21 INFO  Running instrumented original pipeline...
+2022-09-21 16:01:21 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:01:21 INFO  ---RUNTIME: Importing and monkey-patching took 6.439208984375 ms
+2022-09-21 16:01:29 INFO  ---RUNTIME: Original pipeline execution took 7895.350217819214 ms (excluding imports and monkey-patching)
+2022-09-21 16:01:29 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:01:29 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:01:29 INFO  ---RUNTIME: Plan generation took 0.48923492431640625 ms
+2022-09-21 16:01:29 INFO  Estimated runtime of original DAG is 5100.486993789673ms
+2022-09-21 16:01:29 INFO  Performing Multi-Query Optimization
+2022-09-21 16:01:29 INFO  Estimated unoptimized what-if runtime is 127512.17484474182ms
+2022-09-21 16:01:29 INFO  Estimated optimised what-if runtime is 12179.099798202515ms
+2022-09-21 16:01:29 INFO  Estimated optimisation runtime saving is 115333.0750465393ms
+2022-09-21 16:01:29 INFO  ---RUNTIME: Multi-Query Optimization took 62.13498115539551 ms
+2022-09-21 16:01:29 INFO  Executing generated plans
+2022-09-21 16:01:48 INFO  ---RUNTIME: Execution took 18907.755136489868 ms
+2022-09-21 16:01:48 INFO  Done!
+2022-09-21 16:01:48 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:01:48 INFO  Running instrumented original pipeline...
+2022-09-21 16:01:48 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:01:48 INFO  ---RUNTIME: Importing and monkey-patching took 5.772113800048828 ms
+2022-09-21 16:01:56 INFO  ---RUNTIME: Original pipeline execution took 7639.081239700317 ms (excluding imports and monkey-patching)
+2022-09-21 16:01:56 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:01:56 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:01:56 INFO  ---RUNTIME: Plan generation took 0.5393028259277344 ms
+2022-09-21 16:01:56 INFO  Estimated runtime of original DAG is 5145.491361618042ms
+2022-09-21 16:01:56 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:01:56 INFO  Estimated unoptimised what-if runtime is 128637.28404045105ms
+2022-09-21 16:01:56 INFO  ---RUNTIME: Multi-Query Optimization took 18.128633499145508 ms
+2022-09-21 16:01:56 INFO  Executing generated plans
+2022-09-21 16:04:49 INFO  ---RUNTIME: Execution took 173043.87879371643 ms
+2022-09-21 16:04:49 INFO  Done!
+2022-09-21 16:04:49 INFO  # Finished -- repetition 6 of 7 
+2022-09-21 16:04:49 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'logistic_regression']] -- repetition 7 of 7
+2022-09-21 16:04:49 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:04:49 INFO  Running instrumented original pipeline...
+2022-09-21 16:04:49 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:04:49 INFO  ---RUNTIME: Importing and monkey-patching took 6.4067840576171875 ms
+2022-09-21 16:04:56 INFO  ---RUNTIME: Original pipeline execution took 7711.222410202026 ms (excluding imports and monkey-patching)
+2022-09-21 16:04:56 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:04:56 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:04:56 INFO  ---RUNTIME: Plan generation took 0.5056858062744141 ms
+2022-09-21 16:04:56 INFO  Estimated runtime of original DAG is 5236.717939376831ms
+2022-09-21 16:04:56 INFO  Performing Multi-Query Optimization
+2022-09-21 16:04:57 INFO  Estimated unoptimized what-if runtime is 130917.94848442078ms
+2022-09-21 16:04:57 INFO  Estimated optimised what-if runtime is 12310.890436172485ms
+2022-09-21 16:04:57 INFO  Estimated optimisation runtime saving is 118607.05804824829ms
+2022-09-21 16:04:57 INFO  ---RUNTIME: Multi-Query Optimization took 62.087297439575195 ms
+2022-09-21 16:04:57 INFO  Executing generated plans
+2022-09-21 16:05:15 INFO  ---RUNTIME: Execution took 18829.46467399597 ms
+2022-09-21 16:05:15 INFO  Done!
+2022-09-21 16:05:15 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:05:15 INFO  Running instrumented original pipeline...
+2022-09-21 16:05:15 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:05:15 INFO  ---RUNTIME: Importing and monkey-patching took 5.859375 ms
+2022-09-21 16:05:23 INFO  ---RUNTIME: Original pipeline execution took 7690.79065322876 ms (excluding imports and monkey-patching)
+2022-09-21 16:05:23 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:05:23 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:05:23 INFO  ---RUNTIME: Plan generation took 0.5612373352050781 ms
+2022-09-21 16:05:23 INFO  Estimated runtime of original DAG is 5221.795082092285ms
+2022-09-21 16:05:23 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:05:23 INFO  Estimated unoptimised what-if runtime is 130544.87705230713ms
+2022-09-21 16:05:23 INFO  ---RUNTIME: Multi-Query Optimization took 18.254995346069336 ms
+2022-09-21 16:05:23 INFO  Executing generated plans
+2022-09-21 16:08:15 INFO  ---RUNTIME: Execution took 172161.69595718384 ms
+2022-09-21 16:08:15 INFO  Done!
+2022-09-21 16:08:15 INFO  # Finished -- repetition 7 of 7 
+2022-09-21 16:08:15 INFO  # Final results after all repetitions
+2022-09-21 16:08:15 INFO     repetition  ... no_opt_what_if_execution_combined_model_training
+0           0  ...                                      3227.261543
+1           1  ...                                      3225.735188
+2           2  ...                                      3266.841888
+3           3  ...                                      3212.834358
+4           4  ...                                      3581.419706
+5           5  ...                                      3558.787584
+6           6  ...                                      3424.036503
+
+[7 rows x 26 columns]
+taskset -c 32-39 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py data_corruption reviews fast_loading featurization_1 xgboost
+2022-09-21 16:08:18.272407: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
+2022-09-21 16:08:18.272465: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-09-21 16:08:19 INFO  Patching sys.argv with ['mlwhatif', 'reviews', 'fast_loading', 'featurization_1', 'xgboost']
+2022-09-21 16:08:19 INFO  Running instrumented original pipeline...
+2022-09-21 16:08:19 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:08:19 INFO  ---RUNTIME: Importing and monkey-patching took 121.28353118896484 ms
+2022-09-21 16:08:28 INFO  ---RUNTIME: Original pipeline execution took 8355.947017669678 ms (excluding imports and monkey-patching)
+2022-09-21 16:08:28 INFO  Starting execution of 0 what-if analyses...
+2022-09-21 16:08:28 INFO  Estimated runtime of original DAG is 5775.600910186768ms
+2022-09-21 16:08:28 INFO  Performing Multi-Query Optimization
+2022-09-21 16:08:28 INFO  Estimated unoptimized what-if runtime is 0ms
+2022-09-21 16:08:28 INFO  Estimated optimised what-if runtime is 0ms
+2022-09-21 16:08:28 INFO  Estimated optimisation runtime saving is 0ms
+2022-09-21 16:08:28 INFO  ---RUNTIME: Multi-Query Optimization took 0.4870891571044922 ms
+2022-09-21 16:08:28 INFO  Executing generated plans
+2022-09-21 16:08:28 INFO  ---RUNTIME: Execution took 0.025987625122070312 ms
+2022-09-21 16:08:28 INFO  Done!
+2022-09-21 16:08:28 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'xgboost']] -- repetition 1 of 7
+2022-09-21 16:08:28 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:08:28 INFO  Running instrumented original pipeline...
+2022-09-21 16:08:28 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:08:28 INFO  ---RUNTIME: Importing and monkey-patching took 6.145477294921875 ms
+2022-09-21 16:08:36 INFO  ---RUNTIME: Original pipeline execution took 8370.704650878906 ms (excluding imports and monkey-patching)
+2022-09-21 16:08:36 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:08:36 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:08:36 INFO  ---RUNTIME: Plan generation took 0.537872314453125 ms
+2022-09-21 16:08:36 INFO  Estimated runtime of original DAG is 5869.94481086731ms
+2022-09-21 16:08:36 INFO  Performing Multi-Query Optimization
+2022-09-21 16:08:36 INFO  Estimated unoptimized what-if runtime is 146748.62027168274ms
+2022-09-21 16:08:36 INFO  Estimated optimised what-if runtime is 13740.225076675415ms
+2022-09-21 16:08:36 INFO  Estimated optimisation runtime saving is 133008.39519500732ms
+2022-09-21 16:08:36 INFO  ---RUNTIME: Multi-Query Optimization took 62.866926193237305 ms
+2022-09-21 16:08:36 INFO  Executing generated plans
+2022-09-21 16:08:57 INFO  ---RUNTIME: Execution took 20959.601640701294 ms
+2022-09-21 16:08:57 INFO  Done!
+2022-09-21 16:08:57 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:08:57 INFO  Running instrumented original pipeline...
+2022-09-21 16:08:57 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:08:57 INFO  ---RUNTIME: Importing and monkey-patching took 6.250858306884766 ms
+2022-09-21 16:09:06 INFO  ---RUNTIME: Original pipeline execution took 8522.439241409302 ms (excluding imports and monkey-patching)
+2022-09-21 16:09:06 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:09:06 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:09:06 INFO  ---RUNTIME: Plan generation took 0.5648136138916016 ms
+2022-09-21 16:09:06 INFO  Estimated runtime of original DAG is 6318.017482757568ms
+2022-09-21 16:09:06 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:09:06 INFO  Estimated unoptimised what-if runtime is 157950.4370689392ms
+2022-09-21 16:09:06 INFO  ---RUNTIME: Multi-Query Optimization took 18.236398696899414 ms
+2022-09-21 16:09:06 INFO  Executing generated plans
+2022-09-21 16:12:15 INFO  ---RUNTIME: Execution took 189422.85060882568 ms
+2022-09-21 16:12:15 INFO  Done!
+2022-09-21 16:12:15 INFO  # Finished -- repetition 1 of 7 
+2022-09-21 16:12:15 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'xgboost']] -- repetition 2 of 7
+2022-09-21 16:12:15 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:12:15 INFO  Running instrumented original pipeline...
+2022-09-21 16:12:15 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:12:15 INFO  ---RUNTIME: Importing and monkey-patching took 6.214380264282227 ms
+2022-09-21 16:12:23 INFO  ---RUNTIME: Original pipeline execution took 8242.024183273315 ms (excluding imports and monkey-patching)
+2022-09-21 16:12:23 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:12:23 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:12:23 INFO  ---RUNTIME: Plan generation took 0.5443096160888672 ms
+2022-09-21 16:12:23 INFO  Estimated runtime of original DAG is 5921.55909538269ms
+2022-09-21 16:12:23 INFO  Performing Multi-Query Optimization
+2022-09-21 16:12:23 INFO  Estimated unoptimized what-if runtime is 148038.97738456726ms
+2022-09-21 16:12:23 INFO  Estimated optimised what-if runtime is 13832.162857055664ms
+2022-09-21 16:12:23 INFO  Estimated optimisation runtime saving is 134206.8145275116ms
+2022-09-21 16:12:23 INFO  ---RUNTIME: Multi-Query Optimization took 62.468528747558594 ms
+2022-09-21 16:12:23 INFO  Executing generated plans
+2022-09-21 16:12:44 INFO  ---RUNTIME: Execution took 20414.67547416687 ms
+2022-09-21 16:12:44 INFO  Done!
+2022-09-21 16:12:44 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:12:44 INFO  Running instrumented original pipeline...
+2022-09-21 16:12:44 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:12:44 INFO  ---RUNTIME: Importing and monkey-patching took 6.090879440307617 ms
+2022-09-21 16:12:52 INFO  ---RUNTIME: Original pipeline execution took 8245.059967041016 ms (excluding imports and monkey-patching)
+2022-09-21 16:12:52 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:12:52 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:12:52 INFO  ---RUNTIME: Plan generation took 0.6849765777587891 ms
+2022-09-21 16:12:52 INFO  Estimated runtime of original DAG is 6014.940977096558ms
+2022-09-21 16:12:52 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:12:52 INFO  Estimated unoptimised what-if runtime is 150373.52442741394ms
+2022-09-21 16:12:52 INFO  ---RUNTIME: Multi-Query Optimization took 26.425600051879883 ms
+2022-09-21 16:12:52 INFO  Executing generated plans
+2022-09-21 16:16:01 INFO  ---RUNTIME: Execution took 189473.39487075806 ms
+2022-09-21 16:16:01 INFO  Done!
+2022-09-21 16:16:01 INFO  # Finished -- repetition 2 of 7 
+2022-09-21 16:16:01 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'xgboost']] -- repetition 3 of 7
+2022-09-21 16:16:01 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:16:01 INFO  Running instrumented original pipeline...
+2022-09-21 16:16:01 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:16:02 INFO  ---RUNTIME: Importing and monkey-patching took 6.266593933105469 ms
+2022-09-21 16:16:10 INFO  ---RUNTIME: Original pipeline execution took 8226.729393005371 ms (excluding imports and monkey-patching)
+2022-09-21 16:16:10 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:16:10 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:16:10 INFO  ---RUNTIME: Plan generation took 0.5259513854980469 ms
+2022-09-21 16:16:10 INFO  Estimated runtime of original DAG is 6007.879018783569ms
+2022-09-21 16:16:10 INFO  Performing Multi-Query Optimization
+2022-09-21 16:16:10 INFO  Estimated unoptimized what-if runtime is 150196.97546958923ms
+2022-09-21 16:16:10 INFO  Estimated optimised what-if runtime is 13981.083393096924ms
+2022-09-21 16:16:10 INFO  Estimated optimisation runtime saving is 136215.8920764923ms
+2022-09-21 16:16:10 INFO  ---RUNTIME: Multi-Query Optimization took 283.45513343811035 ms
+2022-09-21 16:16:10 INFO  Executing generated plans
+2022-09-21 16:16:31 INFO  ---RUNTIME: Execution took 20658.65659713745 ms
+2022-09-21 16:16:31 INFO  Done!
+2022-09-21 16:16:31 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:16:31 INFO  Running instrumented original pipeline...
+2022-09-21 16:16:31 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:16:31 INFO  ---RUNTIME: Importing and monkey-patching took 5.840063095092773 ms
+2022-09-21 16:16:39 INFO  ---RUNTIME: Original pipeline execution took 7937.057971954346 ms (excluding imports and monkey-patching)
+2022-09-21 16:16:39 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:16:39 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:16:39 INFO  ---RUNTIME: Plan generation took 0.5304813385009766 ms
+2022-09-21 16:16:39 INFO  Estimated runtime of original DAG is 5673.455715179443ms
+2022-09-21 16:16:39 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:16:39 INFO  Estimated unoptimised what-if runtime is 141836.39287948608ms
+2022-09-21 16:16:39 INFO  ---RUNTIME: Multi-Query Optimization took 18.34702491760254 ms
+2022-09-21 16:16:39 INFO  Executing generated plans
+2022-09-21 16:19:49 INFO  ---RUNTIME: Execution took 190394.23823356628 ms
+2022-09-21 16:19:49 INFO  Done!
+2022-09-21 16:19:49 INFO  # Finished -- repetition 3 of 7 
+2022-09-21 16:19:49 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'xgboost']] -- repetition 4 of 7
+2022-09-21 16:19:49 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:19:49 INFO  Running instrumented original pipeline...
+2022-09-21 16:19:49 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:19:49 INFO  ---RUNTIME: Importing and monkey-patching took 6.252050399780273 ms
+2022-09-21 16:19:57 INFO  ---RUNTIME: Original pipeline execution took 8104.633808135986 ms (excluding imports and monkey-patching)
+2022-09-21 16:19:57 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:19:57 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:19:57 INFO  ---RUNTIME: Plan generation took 0.5235671997070312 ms
+2022-09-21 16:19:57 INFO  Estimated runtime of original DAG is 5870.879888534546ms
+2022-09-21 16:19:57 INFO  Performing Multi-Query Optimization
+2022-09-21 16:19:57 INFO  Estimated unoptimized what-if runtime is 146771.99721336365ms
+2022-09-21 16:19:57 INFO  Estimated optimised what-if runtime is 13721.920251846313ms
+2022-09-21 16:19:57 INFO  Estimated optimisation runtime saving is 133050.07696151733ms
+2022-09-21 16:19:57 INFO  ---RUNTIME: Multi-Query Optimization took 62.22224235534668 ms
+2022-09-21 16:19:57 INFO  Executing generated plans
+2022-09-21 16:20:17 INFO  ---RUNTIME: Execution took 19700.76274871826 ms
+2022-09-21 16:20:17 INFO  Done!
+2022-09-21 16:20:17 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:20:17 INFO  Running instrumented original pipeline...
+2022-09-21 16:20:17 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:20:17 INFO  ---RUNTIME: Importing and monkey-patching took 6.21485710144043 ms
+2022-09-21 16:20:28 INFO  ---RUNTIME: Original pipeline execution took 10810.783624649048 ms (excluding imports and monkey-patching)
+2022-09-21 16:20:28 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:20:28 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:20:28 INFO  ---RUNTIME: Plan generation took 0.9002685546875 ms
+2022-09-21 16:20:28 INFO  Estimated runtime of original DAG is 7478.891134262085ms
+2022-09-21 16:20:28 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:20:28 INFO  Estimated unoptimised what-if runtime is 186972.27835655212ms
+2022-09-21 16:20:28 INFO  ---RUNTIME: Multi-Query Optimization took 28.224706649780273 ms
+2022-09-21 16:20:28 INFO  Executing generated plans
+2022-09-21 16:23:37 INFO  ---RUNTIME: Execution took 189135.62536239624 ms
+2022-09-21 16:23:37 INFO  Done!
+2022-09-21 16:23:37 INFO  # Finished -- repetition 4 of 7 
+2022-09-21 16:23:37 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'xgboost']] -- repetition 5 of 7
+2022-09-21 16:23:37 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:23:37 INFO  Running instrumented original pipeline...
+2022-09-21 16:23:37 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:23:37 INFO  ---RUNTIME: Importing and monkey-patching took 7.189512252807617 ms
+2022-09-21 16:23:45 INFO  ---RUNTIME: Original pipeline execution took 7978.881597518921 ms (excluding imports and monkey-patching)
+2022-09-21 16:23:45 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:23:45 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:23:45 INFO  ---RUNTIME: Plan generation took 0.5755424499511719 ms
+2022-09-21 16:23:45 INFO  Estimated runtime of original DAG is 5716.924667358398ms
+2022-09-21 16:23:45 INFO  Performing Multi-Query Optimization
+2022-09-21 16:23:45 INFO  Estimated unoptimized what-if runtime is 142923.11668395996ms
+2022-09-21 16:23:45 INFO  Estimated optimised what-if runtime is 13585.333108901978ms
+2022-09-21 16:23:45 INFO  Estimated optimisation runtime saving is 129337.78357505798ms
+2022-09-21 16:23:45 INFO  ---RUNTIME: Multi-Query Optimization took 62.278032302856445 ms
+2022-09-21 16:23:45 INFO  Executing generated plans
+2022-09-21 16:24:04 INFO  ---RUNTIME: Execution took 19398.276567459106 ms
+2022-09-21 16:24:04 INFO  Done!
+2022-09-21 16:24:04 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:24:04 INFO  Running instrumented original pipeline...
+2022-09-21 16:24:04 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:24:04 INFO  ---RUNTIME: Importing and monkey-patching took 6.9408416748046875 ms
+2022-09-21 16:24:13 INFO  ---RUNTIME: Original pipeline execution took 8298.958539962769 ms (excluding imports and monkey-patching)
+2022-09-21 16:24:13 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:24:13 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:24:13 INFO  ---RUNTIME: Plan generation took 0.5292892456054688 ms
+2022-09-21 16:24:13 INFO  Estimated runtime of original DAG is 5958.711862564087ms
+2022-09-21 16:24:13 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:24:13 INFO  Estimated unoptimised what-if runtime is 148967.79656410217ms
+2022-09-21 16:24:13 INFO  ---RUNTIME: Multi-Query Optimization took 21.06451988220215 ms
+2022-09-21 16:24:13 INFO  Executing generated plans
+2022-09-21 16:27:22 INFO  ---RUNTIME: Execution took 189305.26661872864 ms
+2022-09-21 16:27:22 INFO  Done!
+2022-09-21 16:27:22 INFO  # Finished -- repetition 5 of 7 
+2022-09-21 16:27:22 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'xgboost']] -- repetition 6 of 7
+2022-09-21 16:27:22 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:27:22 INFO  Running instrumented original pipeline...
+2022-09-21 16:27:22 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:27:22 INFO  ---RUNTIME: Importing and monkey-patching took 7.449626922607422 ms
+2022-09-21 16:27:32 INFO  ---RUNTIME: Original pipeline execution took 10022.80855178833 ms (excluding imports and monkey-patching)
+2022-09-21 16:27:32 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:27:32 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:27:32 INFO  ---RUNTIME: Plan generation took 0.5540847778320312 ms
+2022-09-21 16:27:32 INFO  Estimated runtime of original DAG is 7416.2757396698ms
+2022-09-21 16:27:32 INFO  Performing Multi-Query Optimization
+2022-09-21 16:27:32 INFO  Estimated unoptimized what-if runtime is 185406.893491745ms
+2022-09-21 16:27:32 INFO  Estimated optimised what-if runtime is 15944.71788406372ms
+2022-09-21 16:27:32 INFO  Estimated optimisation runtime saving is 169462.17560768127ms
+2022-09-21 16:27:32 INFO  ---RUNTIME: Multi-Query Optimization took 67.9173469543457 ms
+2022-09-21 16:27:32 INFO  Executing generated plans
+2022-09-21 16:27:52 INFO  ---RUNTIME: Execution took 19858.550310134888 ms
+2022-09-21 16:27:52 INFO  Done!
+2022-09-21 16:27:52 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:27:52 INFO  Running instrumented original pipeline...
+2022-09-21 16:27:52 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:27:52 INFO  ---RUNTIME: Importing and monkey-patching took 6.176948547363281 ms
+2022-09-21 16:28:00 INFO  ---RUNTIME: Original pipeline execution took 8189.4941329956055 ms (excluding imports and monkey-patching)
+2022-09-21 16:28:00 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:28:00 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:28:00 INFO  ---RUNTIME: Plan generation took 0.5753040313720703 ms
+2022-09-21 16:28:00 INFO  Estimated runtime of original DAG is 5889.051914215088ms
+2022-09-21 16:28:00 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:28:00 INFO  Estimated unoptimised what-if runtime is 147226.2978553772ms
+2022-09-21 16:28:00 INFO  ---RUNTIME: Multi-Query Optimization took 17.970561981201172 ms
+2022-09-21 16:28:00 INFO  Executing generated plans
+2022-09-21 16:31:07 INFO  ---RUNTIME: Execution took 187274.85418319702 ms
+2022-09-21 16:31:07 INFO  Done!
+2022-09-21 16:31:07 INFO  # Finished -- repetition 6 of 7 
+2022-09-21 16:31:07 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'xgboost']] -- repetition 7 of 7
+2022-09-21 16:31:07 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:31:07 INFO  Running instrumented original pipeline...
+2022-09-21 16:31:07 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:31:08 INFO  ---RUNTIME: Importing and monkey-patching took 6.796360015869141 ms
+2022-09-21 16:31:16 INFO  ---RUNTIME: Original pipeline execution took 8066.035509109497 ms (excluding imports and monkey-patching)
+2022-09-21 16:31:16 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:31:16 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:31:16 INFO  ---RUNTIME: Plan generation took 0.5645751953125 ms
+2022-09-21 16:31:16 INFO  Estimated runtime of original DAG is 5784.408092498779ms
+2022-09-21 16:31:16 INFO  Performing Multi-Query Optimization
+2022-09-21 16:31:16 INFO  Estimated unoptimized what-if runtime is 144610.20231246948ms
+2022-09-21 16:31:16 INFO  Estimated optimised what-if runtime is 13969.412088394165ms
+2022-09-21 16:31:16 INFO  Estimated optimisation runtime saving is 130640.79022407532ms
+2022-09-21 16:31:16 INFO  ---RUNTIME: Multi-Query Optimization took 67.78717041015625 ms
+2022-09-21 16:31:16 INFO  Executing generated plans
+2022-09-21 16:31:35 INFO  ---RUNTIME: Execution took 19795.601844787598 ms
+2022-09-21 16:31:35 INFO  Done!
+2022-09-21 16:31:35 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:31:35 INFO  Running instrumented original pipeline...
+2022-09-21 16:31:35 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:31:35 INFO  ---RUNTIME: Importing and monkey-patching took 6.192684173583984 ms
+2022-09-21 16:31:43 INFO  ---RUNTIME: Original pipeline execution took 8078.632593154907 ms (excluding imports and monkey-patching)
+2022-09-21 16:31:43 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:31:43 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:31:43 INFO  ---RUNTIME: Plan generation took 0.5238056182861328 ms
+2022-09-21 16:31:43 INFO  Estimated runtime of original DAG is 5826.115608215332ms
+2022-09-21 16:31:43 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:31:44 INFO  Estimated unoptimised what-if runtime is 145652.8902053833ms
+2022-09-21 16:31:44 INFO  ---RUNTIME: Multi-Query Optimization took 18.028736114501953 ms
+2022-09-21 16:31:44 INFO  Executing generated plans
+2022-09-21 16:34:58 INFO  ---RUNTIME: Execution took 194680.97639083862 ms
+2022-09-21 16:34:58 INFO  Done!
+2022-09-21 16:34:58 INFO  # Finished -- repetition 7 of 7 
+2022-09-21 16:34:58 INFO  # Final results after all repetitions
+2022-09-21 16:34:58 INFO     repetition  ... no_opt_what_if_execution_combined_model_training
+0           0  ...                                     24421.372652
+1           1  ...                                     24197.171211
+2           2  ...                                     23785.400867
+3           3  ...                                     24275.517464
+4           4  ...                                     29519.199848
+5           5  ...                                     26596.543074
+6           6  ...                                     36219.364166
+
+[7 rows x 26 columns]
+taskset -c 32-39 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py data_corruption reviews fast_loading featurization_1 neural_network
+2022-09-21 16:35:01.099787: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
+2022-09-21 16:35:01.099832: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-09-21 16:35:02 INFO  Patching sys.argv with ['mlwhatif', 'reviews', 'fast_loading', 'featurization_1', 'neural_network']
+2022-09-21 16:35:02 INFO  Running instrumented original pipeline...
+2022-09-21 16:35:02 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:35:02 INFO  ---RUNTIME: Importing and monkey-patching took 132.24411010742188 ms
+2022-09-21 16:35:08.540099: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
+2022-09-21 16:35:08.540153: W tensorflow/stream_executor/cuda/cuda_driver.cc:326] failed call to cuInit: UNKNOWN ERROR (303)
+2022-09-21 16:35:08.540181: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (angus): /proc/driver/nvidia/version does not exist
+2022-09-21 16:35:08.540854: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-09-21 16:35:08.789746: I tensorflow/compiler/mlir/mlir_graph_optimization_pass.cc:176] None of the MLIR Optimization Passes are enabled (registered 2)
+2022-09-21 16:35:08.802185: I tensorflow/core/platform/profile_utils/cpu_utils.cc:114] CPU Frequency: 2595130000 Hz
+2022-09-21 16:35:14 INFO  ---RUNTIME: Original pipeline execution took 11863.47508430481 ms (excluding imports and monkey-patching)
+2022-09-21 16:35:14 INFO  Starting execution of 0 what-if analyses...
+2022-09-21 16:35:14 INFO  Estimated runtime of original DAG is 9454.784870147705ms
+2022-09-21 16:35:14 INFO  Performing Multi-Query Optimization
+2022-09-21 16:35:14 INFO  Estimated unoptimized what-if runtime is 0ms
+2022-09-21 16:35:14 INFO  Estimated optimised what-if runtime is 0ms
+2022-09-21 16:35:14 INFO  Estimated optimisation runtime saving is 0ms
+2022-09-21 16:35:14 INFO  ---RUNTIME: Multi-Query Optimization took 0.5142688751220703 ms
+2022-09-21 16:35:14 INFO  Executing generated plans
+2022-09-21 16:35:14 INFO  ---RUNTIME: Execution took 0.022411346435546875 ms
+2022-09-21 16:35:14 INFO  Done!
+2022-09-21 16:35:14 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'neural_network']] -- repetition 1 of 7
+2022-09-21 16:35:14 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:35:14 INFO  Running instrumented original pipeline...
+2022-09-21 16:35:14 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:35:14 INFO  ---RUNTIME: Importing and monkey-patching took 6.265163421630859 ms
+2022-09-21 16:35:25 INFO  ---RUNTIME: Original pipeline execution took 11347.66149520874 ms (excluding imports and monkey-patching)
+2022-09-21 16:35:25 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:35:25 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:35:25 INFO  ---RUNTIME: Plan generation took 0.4963874816894531 ms
+2022-09-21 16:35:25 INFO  Estimated runtime of original DAG is 9047.335863113403ms
+2022-09-21 16:35:25 INFO  Performing Multi-Query Optimization
+2022-09-21 16:35:25 INFO  Estimated unoptimized what-if runtime is 226183.39657783508ms
+2022-09-21 16:35:25 INFO  Estimated optimised what-if runtime is 27223.194122314453ms
+2022-09-21 16:35:25 INFO  Estimated optimisation runtime saving is 198960.20245552063ms
+2022-09-21 16:35:25 INFO  ---RUNTIME: Multi-Query Optimization took 68.62878799438477 ms
+2022-09-21 16:35:25 INFO  Executing generated plans
+2022-09-21 16:35:58 INFO  ---RUNTIME: Execution took 32621.344327926636 ms
+2022-09-21 16:35:58 INFO  Done!
+2022-09-21 16:35:58 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:35:58 INFO  Running instrumented original pipeline...
+2022-09-21 16:35:58 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:35:58 INFO  ---RUNTIME: Importing and monkey-patching took 6.59942626953125 ms
+2022-09-21 16:36:09 INFO  ---RUNTIME: Original pipeline execution took 10797.762393951416 ms (excluding imports and monkey-patching)
+2022-09-21 16:36:09 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:36:09 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:36:09 INFO  ---RUNTIME: Plan generation took 2.329111099243164 ms
+2022-09-21 16:36:09 INFO  Estimated runtime of original DAG is 8603.314399719238ms
+2022-09-21 16:36:09 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:36:09 INFO  Estimated unoptimised what-if runtime is 215082.85999298096ms
+2022-09-21 16:36:09 INFO  ---RUNTIME: Multi-Query Optimization took 18.035888671875 ms
+2022-09-21 16:36:09 INFO  Executing generated plans
+2022-09-21 16:40:22 INFO  ---RUNTIME: Execution took 252805.69672584534 ms
+2022-09-21 16:40:22 INFO  Done!
+2022-09-21 16:40:22 INFO  # Finished -- repetition 1 of 7 
+2022-09-21 16:40:22 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'neural_network']] -- repetition 2 of 7
+2022-09-21 16:40:22 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:40:22 INFO  Running instrumented original pipeline...
+2022-09-21 16:40:22 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:40:22 INFO  ---RUNTIME: Importing and monkey-patching took 6.849050521850586 ms
+2022-09-21 16:40:33 INFO  ---RUNTIME: Original pipeline execution took 11402.930974960327 ms (excluding imports and monkey-patching)
+2022-09-21 16:40:33 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:40:33 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:40:33 INFO  ---RUNTIME: Plan generation took 0.4165172576904297 ms
+2022-09-21 16:40:33 INFO  Estimated runtime of original DAG is 9055.95350265503ms
+2022-09-21 16:40:33 INFO  Performing Multi-Query Optimization
+2022-09-21 16:40:33 INFO  Estimated unoptimized what-if runtime is 226398.83756637573ms
+2022-09-21 16:40:33 INFO  Estimated optimised what-if runtime is 26712.334394454956ms
+2022-09-21 16:40:33 INFO  Estimated optimisation runtime saving is 199686.50317192078ms
+2022-09-21 16:40:33 INFO  ---RUNTIME: Multi-Query Optimization took 65.97661972045898 ms
+2022-09-21 16:40:33 INFO  Executing generated plans
+2022-09-21 16:41:06 INFO  ---RUNTIME: Execution took 32427.703857421875 ms
+2022-09-21 16:41:06 INFO  Done!
+2022-09-21 16:41:06 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:41:06 INFO  Running instrumented original pipeline...
+2022-09-21 16:41:06 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:41:06 INFO  ---RUNTIME: Importing and monkey-patching took 7.336616516113281 ms
+2022-09-21 16:41:17 INFO  ---RUNTIME: Original pipeline execution took 11758.09907913208 ms (excluding imports and monkey-patching)
+2022-09-21 16:41:17 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:41:17 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:41:17 INFO  ---RUNTIME: Plan generation took 0.4513263702392578 ms
+2022-09-21 16:41:17 INFO  Estimated runtime of original DAG is 9032.237529754639ms
+2022-09-21 16:41:17 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:41:17 INFO  Estimated unoptimised what-if runtime is 225805.93824386597ms
+2022-09-21 16:41:17 INFO  ---RUNTIME: Multi-Query Optimization took 19.9129581451416 ms
+2022-09-21 16:41:17 INFO  Executing generated plans
+2022-09-21 16:45:29 INFO  ---RUNTIME: Execution took 251606.3482761383 ms
+2022-09-21 16:45:29 INFO  Done!
+2022-09-21 16:45:29 INFO  # Finished -- repetition 2 of 7 
+2022-09-21 16:45:29 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'neural_network']] -- repetition 3 of 7
+2022-09-21 16:45:29 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:45:29 INFO  Running instrumented original pipeline...
+2022-09-21 16:45:29 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:45:29 INFO  ---RUNTIME: Importing and monkey-patching took 6.581544876098633 ms
+2022-09-21 16:45:40 INFO  ---RUNTIME: Original pipeline execution took 11461.794376373291 ms (excluding imports and monkey-patching)
+2022-09-21 16:45:40 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:45:40 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:45:40 INFO  ---RUNTIME: Plan generation took 2.282381057739258 ms
+2022-09-21 16:45:40 INFO  Estimated runtime of original DAG is 9113.035678863525ms
+2022-09-21 16:45:40 INFO  Performing Multi-Query Optimization
+2022-09-21 16:45:40 INFO  Estimated unoptimized what-if runtime is 227825.89197158813ms
+2022-09-21 16:45:40 INFO  Estimated optimised what-if runtime is 26515.390872955322ms
+2022-09-21 16:45:40 INFO  Estimated optimisation runtime saving is 201310.5010986328ms
+2022-09-21 16:45:40 INFO  ---RUNTIME: Multi-Query Optimization took 65.0184154510498 ms
+2022-09-21 16:45:40 INFO  Executing generated plans
+2022-09-21 16:46:14 INFO  ---RUNTIME: Execution took 33219.57755088806 ms
+2022-09-21 16:46:14 INFO  Done!
+2022-09-21 16:46:14 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:46:14 INFO  Running instrumented original pipeline...
+2022-09-21 16:46:14 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:46:14 INFO  ---RUNTIME: Importing and monkey-patching took 6.609201431274414 ms
+2022-09-21 16:46:25 INFO  ---RUNTIME: Original pipeline execution took 11420.286655426025 ms (excluding imports and monkey-patching)
+2022-09-21 16:46:25 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:46:25 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:46:25 INFO  ---RUNTIME: Plan generation took 0.42700767517089844 ms
+2022-09-21 16:46:25 INFO  Estimated runtime of original DAG is 9074.938535690308ms
+2022-09-21 16:46:25 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:46:25 INFO  Estimated unoptimised what-if runtime is 226873.4633922577ms
+2022-09-21 16:46:25 INFO  ---RUNTIME: Multi-Query Optimization took 20.0808048248291 ms
+2022-09-21 16:46:25 INFO  Executing generated plans
+2022-09-21 16:50:37 INFO  ---RUNTIME: Execution took 251847.93853759766 ms
+2022-09-21 16:50:37 INFO  Done!
+2022-09-21 16:50:37 INFO  # Finished -- repetition 3 of 7 
+2022-09-21 16:50:37 INFO  # Optimization benchmark for data_corruption with args [['reviews', 'fast_loading', 'featurization_1', 'neural_network']] -- repetition 4 of 7
+2022-09-21 16:50:37 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:50:37 INFO  Running instrumented original pipeline...
+2022-09-21 16:50:37 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:50:37 INFO  ---RUNTIME: Importing and monkey-patching took 6.021022796630859 ms
+2022-09-21 16:50:49 INFO  ---RUNTIME: Original pipeline execution took 11988.125801086426 ms (excluding imports and monkey-patching)
+2022-09-21 16:50:49 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:50:49 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:50:49 INFO  ---RUNTIME: Plan generation took 0.4596710205078125 ms
+2022-09-21 16:50:49 INFO  Estimated runtime of original DAG is 9156.909704208374ms
+2022-09-21 16:50:49 INFO  Performing Multi-Query Optimization
+2022-09-21 16:50:49 INFO  Estimated unoptimized what-if runtime is 228922.74260520935ms
+2022-09-21 16:50:49 INFO  Estimated optimised what-if runtime is 27315.07110595703ms
+2022-09-21 16:50:49 INFO  Estimated optimisation runtime saving is 201607.67149925232ms
+2022-09-21 16:50:49 INFO  ---RUNTIME: Multi-Query Optimization took 66.08414649963379 ms
+2022-09-21 16:50:49 INFO  Executing generated plans
+2022-09-21 16:51:22 INFO  ---RUNTIME: Execution took 32569.767713546753 ms
+2022-09-21 16:51:22 INFO  Done!
+2022-09-21 16:51:22 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:51:22 INFO  Running instrumented original pipeline...
+2022-09-21 16:51:22 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:51:22 INFO  ---RUNTIME: Importing and monkey-patching took 6.684780120849609 ms
+2022-09-21 16:51:33 INFO  ---RUNTIME: Original pipeline execution took 11683.828592300415 ms (excluding imports and monkey-patching)
+2022-09-21 16:51:33 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:51:33 INFO  Start plan generation for analysis DataCorruption...
+2022-09-21 16:51:33 INFO  ---RUNTIME: Plan generation took 0.40602684020996094 ms
+2022-09-21 16:51:33 INFO  Estimated runtime of original DAG is 9278.969764709473ms
+2022-09-21 16:51:33 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:51:33 INFO  Estimated unoptimised what-if runtime is 231974.24411773682ms
+2022-09-21 16:51:33 INFO  ---RUNTIME: Multi-Query Optimization took 20.37978172302246 ms
+2022-09-21 16:51:33 INFO  Executing generated plans
