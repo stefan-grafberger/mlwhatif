@@ -24,7 +24,14 @@ then
   datasets=("cardio")
 fi
 
-if (( $1 < 4 ))
+if (( (($1 % 8)) < 4 ))
+then
+  scenarios=("data_corruption" "feature_importance")
+else
+  scenarios=("data_cleaning" "operator_impact")
+fi
+
+if (( (($1)) < 8 ))
 then
   data_loading_options=("fast_loading")
 else
@@ -32,7 +39,7 @@ else
 fi
 
 echo "Cores to use: $core_num";
-for scenario in "data_corruption" "feature_importance" "data_cleaning" "operator_impact"
+for scenario in "${scenarios[@]}"
 do
   for dataset in "${datasets[@]}"
   do
@@ -50,7 +57,7 @@ do
   done
 done
 
-if [[ "$(($1 % 4))" == "0" ]]
+if [[ "$(($1 % 8))" == "0" ]]
 then
   for scenario in "data_corruption" "data_cleaning"
   do
