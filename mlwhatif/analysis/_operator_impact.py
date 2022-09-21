@@ -135,7 +135,13 @@ class OperatorImpact(WhatIfAnalysis):
         if "Word2Vec" in operator_to_replace.details.description:
             replacement_func = onehot_transformer_processing_func
             replacement_desc = "One-hot encoding"
-        elif "Imputer" in operator_to_replace.details.description:
+        elif "Imputer" in operator_to_replace.details.description or \
+                (operator_to_replace.optional_code_info and
+                 operator_to_replace.optional_code_info.source_code and
+                 "imputer" in operator_to_replace.optional_code_info.source_code):
+            # TODO: This is a hacky workaround for our end_to_end experiments. Normally the restrict_lineno arg
+            #  is for operations that operator_impact cannot handle, but for the end_to_end experiments
+            #  hard-coding the linenos is not a good idea
             replacement_func = imputer_transformer_processing_func
             replacement_desc = "Replace nan with constant"
         else:
@@ -205,7 +211,13 @@ class OperatorImpact(WhatIfAnalysis):
         if operator_to_replace.operator_info.operator == OperatorType.TRANSFORMER:
             if "Word2Vec" in operator_to_replace.details.description:
                 replacement_description = "one-hot encode instead"
-            elif "Imputer" in operator_to_replace.details.description:
+            elif "Imputer" in operator_to_replace.details.description or \
+                    (operator_to_replace.optional_code_info and
+                     operator_to_replace.optional_code_info.source_code and
+                     "imputer" in operator_to_replace.optional_code_info.source_code):
+                # TODO: This is a hacky workaround for our end_to_end experiments. Normally the restrict_lineno arg
+                #  is for operations that operator_impact cannot handle, but for the end_to_end experiments
+                #  hard-coding the linenos is not a good idea
                 replacement_description = "replace nan with constant"
             else:
                 replacement_description = "passthrough"
