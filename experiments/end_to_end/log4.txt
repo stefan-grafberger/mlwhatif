@@ -6620,3 +6620,491 @@ taskset -c 128-135 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 bench
 taskset -c 128-135 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py operator_impact healthcare fast_loading featurization_3 neural_network
 2022-09-21 16:54:10.853237: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
 2022-09-21 16:54:10.853282: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-09-21 16:54:12 INFO  Patching sys.argv with ['mlwhatif', 'healthcare', 'fast_loading', 'featurization_3', 'neural_network']
+2022-09-21 16:54:12 INFO  Running instrumented original pipeline...
+2022-09-21 16:54:12 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:54:12 INFO  ---RUNTIME: Importing and monkey-patching took 121.5219497680664 ms
+2022-09-21 16:54:14.423826: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
+2022-09-21 16:54:14.423870: W tensorflow/stream_executor/cuda/cuda_driver.cc:326] failed call to cuInit: UNKNOWN ERROR (303)
+2022-09-21 16:54:14.423894: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (angus): /proc/driver/nvidia/version does not exist
+2022-09-21 16:54:14.424388: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-09-21 16:54:14.985475: I tensorflow/compiler/mlir/mlir_graph_optimization_pass.cc:176] None of the MLIR Optimization Passes are enabled (registered 2)
+2022-09-21 16:54:14.999187: I tensorflow/core/platform/profile_utils/cpu_utils.cc:114] CPU Frequency: 2595130000 Hz
+2022-09-21 16:54:15 INFO  ---RUNTIME: Original pipeline execution took 2929.645299911499 ms (excluding imports and monkey-patching)
+2022-09-21 16:54:15 INFO  Starting execution of 0 what-if analyses...
+2022-09-21 16:54:15 INFO  Estimated runtime of original DAG is 2583.909749984741ms
+2022-09-21 16:54:15 INFO  Performing Multi-Query Optimization
+2022-09-21 16:54:15 INFO  Estimated unoptimized what-if runtime is 0ms
+2022-09-21 16:54:15 INFO  Estimated optimised what-if runtime is 0ms
+2022-09-21 16:54:15 INFO  Estimated optimisation runtime saving is 0ms
+2022-09-21 16:54:15 INFO  ---RUNTIME: Multi-Query Optimization took 0.5669593811035156 ms
+2022-09-21 16:54:15 INFO  Executing generated plans
+2022-09-21 16:54:15 INFO  ---RUNTIME: Execution took 0.015974044799804688 ms
+2022-09-21 16:54:15 INFO  Done!
+2022-09-21 16:54:15 INFO  # Optimization benchmark for operator_impact with args [['healthcare', 'fast_loading', 'featurization_3', 'neural_network']] -- repetition 1 of 7
+2022-09-21 16:54:15 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:54:15 INFO  Running instrumented original pipeline...
+2022-09-21 16:54:15 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:54:15 INFO  ---RUNTIME: Importing and monkey-patching took 5.1326751708984375 ms
+2022-09-21 16:54:17 INFO  ---RUNTIME: Original pipeline execution took 2564.037799835205 ms (excluding imports and monkey-patching)
+2022-09-21 16:54:17 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:54:17 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:54:17 INFO  ---RUNTIME: Plan generation took 6.204128265380859 ms
+2022-09-21 16:54:17 INFO  Estimated runtime of original DAG is 2255.2499771118164ms
+2022-09-21 16:54:17 INFO  Performing Multi-Query Optimization
+2022-09-21 16:54:17 INFO  Estimated unoptimized what-if runtime is 28129.729083488728ms
+2022-09-21 16:54:17 INFO  Estimated optimised what-if runtime is 8870.119384239462ms
+2022-09-21 16:54:17 INFO  Estimated optimisation runtime saving is 19259.609699249268ms
+2022-09-21 16:54:17 INFO  ---RUNTIME: Multi-Query Optimization took 44.869422912597656 ms
+2022-09-21 16:54:17 INFO  Executing generated plans
+2022-09-21 16:54:26 INFO  ---RUNTIME: Execution took 8339.995622634888 ms
+2022-09-21 16:54:26 INFO  Done!
+2022-09-21 16:54:26 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:54:26 INFO  Running instrumented original pipeline...
+2022-09-21 16:54:26 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:54:26 INFO  ---RUNTIME: Importing and monkey-patching took 5.875110626220703 ms
+2022-09-21 16:54:29 INFO  ---RUNTIME: Original pipeline execution took 2988.0592823028564 ms (excluding imports and monkey-patching)
+2022-09-21 16:54:29 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:54:29 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:54:29 INFO  ---RUNTIME: Plan generation took 5.633354187011719 ms
+2022-09-21 16:54:29 INFO  Estimated runtime of original DAG is 2672.517776489258ms
+2022-09-21 16:54:29 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:54:29 INFO  Estimated unoptimised what-if runtime is 33988.11628900725ms
+2022-09-21 16:54:29 INFO  ---RUNTIME: Multi-Query Optimization took 13.798952102661133 ms
+2022-09-21 16:54:29 INFO  Executing generated plans
+2022-09-21 16:54:57 INFO  ---RUNTIME: Execution took 27873.159885406494 ms
+2022-09-21 16:54:57 INFO  Done!
+2022-09-21 16:54:57 INFO  # Finished -- repetition 1 of 7 
+2022-09-21 16:54:57 INFO  # Optimization benchmark for operator_impact with args [['healthcare', 'fast_loading', 'featurization_3', 'neural_network']] -- repetition 2 of 7
+2022-09-21 16:54:57 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:54:57 INFO  Running instrumented original pipeline...
+2022-09-21 16:54:57 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:54:57 INFO  ---RUNTIME: Importing and monkey-patching took 6.015300750732422 ms
+2022-09-21 16:54:59 INFO  ---RUNTIME: Original pipeline execution took 2579.118251800537 ms (excluding imports and monkey-patching)
+2022-09-21 16:54:59 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:54:59 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:54:59 INFO  ---RUNTIME: Plan generation took 6.163358688354492 ms
+2022-09-21 16:54:59 INFO  Estimated runtime of original DAG is 2255.9659481048584ms
+2022-09-21 16:54:59 INFO  Performing Multi-Query Optimization
+2022-09-21 16:54:59 INFO  Estimated unoptimized what-if runtime is 28178.015609445243ms
+2022-09-21 16:54:59 INFO  Estimated optimised what-if runtime is 9125.627179803523ms
+2022-09-21 16:54:59 INFO  Estimated optimisation runtime saving is 19052.38842964172ms
+2022-09-21 16:54:59 INFO  ---RUNTIME: Multi-Query Optimization took 49.21722412109375 ms
+2022-09-21 16:54:59 INFO  Executing generated plans
+2022-09-21 16:55:08 INFO  ---RUNTIME: Execution took 8539.931297302246 ms
+2022-09-21 16:55:08 INFO  Done!
+2022-09-21 16:55:08 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:55:08 INFO  Running instrumented original pipeline...
+2022-09-21 16:55:08 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:55:08 INFO  ---RUNTIME: Importing and monkey-patching took 5.992412567138672 ms
+2022-09-21 16:55:10 INFO  ---RUNTIME: Original pipeline execution took 2565.4730796813965 ms (excluding imports and monkey-patching)
+2022-09-21 16:55:10 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:55:10 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:55:10 INFO  ---RUNTIME: Plan generation took 6.124258041381836 ms
+2022-09-21 16:55:10 INFO  Estimated runtime of original DAG is 2251.574754714966ms
+2022-09-21 16:55:10 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:55:10 INFO  Estimated unoptimised what-if runtime is 28083.48261734535ms
+2022-09-21 16:55:10 INFO  ---RUNTIME: Multi-Query Optimization took 15.100479125976562 ms
+2022-09-21 16:55:10 INFO  Executing generated plans
+2022-09-21 16:55:38 INFO  ---RUNTIME: Execution took 28088.366270065308 ms
+2022-09-21 16:55:38 INFO  Done!
+2022-09-21 16:55:38 INFO  # Finished -- repetition 2 of 7 
+2022-09-21 16:55:38 INFO  # Optimization benchmark for operator_impact with args [['healthcare', 'fast_loading', 'featurization_3', 'neural_network']] -- repetition 3 of 7
+2022-09-21 16:55:38 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:55:38 INFO  Running instrumented original pipeline...
+2022-09-21 16:55:38 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:55:39 INFO  ---RUNTIME: Importing and monkey-patching took 5.987405776977539 ms
+2022-09-21 16:55:41 INFO  ---RUNTIME: Original pipeline execution took 2549.924373626709 ms (excluding imports and monkey-patching)
+2022-09-21 16:55:41 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:55:41 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:55:41 INFO  ---RUNTIME: Plan generation took 5.759716033935547 ms
+2022-09-21 16:55:41 INFO  Estimated runtime of original DAG is 2237.689256668091ms
+2022-09-21 16:55:41 INFO  Performing Multi-Query Optimization
+2022-09-21 16:55:41 INFO  Estimated unoptimized what-if runtime is 27917.090346895417ms
+2022-09-21 16:55:41 INFO  Estimated optimised what-if runtime is 8841.501882158476ms
+2022-09-21 16:55:41 INFO  Estimated optimisation runtime saving is 19075.58846473694ms
+2022-09-21 16:55:41 INFO  ---RUNTIME: Multi-Query Optimization took 45.30501365661621 ms
+2022-09-21 16:55:41 INFO  Executing generated plans
+2022-09-21 16:55:50 INFO  ---RUNTIME: Execution took 8557.82699584961 ms
+2022-09-21 16:55:50 INFO  Done!
+2022-09-21 16:55:50 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:55:50 INFO  Running instrumented original pipeline...
+2022-09-21 16:55:50 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:55:50 INFO  ---RUNTIME: Importing and monkey-patching took 5.986213684082031 ms
+2022-09-21 16:55:52 INFO  ---RUNTIME: Original pipeline execution took 2576.5597820281982 ms (excluding imports and monkey-patching)
+2022-09-21 16:55:52 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:55:52 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:55:52 INFO  ---RUNTIME: Plan generation took 6.139993667602539 ms
+2022-09-21 16:55:52 INFO  Estimated runtime of original DAG is 2263.015031814575ms
+2022-09-21 16:55:52 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:55:52 INFO  Estimated unoptimised what-if runtime is 28228.081565889817ms
+2022-09-21 16:55:52 INFO  ---RUNTIME: Multi-Query Optimization took 14.6331787109375 ms
+2022-09-21 16:55:52 INFO  Executing generated plans
+2022-09-21 16:56:20 INFO  ---RUNTIME: Execution took 28158.14709663391 ms
+2022-09-21 16:56:20 INFO  Done!
+2022-09-21 16:56:20 INFO  # Finished -- repetition 3 of 7 
+2022-09-21 16:56:20 INFO  # Optimization benchmark for operator_impact with args [['healthcare', 'fast_loading', 'featurization_3', 'neural_network']] -- repetition 4 of 7
+2022-09-21 16:56:20 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:56:20 INFO  Running instrumented original pipeline...
+2022-09-21 16:56:20 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:56:20 INFO  ---RUNTIME: Importing and monkey-patching took 6.10041618347168 ms
+2022-09-21 16:56:23 INFO  ---RUNTIME: Original pipeline execution took 2556.1864376068115 ms (excluding imports and monkey-patching)
+2022-09-21 16:56:23 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:56:23 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:56:23 INFO  ---RUNTIME: Plan generation took 5.766868591308594 ms
+2022-09-21 16:56:23 INFO  Estimated runtime of original DAG is 2242.2173023223877ms
+2022-09-21 16:56:23 INFO  Performing Multi-Query Optimization
+2022-09-21 16:56:23 INFO  Estimated unoptimized what-if runtime is 27960.12090896738ms
+2022-09-21 16:56:23 INFO  Estimated optimised what-if runtime is 8776.794664613131ms
+2022-09-21 16:56:23 INFO  Estimated optimisation runtime saving is 19183.326244354248ms
+2022-09-21 16:56:23 INFO  ---RUNTIME: Multi-Query Optimization took 45.26853561401367 ms
+2022-09-21 16:56:23 INFO  Executing generated plans
+2022-09-21 16:56:32 INFO  ---RUNTIME: Execution took 8533.199071884155 ms
+2022-09-21 16:56:32 INFO  Done!
+2022-09-21 16:56:32 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:56:32 INFO  Running instrumented original pipeline...
+2022-09-21 16:56:32 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:56:32 INFO  ---RUNTIME: Importing and monkey-patching took 5.881786346435547 ms
+2022-09-21 16:56:34 INFO  ---RUNTIME: Original pipeline execution took 2555.8667182922363 ms (excluding imports and monkey-patching)
+2022-09-21 16:56:34 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:56:34 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:56:34 INFO  ---RUNTIME: Plan generation took 5.65028190612793 ms
+2022-09-21 16:56:34 INFO  Estimated runtime of original DAG is 2241.2500381469727ms
+2022-09-21 16:56:34 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:56:34 INFO  Estimated unoptimised what-if runtime is 27952.531701120835ms
+2022-09-21 16:56:34 INFO  ---RUNTIME: Multi-Query Optimization took 13.752937316894531 ms
+2022-09-21 16:56:34 INFO  Executing generated plans
+2022-09-21 16:57:04 INFO  ---RUNTIME: Execution took 30034.111976623535 ms
+2022-09-21 16:57:04 INFO  Done!
+2022-09-21 16:57:04 INFO  # Finished -- repetition 4 of 7 
+2022-09-21 16:57:04 INFO  # Optimization benchmark for operator_impact with args [['healthcare', 'fast_loading', 'featurization_3', 'neural_network']] -- repetition 5 of 7
+2022-09-21 16:57:04 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:57:04 INFO  Running instrumented original pipeline...
+2022-09-21 16:57:04 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:57:04 INFO  ---RUNTIME: Importing and monkey-patching took 5.960226058959961 ms
+2022-09-21 16:57:07 INFO  ---RUNTIME: Original pipeline execution took 3235.0006103515625 ms (excluding imports and monkey-patching)
+2022-09-21 16:57:07 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:57:07 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:57:07 INFO  ---RUNTIME: Plan generation took 8.879661560058594 ms
+2022-09-21 16:57:07 INFO  Estimated runtime of original DAG is 2808.4728717803955ms
+2022-09-21 16:57:07 INFO  Performing Multi-Query Optimization
+2022-09-21 16:57:07 INFO  Estimated unoptimized what-if runtime is 35485.3480330829ms
+2022-09-21 16:57:07 INFO  Estimated optimised what-if runtime is 13851.621197832043ms
+2022-09-21 16:57:07 INFO  Estimated optimisation runtime saving is 21633.726835250854ms
+2022-09-21 16:57:07 INFO  ---RUNTIME: Multi-Query Optimization took 73.14896583557129 ms
+2022-09-21 16:57:07 INFO  Executing generated plans
+2022-09-21 16:57:17 INFO  ---RUNTIME: Execution took 9994.647026062012 ms
+2022-09-21 16:57:17 INFO  Done!
+2022-09-21 16:57:17 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:57:17 INFO  Running instrumented original pipeline...
+2022-09-21 16:57:18 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:57:18 INFO  ---RUNTIME: Importing and monkey-patching took 5.891323089599609 ms
+2022-09-21 16:57:21 INFO  ---RUNTIME: Original pipeline execution took 3344.222068786621 ms (excluding imports and monkey-patching)
+2022-09-21 16:57:21 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:57:21 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:57:21 INFO  ---RUNTIME: Plan generation took 5.882978439331055 ms
+2022-09-21 16:57:21 INFO  Estimated runtime of original DAG is 2928.614377975464ms
+2022-09-21 16:57:21 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:57:21 INFO  Estimated unoptimised what-if runtime is 36653.82589882818ms
+2022-09-21 16:57:21 INFO  ---RUNTIME: Multi-Query Optimization took 13.994932174682617 ms
+2022-09-21 16:57:21 INFO  Executing generated plans
+2022-09-21 16:57:54 INFO  ---RUNTIME: Execution took 32746.485471725464 ms
+2022-09-21 16:57:54 INFO  Done!
+2022-09-21 16:57:54 INFO  # Finished -- repetition 5 of 7 
+2022-09-21 16:57:54 INFO  # Optimization benchmark for operator_impact with args [['healthcare', 'fast_loading', 'featurization_3', 'neural_network']] -- repetition 6 of 7
+2022-09-21 16:57:54 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:57:54 INFO  Running instrumented original pipeline...
+2022-09-21 16:57:54 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:57:54 INFO  ---RUNTIME: Importing and monkey-patching took 5.94639778137207 ms
+2022-09-21 16:57:57 INFO  ---RUNTIME: Original pipeline execution took 3136.528968811035 ms (excluding imports and monkey-patching)
+2022-09-21 16:57:57 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:57:57 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:57:57 INFO  ---RUNTIME: Plan generation took 9.224891662597656 ms
+2022-09-21 16:57:57 INFO  Estimated runtime of original DAG is 2713.519334793091ms
+2022-09-21 16:57:57 INFO  Performing Multi-Query Optimization
+2022-09-21 16:57:57 INFO  Estimated unoptimized what-if runtime is 34342.612929179755ms
+2022-09-21 16:57:57 INFO  Estimated optimised what-if runtime is 13739.218897655099ms
+2022-09-21 16:57:57 INFO  Estimated optimisation runtime saving is 20603.39403152466ms
+2022-09-21 16:57:57 INFO  ---RUNTIME: Multi-Query Optimization took 73.52876663208008 ms
+2022-09-21 16:57:57 INFO  Executing generated plans
+2022-09-21 16:58:07 INFO  ---RUNTIME: Execution took 9929.811000823975 ms
+2022-09-21 16:58:07 INFO  Done!
+2022-09-21 16:58:07 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:58:07 INFO  Running instrumented original pipeline...
+2022-09-21 16:58:07 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:58:07 INFO  ---RUNTIME: Importing and monkey-patching took 9.001970291137695 ms
+2022-09-21 16:58:10 INFO  ---RUNTIME: Original pipeline execution took 3340.4316902160645 ms (excluding imports and monkey-patching)
+2022-09-21 16:58:10 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:58:10 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:58:10 INFO  ---RUNTIME: Plan generation took 5.995750427246094 ms
+2022-09-21 16:58:10 INFO  Estimated runtime of original DAG is 2887.7341747283936ms
+2022-09-21 16:58:10 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:58:10 INFO  Estimated unoptimised what-if runtime is 35810.394398097334ms
+2022-09-21 16:58:10 INFO  ---RUNTIME: Multi-Query Optimization took 14.583826065063477 ms
+2022-09-21 16:58:10 INFO  Executing generated plans
+2022-09-21 16:58:43 INFO  ---RUNTIME: Execution took 32762.287378311157 ms
+2022-09-21 16:58:43 INFO  Done!
+2022-09-21 16:58:43 INFO  # Finished -- repetition 6 of 7 
+2022-09-21 16:58:43 INFO  # Optimization benchmark for operator_impact with args [['healthcare', 'fast_loading', 'featurization_3', 'neural_network']] -- repetition 7 of 7
+2022-09-21 16:58:43 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:58:43 INFO  Running instrumented original pipeline...
+2022-09-21 16:58:43 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:58:43 INFO  ---RUNTIME: Importing and monkey-patching took 5.837202072143555 ms
+2022-09-21 16:58:46 INFO  ---RUNTIME: Original pipeline execution took 3167.8855419158936 ms (excluding imports and monkey-patching)
+2022-09-21 16:58:46 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:58:46 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:58:46 INFO  ---RUNTIME: Plan generation took 8.446216583251953 ms
+2022-09-21 16:58:46 INFO  Estimated runtime of original DAG is 2742.0918941497803ms
+2022-09-21 16:58:46 INFO  Performing Multi-Query Optimization
+2022-09-21 16:58:46 INFO  Estimated unoptimized what-if runtime is 34724.95210581812ms
+2022-09-21 16:58:46 INFO  Estimated optimised what-if runtime is 14024.216298399304ms
+2022-09-21 16:58:46 INFO  Estimated optimisation runtime saving is 20700.735807418816ms
+2022-09-21 16:58:46 INFO  ---RUNTIME: Multi-Query Optimization took 74.08618927001953 ms
+2022-09-21 16:58:46 INFO  Executing generated plans
+2022-09-21 16:58:56 INFO  ---RUNTIME: Execution took 9786.463260650635 ms
+2022-09-21 16:58:56 INFO  Done!
+2022-09-21 16:58:56 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:58:56 INFO  Running instrumented original pipeline...
+2022-09-21 16:58:56 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:58:56 INFO  ---RUNTIME: Importing and monkey-patching took 5.85484504699707 ms
+2022-09-21 16:58:59 INFO  ---RUNTIME: Original pipeline execution took 3053.647756576538 ms (excluding imports and monkey-patching)
+2022-09-21 16:58:59 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:58:59 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:58:59 INFO  ---RUNTIME: Plan generation took 5.605220794677734 ms
+2022-09-21 16:58:59 INFO  Estimated runtime of original DAG is 2738.809823989868ms
+2022-09-21 16:58:59 WARNING Skipping Multi-Query Optimization (instead, only applying patches)
+2022-09-21 16:58:59 INFO  Estimated unoptimised what-if runtime is 34914.37315036511ms
+2022-09-21 16:58:59 INFO  ---RUNTIME: Multi-Query Optimization took 13.616800308227539 ms
+2022-09-21 16:58:59 INFO  Executing generated plans
+2022-09-21 16:59:31 INFO  ---RUNTIME: Execution took 31928.370475769043 ms
+2022-09-21 16:59:31 INFO  Done!
+2022-09-21 16:59:31 INFO  # Finished -- repetition 7 of 7 
+2022-09-21 16:59:31 INFO  # Final results after all repetitions
+2022-09-21 16:59:31 INFO     repetition  ... no_opt_what_if_execution_combined_model_training
+0           0  ...                                      5939.609289
+1           1  ...                                      5378.186703
+2           2  ...                                      6244.831085
+3           3  ...                                      6331.201077
+4           4  ...                                      8554.555178
+5           5  ...                                      6683.808804
+6           6  ...                                      7061.310291
+
+[7 rows x 26 columns]
+taskset -c 128-135 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py operator_impact healthcare fast_loading featurization_4 logistic_regression
+2022-09-21 16:59:34.137158: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
+2022-09-21 16:59:34.137207: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-09-21 16:59:36 INFO  Patching sys.argv with ['mlwhatif', 'healthcare', 'fast_loading', 'featurization_4', 'logistic_regression']
+2022-09-21 16:59:36 INFO  Running instrumented original pipeline...
+2022-09-21 16:59:36 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:59:36 INFO  ---RUNTIME: Importing and monkey-patching took 211.60006523132324 ms
+2022-09-21 16:59:38 INFO  ---RUNTIME: Original pipeline execution took 2451.390504837036 ms (excluding imports and monkey-patching)
+2022-09-21 16:59:38 INFO  Starting execution of 0 what-if analyses...
+2022-09-21 16:59:38 INFO  Estimated runtime of original DAG is 2088.730573654175ms
+2022-09-21 16:59:38 INFO  Performing Multi-Query Optimization
+2022-09-21 16:59:38 INFO  Estimated unoptimized what-if runtime is 0ms
+2022-09-21 16:59:38 INFO  Estimated optimised what-if runtime is 0ms
+2022-09-21 16:59:38 INFO  Estimated optimisation runtime saving is 0ms
+2022-09-21 16:59:38 INFO  ---RUNTIME: Multi-Query Optimization took 0.4711151123046875 ms
+2022-09-21 16:59:38 INFO  Executing generated plans
+2022-09-21 16:59:38 INFO  ---RUNTIME: Execution took 0.025987625122070312 ms
+2022-09-21 16:59:38 INFO  Done!
+2022-09-21 16:59:38 INFO  # Optimization benchmark for operator_impact with args [['healthcare', 'fast_loading', 'featurization_4', 'logistic_regression']] -- repetition 1 of 7
+2022-09-21 16:59:38 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:59:38 INFO  Running instrumented original pipeline...
+2022-09-21 16:59:39 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:59:39 INFO  ---RUNTIME: Importing and monkey-patching took 5.821943283081055 ms
+2022-09-21 16:59:41 INFO  ---RUNTIME: Original pipeline execution took 2229.281187057495 ms (excluding imports and monkey-patching)
+2022-09-21 16:59:41 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:59:41 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:59:41 INFO  ---RUNTIME: Plan generation took 5.635976791381836 ms
+2022-09-21 16:59:41 INFO  Estimated runtime of original DAG is 1760.6003284454346ms
+2022-09-21 16:59:41 INFO  Performing Multi-Query Optimization
+2022-09-21 16:59:41 INFO  Estimated unoptimized what-if runtime is 12372.069986935321ms
+2022-09-21 16:59:41 INFO  Estimated optimised what-if runtime is 1859.3203149992853ms
+2022-09-21 16:59:41 INFO  Estimated optimisation runtime saving is 10512.749671936035ms
+2022-09-21 16:59:41 INFO  ---RUNTIME: Multi-Query Optimization took 25.954008102416992 ms
+2022-09-21 16:59:41 INFO  Executing generated plans
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 228, in <module>
+    analysis_result_opt = PipelineAnalyzer \
+  File "/home/sgrafbe/mlwhatif/mlwhatif/_pipeline_analyzer.py", line 93, in execute
+    return singleton.run(notebook_path=self._notebook_path,
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_pipeline_executor.py", line 149, in run
+    self.run_what_if_analyses()
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_pipeline_executor.py", line 178, in run_what_if_analyses
+    DagExecutor(self).execute(self.analysis_results.combined_optimized_dag)
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_dag_executor.py", line 45, in execute
+    self.traverse_graph_and_process_nodes(dag, execute_node)
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_dag_executor.py", line 57, in traverse_graph_and_process_nodes
+    result_node = func(node)
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_dag_executor.py", line 40, in execute_node
+    optimizer_info, result_df = capture_optimizer_info(executable_processing_func)
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_stat_tracking.py", line 28, in capture_optimizer_info
+    result = instrumented_function_call()
+  File "/home/sgrafbe/mlwhatif/mlwhatif/monkeypatching/_patch_sklearn.py", line 1498, in processing_func
+    transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/preprocessing/_encoders.py", line 410, in fit_transform
+    return super().fit_transform(X, y)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/base.py", line 693, in fit_transform
+    return self.fit(X, y, **fit_params).transform(X)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/preprocessing/_encoders.py", line 385, in fit
+    self._fit(X, handle_unknown=self.handle_unknown)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/preprocessing/_encoders.py", line 74, in _fit
+    X_list, n_samples, n_features = self._check_X(X)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/preprocessing/_encoders.py", line 60, in _check_X
+    Xi = check_array(Xi, ensure_2d=False, dtype=None,
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/utils/validation.py", line 72, in inner_f
+    return f(**kwargs)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/utils/validation.py", line 644, in check_array
+    _assert_all_finite(array,
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/utils/validation.py", line 104, in _assert_all_finite
+    raise ValueError("Input contains NaN")
+ValueError: Input contains NaN
+taskset -c 128-135 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py operator_impact healthcare fast_loading featurization_4 xgboost
+2022-09-21 16:59:45.885354: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
+2022-09-21 16:59:45.885404: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-09-21 16:59:47 INFO  Patching sys.argv with ['mlwhatif', 'healthcare', 'fast_loading', 'featurization_4', 'xgboost']
+2022-09-21 16:59:47 INFO  Running instrumented original pipeline...
+2022-09-21 16:59:47 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:59:47 INFO  ---RUNTIME: Importing and monkey-patching took 185.33062934875488 ms
+2022-09-21 16:59:50 INFO  ---RUNTIME: Original pipeline execution took 3019.820213317871 ms (excluding imports and monkey-patching)
+2022-09-21 16:59:50 INFO  Starting execution of 0 what-if analyses...
+2022-09-21 16:59:50 INFO  Estimated runtime of original DAG is 2632.50732421875ms
+2022-09-21 16:59:50 INFO  Performing Multi-Query Optimization
+2022-09-21 16:59:50 INFO  Estimated unoptimized what-if runtime is 0ms
+2022-09-21 16:59:50 INFO  Estimated optimised what-if runtime is 0ms
+2022-09-21 16:59:50 INFO  Estimated optimisation runtime saving is 0ms
+2022-09-21 16:59:50 INFO  ---RUNTIME: Multi-Query Optimization took 0.49042701721191406 ms
+2022-09-21 16:59:50 INFO  Executing generated plans
+2022-09-21 16:59:50 INFO  ---RUNTIME: Execution took 0.02574920654296875 ms
+2022-09-21 16:59:50 INFO  Done!
+2022-09-21 16:59:50 INFO  # Optimization benchmark for operator_impact with args [['healthcare', 'fast_loading', 'featurization_4', 'xgboost']] -- repetition 1 of 7
+2022-09-21 16:59:50 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 16:59:50 INFO  Running instrumented original pipeline...
+2022-09-21 16:59:50 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:59:50 INFO  ---RUNTIME: Importing and monkey-patching took 5.799293518066406 ms
+2022-09-21 16:59:52 INFO  ---RUNTIME: Original pipeline execution took 2412.1639728546143 ms (excluding imports and monkey-patching)
+2022-09-21 16:59:52 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 16:59:52 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 16:59:52 INFO  ---RUNTIME: Plan generation took 5.518436431884766 ms
+2022-09-21 16:59:52 INFO  Estimated runtime of original DAG is 1950.976848602295ms
+2022-09-21 16:59:52 INFO  Performing Multi-Query Optimization
+2022-09-21 16:59:52 INFO  Estimated unoptimized what-if runtime is 14110.558703850054ms
+2022-09-21 16:59:52 INFO  Estimated optimised what-if runtime is 3635.341361473345ms
+2022-09-21 16:59:52 INFO  Estimated optimisation runtime saving is 10475.217342376709ms
+2022-09-21 16:59:52 INFO  ---RUNTIME: Multi-Query Optimization took 25.988101959228516 ms
+2022-09-21 16:59:52 INFO  Executing generated plans
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 228, in <module>
+    analysis_result_opt = PipelineAnalyzer \
+  File "/home/sgrafbe/mlwhatif/mlwhatif/_pipeline_analyzer.py", line 93, in execute
+    return singleton.run(notebook_path=self._notebook_path,
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_pipeline_executor.py", line 149, in run
+    self.run_what_if_analyses()
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_pipeline_executor.py", line 178, in run_what_if_analyses
+    DagExecutor(self).execute(self.analysis_results.combined_optimized_dag)
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_dag_executor.py", line 45, in execute
+    self.traverse_graph_and_process_nodes(dag, execute_node)
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_dag_executor.py", line 57, in traverse_graph_and_process_nodes
+    result_node = func(node)
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_dag_executor.py", line 40, in execute_node
+    optimizer_info, result_df = capture_optimizer_info(executable_processing_func)
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_stat_tracking.py", line 28, in capture_optimizer_info
+    result = instrumented_function_call()
+  File "/home/sgrafbe/mlwhatif/mlwhatif/monkeypatching/_patch_sklearn.py", line 1498, in processing_func
+    transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/preprocessing/_encoders.py", line 410, in fit_transform
+    return super().fit_transform(X, y)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/base.py", line 693, in fit_transform
+    return self.fit(X, y, **fit_params).transform(X)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/preprocessing/_encoders.py", line 385, in fit
+    self._fit(X, handle_unknown=self.handle_unknown)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/preprocessing/_encoders.py", line 74, in _fit
+    X_list, n_samples, n_features = self._check_X(X)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/preprocessing/_encoders.py", line 60, in _check_X
+    Xi = check_array(Xi, ensure_2d=False, dtype=None,
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/utils/validation.py", line 72, in inner_f
+    return f(**kwargs)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/utils/validation.py", line 644, in check_array
+    _assert_all_finite(array,
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/utils/validation.py", line 104, in _assert_all_finite
+    raise ValueError("Input contains NaN")
+ValueError: Input contains NaN
+taskset -c 128-135 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py operator_impact healthcare fast_loading featurization_4 neural_network
+2022-09-21 16:59:57.905827: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcudart.so.11.0'; dlerror: libcudart.so.11.0: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
+2022-09-21 16:59:57.905872: I tensorflow/stream_executor/cuda/cudart_stub.cc:29] Ignore above cudart dlerror if you do not have a GPU set up on your machine.
+2022-09-21 16:59:59 INFO  Patching sys.argv with ['mlwhatif', 'healthcare', 'fast_loading', 'featurization_4', 'neural_network']
+2022-09-21 16:59:59 INFO  Running instrumented original pipeline...
+2022-09-21 16:59:59 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 16:59:59 INFO  ---RUNTIME: Importing and monkey-patching took 122.77960777282715 ms
+2022-09-21 17:00:02.021272: W tensorflow/stream_executor/platform/default/dso_loader.cc:64] Could not load dynamic library 'libcuda.so.1'; dlerror: libcuda.so.1: cannot open shared object file: No such file or directory; LD_LIBRARY_PATH: /home/sgrafbe/mlwhatif/venv/lib/python3.9/site-packages/cv2/../../lib64:
+2022-09-21 17:00:02.021321: W tensorflow/stream_executor/cuda/cuda_driver.cc:326] failed call to cuInit: UNKNOWN ERROR (303)
+2022-09-21 17:00:02.021357: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (angus): /proc/driver/nvidia/version does not exist
+2022-09-21 17:00:02.022242: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+2022-09-21 17:00:02.508777: I tensorflow/compiler/mlir/mlir_graph_optimization_pass.cc:176] None of the MLIR Optimization Passes are enabled (registered 2)
+2022-09-21 17:00:02.521193: I tensorflow/core/platform/profile_utils/cpu_utils.cc:114] CPU Frequency: 2595130000 Hz
+2022-09-21 17:00:02 INFO  ---RUNTIME: Original pipeline execution took 3641.794204711914 ms (excluding imports and monkey-patching)
+2022-09-21 17:00:02 INFO  Starting execution of 0 what-if analyses...
+2022-09-21 17:00:02 INFO  Estimated runtime of original DAG is 3248.3744621276855ms
+2022-09-21 17:00:02 INFO  Performing Multi-Query Optimization
+2022-09-21 17:00:02 INFO  Estimated unoptimized what-if runtime is 0ms
+2022-09-21 17:00:02 INFO  Estimated optimised what-if runtime is 0ms
+2022-09-21 17:00:02 INFO  Estimated optimisation runtime saving is 0ms
+2022-09-21 17:00:02 INFO  ---RUNTIME: Multi-Query Optimization took 0.4868507385253906 ms
+2022-09-21 17:00:02 INFO  Executing generated plans
+2022-09-21 17:00:02 INFO  ---RUNTIME: Execution took 0.015020370483398438 ms
+2022-09-21 17:00:02 INFO  Done!
+2022-09-21 17:00:02 INFO  # Optimization benchmark for operator_impact with args [['healthcare', 'fast_loading', 'featurization_4', 'neural_network']] -- repetition 1 of 7
+2022-09-21 17:00:02 INFO  The skip_multi_query_optimization function is only intended for benchmarking!
+2022-09-21 17:00:02 INFO  Running instrumented original pipeline...
+2022-09-21 17:00:03 INFO  Importing libraries and monkey-patching them... (Imports are slow if not in sys.modules cache yet!)
+2022-09-21 17:00:03 INFO  ---RUNTIME: Importing and monkey-patching took 5.2661895751953125 ms
+2022-09-21 17:00:05 INFO  ---RUNTIME: Original pipeline execution took 2442.9407119750977 ms (excluding imports and monkey-patching)
+2022-09-21 17:00:05 INFO  Starting execution of 1 what-if analyses...
+2022-09-21 17:00:05 INFO  Start plan generation for analysis OperatorImpact...
+2022-09-21 17:00:05 INFO  ---RUNTIME: Plan generation took 8.029699325561523 ms
+2022-09-21 17:00:05 INFO  Estimated runtime of original DAG is 2157.766580581665ms
+2022-09-21 17:00:05 INFO  Performing Multi-Query Optimization
+2022-09-21 17:00:05 INFO  Estimated unoptimized what-if runtime is 15998.724452380477ms
+2022-09-21 17:00:05 INFO  Estimated optimised what-if runtime is 5562.775365237531ms
+2022-09-21 17:00:05 INFO  Estimated optimisation runtime saving is 10435.949087142944ms
+2022-09-21 17:00:05 INFO  ---RUNTIME: Multi-Query Optimization took 41.11075401306152 ms
+2022-09-21 17:00:05 INFO  Executing generated plans
+Traceback (most recent call last):
+  File "/home/sgrafbe/mlwhatif/experiments/end_to_end/benchmarks_end_to_end.py", line 228, in <module>
+    analysis_result_opt = PipelineAnalyzer \
+  File "/home/sgrafbe/mlwhatif/mlwhatif/_pipeline_analyzer.py", line 93, in execute
+    return singleton.run(notebook_path=self._notebook_path,
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_pipeline_executor.py", line 149, in run
+    self.run_what_if_analyses()
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_pipeline_executor.py", line 178, in run_what_if_analyses
+    DagExecutor(self).execute(self.analysis_results.combined_optimized_dag)
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_dag_executor.py", line 45, in execute
+    self.traverse_graph_and_process_nodes(dag, execute_node)
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_dag_executor.py", line 57, in traverse_graph_and_process_nodes
+    result_node = func(node)
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_dag_executor.py", line 40, in execute_node
+    optimizer_info, result_df = capture_optimizer_info(executable_processing_func)
+  File "/home/sgrafbe/mlwhatif/mlwhatif/execution/_stat_tracking.py", line 28, in capture_optimizer_info
+    result = instrumented_function_call()
+  File "/home/sgrafbe/mlwhatif/mlwhatif/monkeypatching/_patch_sklearn.py", line 1498, in processing_func
+    transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/preprocessing/_encoders.py", line 410, in fit_transform
+    return super().fit_transform(X, y)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/base.py", line 693, in fit_transform
+    return self.fit(X, y, **fit_params).transform(X)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/preprocessing/_encoders.py", line 385, in fit
+    self._fit(X, handle_unknown=self.handle_unknown)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/preprocessing/_encoders.py", line 74, in _fit
+    X_list, n_samples, n_features = self._check_X(X)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/preprocessing/_encoders.py", line 60, in _check_X
+    Xi = check_array(Xi, ensure_2d=False, dtype=None,
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/utils/validation.py", line 72, in inner_f
+    return f(**kwargs)
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/utils/validation.py", line 644, in check_array
+    _assert_all_finite(array,
+  File "/home/sgrafbe/mlwhatif/venv/lib64/python3.9/site-packages/sklearn/utils/validation.py", line 104, in _assert_all_finite
+    raise ValueError("Input contains NaN")
+ValueError: Input contains NaN
