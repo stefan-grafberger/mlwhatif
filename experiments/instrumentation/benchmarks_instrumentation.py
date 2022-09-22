@@ -32,8 +32,8 @@ if __name__ == "__main__":
     featurization_name = sys.argv[3]
     model_name = sys.argv[4]
 
-    num_repetitions = 7
-    seeds = [42, 43, 44, 45, 46, 47, 48]
+    num_repetitions = 30
+    seeds = list(range(42, 42 + num_repetitions))
     assert len(seeds) == num_repetitions
 
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end",
