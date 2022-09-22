@@ -1,0 +1,10 @@
+taskset -c 32-39 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py feature_importance reviews slow_loading featurization_3 logistic_regression && \
+taskset -c 32-39 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py feature_importance reviews slow_loading featurization_3 xgboost && \
+taskset -c 32-39 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py data_corruption reviews slow_loading featurization_3 logistic_regression && \
+taskset -c 32-39 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py data_corruption reviews slow_loading featurization_3 xgboost && \
+taskset -c 160-167 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py operator_impact reviews slow_loading featurization_3 logistic_regression && \
+taskset -c 160-167 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py operator_impact reviews slow_loading featurization_3 xgboost && \
+taskset -c 160-167 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py operator_impact reviews slow_loading featurization_3 neural_network && \
+taskset -c 160-167 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py data_cleaning reviews slow_loading featurization_3 logistic_regression && \
+taskset -c 160-167 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py data_cleaning reviews slow_loading featurization_3 xgboost && \
+taskset -c 160-167 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py data_cleaning reviews slow_loading featurization_3 neural_network
