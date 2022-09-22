@@ -19,6 +19,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransformer, RobustScaler
 from sklearn.preprocessing import label_binarize
+from joblib import parallel_backend
 from tensorflow.keras.layers import Dense  # pylint: disable=no-name-in-module
 from tensorflow.keras.models import Sequential  # pylint: disable=no-name-in-module
 from tensorflow.python.keras.optimizer_v2.gradient_descent import SGD  # pylint: disable=no-name-in-module
@@ -438,15 +439,16 @@ if sys.argv[0] == "mlwhatif" or __name__ == "__main__":
 
     print(f'Running {data_loading_name} featurization {featurization_name} on dataset {dataset_name} with model '
           f'{model_name}')
-    train, train_labels, test, test_labels, numerical_columns, categorical_columns, text_columns = \
-        get_dataset(dataset_name, data_loading_name, seed, featurization_name)
+    with parallel_backend('threading', n_jobs=1):
+        train, train_labels, test, test_labels, numerical_columns, categorical_columns, text_columns = \
+            get_dataset(dataset_name, data_loading_name, seed, featurization_name)
 
-    featurization = get_featurization(featurization_name, numerical_columns, categorical_columns, text_columns)
-    model = get_model(model_name)
+        featurization = get_featurization(featurization_name, numerical_columns, categorical_columns, text_columns)
+        model = get_model(model_name)
 
-    pipeline = Pipeline([('featurization', featurization),
-                         ('model', model)])
+        pipeline = Pipeline([('featurization', featurization),
+                             ('model', model)])
 
-    pipeline = pipeline.fit(train, train_labels)
-    predictions = pipeline.predict(test)
-    print('    Score: ', accuracy_score(predictions, test_labels))
+        pipeline = pipeline.fit(train, train_labels)
+        predictions = pipeline.predict(test)
+        print('    Score: ', accuracy_score(predictions, test_labels))
