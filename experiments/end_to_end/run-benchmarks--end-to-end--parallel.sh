@@ -5,7 +5,7 @@ if [[ $# -eq 0 ]] ; then
     exit 1
 fi
 
-echo "Variant name from 1-8: $1";
+echo "Variant name from 0-15: $1";
 start_core_index=$((($1 % 8) * 32))
 end_core_index=$((start_core_index + 7))
 core_num="$start_core_index"-"$end_core_index"
