@@ -62,16 +62,24 @@ if __name__ == "__main__":
     result_df_data_loading = []
     result_df_featurization = []
     result_df_model = []
-    result_df_total_exec_opt = []
+    result_df_total_exec_instrum_w_tracking = []
+    result_df_total_exec_instrum_wo_tracking = []
     result_df_total_exec_no_instrum_main_func = []
     result_df_total_exec_no_instrum_load_ast_compile = []
 
-    result_df_instrum_original_pipeline_estimated = []
-    result_df_instrum_original_pipeline_importing_and_monkeypatching = []
-    result_df_instrum_original_pipeline_without_importing_and_monkeypatching = []
-    result_df_instrum_original_pipeline_model_training = []
-    result_df_instrum_original_pipeline_train_shape = []
-    result_df_instrum_original_pipeline_test_shape = []
+    result_df_instrum_w_tracking_original_pipeline_estimated = []
+    result_df_instrum_w_tracking_original_pipeline_importing_and_monkeypatching = []
+    result_df_instrum_w_tracking_original_pipeline_wo_importing_and_monkeypatching = []
+    result_df_instrum_w_tracking_original_pipeline_model_training = []
+    result_df_instrum_w_tracking_original_pipeline_train_shape = []
+    result_df_instrum_w_tracking_original_pipeline_test_shape = []
+
+    result_df_instrum_wo_tracking_original_pipeline_estimated = []
+    result_df_instrum_wo_tracking_original_pipeline_importing_and_monkeypatching = []
+    result_df_instrum_wo_tracking_original_pipeline_wo_importing_and_monkeypatching = []
+    result_df_instrum_wo_tracking_original_pipeline_model_training = []
+    result_df_instrum_wo_tracking_original_pipeline_train_shape = []
+    result_df_instrum_wo_tracking_original_pipeline_test_shape = []
 
     for repetition, seed in enumerate(seeds):
         numpy.random.seed(seed)
@@ -94,16 +102,28 @@ if __name__ == "__main__":
             parsed_ast = ast.parse(source_code)
             exec(compile(parsed_ast, filename="does-not-matter", mode="exec"))
         # subprocess.Popen(subprocess_cmd, shell=True).wait()
-        total_no_instrum_load_ast_compile_exec_duration = (time.time() - total_no_instrum_load_ast_compile_exec_start) * 1000
+        total_no_instrum_load_ast_compile_exec_duration = (time.time() -
+                                                           total_no_instrum_load_ast_compile_exec_start) * 1000
 
-        print("with instrumentation")
+        print("with instrumentation with code_reference_tracking")
         with patch.object(sys, 'argv', synthetic_cmd_args):
-            total_instrum_exec_start = time.time()
-            analysis_result_instrum = PipelineAnalyzer \
+            total_instrum_w_tracking_exec_start = time.time()
+            analysis_result_instrum_w_tracking = PipelineAnalyzer \
                 .on_pipeline_from_py_file(pipeline_run_file) \
                 .add_custom_monkey_patching_modules([custom_monkeypatching]) \
+                .set_code_reference_tracking(True) \
                 .execute()
-        total_instrum_exec_duration = (time.time() - total_instrum_exec_start) * 1000
+        total_instrum_w_tracking_exec_duration = (time.time() - total_instrum_w_tracking_exec_start) * 1000
+
+        print("with instrumentation without code_reference_tracking")
+        with patch.object(sys, 'argv', synthetic_cmd_args):
+            total_instrum_wo_tracking_exec_start = time.time()
+            analysis_result_instrum_wo_tracking = PipelineAnalyzer \
+                .on_pipeline_from_py_file(pipeline_run_file) \
+                .add_custom_monkey_patching_modules([custom_monkeypatching]) \
+                .set_code_reference_tracking(False) \
+                .execute()
+        total_instrum_wo_tracking_exec_duration = (time.time() - total_instrum_wo_tracking_exec_start) * 1000
 
 
         result_df_repetitions.append(repetition)
@@ -111,22 +131,36 @@ if __name__ == "__main__":
         result_df_data_loading.append(data_loading_name)
         result_df_featurization.append(featurization_name)
         result_df_model.append(model_name)
-        result_df_total_exec_opt.append(total_instrum_exec_duration)
+        result_df_total_exec_instrum_w_tracking.append(total_instrum_w_tracking_exec_duration)
+        result_df_total_exec_instrum_wo_tracking.append(total_instrum_wo_tracking_exec_duration)
         result_df_total_exec_no_instrum_main_func.append(total_no_instrum_main_func_exec_duration)
         result_df_total_exec_no_instrum_load_ast_compile.append(total_no_instrum_load_ast_compile_exec_duration)
 
-        result_df_instrum_original_pipeline_estimated.append(
-            analysis_result_instrum.runtime_info.original_pipeline_estimated)
-        result_df_instrum_original_pipeline_importing_and_monkeypatching.append(
-            analysis_result_instrum.runtime_info.original_pipeline_importing_and_monkeypatching)
-        result_df_instrum_original_pipeline_without_importing_and_monkeypatching.append(
-            analysis_result_instrum.runtime_info.original_pipeline_without_importing_and_monkeypatching)
-        result_df_instrum_original_pipeline_train_shape.append(
-            analysis_result_instrum.runtime_info.original_pipeline_train_data_shape)
-        result_df_instrum_original_pipeline_test_shape.append(
-            analysis_result_instrum.runtime_info.original_pipeline_test_data_shape)
-        result_df_instrum_original_pipeline_model_training.append(
-            analysis_result_instrum.runtime_info.original_model_training)
+        result_df_instrum_w_tracking_original_pipeline_estimated.append(
+            analysis_result_instrum_w_tracking.runtime_info.original_pipeline_estimated)
+        result_df_instrum_w_tracking_original_pipeline_importing_and_monkeypatching.append(
+            analysis_result_instrum_w_tracking.runtime_info.original_pipeline_importing_and_monkeypatching)
+        result_df_instrum_w_tracking_original_pipeline_wo_importing_and_monkeypatching.append(
+            analysis_result_instrum_w_tracking.runtime_info.original_pipeline_without_importing_and_monkeypatching)
+        result_df_instrum_w_tracking_original_pipeline_train_shape.append(
+            analysis_result_instrum_w_tracking.runtime_info.original_pipeline_train_data_shape)
+        result_df_instrum_w_tracking_original_pipeline_test_shape.append(
+            analysis_result_instrum_w_tracking.runtime_info.original_pipeline_test_data_shape)
+        result_df_instrum_w_tracking_original_pipeline_model_training.append(
+            analysis_result_instrum_w_tracking.runtime_info.original_model_training)
+
+        result_df_instrum_wo_tracking_original_pipeline_estimated.append(
+            analysis_result_instrum_wo_tracking.runtime_info.original_pipeline_estimated)
+        result_df_instrum_wo_tracking_original_pipeline_importing_and_monkeypatching.append(
+            analysis_result_instrum_wo_tracking.runtime_info.original_pipeline_importing_and_monkeypatching)
+        result_df_instrum_wo_tracking_original_pipeline_wo_importing_and_monkeypatching.append(
+            analysis_result_instrum_wo_tracking.runtime_info.original_pipeline_without_importing_and_monkeypatching)
+        result_df_instrum_wo_tracking_original_pipeline_train_shape.append(
+            analysis_result_instrum_wo_tracking.runtime_info.original_pipeline_train_data_shape)
+        result_df_instrum_wo_tracking_original_pipeline_test_shape.append(
+            analysis_result_instrum_wo_tracking.runtime_info.original_pipeline_test_data_shape)
+        result_df_instrum_wo_tracking_original_pipeline_model_training.append(
+            analysis_result_instrum_wo_tracking.runtime_info.original_model_training)
 
         logger.info(f'# Finished -- repetition {repetition + 1} of {num_repetitions} ')
         # print(results_dict_items)
@@ -136,22 +170,38 @@ if __name__ == "__main__":
                                   'data_loading': result_df_data_loading,
                                   'featurization': result_df_featurization,
                                   'model': result_df_model,
-                                  'total_exec_duration_with_instrum': result_df_total_exec_opt,
+                                  'total_exec_duration_with_instrum_with_tracking':
+                                      result_df_total_exec_instrum_w_tracking,
+                                  'total_exec_duration_with_instrum_without_tracking':
+                                      result_df_total_exec_instrum_wo_tracking,
                                   'total_exec_duration_without_instrum_main_func':
                                       result_df_total_exec_no_instrum_main_func,
                                   'total_exec_duration_without_instrum_load_ast_compile':
                                       result_df_total_exec_no_instrum_load_ast_compile,
-                                  'instrum_original_pipeline_estimated': result_df_instrum_original_pipeline_estimated,
-                                  'instrum_original_pipeline_importing_and_monkeypatching':
-                                      result_df_instrum_original_pipeline_importing_and_monkeypatching,
-                                  'instrum_original_pipeline_without_importing_and_monkeypatching':
-                                      result_df_instrum_original_pipeline_without_importing_and_monkeypatching,
-                                  'instrum_original_pipeline_model_training':
-                                      result_df_instrum_original_pipeline_model_training,
-                                  'instrum_original_pipeline_train_data_shape':
-                                      result_df_instrum_original_pipeline_train_shape,
-                                  'instrum_original_pipeline_test_data_shape':
-                                      result_df_instrum_original_pipeline_test_shape,
+                                  'instrum_with_tracking_original_pipeline_estimated':
+                                      result_df_instrum_w_tracking_original_pipeline_estimated,
+                                  'instrum_with_tracking_original_pipeline_importing_and_monkeypatching':
+                                      result_df_instrum_w_tracking_original_pipeline_importing_and_monkeypatching,
+                                  'instrum_with_tracking_original_pipeline_without_importing_and_monkeypatching':
+                                      result_df_instrum_w_tracking_original_pipeline_wo_importing_and_monkeypatching,
+                                  'instrum_with_tracking_original_pipeline_model_training':
+                                      result_df_instrum_w_tracking_original_pipeline_model_training,
+                                  'instrum_with_tracking_original_pipeline_train_data_shape':
+                                      result_df_instrum_w_tracking_original_pipeline_train_shape,
+                                  'instrum_with_tracking_original_pipeline_test_data_shape':
+                                      result_df_instrum_w_tracking_original_pipeline_test_shape,
+                                  'instrum_without_tracking_original_pipeline_estimated':
+                                      result_df_instrum_wo_tracking_original_pipeline_estimated,
+                                  'instrum_without_tracking_original_pipeline_importing_and_monkeypatching':
+                                      result_df_instrum_wo_tracking_original_pipeline_importing_and_monkeypatching,
+                                  'instrum_without_tracking_original_pipeline_without_importing_and_monkeypatching':
+                                      result_df_instrum_wo_tracking_original_pipeline_wo_importing_and_monkeypatching,
+                                  'instrum_without_tracking_original_pipeline_model_training':
+                                      result_df_instrum_wo_tracking_original_pipeline_model_training,
+                                  'instrum_without_tracking_original_pipeline_train_data_shape':
+                                      result_df_instrum_wo_tracking_original_pipeline_train_shape,
+                                  'instrum_without_tracking_original_pipeline_test_data_shape':
+                                      result_df_instrum_wo_tracking_original_pipeline_test_shape,
                                   })
     result_df_path = os.path.join(output_directory, f"results-instrumentation-"
                                                     f"{dataset_name}-{data_loading_name}-"
