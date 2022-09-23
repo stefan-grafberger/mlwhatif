@@ -1,8 +1,0 @@
-repetition,dataset,data_loading,featurization,model,total_exec_duration_with_instrum,total_exec_duration_without_instrum_main_func,total_exec_duration_without_instrum_load_ast_compile
-0,sneakers,fast_loading,image,image,8502.356052398682,6586.332082748413,6681.701898574829
-1,sneakers,fast_loading,image,image,9285.45093536377,7329.875946044922,7032.305955886841
-2,sneakers,fast_loading,image,image,8797.255039215088,7279.275894165039,7267.234086990356
-3,sneakers,fast_loading,image,image,9186.532974243164,7182.820796966553,7396.5959548950195
-4,sneakers,fast_loading,image,image,8719.754934310913,7093.1031703948975,6743.026971817017
-5,sneakers,fast_loading,image,image,9671.085119247437,6970.694303512573,8619.718074798584
-6,sneakers,fast_loading,image,image,8880.50127029419,7158.838987350464,7124.3321895599365

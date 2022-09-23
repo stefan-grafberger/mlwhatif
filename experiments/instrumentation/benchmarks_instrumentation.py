@@ -66,6 +66,13 @@ if __name__ == "__main__":
     result_df_total_exec_no_instrum_main_func = []
     result_df_total_exec_no_instrum_load_ast_compile = []
 
+    result_df_instrum_original_pipeline_estimated = []
+    result_df_instrum_original_pipeline_importing_and_monkeypatching = []
+    result_df_instrum_original_pipeline_without_importing_and_monkeypatching = []
+    result_df_instrum_original_pipeline_model_training = []
+    result_df_instrum_original_pipeline_train_shape = []
+    result_df_instrum_original_pipeline_test_shape = []
+
     for repetition, seed in enumerate(seeds):
         numpy.random.seed(seed)
         random.seed(seed)
@@ -92,7 +99,7 @@ if __name__ == "__main__":
         print("with instrumentation")
         with patch.object(sys, 'argv', synthetic_cmd_args):
             total_instrum_exec_start = time.time()
-            analysis_result_no_opt = PipelineAnalyzer \
+            analysis_result_instrum = PipelineAnalyzer \
                 .on_pipeline_from_py_file(pipeline_run_file) \
                 .add_custom_monkey_patching_modules([custom_monkeypatching]) \
                 .execute()
@@ -108,6 +115,19 @@ if __name__ == "__main__":
         result_df_total_exec_no_instrum_main_func.append(total_no_instrum_main_func_exec_duration)
         result_df_total_exec_no_instrum_load_ast_compile.append(total_no_instrum_load_ast_compile_exec_duration)
 
+        result_df_instrum_original_pipeline_estimated.append(
+            analysis_result_instrum.runtime_info.original_pipeline_estimated)
+        result_df_instrum_original_pipeline_importing_and_monkeypatching.append(
+            analysis_result_instrum.runtime_info.original_pipeline_importing_and_monkeypatching)
+        result_df_instrum_original_pipeline_without_importing_and_monkeypatching.append(
+            analysis_result_instrum.runtime_info.original_pipeline_without_importing_and_monkeypatching)
+        result_df_instrum_original_pipeline_train_shape.append(
+            analysis_result_instrum.runtime_info.original_pipeline_train_data_shape)
+        result_df_instrum_original_pipeline_test_shape.append(
+            analysis_result_instrum.runtime_info.original_pipeline_test_data_shape)
+        result_df_instrum_original_pipeline_model_training.append(
+            analysis_result_instrum.runtime_info.original_model_training)
+
         logger.info(f'# Finished -- repetition {repetition + 1} of {num_repetitions} ')
         # print(results_dict_items)
 
@@ -121,6 +141,17 @@ if __name__ == "__main__":
                                       result_df_total_exec_no_instrum_main_func,
                                   'total_exec_duration_without_instrum_load_ast_compile':
                                       result_df_total_exec_no_instrum_load_ast_compile,
+                                  'instrum_original_pipeline_estimated': result_df_instrum_original_pipeline_estimated,
+                                  'instrum_original_pipeline_importing_and_monkeypatching':
+                                      result_df_instrum_original_pipeline_importing_and_monkeypatching,
+                                  'instrum_original_pipeline_without_importing_and_monkeypatching':
+                                      result_df_instrum_original_pipeline_without_importing_and_monkeypatching,
+                                  'instrum_original_pipeline_model_training':
+                                      result_df_instrum_original_pipeline_model_training,
+                                  'instrum_original_pipeline_train_data_shape':
+                                      result_df_instrum_original_pipeline_train_shape,
+                                  'instrum_original_pipeline_test_data_shape':
+                                      result_df_instrum_original_pipeline_test_shape,
                                   })
     result_df_path = os.path.join(output_directory, f"results-instrumentation-"
                                                     f"{dataset_name}-{data_loading_name}-"

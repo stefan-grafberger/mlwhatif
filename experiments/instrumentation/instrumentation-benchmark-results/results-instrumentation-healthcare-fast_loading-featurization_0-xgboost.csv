@@ -1,8 +1,0 @@
-repetition,dataset,data_loading,featurization,model,total_exec_duration_with_instrum,total_exec_duration_without_instrum_main_func,total_exec_duration_without_instrum_load_ast_compile
-0,healthcare,fast_loading,featurization_0,xgboost,1864.1607761383057,1633.8696479797363,1634.9329948425293
-1,healthcare,fast_loading,featurization_0,xgboost,1921.4551448822021,1618.5898780822754,1677.7689456939697
-2,healthcare,fast_loading,featurization_0,xgboost,1885.045051574707,1640.8278942108154,1626.2283325195312
-3,healthcare,fast_loading,featurization_0,xgboost,1828.1760215759277,1578.9339542388916,1598.9580154418945
-4,healthcare,fast_loading,featurization_0,xgboost,1826.5659809112549,1569.4608688354492,1599.1661548614502
-5,healthcare,fast_loading,featurization_0,xgboost,1832.6091766357422,1575.674057006836,1597.0489978790283
-6,healthcare,fast_loading,featurization_0,xgboost,1860.889196395874,1620.7060813903809,1597.9290008544922
