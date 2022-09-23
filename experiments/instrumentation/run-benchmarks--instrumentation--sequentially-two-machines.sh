@@ -36,8 +36,8 @@ do
       for model in "logistic_regression" "xgboost" "neural_network"
       do
         echo "PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python taskset -c $core_num python3.9 benchmarks_end_to_end.py $dataset $data_loading $featurization $model"
-#        PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python taskset -c "$core_num" python3.9 benchmarks_instrumentation.py "$dataset" "$data_loading" "$featurization" "$model"
-        PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_instrumentation.py "$dataset" "$data_loading" "$featurization" "$model"
+        PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python taskset -c "$core_num" python3.9 benchmarks_instrumentation.py "$dataset" "$data_loading" "$featurization" "$model"
+#        PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_instrumentation.py "$dataset" "$data_loading" "$featurization" "$model"
       done
     done
   done
