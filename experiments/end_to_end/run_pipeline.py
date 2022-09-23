@@ -406,47 +406,40 @@ def get_model(model_name):
     return model
 
 
-# Make sure this code is not executed during imports
-if sys.argv[0] == "mlwhatif" or __name__ == "__main__":
-
+def main_function():
     dataset_name = 'reviews'
     if len(sys.argv) > 1:
         dataset_name = sys.argv[1]
-
     data_loading_name = 'fast'
     if len(sys.argv) > 2:
         data_loading_name = sys.argv[2]
-
     featurization_name = 'fast'
     if len(sys.argv) > 3:
         featurization_name = sys.argv[3]
-
     model_name = 'logistic_regression'
     if len(sys.argv) > 4:
         model_name = sys.argv[4]
-
     seed = 1234
     if len(sys.argv) > 5:
         seed = sys.argv[5]
-
     np.random.seed(seed)
     random.seed(seed)
-
     if dataset_name == "sneakers":
         assert featurization_name == "image"
         assert model_name == "image"
-
     print(f'Running {data_loading_name} featurization {featurization_name} on dataset {dataset_name} with model '
           f'{model_name}')
     train, train_labels, test, test_labels, numerical_columns, categorical_columns, text_columns = \
         get_dataset(dataset_name, data_loading_name, seed, featurization_name)
-
     featurization = get_featurization(featurization_name, numerical_columns, categorical_columns, text_columns)
     model = get_model(model_name)
-
     pipeline = Pipeline([('featurization', featurization),
                          ('model', model)])
-
     pipeline = pipeline.fit(train, train_labels)
     predictions = pipeline.predict(test)
     print('    Score: ', accuracy_score(predictions, test_labels))
+
+
+# Make sure this code is not executed during imports
+if sys.argv[0] == "mlwhatif" or __name__ == "__main__":
+    main_function()
