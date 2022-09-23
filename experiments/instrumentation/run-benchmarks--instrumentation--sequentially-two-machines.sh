@@ -29,7 +29,7 @@ done
 
 for dataset in "healthcare" "folktables" "cardio" "reviews"
 do
-  for data_loading in
+  for data_loading in "${data_loading_options[@]}"
   do
     for featurization in "featurization_0" "featurization_1" "featurization_2" "featurization_3" "featurization_4"
     do
