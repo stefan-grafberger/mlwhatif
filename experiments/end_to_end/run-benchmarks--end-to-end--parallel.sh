@@ -5,7 +5,7 @@ if [[ $# -eq 0 ]] ; then
     exit 1
 fi
 
-echo "Variant name from 1-8: $1";
+echo "Variant name from 0-15: $1";
 start_core_index=$((($1 % 8) * 32))
 end_core_index=$((start_core_index + 7))
 core_num="$start_core_index"-"$end_core_index"
@@ -49,7 +49,7 @@ do
       do
         for model in "logistic_regression" "xgboost" "neural_network"
         do
-          echo "taskset -c $core_num PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmarks_end_to_end.py $scenario $dataset $data_loading $featurization $model"
+          echo "PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python taskset -c $core_num python3.9 benchmarks_end_to_end.py $scenario $dataset $data_loading $featurization $model"
           PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python taskset -c "$core_num" python3.9 benchmarks_end_to_end.py "$scenario" "$dataset" "$data_loading" "$featurization" "$model"
         done
       done
