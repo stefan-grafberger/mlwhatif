@@ -369,7 +369,7 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
 
 def get_model(model_name):
     if model_name == 'logistic_regression':
-        model = SGDClassifier(loss='log', max_iter=30, n_jobs=1, multi_class='ovr')
+        model = SGDClassifier(loss='log', max_iter=30, n_jobs=1)
     elif model_name == 'xgboost':
         model = XGBClassifier(max_depth=12, tree_method='hist', n_jobs=1)
     elif model_name == 'neural_network':
@@ -382,7 +382,7 @@ def get_model(model_name):
             clf.compile(loss='binary_crossentropy', optimizer=SGD(), metrics=["accuracy"])
             return clf
 
-        model = MyKerasClassifier(build_fn=create_model, epochs=7, batch_size=32, verbose=0)
+        model = MyKerasClassifier(build_fn=create_model, epochs=7, batch_size=32, verbose=0, n_jobs=1)
     elif model_name == 'image':
         def create_cnn():
             model = Sequential([
