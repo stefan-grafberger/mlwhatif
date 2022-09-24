@@ -16,7 +16,7 @@ from mlwhatif.execution import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
 from mlwhatif.execution._pipeline_executor import singleton
-from mlwhatif.monkeypatching._mlinspect_ndarray import MlinspectNdarray
+from mlwhatif.monkeypatching._mlinspect_ndarray import MlinspectNdarray, MlinspectList
 
 
 @dataclasses.dataclass(frozen=False)
@@ -214,7 +214,7 @@ def get_column_names(df_object):
         columns = list(df_object.columns)  # TODO: Update this for numpy arrays etc. later
     elif isinstance(df_object, Series):
         columns = [df_object.name]
-    elif isinstance(df_object, (csr_matrix, numpy.ndarray)):
+    elif isinstance(df_object, (csr_matrix, numpy.ndarray, list)):
         columns = ['array']
     else:
         raise NotImplementedError("TODO: Type: '{}' still is not supported!".format(type(df_object)))
@@ -225,8 +225,10 @@ def wrap_in_mlinspect_array_if_necessary(df_object):
     """
     Makes sure annotations can be stored in a df_object. For example, numpy arrays need a wrapper for this.
     """
-    if isinstance(df_object, (numpy.ndarray, list)):
+    if isinstance(df_object, numpy.ndarray):
         df_object = MlinspectNdarray(df_object)
+    elif isinstance(df_object, list):
+        df_object = MlinspectList(df_object)
     return df_object
 
 
