@@ -30,6 +30,7 @@ from tensorflow.keras.models import Sequential
 
 from example_pipelines.healthcare.healthcare_utils import MyKerasClassifier, MyW2VTransformer
 from mlwhatif.utils import get_project_root
+from mlwhatif.utils._utils import decode_image
 
 data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets")
 
@@ -201,9 +202,6 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
         train_labels = train['cardio']
         test_labels = test['cardio']
     elif dataset_name == 'sneakers':
-        def decode_image(img_str):
-            return np.array([int(val) for val in img_str.split(':')])
-
         if data_loading_name == 'fast_loading':
             train_data = pd.read_csv(
                 os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "sneakers",

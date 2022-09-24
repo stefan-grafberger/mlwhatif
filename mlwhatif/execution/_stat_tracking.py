@@ -39,11 +39,13 @@ def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_
 
 
 def get_df_memory(result_or_inplace_obj, estimator_transformer_state: any or None = None,
-                  keras_batch_size: int or None = None):
+                  keras_batch_size: int or None = None, memory_calc_too_expensive=True):
     """Get the size in bytes of a df-like object"""
     # Just using sys.getsize of is not sufficient. See this section of its documentation:
     #  Only the memory consumption directly attributed to the object is accounted for,
     #  not the memory consumption of objects it refers to.
+    if memory_calc_too_expensive is True:
+        return 0  # FIXME: Do this properly with flag in the main API etc and not use 0 here
     if isinstance(result_or_inplace_obj, pandas.DataFrame):
         # For pandas, sizeof seems to work as expected
         size = sys.getsizeof(result_or_inplace_obj)
