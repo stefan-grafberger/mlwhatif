@@ -382,7 +382,7 @@ def get_model(model_name):
             clf.compile(loss='binary_crossentropy', optimizer=SGD(), metrics=["accuracy"])
             return clf
 
-        model = MyKerasClassifier(build_fn=create_model, epochs=7, batch_size=32, verbose=0, n_jobs=1)
+        model = MyKerasClassifier(build_fn=create_model, epochs=7, batch_size=32, verbose=0)
     elif model_name == 'image':
         def create_cnn():
             model = Sequential([
@@ -399,7 +399,7 @@ def get_model(model_name):
             ])
             model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
             return model
-        model = KerasClassifier(create_cnn, epochs=10, verbose=0, n_jobs=1)
+        model = KerasClassifier(create_cnn, epochs=10, verbose=0)
     else:
         raise ValueError(f"Invalid model name: {model_name}!")
 
