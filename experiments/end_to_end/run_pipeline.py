@@ -369,9 +369,9 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
 
 def get_model(model_name):
     if model_name == 'logistic_regression':
-        model = SGDClassifier(loss='log', max_iter=30)
+        model = SGDClassifier(loss='log', max_iter=30, n_jobs=1)
     elif model_name == 'xgboost':
-        model = XGBClassifier(max_depth=12, tree_method='hist')
+        model = XGBClassifier(max_depth=12, tree_method='hist', n_jobs=1)
     elif model_name == 'neural_network':
         def create_model(input_dim=10):
             """Create a simple neural network"""
