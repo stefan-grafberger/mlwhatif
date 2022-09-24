@@ -369,7 +369,7 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
 
 def get_model(model_name):
     if model_name == 'logistic_regression':
-        model = SGDClassifier(loss='log', max_iter=30, n_jobs=1)
+        model = SGDClassifier(loss='log', max_iter=30, n_jobs=1, multi_class='ovr')
     elif model_name == 'xgboost':
         model = XGBClassifier(max_depth=12, tree_method='hist', n_jobs=1)
     elif model_name == 'neural_network':
@@ -399,7 +399,7 @@ def get_model(model_name):
             ])
             model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
             return model
-        model = KerasClassifier(create_cnn, epochs=10, verbose=0)
+        model = KerasClassifier(create_cnn, epochs=10, verbose=0, n_jobs=1)
     else:
         raise ValueError(f"Invalid model name: {model_name}!")
 
