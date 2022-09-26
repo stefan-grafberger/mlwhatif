@@ -188,7 +188,7 @@ class PipelineExecutor:
                                            if node.operator_info.operator == OperatorType.ESTIMATOR]
             self.analysis_results.runtime_info.what_if_execution_combined_model_training = sum(
                 analysis_estimator_runtimes)
-            # Some debugging code to look 
+            # Some debugging code to look at actual executon time of different operators in optimized plan
             # ops_with_runtimes = [(operator, optimizer_info.runtime) for operator, optimizer_info
             #                      in self.operators_to_runtime_during_analysis]
             # ops_with_runtimes.sort(key=lambda tuple: tuple[1], reverse=True)
