@@ -1,8 +1,0 @@
-repetition,optimization,scenario,variant_counts,scale_factors,original_pipeline,analysis_result_with_opt_rule,analysis_result_without_opt_rule,analysis_result_without_any_opt
-0,operator_deletion_filter_push_up,worst_wo_safety,4,1.5,140.21944999694824,2268.6612606048584,542.0897006988525,558.4583282470703
-1,operator_deletion_filter_push_up,worst_wo_safety,4,1.5,109.7722053527832,2259.725332260132,443.4630870819092,460.0210189819336
-2,operator_deletion_filter_push_up,worst_wo_safety,4,1.5,109.73739624023438,2232.2750091552734,440.66429138183594,465.5275344848633
-3,operator_deletion_filter_push_up,worst_wo_safety,4,1.5,134.78326797485352,2213.682174682617,540.8899784088135,556.3986301422119
-4,operator_deletion_filter_push_up,worst_wo_safety,4,1.5,126.18875503540039,2239.009141921997,523.6108303070068,538.6743545532227
-5,operator_deletion_filter_push_up,worst_wo_safety,4,1.5,111.12165451049805,2216.811180114746,448.4677314758301,467.2107696533203
-6,operator_deletion_filter_push_up,worst_wo_safety,4,1.5,134.90867614746094,2242.252826690674,551.8832206726074,562.1280670166016
