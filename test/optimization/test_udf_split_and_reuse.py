@@ -115,7 +115,7 @@ def test_udf_split_and_reuse_worst_case_with_selectivity_safety_active(tmpdir):
     """
     Tests whether the .py version of the inspector works
     """
-    variant_count = 4
+    variant_count = 10
 
     scenario_result_dict = execute_udf_split_and_reuse_worst_case_with_selectivity_safety_active(0.5, tmpdir,
                                                                                                  variant_count)
