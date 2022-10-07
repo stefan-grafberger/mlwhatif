@@ -21,6 +21,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransfo
 from sklearn.preprocessing import label_binarize
 from xgboost import XGBClassifier
 
+from experiments.manual_analysis.cleaner_copy_from_non_pip_cleanml import MVCleaner
 from mlwhatif.utils import get_project_root
 
 data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "../end_to_end/datasets")
@@ -101,6 +102,33 @@ def get_dataset(seed, analysis_name, variant_index):
         else:
             raise ValueError(f"Invalid variant_index: variant_index!")
         test = corruption.transform(test)
+    elif analysis_name == "data_cleaning":
+        if variant_index <= 3:  # column
+            if variant_index <= 3:  # variant
+                column = 'category'
+                if variant_index == 0:
+                    cleaner = MVCleaner("delete")
+                if variant_index == 1:
+                    cleaner = MVCleaner("impute", num="mean", cat="mode")
+                if variant_index == 2:
+                    cleaner = MVCleaner("impute", num="mean", cat="dummy")
+
+        # FIXME: This does not work for dropna yet, we need to use the indicator array!
+        train_input = train[[column]]
+        test_input = test[[column]]
+        cleaner.fit(None, train_input)
+
+        if variant_index in {0}:  # Filter cleaners
+            train_mask = ~cleaner.detect(train_input).iloc[:, 0].to_numpy()
+            test_mask = ~cleaner.detect(test_input).iloc[:, 0].to_numpy()
+
+            train = train[train_mask]
+            test = test[test_mask]
+            train_labels = train_labels[train_mask]
+            test_labels = test_labels[test_mask]
+        else:  # Projection cleaners
+            train[[column]] = cleaner.repair(train_input)
+            test[[column]] = cleaner.repair(test_input)
 
     return train, train_labels, test, test_labels, numerical_columns, categorical_columns, text_columns
 
@@ -153,12 +181,14 @@ def get_model():
 
 def main_function():
     # analysis = 'none'
-    analysis = 'data_corruption'
-    # analysis = 'data_cleaning'
+    # analysis = 'data_corruption'
+    analysis = 'data_cleaning'
     if len(sys.argv) > 1:
         analysis = sys.argv[1]
     if analysis == 'data_corruption':
         variant_count = 25
+    elif analysis == 'data_cleaning':
+        variant_count = 3  # FIXME: Add support for more
     elif analysis == 'none':
         variant_count = 1
     else:
@@ -182,7 +212,7 @@ def main_function():
         predictions = pipeline.predict(test)
         score = accuracy_score(predictions, test_labels)
         print('    Score: ', score)
-        scores.append(accuracy_score)
+        scores.append(score)
     results = pd.DataFrame({'variant_index': range(variant_count), 'score': scores})
     print(results)
 
