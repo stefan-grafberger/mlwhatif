@@ -1,8 +1,6 @@
 import datetime
 import os
 import random
-import re
-import string
 import sys
 
 import numpy as np
@@ -12,14 +10,12 @@ from jenga.corruptions.generic import CategoricalShift
 from jenga.corruptions.numerical import GaussianNoise, Scaling
 from jenga.corruptions.text import BrokenCharacters
 from sklearn.compose import ColumnTransformer
-from sklearn.decomposition import PCA, TruncatedSVD
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from sklearn.impute import SimpleImputer
+from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import accuracy_score
-from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, FunctionTransformer, RobustScaler
 from sklearn.preprocessing import label_binarize
-from xgboost import XGBClassifier
 
 from experiments.manual_analysis.cleaner_copy_from_non_pip_cleanml import MVCleaner, OutlierCleaner, DuplicatesCleaner
 from mlwhatif.utils import get_project_root
@@ -188,48 +184,25 @@ def apply_jenga_for_variant(test, variant_index):
 
 
 def get_featurization(numerical_columns, categorical_columns, text_columns):
-    # based on dspipes 'num_pipe_3' and 'txt_pipe_2'
-    union = FeatureUnion([("pca", PCA(n_components=(len(numerical_columns) - 1))),
-                          ("svd", TruncatedSVD(n_iter=1, n_components=(len(numerical_columns) - 1)))])
-    num_pipe = Pipeline([('union', union), ('scaler', StandardScaler())])
-
-    transformers = [('num', num_pipe, numerical_columns)]
+    transformers = [('num', RobustScaler(), numerical_columns)]
     if len(text_columns) >= 1:
         assert len(text_columns) == 1
-
-        def remove_numbers(text_array):
-            return [str(re.sub(r'\d+', '', text)) for text in text_array]
-
-        def remove_punctuation(text_array):
-            translator = str.maketrans('', '', string.punctuation)
-            return [text.translate(translator) for text in text_array]
-
-        def text_lowercase(text_array):
-            return list(map(lambda x: x.lower(), text_array))
-
-        def remove_urls(text_array):
-            return [str(' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)", " ", text).split()))
-                    for text in text_array]
-
-        text_pipe = Pipeline([('lower_case', FunctionTransformer(text_lowercase)),
-                              ('remove_url', FunctionTransformer(remove_urls)),
-                              ('remove_numbers', FunctionTransformer(remove_numbers)),
-                              ('remove_punctuation', FunctionTransformer(remove_punctuation)),
-                              ('vect', CountVectorizer(min_df=0.01, max_df=0.5)), ('tfidf', TfidfTransformer())])
-        transformers.append(('text', text_pipe, text_columns[0]))
+        transformers.append(('text', HashingVectorizer(n_features=2 ** 5), text_columns[0]))
     for cat_column in categorical_columns:
-        cat_pipe = Pipeline([('simpleimputer', SimpleImputer(strategy='most_frequent')),
+        def another_imputer(df_with_categorical_columns):
+            return df_with_categorical_columns.fillna('__missing__').astype(str)
+
+        cat_pipe = Pipeline([('anothersimpleimputer', FunctionTransformer(another_imputer)),
                              ('onehotencoder', OneHotEncoder(handle_unknown='ignore'))])
+
         transformers.append((f"cat_{cat_column}", cat_pipe, [cat_column]))
 
     featurization = ColumnTransformer(transformers)
-
     return featurization
 
 
 def get_model():
-    model = XGBClassifier(max_depth=12, tree_method='hist', n_jobs=1)
-
+    model = SGDClassifier(loss='log', max_iter=30, n_jobs=1)
     return model
 
 
