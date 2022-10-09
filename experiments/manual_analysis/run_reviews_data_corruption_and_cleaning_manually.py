@@ -272,5 +272,5 @@ def main_function():
 
 
 # Make sure this code is not executed during imports
-if sys.argv[0] == "mlwhatif" or __name__ == "__main__":
+if sys.argv[0] == "manual" or __name__ == "__main__":
     main_function()
