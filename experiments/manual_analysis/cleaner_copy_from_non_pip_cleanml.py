@@ -73,10 +73,13 @@ class DuplicatesCleaner(object):
         super(DuplicatesCleaner, self).__init__()
 
     def fit(self, dataset, df):
-        self.keys = dataset['key_columns']
+        # self.keys = dataset['key_columns']
+        self.keys = list(df.columns)
 
-    def detect(self, df, keys):
-        key_col = pd.DataFrame(df, columns=keys)
+    # def detect(self, df, keys):
+    def detect(self, df):
+        # key_col = pd.DataFrame(df, columns=keys)
+        key_col = pd.DataFrame(df, columns=self.keys)
         is_dup = key_col.duplicated(keep='first')
         is_dup = pd.DataFrame(is_dup, columns=['is_dup'])
         return is_dup

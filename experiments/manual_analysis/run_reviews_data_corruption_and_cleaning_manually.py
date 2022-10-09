@@ -21,7 +21,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransfo
 from sklearn.preprocessing import label_binarize
 from xgboost import XGBClassifier
 
-from experiments.manual_analysis.cleaner_copy_from_non_pip_cleanml import MVCleaner
+from experiments.manual_analysis.cleaner_copy_from_non_pip_cleanml import MVCleaner, OutlierCleaner, DuplicatesCleaner
 from mlwhatif.utils import get_project_root
 
 data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "../end_to_end/datasets")
@@ -78,7 +78,8 @@ def get_dataset(seed, analysis_name, variant_index):
     numerical_columns = ['total_votes', 'star_rating']
     categorical_columns = ['vine', 'category']
     text_columns = ["review_body"]
-    final_columns = numerical_columns + categorical_columns + text_columns + ['is_helpful', 'review_date']
+    # final_columns = numerical_columns + categorical_columns + text_columns + ['is_helpful', 'review_date']
+    final_columns = numerical_columns + categorical_columns + text_columns + ['is_helpful', 'review_date', "review_id"]
 
     reviews, ratings, products, categories = load_data()
 
@@ -88,37 +89,72 @@ def get_dataset(seed, analysis_name, variant_index):
     train, train_labels, test, test_labels = compute_feature_and_label_data(integrated_data, final_columns, fake)
 
     if analysis_name == "data_corruption":
-        fraction = [0.2, 0.4, 0.6, 0.8, 1.0][variant_index % 5]
-        if variant_index < 5:
-            corruption = BrokenCharacters(column='review_body', fraction=fraction)
-        elif variant_index < 10:
-            corruption = CategoricalShift(column='vine', fraction=fraction)
-        elif variant_index < 15:
-            corruption = CategoricalShift(column='category', fraction=fraction)
-        elif variant_index < 20:
-            corruption = Scaling(column='total_votes', fraction=fraction)
-        elif variant_index < 25:
-            corruption = GaussianNoise(column='star_rating', fraction=fraction)
-        else:
-            raise ValueError(f"Invalid variant_index: variant_index!")
-        test = corruption.transform(test)
+        test = apply_jenga_for_variant(test, variant_index)
     elif analysis_name == "data_cleaning":
-        if variant_index <= 3:  # column
-            if variant_index <= 3:  # variant
-                column = 'category'
-                if variant_index == 0:
-                    cleaner = MVCleaner("delete")
-                if variant_index == 1:
-                    cleaner = MVCleaner("impute", num="mean", cat="mode")
-                if variant_index == 2:
-                    cleaner = MVCleaner("impute", num="mean", cat="dummy")
+        test, test_labels, train, train_labels = apply_clean_ml_for_variant(test, test_labels, train, train_labels,
+                                                                            variant_index)
 
-        # FIXME: This does not work for dropna yet, we need to use the indicator array!
+    return train, train_labels, test, test_labels, numerical_columns, categorical_columns, text_columns
+
+
+def apply_clean_ml_for_variant(test, test_labels, train, train_labels, variant_index):
+    """Apply CleanML data cleaning"""
+    if variant_index < 3:  # column
+        column = 'category'
+        if variant_index == 0:
+            cleaner = MVCleaner("delete")
+        elif variant_index == 1:
+            cleaner = MVCleaner("impute", num="mean", cat="mode")
+        elif variant_index == 2:
+            cleaner = MVCleaner("impute", num="mean", cat="dummy")
+    elif variant_index < 6:  # variant
+        column = 'vine'
+        if variant_index == 3:
+            cleaner = MVCleaner("delete")
+        elif variant_index == 4:
+            cleaner = MVCleaner("impute", num="mean", cat="mode")
+        elif variant_index == 5:
+            cleaner = MVCleaner("impute", num="mean", cat="dummy")
+    elif variant_index < 10:  # variant
+        column = 'star_rating'
+        if variant_index == 6:
+            cleaner = MVCleaner("delete")
+        elif variant_index == 7:
+            cleaner = MVCleaner("impute", num="median", cat="mode")
+        elif variant_index == 8:
+            cleaner = MVCleaner("impute", num="mean", cat="dummy")
+        elif variant_index == 9:
+            cleaner = MVCleaner("impute", num="mode", cat="dummy")
+    elif variant_index < 19:  # variant
+        column = 'total_votes'
+        if variant_index == 10:
+            cleaner = OutlierCleaner(detect_method="SD", repairer=MVCleaner("impute", num="mean", cat="dummy"))
+        elif variant_index == 11:
+            cleaner = OutlierCleaner(detect_method="SD", repairer=MVCleaner("impute", num="mode", cat="dummy"))
+        elif variant_index == 12:
+            cleaner = OutlierCleaner(detect_method="SD", repairer=MVCleaner("impute", num="median", cat="dummy"))
+        elif variant_index == 13:
+            cleaner = OutlierCleaner(detect_method="IQR", repairer=MVCleaner("impute", num="mean", cat="dummy"))
+        elif variant_index == 14:
+            cleaner = OutlierCleaner(detect_method="IQR", repairer=MVCleaner("impute", num="mode", cat="dummy"))
+        elif variant_index == 15:
+            cleaner = OutlierCleaner(detect_method="IQR", repairer=MVCleaner("impute", num="median", cat="dummy"))
+        elif variant_index == 16:
+            cleaner = OutlierCleaner(detect_method="IF", repairer=MVCleaner("impute", num="mean", cat="dummy"))
+        elif variant_index == 17:
+            cleaner = OutlierCleaner(detect_method="IF", repairer=MVCleaner("impute", num="mode", cat="dummy"))
+        elif variant_index == 18:
+            cleaner = OutlierCleaner(detect_method="IF", repairer=MVCleaner("impute", num="median", cat="dummy"))
+    elif variant_index < 20:  # variant
+        column = 'review_id'
+        if variant_index == 19:
+            cleaner = DuplicatesCleaner()
+    if variant_index != -1:
         train_input = train[[column]]
         test_input = test[[column]]
         cleaner.fit(None, train_input)
 
-        if variant_index in {0}:  # Filter cleaners
+        if variant_index in {0, 3, 6, 19}:  # Filter cleaners
             train_mask = ~cleaner.detect(train_input).iloc[:, 0].to_numpy()
             test_mask = ~cleaner.detect(test_input).iloc[:, 0].to_numpy()
 
@@ -127,10 +163,28 @@ def get_dataset(seed, analysis_name, variant_index):
             train_labels = train_labels[train_mask]
             test_labels = test_labels[test_mask]
         else:  # Projection cleaners
-            train[[column]] = cleaner.repair(train_input)
-            test[[column]] = cleaner.repair(test_input)
+            train[[column]], _ = cleaner.clean_df(train_input)
+            test[[column]], _ = cleaner.clean_df(test_input)
+    return test, test_labels, train, train_labels
 
-    return train, train_labels, test, test_labels, numerical_columns, categorical_columns, text_columns
+
+def apply_jenga_for_variant(test, variant_index):
+    """Apply Jenga data corruptions"""
+    fraction = [0.2, 0.4, 0.6, 0.8, 1.0][variant_index % 5]
+    if variant_index < 5:
+        corruption = BrokenCharacters(column='review_body', fraction=fraction)
+    elif variant_index < 10:
+        corruption = CategoricalShift(column='vine', fraction=fraction)
+    elif variant_index < 15:
+        corruption = CategoricalShift(column='category', fraction=fraction)
+    elif variant_index < 20:
+        corruption = Scaling(column='total_votes', fraction=fraction)
+    elif variant_index < 25:
+        corruption = GaussianNoise(column='star_rating', fraction=fraction)
+    else:
+        raise ValueError(f"Invalid variant_index: variant_index!")
+    test = corruption.transform(test)
+    return test
 
 
 def get_featurization(numerical_columns, categorical_columns, text_columns):
@@ -180,17 +234,17 @@ def get_model():
 
 
 def main_function():
-    # analysis = 'none'
+    analysis = 'none'
     # analysis = 'data_corruption'
-    analysis = 'data_cleaning'
+    # analysis = 'data_cleaning'
     if len(sys.argv) > 1:
         analysis = sys.argv[1]
     if analysis == 'data_corruption':
         variant_count = 25
     elif analysis == 'data_cleaning':
-        variant_count = 3  # FIXME: Add support for more
+        variant_count = 20
     elif analysis == 'none':
-        variant_count = 1
+        variant_count = 0
     else:
         raise ValueError(f"Invalid analysis!")
     seed = 1234
@@ -199,7 +253,7 @@ def main_function():
     np.random.seed(seed)
     random.seed(seed)
     scores = []
-    for variant_index in range(variant_count):
+    for variant_index in range(-1, variant_count):
         print(f'Running fast_loading featurization featurization_3 on dataset reviews with model '
               f'xgboost with analysis {analysis} for variant {variant_index}')
         train, train_labels, test, test_labels, numerical_columns, categorical_columns, text_columns = \
@@ -213,7 +267,7 @@ def main_function():
         score = accuracy_score(predictions, test_labels)
         print('    Score: ', score)
         scores.append(score)
-    results = pd.DataFrame({'variant_index': range(variant_count), 'score': scores})
+    results = pd.DataFrame({'variant_index': range(-1, variant_count), 'score': scores})
     print(results)
 
 
