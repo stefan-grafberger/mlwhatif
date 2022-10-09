@@ -59,7 +59,7 @@ if __name__ == "__main__":
     featurization_name = sys.argv[4]
     model_name = sys.argv[5]
 
-    num_repetitions = 30
+    num_repetitions = 7
     seeds = range(42, 42 + num_repetitions)
     assert len(seeds) == num_repetitions
 
