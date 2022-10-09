@@ -19,7 +19,7 @@ do
         for featurization in "featurization_3"
         do
           echo "PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python taskset -c $core_num python3.9 benchmark_manual_vs_automatic.py $scenario $dataset $data_loading $featurization $model"
-          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 benchmark_manual_vs_automatic.py "$scenario" "$dataset" "$data_loading" "$featurization" "$model"
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python python3.9 taskset -c $core_num benchmark_manual_vs_automatic.py "$scenario" "$dataset" "$data_loading" "$featurization" "$model"
         done
       done
     done
