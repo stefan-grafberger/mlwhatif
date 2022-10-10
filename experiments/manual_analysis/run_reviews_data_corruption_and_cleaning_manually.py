@@ -179,7 +179,8 @@ def apply_jenga_for_variant(test, variant_index):
         corruption = GaussianNoise(column='star_rating', fraction=fraction)
     else:
         raise ValueError(f"Invalid variant_index: variant_index!")
-    test = corruption.transform(test)
+    if variant_index != -1:
+        test = corruption.transform(test)
     return test
 
 
@@ -220,7 +221,7 @@ def main_function():
         variant_count = 0
     else:
         raise ValueError(f"Invalid analysis!")
-    seed = 1234
+    seed = 42
     if len(sys.argv) > 3:
         seed = sys.argv[3]
     np.random.seed(seed)
@@ -228,7 +229,7 @@ def main_function():
     scores = []
     for variant_index in range(-1, variant_count):
         print(f'Running fast_loading featurization featurization_3 on dataset reviews with model '
-              f'xgboost with analysis {analysis} for variant {variant_index}')
+              f'logistic_regression with analysis {analysis} for variant {variant_index}')
         train, train_labels, test, test_labels, numerical_columns, categorical_columns, text_columns = \
             get_dataset(seed, analysis, variant_index)
         featurization = get_featurization(numerical_columns, categorical_columns, text_columns)
