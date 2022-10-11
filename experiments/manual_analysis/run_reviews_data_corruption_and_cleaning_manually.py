@@ -222,8 +222,8 @@ def main_function():
     else:
         raise ValueError(f"Invalid analysis!")
     seed = 42
-    if len(sys.argv) > 3:
-        seed = sys.argv[3]
+    if len(sys.argv) > 2:
+        seed = sys.argv[2]
     np.random.seed(seed)
     random.seed(seed)
     scores = []
