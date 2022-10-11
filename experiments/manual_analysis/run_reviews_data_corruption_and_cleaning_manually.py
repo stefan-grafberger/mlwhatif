@@ -228,7 +228,7 @@ def main_function():
     random.seed(seed)
     scores = []
     for variant_index in range(-1, variant_count):
-        print(f'Running fast_loading featurization featurization_3 on dataset reviews with model '
+        print(f'Running fast_loading featurization featurization_1 on dataset reviews with model '
               f'logistic_regression with analysis {analysis} for variant {variant_index}')
         train, train_labels, test, test_labels, numerical_columns, categorical_columns, text_columns = \
             get_dataset(seed, analysis, variant_index)

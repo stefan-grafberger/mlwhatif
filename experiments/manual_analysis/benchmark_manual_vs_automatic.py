@@ -126,7 +126,7 @@ if __name__ == "__main__":
         total_manual_exec_duration = (time.time() - total_manual_exec_start) * 1000
 
         total_opt_exec_start = time.time()
-        with patch.object(sys, 'argv', synthetic_cmd_args):
+        with patch.object(sys, 'argv', synthetic_cmd_args + [seed]):
             analysis_result_opt = PipelineAnalyzer \
                 .on_pipeline_from_py_file(pipeline_run_file) \
                 .add_custom_monkey_patching_modules([custom_monkeypatching]) \
@@ -136,7 +136,7 @@ if __name__ == "__main__":
         total_opt_exec_duration = (time.time() - total_opt_exec_start) * 1000
 
         total_no_opt_exec_start = time.time()
-        with patch.object(sys, 'argv', synthetic_cmd_args):
+        with patch.object(sys, 'argv', synthetic_cmd_args + [seed]):
             analysis_result_no_opt = PipelineAnalyzer \
                 .on_pipeline_from_py_file(pipeline_run_file) \
                 .add_custom_monkey_patching_modules([custom_monkeypatching]) \
