@@ -1,3 +1,4 @@
+# pylint: disable-all
 # https://github.com/chu-data-lab/CleanML/blob/b7ee8ecee2cef4e92d9c78efcd0401bf49d8458a/schema/clean_method.py
 # Unfortunately, CleanML did not ingegrate pip installation
 

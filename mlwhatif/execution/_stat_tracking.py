@@ -106,6 +106,7 @@ def get_model_memory_usage_in_bytes(model, batch_size):
 
 def get_df_shape(result_or_inplace_obj):
     """Get the shape of a df-like object"""
+    # pylint: disable=too-many-branches
     if isinstance(result_or_inplace_obj, pandas.DataFrame):
         shape = result_or_inplace_obj.shape
     elif isinstance(result_or_inplace_obj, numpy.ndarray):

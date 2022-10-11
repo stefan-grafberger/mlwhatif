@@ -1,3 +1,4 @@
+# pylint: disable-all
 import datetime
 import os
 import random
@@ -19,8 +20,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransformer, RobustScaler
 from sklearn.preprocessing import label_binarize
-from tensorflow.keras.layers import Dense  # pylint: disable=no-name-in-module
-from tensorflow.keras.models import Sequential  # pylint: disable=no-name-in-module
 from tensorflow.python.keras.optimizer_v2.gradient_descent import SGD  # pylint: disable=no-name-in-module
 from xgboost import XGBClassifier
 
