@@ -13,7 +13,6 @@ import sklearn
 import tensorflow
 from fairlearn.metrics import MetricFrame
 from scipy.sparse import csr_matrix
-from tensorflow.python.keras.callbacks import History  # pylint: disable=no-name-in-module
 from tensorflow.python.keras.wrappers.scikit_learn import BaseWrapper  # pylint: disable=no-name-in-module
 
 from mlwhatif.instrumentation._dag_node import OptimizerInfo
@@ -107,6 +106,7 @@ def get_model_memory_usage_in_bytes(model, batch_size):
 
 def get_df_shape(result_or_inplace_obj):
     """Get the shape of a df-like object"""
+    # pylint: disable=too-many-branches
     if isinstance(result_or_inplace_obj, pandas.DataFrame):
         shape = result_or_inplace_obj.shape
     elif isinstance(result_or_inplace_obj, numpy.ndarray):

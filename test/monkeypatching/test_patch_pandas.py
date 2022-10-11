@@ -1,6 +1,7 @@
 """
 Tests whether the monkey patching works for all patched pandas methods
 """
+# pylint: disable=too-many-lines
 from functools import partial
 from inspect import cleandoc
 from types import FunctionType

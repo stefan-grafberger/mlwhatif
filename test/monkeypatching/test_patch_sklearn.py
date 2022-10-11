@@ -4091,6 +4091,7 @@ def test_tfidf_vectorizer():
     Tests whether the monkey patching of ('sklearn.compose._column_transformer', 'ColumnTransformer') works with
     multiple transformers with dense output
     """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.feature_extraction.text import  CountVectorizer, TfidfTransformer
@@ -4285,6 +4286,7 @@ def test_feature_union():
     """
     Tests whether the monkey patching of ('sklearn.preprocessing._data', 'StandardScaler') works
     """
+    # pylint: disable=too-many-locals
     test_code = cleandoc("""
                 import pandas as pd
                 from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder

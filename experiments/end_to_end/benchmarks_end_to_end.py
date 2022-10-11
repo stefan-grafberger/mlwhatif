@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name,missing-module-docstring
+# pylint: disable-all
 import logging
 import os
 import random

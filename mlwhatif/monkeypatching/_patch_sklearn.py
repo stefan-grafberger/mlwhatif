@@ -624,7 +624,7 @@ class SklearnCountVectorizerPatching:
                         mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
                         mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
         """ Patch for ('sklearn.feature_extraction.text', 'CountVectorizer') """
-        # pylint: disable=no-method-argument, attribute-defined-outside-init
+        # pylint: disable=no-method-argument, attribute-defined-outside-init,redefined-builtin,too-many-locals
         original = gorilla.get_original_attribute(text.CountVectorizer, '__init__')
 
         self.mlinspect_caller_filename = mlinspect_caller_filename
@@ -1109,15 +1109,15 @@ class SklearnFeatureUnionPatching:
     @gorilla.settings(allow_hit=True)
     def patched_fit_transform(self, X, y=None, **fit_params):
         """ Patch for ('sklearn.pipeline.FeatureUnion', 'fit_transform') """
-        # pylint: disable=no-method-argument
-        results = self._parallel_func(X, y, fit_params, _fit_transform_one)
+        # pylint: disable=no-method-argument, invalid-name,too-many-locals,invalid-name
+        results = self._parallel_func(X, y, fit_params, _fit_transform_one)  # pylint: disable=no-member
         if not results:
             # All transformers are None
             raise Exception("TODO: Implement support for FeatureUnion without transformers")
             # return numpy.zeros((X.shape[0], 0))
 
         Xs, transformers = zip(*results)
-        self._update_transformer_list(transformers)
+        self._update_transformer_list(transformers)  # pylint: disable=no-member
 
         self.mlinspect_fit_transform_active = True  # pylint: disable=attribute-defined-outside-init
         function_info = FunctionInfo('sklearn.pipeline', 'FeatureUnion')
@@ -1162,7 +1162,7 @@ class SklearnFeatureUnionPatching:
     @gorilla.settings(allow_hit=True)
     def patched_transform(self, X):
         """ Patch for ('sklearn.pipeline.FeatureUnion', 'transform') """
-        # pylint: disable=no-method-argument
+        # pylint: disable=no-method-argument,invalid-name,too-many-locals,no-member
         original = gorilla.get_original_attribute(pipeline.FeatureUnion, 'transform')
         if not self.mlinspect_fit_transform_active:
             # First part up to concat of the original transform
@@ -1458,7 +1458,7 @@ class SklearnOneHotEncoderPatching:
                         mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
                         mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
         """ Patch for ('sklearn.preprocessing._encoders', 'OneHotEncoder') """
-        # pylint: disable=no-method-argument, attribute-defined-outside-init
+        # pylint: disable=no-method-argument, attribute-defined-outside-init,redefined-outer-name
         original = gorilla.get_original_attribute(preprocessing.OneHotEncoder, '__init__')
 
         self.mlinspect_caller_filename = mlinspect_caller_filename

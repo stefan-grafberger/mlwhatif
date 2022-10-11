@@ -83,7 +83,7 @@ class PipelineExecutor:
         Instrument and execute the pipeline and evaluate all checks
         """
         # TODO: Add option to reuse results
-        # pylint: disable=too-many-arguments
+        # pylint: disable=too-many-arguments, too-many-locals
         if reset_state:
             # reset_state=False should only be used internally for performance experiments etc!
             # It does not ensure the same inspections are still used as args etc.

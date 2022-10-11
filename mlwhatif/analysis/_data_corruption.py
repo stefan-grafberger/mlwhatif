@@ -33,6 +33,7 @@ class CorruptionType(Enum):
 
 
 def corrupt_broken_characters(pandas_df, column):
+    """Corrupt broken characters that may be in a pandas df, but may also be in a different format"""
     if isinstance(pandas_df, pandas.DataFrame):
         result = BrokenCharacters(column=column, fraction=1.).transform(pandas_df)
     else:

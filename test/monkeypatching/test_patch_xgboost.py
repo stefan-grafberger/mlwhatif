@@ -5,6 +5,7 @@ Tests whether the monkey patching works for all patched sklearn methods
 from functools import partial
 from inspect import cleandoc
 from types import FunctionType
+from test.monkeypatching.test_patch_sklearn import filter_dag_for_nodes_with_ids
 
 import networkx
 import pandas
@@ -16,7 +17,6 @@ from mlwhatif import OperatorType, OperatorContext, FunctionInfo
 from mlwhatif.execution import _pipeline_executor
 from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
-from test.monkeypatching.test_patch_sklearn import filter_dag_for_nodes_with_ids
 
 
 def test_xgbclassifier():
