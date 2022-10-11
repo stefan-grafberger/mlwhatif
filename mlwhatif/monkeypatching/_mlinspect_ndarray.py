@@ -5,6 +5,7 @@ import numpy
 
 
 class MlinspectList(list):
+    """A list wrapper that can store mlinspect annotations"""
     _mlinspect_dag_node = None
     _mlinspect_annotation = None
 

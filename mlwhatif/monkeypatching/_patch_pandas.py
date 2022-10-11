@@ -564,7 +564,7 @@ class SeriesPatching:
     @gorilla.settings(allow_hit=True)
     def patched_fillna(self, value=None, method=None, axis=None, inplace=False, limit=None, downcast=None):
         """ Patch for ('pandas.core.series', 'fillna') """
-        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-locals,too-many-arguments
         original = gorilla.get_original_attribute(pandas.Series, 'fillna')
         func_args = {'value': value, 'method': method, 'axis': axis, 'inplace': inplace, 'limit': limit,
                      'downcast': downcast}

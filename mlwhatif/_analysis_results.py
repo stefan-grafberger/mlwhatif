@@ -113,4 +113,3 @@ class EstimationResults:
         Save the extracted original DAG to a file
         """
         save_fig_to_path(self.combined_optimized_dag, f"{prefix_optimised_analysis_dag}.png")
-

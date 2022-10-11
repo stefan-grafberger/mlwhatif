@@ -278,6 +278,7 @@ def visualize_dags(analysis_result, tmpdir, skip_combined_dag=False):
 
 
 def run_scenario_and_visualize_dags(dataset, scenario, tmpdir):
+    """Run a scenario and visualize the DAGs for debugging and save them to same temporary directory"""
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     analysis = get_analysis_for_scenario_and_dataset(scenario, dataset)
     with patch.object(sys, 'argv', ["mlwhatif", dataset, "fast_loading", "featurization_0", "logistic_regression"]):

@@ -13,7 +13,6 @@ import sklearn
 import tensorflow
 from fairlearn.metrics import MetricFrame
 from scipy.sparse import csr_matrix
-from tensorflow.python.keras.callbacks import History  # pylint: disable=no-name-in-module
 from tensorflow.python.keras.wrappers.scikit_learn import BaseWrapper  # pylint: disable=no-name-in-module
 
 from mlwhatif.instrumentation._dag_node import OptimizerInfo

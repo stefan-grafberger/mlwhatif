@@ -2,7 +2,7 @@
 The Permutation Feature Importance What-If Analysis
 """
 from functools import partial
-from typing import Iterable, Dict, List
+from typing import Iterable, Dict
 
 import networkx
 import pandas

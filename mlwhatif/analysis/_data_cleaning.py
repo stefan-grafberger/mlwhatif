@@ -145,7 +145,7 @@ class DataCleaning(WhatIfAnalysis):
         return self._analysis_id
 
     def generate_plans_to_try(self, dag: networkx.DiGraph) -> Iterable[Iterable[PipelinePatch]]:
-        # pylint: disable=too-many-locals
+        # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         predict_operators = find_nodes_by_type(dag, OperatorType.PREDICT)
         if len(predict_operators) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call which "
