@@ -5,7 +5,6 @@ import random
 
 import numpy as np
 import pandas as pd
-from faker import Faker
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model import SGDClassifier
@@ -34,10 +33,7 @@ def load_data():
     return reviews, ratings, products, categories
 
 
-def integrate_data(reviews, ratings, products, categories, fake):
-    start_date = fake.date_between(start_date=datetime.date(year=2011, month=1, day=1),
-                                   end_date=datetime.date(year=2013, month=6, day=1))
-
+def integrate_data(reviews, ratings, products, categories, start_date):
     reviews = reviews[reviews['review_date'] >= start_date.strftime('%Y-%m-%d')]
 
     reviews_with_ratings = reviews.merge(ratings, on='review_id')
@@ -52,13 +48,10 @@ def integrate_data(reviews, ratings, products, categories, fake):
     return reviews_with_products_and_ratings
 
 
-def compute_feature_and_label_data(reviews_with_products_and_ratings, final_columns, fake):
+def compute_feature_and_label_data(reviews_with_products_and_ratings, final_columns, split_date):
     reviews_with_products_and_ratings['is_helpful'] = reviews_with_products_and_ratings['helpful_votes'] > 0
 
     projected_reviews = reviews_with_products_and_ratings[final_columns]
-
-    split_date = fake.date_between(start_date=datetime.date(year=2013, month=12, day=1),
-                                   end_date=datetime.date(year=2015, month=1, day=1))
 
     train_data = projected_reviews[projected_reviews['review_date'] <= split_date.strftime('%Y-%m-%d')]
     train_labels = label_binarize(train_data['is_helpful'], classes=[True, False]).ravel()
@@ -94,18 +87,18 @@ seed = 42
 np.random.seed(seed)
 random.seed(seed)
 
-fake = Faker()
-fake.seed_instance(seed)
-
 numerical_columns = ['total_votes', 'star_rating']
 categorical_columns = ['vine', 'category']
 text_columns = ["review_body"]
 final_columns = numerical_columns + categorical_columns + text_columns + ['is_helpful', 'review_date']
 
 reviews, ratings, products, categories = load_data()
-integrated_data = integrate_data(reviews, ratings, products, categories, fake)
 
-train, train_labels, test, test_labels = compute_feature_and_label_data(integrated_data, final_columns, fake)
+start_date = datetime.date(2011, 6, 22)
+integrated_data = integrate_data(reviews, ratings, products, categories, start_date)
+
+split_date = datetime.date(2013, 12, 20)
+train, train_labels, test, test_labels = compute_feature_and_label_data(integrated_data, final_columns, split_date)
 
 featurization = get_featurization(numerical_columns, categorical_columns, text_columns)
 model = get_model()
