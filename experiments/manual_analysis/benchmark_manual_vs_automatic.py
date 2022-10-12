@@ -39,8 +39,7 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                  'vine': ErrorType.CAT_MISSING_VALUES,
                                  'star_rating': ErrorType.NUM_MISSING_VALUES,
                                  'total_votes': ErrorType.OUTLIERS,
-                                 'review_id': ErrorType.DUPLICATES,
-                                 # None: ErrorType.MISLABEL  # Very slow, not doing this makes experiments much faster
+                                 'review_id': ErrorType.DUPLICATES
                                  })
     else:
         raise ValueError(f"Invalid scenario or dataset: {scenario_name} {dataset_name}!")
