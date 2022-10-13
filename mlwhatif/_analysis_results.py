@@ -103,7 +103,7 @@ class EstimationResults:
         """
         Save the generated What-If DAGs to a file
         """
-        what_if_dags = [dag for _, dag in self.what_if_dags]
+        what_if_dags = [dag for patches, dag in self.what_if_dags]  # FIXME: Patch apply method call might still be necessary, test this
         for dag_index, what_if_dag in enumerate(what_if_dags):
             if prefix_analysis_dags is not None:
                 save_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-{dag_index}.png")

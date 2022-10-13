@@ -34,7 +34,7 @@ class DagExecutor:
 
         def execute_node(current_node: DagNode):
             if current_node.operator_info.operator == OperatorType.MISSING_OP:
-                raise Exception("Missing Ops not supported currently!")
+                raise Exception(f"Missing Ops not supported currently! The operator: {current_node}")
             inputs = self.get_required_values(dag, current_node)
             executable_processing_func = partial(current_node.processing_func, *inputs)
             optimizer_info, result_df = capture_optimizer_info(executable_processing_func)
