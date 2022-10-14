@@ -52,6 +52,7 @@ class AnalysisResults:
     combined_optimized_dag: networkx.DiGraph
     runtime_info: RuntimeInfo
     dag_extraction_info: DagExtractionInfo
+    pipeline_executor: any
 
     def save_original_dag_to_path(self, prefix_original_dag: str):
         """
@@ -63,10 +64,13 @@ class AnalysisResults:
         """
         Save the generated What-If DAGs to a file
         """
-        what_if_dags = [dag for _, dag in self.what_if_dags]
-        for dag_index, what_if_dag in enumerate(what_if_dags):
+        what_if_patches = [patches for patches, _ in self.what_if_dags]
+        for dag_index, what_if_patches in enumerate(what_if_patches):
+            original_copy = self.original_dag.copy()
+            for patch in what_if_patches:
+                patch.apply(original_copy, self.pipeline_executor)
             if prefix_analysis_dags is not None:
-                save_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-{dag_index}.png")
+                save_fig_to_path(original_copy, f"{prefix_analysis_dags}-{dag_index}.png")
 
     def save_optimised_what_if_dags_to_path(self, prefix_optimised_analysis_dag: str):
         """
@@ -85,6 +89,7 @@ class EstimationResults:
     combined_optimized_dag: networkx.DiGraph
     runtime_info: RuntimeInfo
     dag_extraction_info: DagExtractionInfo
+    pipeline_executor: any
 
     def print_estimate(self):
         """
@@ -103,7 +108,7 @@ class EstimationResults:
         """
         Save the generated What-If DAGs to a file
         """
-        what_if_dags = [dag for patches, dag in self.what_if_dags]  # FIXME: Patch apply method call might still be necessary, test this
+        what_if_dags = [dag for patches, dag in self.what_if_dags]
         for dag_index, what_if_dag in enumerate(what_if_dags):
             if prefix_analysis_dags is not None:
                 save_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-{dag_index}.png")

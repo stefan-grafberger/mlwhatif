@@ -120,7 +120,8 @@ class PipelineInspectorBuilder:
             analysis_result_with_empty_result.what_if_dags,
             analysis_result_with_empty_result.combined_optimized_dag,
             analysis_result_with_empty_result.runtime_info,
-            analysis_result_with_empty_result.dag_extraction_info)
+            analysis_result_with_empty_result.dag_extraction_info,
+            analysis_result_with_empty_result.pipeline_executor)
 
 
 class PipelineAnalyzer:

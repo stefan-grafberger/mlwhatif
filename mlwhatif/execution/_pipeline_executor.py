@@ -59,7 +59,7 @@ class PipelineExecutor:
     labels_to_extracted_plan_results = dict()
     analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
                                        RuntimeInfo(0, 0, 0, 0, None, None, 0, 0, 0, 0, 0, 0, 0),
-                                       DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0))
+                                       DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0), None)
     monkey_patch_duration = 0
     skip_optimizer = False
     force_optimization_rules = None
@@ -82,6 +82,7 @@ class PipelineExecutor:
         """
         Instrument and execute the pipeline and evaluate all checks
         """
+        self.analysis_results.pipeline_executor = self
         # TODO: Add option to reuse results
         # pylint: disable=too-many-arguments, too-many-locals
         if reset_state:
@@ -250,7 +251,7 @@ class PipelineExecutor:
         self.op_id_to_dag_node = dict()
         self.analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
                                                 RuntimeInfo(0, 0, 0, 0, None, None, 0, 0, 0, 0, 0, 0, 0),
-                                                DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0))
+                                                DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0), self)
         self.analyses = []
         self.original_pipeline_labels_to_extracted_plan_results = dict()
         self.labels_to_extracted_plan_results = dict()
