@@ -5,7 +5,6 @@ from inspect import cleandoc
 
 import networkx
 import numpy
-from humanize import naturalsize
 from networkx.drawing.nx_agraph import to_agraph
 
 from mlwhatif.instrumentation._dag_node import DagNode
@@ -22,6 +21,11 @@ def save_fig_to_path(extracted_dag, filename):
     """
     Create a figure of the extracted DAG and save it with some filename
     """
+    # pylint: disable-all
+    # Memory tracking is disabled by default for now
+    # from humanize import naturalsize
+    # {naturalsize(node.details.optimizer_info.memory)
+    #  if node.details.optimizer_info and isinstance(node.details.optimizer_info.memory, int) else ""}
 
     def get_new_node_label(node: DagNode):
         label = cleandoc(f"""
@@ -31,8 +35,6 @@ def save_fig_to_path(extracted_dag, filename):
                 {str(numpy.round(node.details.optimizer_info.runtime, 3)) + "ms"
                 if node.details.optimizer_info and isinstance(node.details.optimizer_info.runtime, (int, float)) 
                 else ""}
-                {naturalsize(node.details.optimizer_info.memory) if node.details.optimizer_info
-                and isinstance(node.details.optimizer_info.memory, int) else ""}
                 {node.details.description or ""}
                 """)
         return label

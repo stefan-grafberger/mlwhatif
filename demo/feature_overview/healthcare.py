@@ -51,12 +51,9 @@ def featurization():
 
 def execute_pipeline():
     # Relational preprocessing
-    patients = pd.read_csv(os.path.join(str(get_project_root()), "demo", "feature_overview",
-                                        "patients.csv"))
-    histories = pd.read_csv(os.path.join(str(get_project_root()), "demo", "feature_overview",
-                                         "histories.csv"))
-    test_histories = pd.read_csv(os.path.join(str(get_project_root()), "demo", "feature_overview",
-                                              "test_histories.csv"))
+    patients = pd.read_csv("patients.csv")
+    histories = pd.read_csv("histories.csv")
+    test_histories = pd.read_csv("test_histories.csv")
     histories = histories[histories['hospital'].isin(["AL", "AK", "AR"])]
     train = combine(patients, histories, consent_required=True)
     test = combine(patients, test_histories, consent_required=True)
