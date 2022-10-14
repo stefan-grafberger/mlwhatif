@@ -23,6 +23,7 @@ def detect_outlier_standard_deviation(x, n_std=3.0, fitted_detector=None):
         lower, upper = mean - cut_off, mean + cut_off
     else:
         lower, upper = fitted_detector
+    print(upper, lower)
     return lambda y: (y > upper) | (y < lower), (lower, upper)
 
 

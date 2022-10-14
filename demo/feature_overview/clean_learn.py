@@ -59,19 +59,19 @@ class CleaningMethod:
         return hash(self.method_name)
 
 
-def drop_outliers(input_df, column):
+def drop_outliers(input_df, column, outlier_func):
     """Drop rows with missing values in that column"""
-    outlier_indicator, _ = detect_outlier_standard_deviation(input_df[[column]])
-    input_df[outlier_indicator] = numpy.nan
-    result = input_df.dropna(subset=[column])
+    df_copy = input_df.copy()
+    indexes = df_copy[column].loc[outlier_func].index
+    result = df_copy.drop(indexes)
     return result
 
 
-def impute_outliers(input_df, column, constant):
+def impute_outliers(input_df, column, constant, outlier_func):
     """Drop rows with missing values in that column"""
     df_copy = input_df.copy()
-    outlier_indicator, _ = detect_outlier_standard_deviation(df_copy[[column]])
-    df_copy.loc[df_copy[[column]][outlier_indicator].index, column] = constant
+    indexes = df_copy[column].loc[outlier_func].index
+    df_copy.loc[indexes, column] = constant
     return df_copy
 
 
@@ -80,13 +80,14 @@ class CleanLearn(WhatIfAnalysis):
     The Data Cleaning What-If Analysis
     """
 
-    def __init__(self, column, error, cleanings, constant):
+    def __init__(self, column, error, cleanings, impute_constant, outlier_func):
         self.column = column
         self.error = error
         self.cleanings = cleanings
         self._score_nodes_and_linenos = []
-        self.constant = constant
-        self._analysis_id = (self.column, self.error, self.constant, *self.cleanings,)
+        self.impute_constant = impute_constant
+        self.outlier_func = outlier_func
+        self._analysis_id = (self.column, self.error, self.impute_constant, *self.cleanings,)
 
     @property
     def analysis_id(self):
@@ -120,7 +121,7 @@ class CleanLearn(WhatIfAnalysis):
                     required_cols = list(feature_cols)
                 else:
                     required_cols = [self.column]
-                filter_func = partial(drop_outliers, column=self.column)
+                filter_func = partial(drop_outliers, column=self.column, outlier_func=self.outlier_func)
 
                 new_test_cleaning_node = DagNode(singleton.get_next_op_id(),
                                                   BasicCodeLocation("Data Cleaning", None),
@@ -141,7 +142,8 @@ class CleanLearn(WhatIfAnalysis):
                                                                                        self._score_nodes_and_linenos)
                 patches_for_variant.extend(extraction_nodes)
                 only_reads_column = [self.column]
-                projection = partial(impute_outliers, column=self.column, constant=self.constant)
+                projection = partial(impute_outliers, column=self.column, constant=self.impute_constant,
+                                     outlier_func=self.outlier_func)
                 new_projection_node = DagNode(singleton.get_next_op_id(),
                                               BasicCodeLocation("DataCorruption", None),
                                               OperatorContext(OperatorType.PROJECTION_MODIFY, None),
