@@ -1,23 +1,20 @@
 """
 The Cleanlearn What-If Analysis for the running example
 """
+# pylint: disable-all
 import dataclasses
 from enum import Enum
 from functools import partial
 from typing import Iterable, Dict, Callable
 
 import networkx
-import numpy
 import pandas
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
 from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_columns_used_as_feature
-from mlwhatif.analysis._cleaning_methods import MissingValueCleaner, DuplicateCleaner, OutlierCleaner, MislabelCleaner, \
-    detect_outlier_standard_deviation
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
-from mlwhatif.execution._patches import DataFiltering, DataTransformer, ModelPatch, PipelinePatch, DataProjection
-from mlwhatif.instrumentation._dag_node import OptimizerInfo
+from mlwhatif.execution._patches import DataFiltering, PipelinePatch, DataProjection
 from mlwhatif.execution._pipeline_executor import singleton
 
 

@@ -1,3 +1,4 @@
+# pylint: disable-all
 import os
 import warnings
 
@@ -13,7 +14,6 @@ from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.models import Sequential
 
 from example_pipelines.healthcare.healthcare_utils import MyW2VTransformer, MyKerasClassifier
-from mlwhatif.utils import get_project_root
 
 # Disable tensorflow API and optimization warnings for a readable output
 warnings.filterwarnings('ignore')

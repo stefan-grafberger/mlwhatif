@@ -1,23 +1,19 @@
 """
 The Operator Impact What-If Analysis
 """
-from collections import defaultdict
+# pylint: disable-all
 from functools import partial
-from typing import Iterable, Dict, List, Callable
+from typing import Iterable, Dict
 
 import networkx
 import pandas
-from sklearn.compose import ColumnTransformer, make_column_selector
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder, RobustScaler
+from sklearn.preprocessing import FunctionTransformer, RobustScaler
 
 from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type, find_train_or_test_pipeline_part_end, \
-    filter_estimator_transformer_edges
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, find_train_or_test_pipeline_part_end
 from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
-from mlwhatif.execution._patches import PipelinePatch, OperatorReplacement, OperatorRemoval, ModelPatch
+from mlwhatif.execution._patches import PipelinePatch, OperatorReplacement, ModelPatch
 from mlwhatif.execution._pipeline_executor import singleton
 from mlwhatif.monkeypatching._monkey_patching_utils import wrap_in_mlinspect_array_if_necessary
 
