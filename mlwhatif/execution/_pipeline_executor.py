@@ -18,13 +18,16 @@ from nbconvert import PythonExporter
 
 from mlwhatif.instrumentation._call_capture_transformer import CallCaptureTransformer
 from mlwhatif import monkeypatching
+from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif._analysis_results import AnalysisResults, RuntimeInfo, DagExtractionInfo
 from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
 from mlwhatif.execution._dag_executor import DagExecutor
 from mlwhatif.optimization._multi_query_optimizer import MultiQueryOptimizer
 from mlwhatif.optimization._query_optimization_rules import QueryOptimizationRule
 
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(levelname)-5s %(message)s',
+                    level=logging.INFO,
+                    datefmt='%Y-%m-%d %H:%M:%S')
 for _ in ("gensim", "tensorflow", "h5py"):
     logging.getLogger(_).setLevel(logging.CRITICAL)
 
@@ -55,11 +58,13 @@ class PipelineExecutor:
     original_pipeline_labels_to_extracted_plan_results = dict()
     labels_to_extracted_plan_results = dict()
     analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
-                                       RuntimeInfo(0, 0, 0, 0, 0, 0, 0, 0, 0),
-                                       DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0))
+                                       RuntimeInfo(0, 0, 0, 0, None, None, 0, 0, 0, 0, 0, 0, 0),
+                                       DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0), None)
     monkey_patch_duration = 0
     skip_optimizer = False
     force_optimization_rules = None
+    estimate_only = False
+    operators_to_runtime_during_analysis = []
 
     def run(self, *,
             notebook_path: str or None = None,
@@ -71,13 +76,14 @@ class PipelineExecutor:
             track_code_references: bool = True,
             custom_monkey_patching: List[any] = None,
             skip_optimizer=False,
-            force_optimization_rules: List[QueryOptimizationRule] or None=None
+            force_optimization_rules: List[QueryOptimizationRule] or None = None,
+            estimate_only=False
             ) -> AnalysisResults:
         """
         Instrument and execute the pipeline and evaluate all checks
         """
-        # TODO: Add option to reuse results
-        # pylint: disable=too-many-arguments
+        # pylint: disable=too-many-arguments,too-many-locals
+        self.analysis_results.pipeline_executor = self
         if reset_state:
             # reset_state=False should only be used internally for performance experiments etc!
             # It does not ensure the same inspections are still used as args etc.
@@ -93,6 +99,7 @@ class PipelineExecutor:
         self.analyses = analyses
         self.skip_optimizer = skip_optimizer
         self.force_optimization_rules = force_optimization_rules
+        self.estimate_only = estimate_only
 
         if extraction_info is None:
             logger.info(f'Running instrumented original pipeline...')
@@ -108,6 +115,24 @@ class PipelineExecutor:
                                                singleton.monkey_patch_duration)
             self.analysis_results.runtime_info.original_pipeline_without_importing_and_monkeypatching = \
                 orig_instrumented_exec_duration * 1000
+
+            original_estimator_runtime = [node.details.optimizer_info.runtime
+                                          for node in self.analysis_results.original_dag.nodes
+                                          if node.operator_info.operator == OperatorType.ESTIMATOR]
+            self.analysis_results.runtime_info.original_model_training = sum(original_estimator_runtime)
+            train_data_nodes = [node for node in self.analysis_results.original_dag.nodes
+                                if node.operator_info.operator == OperatorType.TRAIN_DATA]
+            if len(train_data_nodes) != 0:
+                train_data_node = train_data_nodes[0]
+                self.analysis_results.runtime_info.original_pipeline_train_data_shape = \
+                    train_data_node.details.optimizer_info.shape
+            test_data_nodes = [node for node in self.analysis_results.original_dag.nodes
+                               if node.operator_info.operator == OperatorType.TEST_DATA]
+            if len(test_data_nodes) != 0:
+                test_data_node = test_data_nodes[0]
+                self.analysis_results.runtime_info.original_pipeline_test_data_shape = \
+                    test_data_node.details.optimizer_info.shape
+            # FIXME: Training Data Matrix shape
             logger.info(f'---RUNTIME: Original pipeline execution took {orig_instrumented_exec_duration * 1000} ms '
                         f'(excluding imports and monkey-patching)')
         else:
@@ -143,20 +168,35 @@ class PipelineExecutor:
             self.analysis_results.runtime_info.what_if_plan_generation = plan_generation_duration * 1000
 
         # TODO: Add try catch statements so we can see intermediate DAGs even if something goes wrong for debugging
-        MultiQueryOptimizer(self, self.force_optimization_rules)\
+        MultiQueryOptimizer(self, self.force_optimization_rules) \
             .create_optimized_plan(self.analysis_results, self.skip_optimizer)
 
-        logger.info(f"Executing generated plans")
-        execution_start = time.time()
-        DagExecutor().execute(self.analysis_results.combined_optimized_dag)
-        execution_duration = time.time() - execution_start
-        logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
-        self.analysis_results.runtime_info.what_if_execution = execution_duration * 1000
+        if self.estimate_only is False:
+            logger.info(f"Executing generated plans")
+            execution_start = time.time()
+            if self.skip_optimizer is False:
+                DagExecutor(self).execute(self.analysis_results.combined_optimized_dag)
+            else:
+                for _, what_if_dag in self.analysis_results.what_if_dags:
+                    DagExecutor(self).execute(what_if_dag)
+            execution_duration = time.time() - execution_start
+            logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
+            self.analysis_results.runtime_info.what_if_execution = execution_duration * 1000
 
-        self.labels_to_extracted_plan_results.update(self.original_pipeline_labels_to_extracted_plan_results)
-        for analysis in self.analyses:
-            report = analysis.generate_final_report(self.labels_to_extracted_plan_results)
-            self.analysis_results.analysis_to_result_reports[analysis] = report
+            analysis_estimator_runtimes = [optimizer_info.runtime
+                                           for node, optimizer_info in self.operators_to_runtime_during_analysis
+                                           if node.operator_info.operator == OperatorType.ESTIMATOR]
+            self.analysis_results.runtime_info.what_if_execution_combined_model_training = sum(
+                analysis_estimator_runtimes)
+            # Some debugging code to look at actual executon time of different operators in optimized plan
+            # ops_with_runtimes = [(operator, optimizer_info.runtime) for operator, optimizer_info
+            #                      in self.operators_to_runtime_during_analysis]
+            # ops_with_runtimes.sort(key=lambda tuple: tuple[1], reverse=True)
+            # ops_with_runtimes = [(op.details.description, runtime) for op, runtime in ops_with_runtimes]
+            self.labels_to_extracted_plan_results.update(self.original_pipeline_labels_to_extracted_plan_results)
+            for analysis in self.analyses:
+                report = analysis.generate_final_report(self.labels_to_extracted_plan_results)
+                self.analysis_results.analysis_to_result_reports[analysis] = report
 
     def run_instrumented_pipeline(self, notebook_path, python_code, python_path):
         """
@@ -209,8 +249,8 @@ class PipelineExecutor:
         self.track_code_references = True
         self.op_id_to_dag_node = dict()
         self.analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
-                                                RuntimeInfo(0, 0, 0, 0, 0, 0, 0, 0, 0),
-                                                DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0))
+                                                RuntimeInfo(0, 0, 0, 0, None, None, 0, 0, 0, 0, 0, 0, 0),
+                                                DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0), self)
         self.analyses = []
         self.original_pipeline_labels_to_extracted_plan_results = dict()
         self.labels_to_extracted_plan_results = dict()
@@ -218,6 +258,8 @@ class PipelineExecutor:
         self.monkey_patch_duration = 0
         self.skip_optimizer = False
         self.force_optimization_rules = None
+        self.estimate_only = False
+        self.operators_to_runtime_during_analysis = []
 
     @staticmethod
     def instrument_pipeline(parsed_ast, track_code_references):

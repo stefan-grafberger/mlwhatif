@@ -2,8 +2,12 @@
 The place where the DAG execution happens
 """
 import dataclasses
+from copy import copy
+from functools import partial
+
 import networkx
 
+from mlwhatif.execution._stat_tracking import capture_optimizer_info
 from mlwhatif.instrumentation._operator_types import OperatorType
 from mlwhatif.instrumentation._dag_node import DagNode
 
@@ -19,6 +23,9 @@ class DagNodeResult:
 class DagExecutor:
     """ Executes given DAGs using the processing_funcs started with each DagNode """
 
+    def __init__(self, pipeline_executor):
+        self.pipeline_executor = pipeline_executor
+
     def execute(self, dag: networkx.DiGraph):
         """ Execute a given input DAG """
         # TODO: Currently, this returns the final result from some DagNode without children but in the future,
@@ -27,9 +34,11 @@ class DagExecutor:
 
         def execute_node(current_node: DagNode):
             if current_node.operator_info.operator == OperatorType.MISSING_OP:
-                raise Exception("Missing Ops not supported currently!")
+                raise Exception(f"Missing Ops not supported currently! The operator: {current_node}")
             inputs = self.get_required_values(dag, current_node)
-            result_df = current_node.processing_func(*inputs)
+            executable_processing_func = partial(current_node.processing_func, *inputs)
+            optimizer_info, result_df = capture_optimizer_info(executable_processing_func)
+            self.pipeline_executor.operators_to_runtime_during_analysis.append((copy(current_node), optimizer_info))
             result = self.replace_node_with_result(dag, current_node, result_df)
             return result
 

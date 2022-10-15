@@ -312,7 +312,7 @@ class DataProjection(DataPatch):
     train_not_test: bool
     modifies_column: str
     only_reads_column: List[str]
-    maybe_udf_split_info: UdfSplitInfo
+    maybe_udf_split_info: UdfSplitInfo or None
 
 
     def apply(self, dag: networkx.DiGraph, pipeline_executor):

@@ -5,7 +5,7 @@ Tests whether the optimization works
 # TODO: Clean up these tests
 import os
 
-from experiments.simple_filter_addition_push_up import execute_filter_addition_push_up_ideal_case, \
+from experiments.optimizations.simple_filter_addition_push_up import execute_filter_addition_push_up_ideal_case, \
     execute_filter_addition_push_up_average_case, execute_filter_addition_push_up_worst_case_no_original_pipeline, \
     execute_filter_addition_push_up_worst_case_original_pipeline
 
@@ -43,8 +43,6 @@ def test_filter_push_up_ideal_case(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_filter_push_up_average_case(tmpdir):
@@ -80,8 +78,6 @@ def test_filter_push_up_average_case(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_filter_push_up_worst_case_no_original_pipeline(tmpdir):
@@ -118,8 +114,6 @@ def test_filter_push_up_worst_case_no_original_pipeline(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_filter_push_up_worst_case_original_pipeline(tmpdir):
@@ -156,5 +150,3 @@ def test_filter_push_up_worst_case_original_pipeline(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))

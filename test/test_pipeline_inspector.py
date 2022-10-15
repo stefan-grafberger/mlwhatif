@@ -110,6 +110,31 @@ def test_dag_extraction_reuse():
     assert report.shape == (19, 4)
 
 
+def test_estimation():
+    """
+    Tests whether the Data Cleaning analysis works for a very simple pipeline with a DecisionTree score
+    """
+    data_cleaning = DataCleaning({'education': ErrorType.CAT_MISSING_VALUES,
+                                  'age': ErrorType.NUM_MISSING_VALUES,
+                                  'hours-per-week': ErrorType.OUTLIERS,
+                                  None: ErrorType.MISLABEL})
+
+    estimation_result = PipelineAnalyzer \
+        .on_pipeline_from_py_file(ADULT_COMPLEX_PY) \
+        .add_what_if_analysis(data_cleaning) \
+        .estimate()
+
+    estimation_result.print_estimate()
+
+    analysis_result = PipelineAnalyzer \
+        .on_previously_extracted_pipeline(estimation_result.dag_extraction_info) \
+        .add_what_if_analysis(data_cleaning) \
+        .execute()
+
+    report = analysis_result.analysis_to_result_reports[data_cleaning]
+    assert report.shape == (19, 4)
+
+
 def assert_healthcare_pipeline_output_complete(inspector_result):
     """ Assert that the healthcare DAG was extracted completely """
     for dag_node, _ in inspector_result.analysis_to_result_reports.items():

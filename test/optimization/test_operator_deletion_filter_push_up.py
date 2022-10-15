@@ -5,7 +5,7 @@ Tests whether the optimization works
 # TODO: Clean up these tests
 import os
 
-from experiments.operator_deletion_filter_push_up import execute_operator_deletion_filter_push_up_ideal_case, \
+from experiments.optimizations.operator_deletion_filter_push_up import execute_operator_deletion_filter_push_up_ideal_case, \
     execute_operator_deletion_filter_push_up_worst_case_safety_inactive, \
     execute_operator_deletion_filter_push_up_worst_case_safety_active, \
     execute_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario, \
@@ -46,8 +46,6 @@ def test_operator_deletion_filter_push_up_ideal_case(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_operator_deletion_filter_push_up_worst_case_safety_inactive(tmpdir):
@@ -84,8 +82,6 @@ def test_operator_deletion_filter_push_up_worst_case_safety_inactive(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_operator_deletion_filter_push_up_worst_case_safety_active(tmpdir):
@@ -122,8 +118,6 @@ def test_operator_deletion_filter_push_up_worst_case_safety_active(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_operator_deletion_filter_push_up_average_case(tmpdir):
@@ -159,8 +153,6 @@ def test_operator_deletion_filter_push_up_average_case(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_scenario(tmpdir):
@@ -197,8 +189,6 @@ def test_operator_deletion_filter_push_up_worst_case_safety_too_defensive_for_sc
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_operator_deletion_filter_push_up_worst_case_only_some_filters_worth_pushing_up(tmpdir):
@@ -235,5 +225,3 @@ def test_operator_deletion_filter_push_up_worst_case_only_some_filters_worth_pus
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))

@@ -3,6 +3,7 @@ Monkey patching for sklearn
 """
 # pylint: disable=too-many-lines
 import dataclasses
+import warnings
 from functools import partial
 from typing import Callable
 
@@ -11,10 +12,15 @@ import numpy
 import pandas
 import scipy
 import tensorflow
-from sklearn import preprocessing, compose, tree, impute, linear_model, model_selection, metrics, dummy, decomposition
+from joblib import Parallel, delayed
+from scipy import sparse
+from scipy.sparse import csr_matrix
+from sklearn import preprocessing, compose, tree, impute, linear_model, model_selection, metrics, dummy, decomposition, \
+    svm, pipeline
 from sklearn.feature_extraction import text
 from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.metrics import accuracy_score
+from sklearn.pipeline import _fit_transform_one, _transform_one
 from tensorflow.keras.wrappers import scikit_learn as keras_sklearn_external  # pylint: disable=no-name-in-module
 from tensorflow.python.keras.wrappers import scikit_learn as keras_sklearn_internal  # pylint: disable=no-name-in-module
 
@@ -599,6 +605,354 @@ class SklearnRobustScalerPatching:
         return new_result
 
 
+@gorilla.patches(text.CountVectorizer)
+class SklearnCountVectorizerPatching:
+    """ Patches for sklearn RobustScaler"""
+
+    # pylint: disable=too-few-public-methods
+
+    @gorilla.name('__init__')
+    @gorilla.settings(allow_hit=True)
+    def patched__init__(self, *, input='content', encoding='utf-8',
+                        decode_error='strict', strip_accents=None,
+                        lowercase=True, preprocessor=None, tokenizer=None,
+                        stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
+                        ngram_range=(1, 1), analyzer='word',
+                        max_df=1.0, min_df=1, max_features=None,
+                        vocabulary=None, binary=False, dtype=numpy.int64,
+                        mlinspect_caller_filename=None, mlinspect_lineno=None,
+                        mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
+                        mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
+        """ Patch for ('sklearn.feature_extraction.text', 'CountVectorizer') """
+        # pylint: disable=no-method-argument, attribute-defined-outside-init,redefined-builtin,too-many-locals
+        original = gorilla.get_original_attribute(text.CountVectorizer, '__init__')
+
+        self.mlinspect_caller_filename = mlinspect_caller_filename
+        self.mlinspect_lineno = mlinspect_lineno
+        self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
+        self.mlinspect_optional_source_code = mlinspect_optional_source_code
+        self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+        self.mlinspect_transformer_node_id = mlinspect_transformer_node_id
+
+        self.mlinspect_non_data_func_args = {'input': input, 'encoding': encoding,
+                                             'decode_error': decode_error, 'strip_accents': strip_accents,
+                                             'lowercase': lowercase, 'preprocessor': preprocessor,
+                                             'tokenizer': tokenizer, 'stop_words': stop_words,
+                                             'token_pattern': token_pattern, 'ngram_range': ngram_range,
+                                             'analyzer': analyzer, 'max_df': max_df, 'min_df': min_df,
+                                             'max_features': max_features, 'vocabulary': vocabulary,
+                                             'binary': binary, 'dtype': dtype}
+
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            original(self, **self.mlinspect_non_data_func_args)
+
+            self.mlinspect_caller_filename = caller_filename
+            self.mlinspect_lineno = lineno
+            self.mlinspect_optional_code_reference = optional_code_reference
+            self.mlinspect_optional_source_code = optional_source_code
+
+        return execute_patched_func_no_op_id(original, execute_inspections, self, **self.mlinspect_non_data_func_args)
+
+    @gorilla.name('fit_transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_fit_transform(self, *args, **kwargs):
+        """ Patch for ('sklearn.feature_extraction.text.CountVectorizer', 'fit_transform') """
+        # pylint: disable=no-method-argument
+        self.mlinspect_fit_transform_active = True  # pylint: disable=attribute-defined-outside-init
+        original = gorilla.get_original_attribute(text.CountVectorizer, 'fit_transform')
+        function_info = FunctionInfo('sklearn.feature_extraction.text', 'CountVectorizer')
+        input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
+                                    self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
+
+        def processing_func(input_df):
+            transformer = text.CountVectorizer(**self.mlinspect_non_data_func_args)
+            transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+            transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+            return transformed_data
+
+        operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+        initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
+                           BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                           operator_context,
+                           DagNodeDetails("Count Vectorizer: fit_transform", ['array'], optimizer_info),
+                           get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
+
+        function_call_result = FunctionCallResult(result)
+        add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+        new_result = function_call_result.function_result
+        assert isinstance(new_result, (MlinspectNdarray, csr_matrix))
+        self.mlinspect_fit_transform_active = False  # pylint: disable=attribute-defined-outside-init
+        return new_result
+
+    @gorilla.name('transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_transform(self, *args, **kwargs):
+        """ Patch for ('sklearn.feature_extraction.text.CountVectorizer', 'transform') """
+        # pylint: disable=no-method-argument
+        original = gorilla.get_original_attribute(text.CountVectorizer, 'transform')
+        if not self.mlinspect_fit_transform_active:
+            function_info = FunctionInfo('sklearn.feature_extraction.text', 'CountVectorizer')
+            input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
+                                        self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
+
+            def processing_func(fit_data, input_df):
+                transformer = fit_data._mlinspect_annotation  # pylint: disable=protected-access
+                transformed_data = transformer.transform(input_df, *args[1:], **kwargs)
+                return transformed_data
+
+            operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+            initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
+            dag_node = DagNode(singleton.get_next_op_id(),
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("Count Vectorizer: transform", ['array'], optimizer_info),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
+
+            function_call_result = FunctionCallResult(result)
+            transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
+            add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
+            new_result = function_call_result.function_result
+            assert isinstance(new_result, (MlinspectNdarray, csr_matrix))
+        else:
+            new_result = original(self, *args, **kwargs)
+        return new_result
+
+
+@gorilla.patches(text.TfidfTransformer)
+class SklearnTfidfTransformerPatching:
+    """ Patches for sklearn RobustScaler"""
+
+    # pylint: disable=too-few-public-methods
+
+    @gorilla.name('__init__')
+    @gorilla.settings(allow_hit=True)
+    def patched__init__(self, *, norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False,
+                        mlinspect_caller_filename=None, mlinspect_lineno=None,
+                        mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
+                        mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
+        """ Patch for ('sklearn.feature_extraction.text', 'TfidfTransformer') """
+        # pylint: disable=no-method-argument, attribute-defined-outside-init
+        original = gorilla.get_original_attribute(text.TfidfTransformer, '__init__')
+
+        self.mlinspect_caller_filename = mlinspect_caller_filename
+        self.mlinspect_lineno = mlinspect_lineno
+        self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
+        self.mlinspect_optional_source_code = mlinspect_optional_source_code
+        self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+        self.mlinspect_transformer_node_id = mlinspect_transformer_node_id
+
+        self.mlinspect_non_data_func_args = {'norm': norm, 'use_idf': use_idf, 'smooth_idf': smooth_idf,
+                                             'sublinear_tf': sublinear_tf}
+
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            original(self, **self.mlinspect_non_data_func_args)
+
+            self.mlinspect_caller_filename = caller_filename
+            self.mlinspect_lineno = lineno
+            self.mlinspect_optional_code_reference = optional_code_reference
+            self.mlinspect_optional_source_code = optional_source_code
+
+        return execute_patched_func_no_op_id(original, execute_inspections, self, **self.mlinspect_non_data_func_args)
+
+    @gorilla.name('fit_transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_fit_transform(self, *args, **kwargs):
+        """ Patch for ('sklearn.feature_extraction.text.TfidfTransformer', 'fit_transform') """
+        # pylint: disable=no-method-argument
+        self.mlinspect_fit_transform_active = True  # pylint: disable=attribute-defined-outside-init
+        original = gorilla.get_original_attribute(text.TfidfTransformer, 'fit_transform')
+        function_info = FunctionInfo('sklearn.feature_extraction.text', 'TfidfTransformer')
+        input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
+                                    self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
+
+        def processing_func(input_df):
+            transformer = text.TfidfTransformer(**self.mlinspect_non_data_func_args)
+            transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+            transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+            return transformed_data
+
+        operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+        initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
+                           BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                           operator_context,
+                           DagNodeDetails("Tfidf Transformer: fit_transform", ['array'], optimizer_info),
+                           get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
+
+        function_call_result = FunctionCallResult(result)
+        add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+        new_result = function_call_result.function_result
+        assert isinstance(new_result, (MlinspectNdarray, csr_matrix))
+        self.mlinspect_fit_transform_active = False  # pylint: disable=attribute-defined-outside-init
+        return new_result
+
+    @gorilla.name('transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_transform(self, *args, **kwargs):
+        """ Patch for ('sklearn.feature_extraction.text.TfidfTransformer', 'transform') """
+        # pylint: disable=no-method-argument
+        original = gorilla.get_original_attribute(text.TfidfTransformer, 'transform')
+        if not self.mlinspect_fit_transform_active:
+            function_info = FunctionInfo('sklearn.feature_extraction.text', 'TfidfTransformer')
+            input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
+                                        self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
+
+            def processing_func(fit_data, input_df):
+                transformer = fit_data._mlinspect_annotation  # pylint: disable=protected-access
+                transformed_data = transformer.transform(input_df, *args[1:], **kwargs)
+                return transformed_data
+
+            operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+            initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
+            dag_node = DagNode(singleton.get_next_op_id(),
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("Tfidf Transformer: transform", ['array'], optimizer_info),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
+
+            function_call_result = FunctionCallResult(result)
+            transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
+            add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
+            new_result = function_call_result.function_result
+            assert isinstance(new_result, (MlinspectNdarray, csr_matrix))
+        else:
+            new_result = original(self, *args, **kwargs)
+        return new_result
+
+
+@gorilla.patches(decomposition.TruncatedSVD)
+class SklearnTruncatedSVDPatching:
+    """ Patches for sklearn TruncatedSVD"""
+
+    # pylint: disable=too-few-public-methods
+
+    @gorilla.name('__init__')
+    @gorilla.settings(allow_hit=True)
+    def patched__init__(self, n_components=2, *, algorithm="randomized", n_iter=5,
+                        random_state=None, tol=0., mlinspect_caller_filename=None, mlinspect_lineno=None,
+                        mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
+                        mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
+        """ Patch for ('sklearn.decomposition._truncated_svd', 'TruncatedSVD') """
+        # pylint: disable=no-method-argument, attribute-defined-outside-init
+        original = gorilla.get_original_attribute(decomposition.TruncatedSVD, '__init__')
+
+        self.mlinspect_caller_filename = mlinspect_caller_filename
+        self.mlinspect_lineno = mlinspect_lineno
+        self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
+        self.mlinspect_optional_source_code = mlinspect_optional_source_code
+        self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+        self.mlinspect_transformer_node_id = mlinspect_transformer_node_id
+
+        self.mlinspect_non_data_func_args = {'n_components': n_components, 'algorithm': algorithm, 'n_iter': n_iter,
+                                             'random_state': random_state, 'tol': tol}
+
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            original(self, **self.mlinspect_non_data_func_args)
+
+            self.mlinspect_caller_filename = caller_filename
+            self.mlinspect_lineno = lineno
+            self.mlinspect_optional_code_reference = optional_code_reference
+            self.mlinspect_optional_source_code = optional_source_code
+
+        return execute_patched_func_no_op_id(original, execute_inspections, self, **self.mlinspect_non_data_func_args)
+
+    @gorilla.name('fit_transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_fit_transform(self, *args, **kwargs):
+        """ Patch for ('sklearn.decomposition._truncated_svd.TruncatedSVD', 'fit_transform') """
+        # pylint: disable=no-method-argument
+        self.mlinspect_fit_transform_active = True  # pylint: disable=attribute-defined-outside-init
+        original = gorilla.get_original_attribute(decomposition.TruncatedSVD, 'fit_transform')
+        function_info = FunctionInfo('sklearn.decomposition._truncated_svd', 'TruncatedSVD')
+        input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
+                                    self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
+
+        def processing_func(input_df):
+            transformer = decomposition.TruncatedSVD(**self.mlinspect_non_data_func_args)
+            transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
+            transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
+            return transformed_data
+
+        operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+        initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
+                           BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                           operator_context,
+                           DagNodeDetails("Truncated SVD: fit_transform", ['array'], optimizer_info),
+                           get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
+
+        function_call_result = FunctionCallResult(result)
+        add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+        new_result = function_call_result.function_result
+        assert isinstance(new_result, (MlinspectNdarray, csr_matrix))
+        self.mlinspect_fit_transform_active = False  # pylint: disable=attribute-defined-outside-init
+        return new_result
+
+    @gorilla.name('transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_transform(self, *args, **kwargs):
+        """ Patch for ('sklearn.decomposition._truncated_svd.TruncatedSVD', 'transform') """
+        # pylint: disable=no-method-argument
+        original = gorilla.get_original_attribute(decomposition.TruncatedSVD, 'transform')
+        if not self.mlinspect_fit_transform_active:
+            function_info = FunctionInfo('sklearn.decomposition._truncated_svd', 'TruncatedSVD')
+            input_info = get_input_info(args[0], self.mlinspect_caller_filename, self.mlinspect_lineno, function_info,
+                                        self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
+
+            def processing_func(fit_data, input_df):
+                transformer = fit_data._mlinspect_annotation  # pylint: disable=protected-access
+                transformed_data = transformer.transform(input_df, *args[1:], **kwargs)
+                return transformed_data
+
+            operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+            initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
+            dag_node = DagNode(singleton.get_next_op_id(),
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("Truncated SVD: transform", ['array'], optimizer_info),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
+
+            function_call_result = FunctionCallResult(result)
+            transformer_dag_node = get_dag_node_for_id(self.mlinspect_transformer_node_id)
+            add_dag_node(dag_node, [transformer_dag_node, input_info.dag_node], function_call_result)
+            new_result = function_call_result.function_result
+            assert isinstance(new_result, (MlinspectNdarray, csr_matrix))
+        else:
+            new_result = original(self, *args, **kwargs)
+        return new_result
+
+
 @gorilla.patches(decomposition.PCA)
 class SklearnPCAPatching:
     """ Patches for sklearn PCA"""
@@ -710,6 +1064,158 @@ class SklearnPCAPatching:
             assert isinstance(new_result, MlinspectNdarray)
         else:
             new_result = original(self, *args, **kwargs)
+        return new_result
+
+
+@gorilla.patches(pipeline.FeatureUnion)
+class SklearnFeatureUnionPatching:
+    """ Patches for sklearn StandardScaler"""
+
+    # pylint: disable=too-few-public-methods
+
+    @gorilla.name('__init__')
+    @gorilla.settings(allow_hit=True)
+    def patched__init__(self, transformer_list, *, n_jobs=None,
+                        transformer_weights=None, verbose=False,
+                        mlinspect_caller_filename=None, mlinspect_lineno=None,
+                        mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
+                        mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
+        """ Patch for ('sklearn.pipeline', 'FeatureUnion') """
+        # pylint: disable=no-method-argument, attribute-defined-outside-init
+        original = gorilla.get_original_attribute(pipeline.FeatureUnion, '__init__')
+
+        self.mlinspect_caller_filename = mlinspect_caller_filename
+        self.mlinspect_lineno = mlinspect_lineno
+        self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
+        self.mlinspect_optional_source_code = mlinspect_optional_source_code
+        self.mlinspect_fit_transform_active = mlinspect_fit_transform_active
+        self.mlinspect_transformer_node_id = mlinspect_transformer_node_id
+
+        self.mlinspect_non_data_func_args = {'transformer_list': transformer_list, 'n_jobs': n_jobs,
+                                             'transformer_weights': transformer_weights, 'verbose': verbose}
+
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            original(self, **self.mlinspect_non_data_func_args)
+
+            self.mlinspect_caller_filename = caller_filename
+            self.mlinspect_lineno = lineno
+            self.mlinspect_optional_code_reference = optional_code_reference
+            self.mlinspect_optional_source_code = optional_source_code
+
+        return execute_patched_func_no_op_id(original, execute_inspections, self, **self.mlinspect_non_data_func_args)
+
+    @gorilla.name('fit_transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_fit_transform(self, X, y=None, **fit_params):
+        """ Patch for ('sklearn.pipeline.FeatureUnion', 'fit_transform') """
+        # pylint: disable=no-method-argument, invalid-name,too-many-locals,invalid-name
+        results = self._parallel_func(X, y, fit_params, _fit_transform_one)  # pylint: disable=no-member
+        if not results:
+            # All transformers are None
+            raise Exception("TODO: Implement support for FeatureUnion without transformers")
+            # return numpy.zeros((X.shape[0], 0))
+
+        Xs, transformers = zip(*results)
+        self._update_transformer_list(transformers)  # pylint: disable=no-member
+
+        self.mlinspect_fit_transform_active = True  # pylint: disable=attribute-defined-outside-init
+        function_info = FunctionInfo('sklearn.pipeline', 'FeatureUnion')
+        input_infos = []
+        for input_df_obj in Xs:
+            input_info = get_input_info(input_df_obj, self.mlinspect_caller_filename, self.mlinspect_lineno,
+                                        function_info, self.mlinspect_optional_code_reference,
+                                        self.mlinspect_optional_source_code)
+            input_infos.append(input_info)
+
+        def processing_func(*input_dfs):
+            # Rest of orignal fit_transform
+            if any(sparse.issparse(f) for f in input_dfs):
+                hstack_result = sparse.hstack(input_dfs).tocsr()
+            else:
+                hstack_result = numpy.hstack(input_dfs)
+            transformed_data = wrap_in_mlinspect_array_if_necessary(hstack_result)
+            return transformed_data
+
+        operator_context = OperatorContext(OperatorType.CONCATENATION, function_info)
+        initial_func = partial(processing_func, *Xs)
+        optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
+        dag_node_id = singleton.get_next_op_id()
+        self.mlinspect_transformer_node_id = dag_node_id  # pylint: disable=attribute-defined-outside-init
+        dag_node = DagNode(dag_node_id,
+                           BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                           operator_context,
+                           DagNodeDetails("Feature Union", ['array'], optimizer_info),
+                           get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                          self.mlinspect_optional_source_code),
+                           processing_func)
+
+        function_call_result = FunctionCallResult(result)
+        input_dag_nodes = [input_info.dag_node for input_info in input_infos]
+        add_dag_node(dag_node, input_dag_nodes, function_call_result)
+        new_result = function_call_result.function_result
+        assert isinstance(new_result, (MlinspectNdarray, csr_matrix))
+        self.mlinspect_fit_transform_active = False  # pylint: disable=attribute-defined-outside-init
+        return new_result
+
+    @gorilla.name('transform')
+    @gorilla.settings(allow_hit=True)
+    def patched_transform(self, X):
+        """ Patch for ('sklearn.pipeline.FeatureUnion', 'transform') """
+        # pylint: disable=no-method-argument,invalid-name,too-many-locals,no-member
+        original = gorilla.get_original_attribute(pipeline.FeatureUnion, 'transform')
+        if not self.mlinspect_fit_transform_active:
+            # First part up to concat of the original transform
+            for _, t in self.transformer_list:
+                # TODO: Remove in 0.24 when None is removed
+                if t is None:
+                    warnings.warn("Using None as a transformer is deprecated "
+                                  "in version 0.22 and will be removed in "
+                                  "version 0.24. Please use 'drop' instead.",
+                                  FutureWarning)
+                    continue
+            Xs = Parallel(n_jobs=self.n_jobs)(
+                delayed(_transform_one)(trans, X, None, weight)
+                for name, trans, weight in self._iter())
+            if not Xs:
+                # All transformers are None
+                raise Exception("TODO: Implement support for FeatureUnion without transformers")
+                # return numpy.zeros((X.shape[0], 0))
+
+            function_info = FunctionInfo('sklearn.pipeline', 'FeatureUnion')
+            input_infos = []
+            for input_df_obj in Xs:
+                input_info = get_input_info(input_df_obj, self.mlinspect_caller_filename, self.mlinspect_lineno,
+                                            function_info, self.mlinspect_optional_code_reference,
+                                            self.mlinspect_optional_source_code)
+                input_infos.append(input_info)
+
+            def processing_func(*input_dfs):
+                if any(sparse.issparse(f) for f in input_dfs):
+                    hstack_result = sparse.hstack(input_dfs).tocsr()
+                else:
+                    hstack_result = numpy.hstack(input_dfs)
+                transformed_data = wrap_in_mlinspect_array_if_necessary(hstack_result)
+                return transformed_data
+
+            operator_context = OperatorContext(OperatorType.CONCATENATION, function_info)
+            initial_func = partial(processing_func, *Xs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
+            dag_node = DagNode(singleton.get_next_op_id(),
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("Feature Union", ['array'], optimizer_info),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func)
+
+            function_call_result = FunctionCallResult(result)
+            input_dag_nodes = [input_info.dag_node for input_info in input_infos]
+            add_dag_node(dag_node, input_dag_nodes, function_call_result)
+            new_result = function_call_result.function_result
+            assert isinstance(new_result, (MlinspectNdarray, csr_matrix))
+        else:
+            new_result = original(self, X)
         return new_result
 
 
@@ -952,7 +1458,7 @@ class SklearnOneHotEncoderPatching:
                         mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
                         mlinspect_fit_transform_active=False, mlinspect_transformer_node_id=None):
         """ Patch for ('sklearn.preprocessing._encoders', 'OneHotEncoder') """
-        # pylint: disable=no-method-argument, attribute-defined-outside-init
+        # pylint: disable=no-method-argument, attribute-defined-outside-init,redefined-outer-name
         original = gorilla.get_original_attribute(preprocessing.OneHotEncoder, '__init__')
 
         self.mlinspect_caller_filename = mlinspect_caller_filename
@@ -1217,8 +1723,9 @@ class SklearnFunctionTransformerPatching:
                                     self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
 
         def processing_func(input_df):
+            input_df_copy = input_df.copy()
             transformer = preprocessing.FunctionTransformer(**self.mlinspect_non_data_func_args)
-            transformed_data = transformer.fit_transform(input_df, *args[1:], **kwargs)
+            transformed_data = transformer.fit_transform(input_df_copy, *args[1:], **kwargs)
             transformed_data = wrap_in_mlinspect_array_if_necessary(transformed_data)
             transformed_data._mlinspect_annotation = transformer  # pylint: disable=protected-access
             return transformed_data
@@ -1953,7 +2460,7 @@ class SklearnKerasClassifierPatching:
 
     # pylint: disable=too-few-public-methods
     @gorilla.patch(keras_sklearn_internal.BaseWrapper, name='__init__', settings=gorilla.Settings(allow_hit=True))
-    def patched__init__(self, mlinspect_caller_filename=None, mlinspect_lineno=None,
+    def patched__init__(self, build_fn, mlinspect_caller_filename=None, mlinspect_lineno=None,
                         mlinspect_optional_code_reference=None, mlinspect_optional_source_code=None,
                         mlinspect_estimator_node_id=None, **sk_params):
         """ Patch for ('tensorflow.python.keras.wrappers.scikit_learn', 'KerasClassifier') """
@@ -1966,11 +2473,11 @@ class SklearnKerasClassifierPatching:
         self.mlinspect_optional_source_code = mlinspect_optional_source_code
         self.mlinspect_estimator_node_id = mlinspect_estimator_node_id
 
-        self.mlinspect_non_data_func_args = sk_params
+        self.mlinspect_non_data_func_args = {'build_fn': build_fn, **sk_params}
 
         def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
             """ Execute inspections, add DAG node """
-            original(self, **sk_params)
+            original(self, **self.mlinspect_non_data_func_args)
 
             self.mlinspect_caller_filename = caller_filename
             self.mlinspect_lineno = lineno
@@ -1983,6 +2490,14 @@ class SklearnKerasClassifierPatching:
     def patched_fit(self, *args, **kwargs):
         """ Patch for ('tensorflow.python.keras.wrappers.scikit_learn.KerasClassifier', 'fit') """
         # pylint: disable=no-method-argument, too-many-locals
+        class KerasClassifierAdjustableInputDims(keras_sklearn_external.KerasClassifier):
+            """A Keras Wrapper that sets input_dim on fit"""
+
+            def fit(self, x, y, **kwargs):
+                """Create and fit a simple neural network"""
+                self.sk_params['input_dim'] = x.shape[1]
+                super().fit(x, y, **kwargs)
+
         original = gorilla.get_original_attribute(keras_sklearn_external.KerasClassifier, 'fit')
         if not call_info_singleton.param_search_active:
             function_info = FunctionInfo('tensorflow.python.keras.wrappers.scikit_learn', 'KerasClassifier')
@@ -1999,8 +2514,7 @@ class SklearnKerasClassifierPatching:
                     estimator.fit(train_data, train_labels, *args[2:], **kwargs)
                     return estimator
                 param_search_runtime = 0
-                create_func = partial(tensorflow.keras.wrappers.scikit_learn.KerasClassifier,
-                                      **self.mlinspect_non_data_func_args)
+                create_func = partial(KerasClassifierAdjustableInputDims, **self.mlinspect_non_data_func_args)
             else:
                 def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
                     estimator = make_grid_search_func(tensorflow.keras.wrappers.scikit_learn.KerasClassifier(
@@ -2011,8 +2525,8 @@ class SklearnKerasClassifierPatching:
                 processing_func = partial(processing_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
                 def create_func_with_grid_search(make_grid_search_func):
-                    return make_grid_search_func(tensorflow.keras.wrappers.scikit_learn.
-                                                 KerasClassifier(**self.mlinspect_non_data_func_args))
+                    return make_grid_search_func(KerasClassifierAdjustableInputDims(
+                        **self.mlinspect_non_data_func_args))
                 create_func = partial(create_func_with_grid_search, call_info_singleton.make_grid_search_func)
 
                 call_info_singleton.make_grid_search_func = None
@@ -2426,5 +2940,234 @@ class SklearnDummyClassifierPatching:
             new_result = execute_patched_func_indirect_allowed(execute_inspections)
         else:
             original = gorilla.get_original_attribute(dummy.DummyClassifier, 'predict')
+            new_result = original(self, *args)
+        return new_result
+
+
+@gorilla.patches(svm.SVC)
+class SklearnSVCPatching:
+    """ Patches for sklearn SVC"""
+
+    # pylint: disable=too-few-public-methods
+
+    @gorilla.name('__init__')
+    @gorilla.settings(allow_hit=True)
+    def patched__init__(self, *, C=1.0, kernel='rbf', degree=3, gamma='scale',
+                        coef0=0.0, shrinking=True, probability=False,
+                        tol=1e-3, cache_size=200, class_weight=None,
+                        verbose=False, max_iter=-1, decision_function_shape='ovr',
+                        break_ties=False,
+                        random_state=None, mlinspect_caller_filename=None,
+                        mlinspect_lineno=None, mlinspect_optional_code_reference=None,
+                        mlinspect_optional_source_code=None, mlinspect_estimator_node_id=None):
+        """ Patch for ('sklearn.svm._classes', 'SVC') """
+        # pylint: disable=no-method-argument, attribute-defined-outside-init, too-many-locals, invalid-name
+        original = gorilla.get_original_attribute(svm.SVC, '__init__')
+
+        self.mlinspect_caller_filename = mlinspect_caller_filename
+        self.mlinspect_lineno = mlinspect_lineno
+        self.mlinspect_optional_code_reference = mlinspect_optional_code_reference
+        self.mlinspect_optional_source_code = mlinspect_optional_source_code
+        self.mlinspect_estimator_node_id = mlinspect_estimator_node_id
+
+        self.mlinspect_non_data_func_args = {'C': C, 'kernel': kernel, 'degree': degree, 'gamma': gamma,
+                                             'coef0': coef0, 'shrinking': shrinking, 'probability': probability,
+                                             'tol': tol, 'cache_size': cache_size, 'class_weight': class_weight,
+                                             'verbose': verbose, 'max_iter': max_iter,
+                                             'decision_function_shape': decision_function_shape,
+                                             'break_ties': break_ties, 'random_state': random_state
+                                             }
+
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            original(self, **self.mlinspect_non_data_func_args)
+
+            self.mlinspect_caller_filename = caller_filename
+            self.mlinspect_lineno = lineno
+            self.mlinspect_optional_code_reference = optional_code_reference
+            self.mlinspect_optional_source_code = optional_source_code
+
+        return execute_patched_func_no_op_id(original, execute_inspections, self,
+                                             **self.mlinspect_non_data_func_args)
+
+    @gorilla.name('fit')
+    @gorilla.settings(allow_hit=True)
+    def patched_fit(self, *args, **kwargs):
+        """ Patch for ('sklearn.svm._classes.SVC', 'fit') """
+        # pylint: disable=no-method-argument, too-many-locals
+        original = gorilla.get_original_attribute(svm.SVC, 'fit')
+        if not call_info_singleton.param_search_active:
+            function_info = FunctionInfo('sklearn.svm._classes', 'SVC')
+
+            _, train_data_node, train_data_result = add_train_data_node(self, args[0], function_info)
+            _, train_labels_node, train_labels_result = add_train_label_node(self, args[1], function_info)
+
+            if call_info_singleton.make_grid_search_func is None:
+                def processing_func(train_data, train_labels):
+                    estimator = svm.SVC(**self.mlinspect_non_data_func_args)
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+
+                param_search_runtime = 0
+                create_func = partial(svm.SVC, **self.mlinspect_non_data_func_args)
+            else:
+                def processing_func_with_grid_search(make_grid_search_func, train_data, train_labels):
+                    estimator = make_grid_search_func(svm.SVC(
+                        **self.mlinspect_non_data_func_args))
+                    fitted_estimator = estimator.fit(train_data, train_labels, *args[2:], **kwargs)
+                    return fitted_estimator
+
+                processing_func = partial(processing_func_with_grid_search,
+                                          call_info_singleton.make_grid_search_func)
+
+                def create_func_with_grid_search(make_grid_search_func):
+                    return make_grid_search_func(svm.SVC(**self.mlinspect_non_data_func_args))
+
+                create_func = partial(create_func_with_grid_search, call_info_singleton.make_grid_search_func)
+
+                call_info_singleton.make_grid_search_func = None
+                param_search_runtime = call_info_singleton.param_search_duration
+                call_info_singleton.param_search_duration = 0
+
+            # Estimator
+            operator_context = OperatorContext(OperatorType.ESTIMATOR, function_info)
+            # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
+            initial_func = partial(original, self, train_data_result, train_labels_result, *args[2:], **kwargs)
+            optimizer_info, _ = capture_optimizer_info(initial_func, self, estimator_transformer_state=self)
+            optimizer_info_with_search = OptimizerInfo(optimizer_info.runtime + param_search_runtime,
+                                                       optimizer_info.shape, optimizer_info.memory)
+            self.mlinspect_estimator_node_id = singleton.get_next_op_id()  # pylint: disable=attribute-defined-outside-init
+            dag_node = DagNode(self.mlinspect_estimator_node_id,
+                               BasicCodeLocation(self.mlinspect_caller_filename, self.mlinspect_lineno),
+                               operator_context,
+                               DagNodeDetails("SVC", [], optimizer_info_with_search),
+                               get_optional_code_info_or_none(self.mlinspect_optional_code_reference,
+                                                              self.mlinspect_optional_source_code),
+                               processing_func,
+                               create_func)
+            function_call_result = FunctionCallResult(None)
+            add_dag_node(dag_node, [train_data_node, train_labels_node], function_call_result)
+        else:
+            original(self, *args, **kwargs)
+        return self
+
+    @gorilla.name('score')
+    @gorilla.settings(allow_hit=True)
+    def patched_score(self, *args, **kwargs):
+        """ Patch for ('sklearn.svm._classes.SVC', 'score') """
+
+        # pylint: disable=no-method-argument
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
+            if len(kwargs) != 0:
+                raise Exception("TODO: Support other metrics in model.score calls!")
+
+            function_info = FunctionInfo('sklearn.svm._classes.SVC', 'score')
+            # Test data
+            _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
+                                                                         function_info,
+                                                                         lineno,
+                                                                         optional_code_reference,
+                                                                         optional_source_code,
+                                                                         caller_filename)
+
+            # Test labels
+            _, test_labels_node, test_labels_result = add_test_label_node(args[1],
+                                                                          caller_filename,
+                                                                          function_info,
+                                                                          lineno,
+                                                                          optional_code_reference,
+                                                                          optional_source_code)
+
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            def processing_func_score(predictions, test_labels):
+                score = accuracy_score(predictions, test_labels)
+                return score
+
+            # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
+
+            original_predict = gorilla.get_original_attribute(svm.SVC, 'predict')
+            initial_func_predict = partial(original_predict, self, test_data_result)
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("SVC", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference,
+                                                                      optional_source_code),
+                                       processing_func_predict)
+            estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
+
+            initial_func_score = partial(processing_func_score, result_predict, test_labels_result)
+            optimizer_info_score, result_score = capture_optimizer_info(initial_func_score)
+            operator_context_score = OperatorContext(OperatorType.SCORE, function_info)
+            dag_node_score = DagNode(singleton.get_next_op_id(),
+                                     BasicCodeLocation(caller_filename, lineno),
+                                     operator_context_score,
+                                     DagNodeDetails("Accuracy", [], optimizer_info_score),
+                                     get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                                     processing_func_score)
+            function_call_result = FunctionCallResult(result_score)
+            add_dag_node(dag_node_score, [dag_node_predict, test_labels_node],
+                         function_call_result)
+            return result_score
+
+        if not call_info_singleton.param_search_active:
+            new_result = execute_patched_func_indirect_allowed(execute_inspections)
+        else:
+            original = gorilla.get_original_attribute(svm.SVC, 'score')
+            new_result = original(self, *args, **kwargs)
+        return new_result
+
+    @gorilla.name('predict')
+    @gorilla.settings(allow_hit=True)
+    def patched_predict(self, *args):
+        """ Patch for ('sklearn.svm._classes.SVC', 'predict') """
+
+        # pylint: disable=no-method-argument
+        def execute_inspections(_, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            # pylint: disable=too-many-locals
+            function_info = FunctionInfo('sklearn.svm._classes.SVC', 'predict')
+            # Test data
+            _, test_data_node, test_data_result = add_test_data_dag_node(args[0],
+                                                                         function_info,
+                                                                         lineno,
+                                                                         optional_code_reference,
+                                                                         optional_source_code,
+                                                                         caller_filename)
+
+            def processing_func_predict(estimator, test_data):
+                predictions = estimator.predict(test_data)
+                return predictions
+
+            original_predict = gorilla.get_original_attribute(svm.SVC, 'predict')
+            initial_func_predict = partial(original_predict, self, test_data_result)
+            optimizer_info_predict, result_predict = capture_optimizer_info(initial_func_predict)
+            operator_context_predict = OperatorContext(OperatorType.PREDICT, function_info)
+            dag_node_predict = DagNode(singleton.get_next_op_id(),
+                                       BasicCodeLocation(caller_filename, lineno),
+                                       operator_context_predict,
+                                       DagNodeDetails("SVC", [], optimizer_info_predict),
+                                       get_optional_code_info_or_none(optional_code_reference,
+                                                                      optional_source_code),
+                                       processing_func_predict)
+            estimator_dag_node = get_dag_node_for_id(self.mlinspect_estimator_node_id)
+            function_call_result = FunctionCallResult(result_predict)
+            add_dag_node(dag_node_predict, [estimator_dag_node, test_data_node], function_call_result)
+            new_result = function_call_result.function_result
+            return new_result
+
+        if not call_info_singleton.param_search_active:
+            new_result = execute_patched_func_indirect_allowed(execute_inspections)
+        else:
+            original = gorilla.get_original_attribute(svm.SVC, 'predict')
             new_result = original(self, *args)
         return new_result

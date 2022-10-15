@@ -4,7 +4,7 @@ The Data Corruption What-If Analysis
 from enum import Enum
 from functools import partial
 from types import FunctionType
-from typing import Iterable, Dict, Callable, Union
+from typing import Iterable, Dict, Callable, Union, Tuple, List
 
 import networkx
 import numpy
@@ -32,11 +32,22 @@ class CorruptionType(Enum):
     SCALING = "scaling"
 
 
+def corrupt_broken_characters(pandas_df, column):
+    """Corrupt broken characters that may be in a pandas df, but may also be in a different format"""
+    if isinstance(pandas_df, pandas.DataFrame):
+        result = BrokenCharacters(column=column, fraction=1.).transform(pandas_df)
+    else:
+        pandas_df = pandas.DataFrame(pandas_df)
+        result = BrokenCharacters(column=column, fraction=1.).transform(pandas_df)
+        result = result[column]
+    return result
+
+
 CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES = {
-    CorruptionType.CATEGORICAL_SHIFT: lambda pandas_df, column: CategoricalShift('education', 1.).transform(pandas_df),
+    CorruptionType.CATEGORICAL_SHIFT:
+        lambda pandas_df, column: CategoricalShift(column=column, fraction=1.).transform(pandas_df),
     CorruptionType.MISSING_VALUES: lambda pandas_df, column: Scaling(column=column, fraction=1.).transform(pandas_df),
-    CorruptionType.BROKEN_CHARACTERS:
-        lambda pandas_df, column: BrokenCharacters(column=column, fraction=1.).transform(pandas_df),
+    CorruptionType.BROKEN_CHARACTERS: corrupt_broken_characters,
     CorruptionType.GAUSSIAN_NOISE:
         lambda pandas_df, column: GaussianNoise(column=column, fraction=1.).transform(pandas_df),
     CorruptionType.SCALING: lambda pandas_df, column: Scaling(column=column, fraction=1.).transform(pandas_df)
@@ -49,18 +60,21 @@ class DataCorruption(WhatIfAnalysis):
     """
 
     def __init__(self,
-                 column_to_corruption: Dict[str, Union[FunctionType, CorruptionType]],
+                 column_to_corruption: List[Tuple[str, Union[FunctionType, CorruptionType]]],
                  corruption_percentages: Iterable[Union[float, Callable]] or None = None,
                  also_corrupt_train: bool = False):
         # pylint: disable=unsubscriptable-object
         self.also_corrupt_train = also_corrupt_train
         self.column_to_corruption = column_to_corruption
-        for column, corruption_function in self.column_to_corruption.items():
+        column_to_corruption_with_replaced_corruption_types = []
+        for column, corruption_function in self.column_to_corruption:
             if isinstance(corruption_function, CorruptionType):
                 # noinspection PyTypeChecker
-                self.column_to_corruption[column] = partial(CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES[corruption_function],
-                                                            column=column)
-        self.column_to_corruption = list(self.column_to_corruption.items())
+                column_to_corruption_with_replaced_corruption_types.append(
+                    (column, partial(CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES[corruption_function], column=column)))
+            else:
+                column_to_corruption_with_replaced_corruption_types.append((column, corruption_function))
+        self.column_to_corruption = column_to_corruption_with_replaced_corruption_types
         if corruption_percentages is None:
             self.corruption_percentages = [0.2, 0.5, 0.9]
         else:
@@ -151,11 +165,18 @@ class DataCorruption(WhatIfAnalysis):
             return indexes_to_corrupt
 
         def corrupt_df(pandas_df, corruption_index_selection_func, corruption_function, column):
+            if isinstance(pandas_df, pandas.Series):
+                pandas_df = pandas.DataFrame(pandas_df)
+                was_series = True
+            else:
+                was_series = False
             indexes_to_corrupt = corruption_index_selection_func(pandas_df)
             return_df = pandas_df.copy()
             corrupted_df = return_df.loc[indexes_to_corrupt, :]
             completely_corrupted_df = corruption_function(corrupted_df)
             return_df.loc[indexes_to_corrupt, column] = completely_corrupted_df[column]
+            if was_series is True:
+                return_df = return_df[column]
             return return_df
 
         # We need to use partial here to avoid problems with late bindings, see

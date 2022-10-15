@@ -14,6 +14,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import label_binarize, OneHotEncoder
+from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from tensorflow.python.keras.wrappers.scikit_learn import KerasClassifier  # pylint: disable=no-name-in-module
 from testfixtures import compare, Comparison, RangeComparison
@@ -343,7 +344,7 @@ def test_pca():
                                                "ColumnTransformer(transformers=[\n"
                                                "    ('numeric', StandardScaler(), ['A']),\n"
                                                "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"),
-                              Comparison(FunctionType)                              )
+                              Comparison(FunctionType))
     expected_transformer = DagNode(6,
                                    BasicCodeLocation("<string-source>", 14),
                                    OperatorContext(OperatorType.TRANSFORMER,
@@ -375,13 +376,13 @@ def test_pca():
     transform_node = list(inspector_result.original_dag.nodes)[2]
     pandas_df = pandas.DataFrame({'A': [5, 1, 100, 2], 'B': [5, 1, 100, 2]})
     fit_transformed_result = fit_transform_node.processing_func(pandas_df)
-    expected_fit_transform_data = numpy.array([[-3.11126984e+01,  1.17350380e-14], [-3.67695526e+01, -2.15521568e-15],
-                                               [ 1.03237590e+02,  1.99309735e-15], [-3.53553391e+01, -2.26556491e-15]])
+    expected_fit_transform_data = numpy.array([[-3.11126984e+01, 1.17350380e-14], [-3.67695526e+01, -2.15521568e-15],
+                                               [1.03237590e+02, 1.99309735e-15], [-3.53553391e+01, -2.26556491e-15]])
     assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
 
     test_df = pandas.DataFrame({'A': [50, 2, 10, 1], 'B': [50, 2, 10, 1]})
     encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
-    expected = numpy.array([[ 3.25269119e+01,  4.88498131e-15], [-3.53553391e+01, -5.77315973e-15],
+    expected = numpy.array([[3.25269119e+01, 4.88498131e-15], [-3.53553391e+01, -5.77315973e-15],
                             [-2.40416306e+01, -3.99680289e-15], [-3.67695526e+01, -4.44089210e-15]])
     assert numpy.allclose(encoded_data, expected)
 
@@ -3655,3 +3656,786 @@ def test_dummy_classifier_predict():
     test_data = test_data_node.processing_func(test_df[['C', 'D']])
     test_predict = predict_node.processing_func(fitted_estimator, test_data)
     assert len(test_predict) == 2
+
+
+def test_svc():
+    """
+    Tests whether the monkey patching of ('sklearn.tree._classes', 'DecisionTreeClassifier') works
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler
+                from sklearn.svm import SVC
+                import numpy as np
+
+                df = pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+
+                train = StandardScaler().fit_transform(df[['A', 'B']])
+                target = label_binarize(df['target'], classes=['no', 'yes'])
+
+                clf = SVC(random_state=42)
+                clf = clf.fit(train, target)
+
+                test_predict = clf.predict(pd.DataFrame([[0., 0.], [0.6, 0.6]], columns=['A', 'B']))
+                print(test_predict)
+                expected = np.array([1., 1.])
+                assert np.allclose(test_predict, expected)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[10])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[9])
+    inspector_result.original_dag.remove_node(list(inspector_result.original_dag.nodes)[8])
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 6),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.frame', 'DataFrame')),
+                                   DagNodeDetails(None, ['A', 'B', 'target'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(6, 5, 6, 95),
+                                                    "pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], "
+                                                    "'target': ['no', 'no', 'yes', 'yes']})"),
+                                   Comparison(partial))
+    expected_data_projection = DagNode(1,
+                                       BasicCodeLocation("<string-source>", 8),
+                                       OperatorContext(OperatorType.PROJECTION,
+                                                       FunctionInfo('pandas.core.frame', '__getitem__')),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(8, 39, 8, 53), "df[['A', 'B']]"),
+                                       Comparison(FunctionType))
+    expected_standard_scaler = DagNode(2,
+                                       BasicCodeLocation("<string-source>", 8),
+                                       OperatorContext(OperatorType.TRANSFORMER,
+                                                       FunctionInfo('sklearn.preprocessing._data', 'StandardScaler')),
+                                       DagNodeDetails('Standard Scaler: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 10000))),
+                                       OptionalCodeInfo(CodeReference(8, 8, 8, 24), 'StandardScaler()'),
+                                       Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_data_projection, arg_index=0)
+    expected_dag.add_edge(expected_data_projection, expected_standard_scaler, arg_index=0)
+    expected_label_projection = DagNode(3,
+                                        BasicCodeLocation("<string-source>", 9),
+                                        OperatorContext(OperatorType.PROJECTION,
+                                                        FunctionInfo('pandas.core.frame', '__getitem__')),
+                                        DagNodeDetails("to ['target']", ['target'],
+                                                       OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                     RangeComparison(0, 800))),
+                                        OptionalCodeInfo(CodeReference(9, 24, 9, 36), "df['target']"),
+                                        Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_label_projection, arg_index=0)
+    expected_label_encode = DagNode(4,
+                                    BasicCodeLocation("<string-source>", 9),
+                                    OperatorContext(OperatorType.PROJECTION_MODIFY,
+                                                    FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                 RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(9, 9, 9, 60),
+                                                     "label_binarize(df['target'], classes=['no', 'yes'])"),
+                                    Comparison(FunctionType))
+    expected_dag.add_edge(expected_label_projection, expected_label_encode, arg_index=0)
+    expected_train_data = DagNode(5,
+                                  BasicCodeLocation("<string-source>", 11),
+                                  OperatorContext(OperatorType.TRAIN_DATA,
+                                                  FunctionInfo('sklearn.svm._classes', 'SVC')),
+                                  DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                                RangeComparison(0, 800))),
+                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'SVC(random_state=42)'),
+                                  Comparison(FunctionType))
+    expected_dag.add_edge(expected_standard_scaler, expected_train_data, arg_index=0)
+    expected_train_labels = DagNode(6,
+                                    BasicCodeLocation("<string-source>", 11),
+                                    OperatorContext(OperatorType.TRAIN_LABELS,
+                                                    FunctionInfo('sklearn.svm._classes', 'SVC')),
+                                    DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                  RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'SVC(random_state=42)'),
+                                    Comparison(FunctionType))
+    expected_dag.add_edge(expected_label_encode, expected_train_labels, arg_index=0)
+    expected_decision_tree = DagNode(7,
+                                     BasicCodeLocation("<string-source>", 11),
+                                     OperatorContext(OperatorType.ESTIMATOR,
+                                                     FunctionInfo('sklearn.svm._classes', 'SVC')),
+                                     DagNodeDetails('SVC', [],
+                                                    OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                  RangeComparison(0, 10000))),
+                                     OptionalCodeInfo(CodeReference(11, 6, 11, 26),
+                                                      'SVC(random_state=42)'),
+                                     Comparison(FunctionType),
+                                     Comparison(partial))
+    expected_dag.add_edge(expected_train_data, expected_decision_tree, arg_index=0)
+    expected_dag.add_edge(expected_train_labels, expected_decision_tree, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.original_dag.nodes)[7]
+    train_data_node = list(inspector_result.original_dag.nodes)[5]
+    train_label_node = list(inspector_result.original_dag.nodes)[6]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_data = train_data_node.processing_func(train_df[['C', 'D']])
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    train_labels = train_label_node.processing_func(train_labels)
+    fitted_estimator = fit_node.processing_func(train_data, train_labels)
+    assert isinstance(fitted_estimator, SVC)
+    assert isinstance(fit_node.make_classifier_func(), SVC)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
+    test_score = fitted_estimator.score(test_df[['C', 'D']], test_labels)
+    assert test_score == 0.5
+
+
+def test_svc_score():
+    """
+    Tests whether the monkey patching of ('sklearn.tree._classes.DecisionTreeClassifier', 'score') works
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler
+                from sklearn.svm import SVC
+                import numpy as np
+
+                df = pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+
+                train = StandardScaler().fit_transform(df[['A', 'B']])
+                target = label_binarize(df['target'], classes=['no', 'yes'])
+
+                clf = SVC(random_state=42)
+                clf = clf.fit(train, target)
+
+                test_df = pd.DataFrame({'A': [0., 0.6], 'B':  [0., 0.6], 'target': ['no', 'yes']})
+                test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
+                test_score = clf.score(test_df[['A', 'B']], test_labels)
+                assert test_score == 0.5
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, {7, 10, 11, 12, 13, 14, 15}, 16)
+
+    expected_dag = networkx.DiGraph()
+    expected_data_projection = DagNode(11,
+                                       BasicCodeLocation("<string-source>", 16),
+                                       OperatorContext(OperatorType.PROJECTION,
+                                                       FunctionInfo('pandas.core.frame', '__getitem__')),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                    RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(16, 23, 16, 42), "test_df[['A', 'B']]"),
+                                       Comparison(FunctionType))
+    expected_test_data = DagNode(12,
+                                 BasicCodeLocation("<string-source>", 16),
+                                 OperatorContext(OperatorType.TEST_DATA,
+                                                 FunctionInfo('sklearn.svm._classes.SVC', 'score')),
+                                 DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                RangeComparison(0, 800))),
+                                 OptionalCodeInfo(CodeReference(16, 13, 16, 56),
+                                                  "clf.score(test_df[['A', 'B']], test_labels)"),
+                                 Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
+    expected_label_encode = DagNode(10,
+                                    BasicCodeLocation("<string-source>", 15),
+                                    OperatorContext(OperatorType.PROJECTION_MODIFY,
+                                                    FunctionInfo('sklearn.preprocessing._label', 'label_binarize')),
+                                    DagNodeDetails("label_binarize, classes: ['no', 'yes']", ['array'],
+                                                   OptimizerInfo(RangeComparison(0, 200), (2, 1),
+                                                                 RangeComparison(0, 800))),
+                                    OptionalCodeInfo(CodeReference(15, 14, 15, 70),
+                                                     "label_binarize(test_df['target'], classes=['no', 'yes'])"),
+                                    Comparison(FunctionType))
+    expected_test_labels = DagNode(13,
+                                   BasicCodeLocation("<string-source>", 16),
+                                   OperatorContext(OperatorType.TEST_LABELS,
+                                                   FunctionInfo('sklearn.svm._classes.SVC', 'score')),
+                                   DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 200), (2, 1),
+                                                                                 RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(16, 13, 16, 56),
+                                                    "clf.score(test_df[['A', 'B']], test_labels)"),
+                                   Comparison(FunctionType))
+    expected_dag.add_edge(expected_label_encode, expected_test_labels, arg_index=0)
+    expected_classifier = DagNode(7,
+                                  BasicCodeLocation("<string-source>", 11),
+                                  OperatorContext(OperatorType.ESTIMATOR,
+                                                  FunctionInfo('sklearn.svm._classes', 'SVC')),
+                                  DagNodeDetails('SVC', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                          RangeComparison(0, 10000))),
+                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'SVC(random_state=42)'),
+                                  Comparison(FunctionType),
+                                  Comparison(partial))
+    expected_predict = DagNode(14,
+                               BasicCodeLocation("<string-source>", 16),
+                               OperatorContext(OperatorType.PREDICT,
+                                               FunctionInfo('sklearn.svm._classes.SVC', 'score')),
+                               DagNodeDetails('SVC', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                       RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(16, 13, 16, 56),
+                                                "clf.score(test_df[['A', 'B']], test_labels)"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
+
+    expected_score = DagNode(15,
+                             BasicCodeLocation("<string-source>", 16),
+                             OperatorContext(OperatorType.SCORE,
+                                             FunctionInfo('sklearn.svm._classes.SVC', 'score')),
+                             DagNodeDetails('Accuracy', [], OptimizerInfo(RangeComparison(0, 1000), (1, 1),
+                                                                          RangeComparison(0, 800))),
+                             OptionalCodeInfo(CodeReference(16, 13, 16, 56),
+                                              "clf.score(test_df[['A', 'B']], test_labels)"),
+                             Comparison(FunctionType))
+    expected_dag.add_edge(expected_predict, expected_score, arg_index=0)
+    expected_dag.add_edge(expected_test_labels, expected_score, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.original_dag.nodes)[0]
+    predict_node = list(inspector_result.original_dag.nodes)[5]
+    score_node = list(inspector_result.original_dag.nodes)[6]
+    test_data_node = list(inspector_result.original_dag.nodes)[3]
+    test_label_node = list(inspector_result.original_dag.nodes)[4]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
+    assert isinstance(fitted_estimator, SVC)
+    assert isinstance(fit_node.make_classifier_func(), SVC)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_data = test_data_node.processing_func(test_df[['C', 'D']])
+    test_labels = label_binarize(test_df['target'], classes=['no', 'yes'])
+    test_labels = test_label_node.processing_func(test_labels)
+    test_predictions = predict_node.processing_func(fitted_estimator, test_data)
+    test_score = score_node.processing_func(test_predictions, test_labels)
+    assert test_score == 0.5
+
+
+def test_svc_predict():
+    """
+    Tests whether the monkey patching of ('sklearn.tree._classes.DecisionTreeClassifier', 'predict') works
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler
+                from sklearn.svm import SVC
+                import numpy as np
+
+                df = pd.DataFrame({'A': [0, 1, 2, 3], 'B': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+
+                train = StandardScaler().fit_transform(df[['A', 'B']])
+                target = label_binarize(df['target'], classes=['no', 'yes'])
+
+                clf = SVC(random_state=42)
+                clf = clf.fit(train, target)
+
+                test_df = pd.DataFrame({'A': [0., 0.6], 'B':  [0., 0.6], 'target': ['no', 'yes']})
+                predictions = clf.predict(test_df[['A', 'B']])
+                assert len(predictions) == 2
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, {7, 9, 10, 11}, 12)
+
+    expected_dag = networkx.DiGraph()
+    expected_data_projection = DagNode(9,
+                                       BasicCodeLocation("<string-source>", 15),
+                                       OperatorContext(OperatorType.PROJECTION,
+                                                       FunctionInfo('pandas.core.frame', '__getitem__')),
+                                       DagNodeDetails("to ['A', 'B']", ['A', 'B'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                    RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(15, 26, 15, 45), "test_df[['A', 'B']]"),
+                                       Comparison(FunctionType))
+    expected_test_data = DagNode(10,
+                                 BasicCodeLocation("<string-source>", 15),
+                                 OperatorContext(OperatorType.TEST_DATA,
+                                                 FunctionInfo('sklearn.svm._classes.SVC', 'predict')),
+                                 DagNodeDetails(None, ['A', 'B'], OptimizerInfo(RangeComparison(0, 200), (2, 2),
+                                                                                RangeComparison(0, 800))),
+                                 OptionalCodeInfo(CodeReference(15, 14, 15, 46),
+                                                  "clf.predict(test_df[['A', 'B']])"),
+                                 Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_projection, expected_test_data, arg_index=0)
+    expected_classifier = DagNode(7,
+                                  BasicCodeLocation("<string-source>", 11),
+                                  OperatorContext(OperatorType.ESTIMATOR,
+                                                  FunctionInfo('sklearn.svm._classes', 'SVC')),
+                                  DagNodeDetails('SVC', [], OptimizerInfo(RangeComparison(0, 1000), None,
+                                                                          RangeComparison(0, 10000))),
+                                  OptionalCodeInfo(CodeReference(11, 6, 11, 26), 'SVC(random_state=42)'),
+                                  Comparison(FunctionType),
+                                  Comparison(partial))
+    expected_predict = DagNode(11,
+                               BasicCodeLocation("<string-source>", 15),
+                               OperatorContext(OperatorType.PREDICT,
+                                               FunctionInfo('sklearn.svm._classes.SVC', 'predict')),
+                               DagNodeDetails('SVC', [], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                       RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(15, 14, 15, 46),
+                                                "clf.predict(test_df[['A', 'B']])"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_classifier, expected_predict, arg_index=0)
+    expected_dag.add_edge(expected_test_data, expected_predict, arg_index=1)
+
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_node = list(inspector_result.original_dag.nodes)[0]
+    predict_node = list(inspector_result.original_dag.nodes)[3]
+    test_data_node = list(inspector_result.original_dag.nodes)[2]
+    train_df = pandas.DataFrame({'C': [0, 1, 2, 3], 'D': [0, 1, 2, 3], 'target': ['no', 'no', 'yes', 'yes']})
+    train_labels = label_binarize(train_df['target'], classes=['no', 'yes'])
+    fitted_estimator = fit_node.processing_func(train_df[['C', 'D']], train_labels)
+    assert isinstance(fitted_estimator, SVC)
+    assert isinstance(fit_node.make_classifier_func(), SVC)
+
+    test_df = pandas.DataFrame({'C': [0., 0.6], 'D': [0., 0.6], 'target': ['no', 'yes']})
+    test_data = test_data_node.processing_func(test_df[['C', 'D']])
+    test_predict = predict_node.processing_func(fitted_estimator, test_data)
+    assert len(test_predict) == 2
+
+
+def test_count_vectorizer():
+    """
+    Tests whether the monkey patching of ('sklearn.compose._column_transformer', 'ColumnTransformer') works with
+    multiple transformers with dense output
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.feature_extraction.text import CountVectorizer
+                import numpy
+                from scipy.sparse import csr_matrix
+                df = pd.Series(['cat_a', 'cat_b', 'cat_a', 'cat_c'], name='A').to_numpy()
+                transformer = CountVectorizer()
+                transformed_data = transformer.fit_transform(df)
+                test_transform_function = transformer.transform(df)
+                print(transformed_data)
+                expected = numpy.array([[1., 0., 0.],
+                                        [0., 1., 0.],
+                                        [1., 0., 0.],
+                                        [0., 0., 1.]])
+                expected = csr_matrix([[1., 0., 0.], [0., 1., 0.], [1., 0., 0.], [0., 0., 1.]])
+                assert numpy.allclose(transformed_data.A, expected.A) and isinstance(transformed_data, csr_matrix)
+                assert numpy.allclose(test_transform_function.A, expected.A) and isinstance(test_transform_function, 
+                    csr_matrix)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 5),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.series', 'Series')),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(5, 5, 5, 62),
+                                                    "pd.Series(['cat_a', 'cat_b', 'cat_a', 'cat_c'], name='A')"),
+                                   Comparison(partial))
+    expected_project = DagNode(1,
+                               BasicCodeLocation('<string-source>', 5),
+                               OperatorContext(OperatorType.PROJECTION,
+                                               FunctionInfo('pandas.core.series.Series', 'to_numpy')),
+                               DagNodeDetails('numpy conversion', ['array'], OptimizerInfo(RangeComparison(0, 200),
+                                                                                           (4, 1),
+                                                                                           RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(5, 5, 5, 73),
+                                                "pd.Series(['cat_a', 'cat_b', 'cat_a', 'cat_c'], name='A').to_numpy()"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
+    expected_transformer = DagNode(2,
+                                   BasicCodeLocation("<string-source>", 6),
+                                   OperatorContext(OperatorType.TRANSFORMER,
+                                                   FunctionInfo('sklearn.feature_extraction.text', 'CountVectorizer')),
+                                   DagNodeDetails('Count Vectorizer: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 200), (4, 3),
+                                                                RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(6, 14, 6, 31),
+                                                    'CountVectorizer()'),
+                                   Comparison(FunctionType))
+    expected_dag.add_edge(expected_project, expected_transformer, arg_index=0)
+    expected_transform_test = DagNode(3,
+                                      BasicCodeLocation("<string-source>", 6),
+                                      OperatorContext(OperatorType.TRANSFORMER,
+                                                      FunctionInfo('sklearn.feature_extraction.text',
+                                                                   'CountVectorizer')),
+                                      DagNodeDetails('Count Vectorizer: transform', ['array']),
+                                      OptionalCodeInfo(CodeReference(6, 14, 6, 31),
+                                                       'CountVectorizer()'),
+                                      Comparison(FunctionType))
+    expected_dag.add_edge(expected_transformer, expected_transform_test, arg_index=0)
+    expected_dag.add_edge(expected_project, expected_transform_test, arg_index=1)
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.original_dag.nodes)[2]
+    transform_node = list(inspector_result.original_dag.nodes)[3]
+    pandas_df = pandas.Series(['cat_a', 'cat_b', 'cat_c', 'cat_c'], name='A').to_numpy()
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df)
+    expected_fit_transform_data = csr_matrix([[1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [0., 0., 1.]])
+    assert numpy.allclose(fit_transformed_result.A, expected_fit_transform_data.A) and \
+           isinstance(fit_transformed_result, csr_matrix)
+
+    test_df = pandas.Series(['cat_c', 'cat_c', 'cat_b', 'cat_c'], name='A').to_numpy()
+    encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
+    expected = csr_matrix([[0., 0., 1.], [0., 0., 1.], [0., 1., 0.], [0., 0., 1.]])
+    assert numpy.allclose(encoded_data.A, expected.A) and \
+           isinstance(encoded_data, csr_matrix)
+
+
+def test_tfidf_vectorizer():
+    """
+    Tests whether the monkey patching of ('sklearn.compose._column_transformer', 'ColumnTransformer') works with
+    multiple transformers with dense output
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.feature_extraction.text import  CountVectorizer, TfidfTransformer
+                import numpy
+                from scipy.sparse import csr_matrix
+                df = CountVectorizer().fit_transform(
+                    pd.Series(['cat_a', 'cat_b', 'cat_a', 'cat_c'], name='A').to_numpy())
+                transformer = TfidfTransformer()
+                transformed_data = transformer.fit_transform(df)
+                test_transform_function = transformer.transform(df)
+                print(transformed_data)
+                expected = numpy.array([[1., 0., 0.],
+                                        [0., 1., 0.],
+                                        [1., 0., 0.],
+                                        [0., 0., 1.]])
+                expected = csr_matrix([[1., 0., 0.], [0., 1., 0.], [1., 0., 0.], [0., 0., 1.]])
+                assert numpy.allclose(transformed_data.A, expected.A) and isinstance(transformed_data, csr_matrix)
+                assert numpy.allclose(test_transform_function.A, expected.A) and isinstance(test_transform_function, 
+                    csr_matrix)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 6),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.series', 'Series')),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(6, 4, 6, 61),
+                                                    "pd.Series(['cat_a', 'cat_b', 'cat_a', 'cat_c'], name='A')"),
+                                   Comparison(partial))
+    expected_project = DagNode(1,
+                               BasicCodeLocation('<string-source>', 6),
+                               OperatorContext(OperatorType.PROJECTION,
+                                               FunctionInfo('pandas.core.series.Series', 'to_numpy')),
+                               DagNodeDetails('numpy conversion', ['array'],
+                                              OptimizerInfo(RangeComparison(0, 200), (4, 1), RangeComparison(0, 800))),
+                               OptionalCodeInfo(CodeReference(6, 4, 6, 72),
+                                                "pd.Series(['cat_a', 'cat_b', 'cat_a', 'cat_c'], name='A').to_numpy()"),
+                               Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_project, arg_index=0)
+    expected_count_vectorizer = DagNode(2,
+                                        BasicCodeLocation("<string-source>", 5),
+                                        OperatorContext(OperatorType.TRANSFORMER,
+                                                        FunctionInfo('sklearn.feature_extraction.text',
+                                                                     'CountVectorizer')),
+                                        DagNodeDetails('Count Vectorizer: fit_transform', ['array'],
+                                                       OptimizerInfo(RangeComparison(0, 2000), (4, 3),
+                                                                     RangeComparison(0, 2000))),
+                                        OptionalCodeInfo(CodeReference(5, 5, 5, 22),
+                                                         'CountVectorizer()'),
+                                        Comparison(FunctionType))
+    expected_dag.add_edge(expected_project, expected_count_vectorizer, arg_index=0)
+    expected_transformer = DagNode(3,
+                                   BasicCodeLocation("<string-source>", 7),
+                                   OperatorContext(OperatorType.TRANSFORMER,
+                                                   FunctionInfo('sklearn.feature_extraction.text', 'TfidfTransformer')),
+                                   DagNodeDetails('Tfidf Transformer: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 2000), (4, 3),
+                                                                RangeComparison(0, 2000))),
+                                   OptionalCodeInfo(CodeReference(7, 14, 7, 32),
+                                                    'TfidfTransformer()'),
+                                   Comparison(FunctionType)
+                                   )
+    expected_dag.add_edge(expected_count_vectorizer, expected_transformer, arg_index=0)
+    expected_transform_test = DagNode(4,
+                                      BasicCodeLocation("<string-source>", 7),
+                                      OperatorContext(OperatorType.TRANSFORMER,
+                                                      FunctionInfo('sklearn.feature_extraction.text',
+                                                                   'TfidfTransformer')),
+                                      DagNodeDetails('Tfidf Transformer: transform', ['array'],
+                                                     OptimizerInfo(RangeComparison(0, 2000), (4, 3),
+                                                                   RangeComparison(0, 2000))),
+                                      OptionalCodeInfo(CodeReference(7, 14, 7, 32), 'TfidfTransformer()'),
+                                      Comparison(FunctionType)
+                                      )
+    expected_dag.add_edge(expected_transformer, expected_transform_test, arg_index=0)
+    expected_dag.add_edge(expected_count_vectorizer, expected_transform_test, arg_index=1)
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    count_vectorizer = list(inspector_result.original_dag.nodes)[2]
+    fit_transform_node = list(inspector_result.original_dag.nodes)[3]
+    transform_node = list(inspector_result.original_dag.nodes)[4]
+    pandas_df = pandas.Series(['cat_a', 'cat_b', 'cat_c', 'cat_c'], name='A').to_numpy()
+    count_vectorizer_result = count_vectorizer.processing_func(pandas_df)
+    fit_transformed_result = fit_transform_node.processing_func(count_vectorizer_result)
+    expected_fit_transform_data = csr_matrix([[1., 0., 0.], [0., 1., 0.], [0., 0., 1.], [0., 0., 1.]])
+    assert numpy.allclose(fit_transformed_result.A, expected_fit_transform_data.A) and \
+           isinstance(fit_transformed_result, csr_matrix)
+
+    test_df = pandas.Series(['cat_c', 'cat_c', 'cat_b', 'cat_a'], name='A').to_numpy()
+    count_vectorizer_result = count_vectorizer.processing_func(test_df)
+    encoded_data = transform_node.processing_func(fit_transformed_result, count_vectorizer_result)
+    expected = csr_matrix([[0., 0., 1.], [0., 0., 1.], [0., 1., 0.], [1., 0., 0.]])
+    assert numpy.allclose(encoded_data.A, expected.A) and \
+           isinstance(encoded_data, csr_matrix)
+
+
+def test_truncated_svd():
+    """
+    Tests whether the monkey patching of ('sklearn.compose._column_transformer', 'ColumnTransformer') works with
+    multiple transformers with dense output
+    """
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
+                from sklearn.compose import ColumnTransformer
+                from sklearn.decomposition import TruncatedSVD
+                from scipy.sparse import csr_matrix
+                import numpy
+
+                df = pd.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})
+                column_transformer = ColumnTransformer(transformers=[
+                    ('numeric', StandardScaler(), ['A']),
+                    ('categorical', OneHotEncoder(sparse=False), ['B'])
+                ])
+                encoded_data = column_transformer.fit_transform(df)
+                transformer = TruncatedSVD(n_iter=1, random_state=42)
+                reduced_data = transformer.fit_transform(encoded_data)
+                test_transform_function = transformer.transform(encoded_data)
+                expected = numpy.array([[-0.7135186,   1.16732311],
+                                        [-0.88316363,  0.30897343],
+                                        [ 1.72690506,  0.64664575],
+                                        [ 0.17663273, -0.06179469]])
+                assert numpy.allclose(reduced_data, expected)
+                assert numpy.allclose(test_transform_function, expected)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+    filter_dag_for_nodes_with_ids(inspector_result, [5, 6, 7], 8)
+
+    expected_dag = networkx.DiGraph()
+    expected_concat = DagNode(5,
+                              BasicCodeLocation("<string-source>", 9),
+                              OperatorContext(OperatorType.CONCATENATION,
+                                              FunctionInfo('sklearn.compose._column_transformer', 'ColumnTransformer')),
+                              DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 2000), (4, 4),
+                                                                            RangeComparison(0, 2000))),
+                              OptionalCodeInfo(CodeReference(9, 21, 12, 2),
+                                               "ColumnTransformer(transformers=[\n"
+                                               "    ('numeric', StandardScaler(), ['A']),\n"
+                                               "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"),
+                              Comparison(FunctionType))
+    expected_transformer = DagNode(6,
+                                   BasicCodeLocation("<string-source>", 14),
+                                   OperatorContext(OperatorType.TRANSFORMER,
+                                                   FunctionInfo('sklearn.decomposition._truncated_svd',
+                                                                'TruncatedSVD')),
+                                   DagNodeDetails('Truncated SVD: fit_transform', ['array'],
+                                                  OptimizerInfo(RangeComparison(0, 2000), (4, 2),
+                                                                RangeComparison(0, 2000))),
+                                   OptionalCodeInfo(CodeReference(14, 14, 14, 53),
+                                                    'TruncatedSVD(n_iter=1, random_state=42)'),
+                                   Comparison(FunctionType))
+    expected_dag.add_edge(expected_concat, expected_transformer, arg_index=0)
+    expected_transform_test = DagNode(7,
+                                      BasicCodeLocation("<string-source>", 14),
+                                      OperatorContext(OperatorType.TRANSFORMER,
+                                                      FunctionInfo('sklearn.decomposition._truncated_svd',
+                                                                   'TruncatedSVD')),
+                                      DagNodeDetails('Truncated SVD: transform', ['array'],
+                                                     OptimizerInfo(RangeComparison(0, 2000), (4, 2),
+                                                                   RangeComparison(0, 2000))),
+                                      OptionalCodeInfo(CodeReference(14, 14, 14, 53),
+                                                       'TruncatedSVD(n_iter=1, random_state=42)'),
+                                      Comparison(FunctionType))
+    expected_dag.add_edge(expected_transformer, expected_transform_test, arg_index=0)
+    expected_dag.add_edge(expected_concat, expected_transform_test, arg_index=1)
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    fit_transform_node = list(inspector_result.original_dag.nodes)[1]
+    transform_node = list(inspector_result.original_dag.nodes)[2]
+    pandas_df = numpy.array([[2., 4., 3.], [0., 2., 2.], [0., 0., 1.], [4., 4., 3.]])
+    fit_transformed_result = fit_transform_node.processing_func(pandas_df)
+    expected_fit_transform_data = numpy.array([[5.34468848, 0.60472355],
+                                               [2.46206848, 1.3921952],
+                                               [0.54114431, 0.47790364],
+                                               [6.30638433, -1.09703966]])
+    assert numpy.allclose(fit_transformed_result, expected_fit_transform_data)
+
+    test_df = numpy.array([[0., 2., 2.], [0., 0., 1.], [4., 4., 3.], [2., 4., 3.]])
+    encoded_data = transform_node.processing_func(fit_transformed_result, test_df)
+    expected = numpy.array([[2.46206848, 1.3921952],
+                            [0.54114431, 0.47790364],
+                            [6.30638433, -1.09703966],
+                            [5.34468848, 0.60472355]])
+    assert numpy.allclose(encoded_data, expected)
+
+
+def test_feature_union():
+    """
+    Tests whether the monkey patching of ('sklearn.preprocessing._data', 'StandardScaler') works
+    """
+    # pylint: disable=too-many-locals
+    test_code = cleandoc("""
+                import pandas as pd
+                from sklearn.preprocessing import label_binarize, StandardScaler, OneHotEncoder
+                from sklearn.compose import ColumnTransformer
+                from sklearn.pipeline import FeatureUnion
+                from sklearn.decomposition import PCA
+                from sklearn.decomposition import TruncatedSVD
+                from scipy.sparse import csr_matrix
+                import numpy
+                
+                df = pd.DataFrame({'A': [1, 2, 10, 5], 'B': ['cat_a', 'cat_b', 'cat_a', 'cat_c']})
+                column_transformer = ColumnTransformer(transformers=[
+                    ('numeric', StandardScaler(), ['A']),
+                    ('categorical', OneHotEncoder(sparse=False), ['B'])
+                ])
+                encoded_data = column_transformer.fit_transform(df)
+                transformer = FeatureUnion([('pca', PCA(n_components=2, random_state=42)),
+                                            ('svd', TruncatedSVD(n_iter=1, random_state=42))])
+                reduced_data = transformer.fit_transform(encoded_data)
+                test_transform_function = transformer.transform(encoded_data)
+                print(reduced_data)
+                expected = numpy.array([[-0.80795996, -0.75406407, -0.7135186,   1.16732311],
+                                        [-0.953227,    0.23384447, -0.88316363,  0.30897343],
+                                        [ 1.64711991, -0.29071836,  1.72690506,  0.64664575],
+                                        [ 0.11406705,  0.81093796,  0.17663273, -0.06179469]])
+                assert numpy.allclose(reduced_data, expected)
+                assert numpy.allclose(test_transform_function, expected)
+                """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    filter_dag_for_nodes_with_ids(inspector_result, [5, 6, 7, 8, 9, 10, 11], 12)
+
+    expected_dag = networkx.DiGraph()
+    expected_concat = DagNode(5,
+                              BasicCodeLocation("<string-source>", 11),
+                              OperatorContext(OperatorType.CONCATENATION,
+                                              FunctionInfo('sklearn.compose._column_transformer', 'ColumnTransformer')),
+                              DagNodeDetails(None, ['array'], OptimizerInfo(RangeComparison(0, 2000), (4, 4),
+                                                                            RangeComparison(0, 2000))),
+                              OptionalCodeInfo(CodeReference(11, 21, 14, 2),
+                                               "ColumnTransformer(transformers=[\n"
+                                               "    ('numeric', StandardScaler(), ['A']),\n"
+                                               "    ('categorical', OneHotEncoder(sparse=False), ['B'])\n])"),
+                              Comparison(FunctionType))
+    expected_transformer_pca = DagNode(6,
+                                       BasicCodeLocation("<string-source>", 16),
+                                       OperatorContext(OperatorType.TRANSFORMER,
+                                                       FunctionInfo('sklearn.decomposition._pca',
+                                                                    'PCA')),
+                                       DagNodeDetails('PCA: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(16, 36, 16, 72),
+                                                        'PCA(n_components=2, random_state=42)'),
+                                       Comparison(FunctionType))
+    expected_dag.add_edge(expected_concat, expected_transformer_pca, arg_index=0)
+    expected_transformer_svd = DagNode(7,
+                                       BasicCodeLocation("<string-source>", 17),
+                                       OperatorContext(OperatorType.TRANSFORMER,
+                                                       FunctionInfo('sklearn.decomposition._truncated_svd',
+                                                                    'TruncatedSVD')),
+                                       DagNodeDetails('Truncated SVD: fit_transform', ['array'],
+                                                      OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                    RangeComparison(0, 800))),
+                                       OptionalCodeInfo(CodeReference(17, 36, 17, 75),
+                                                        'TruncatedSVD(n_iter=1, random_state=42)'),
+                                       Comparison(FunctionType))
+    expected_dag.add_edge(expected_concat, expected_transformer_svd, arg_index=0)
+    expected_transformer_concat = DagNode(8,
+                                          BasicCodeLocation("<string-source>", 16),
+                                          OperatorContext(OperatorType.CONCATENATION,
+                                                          FunctionInfo('sklearn.pipeline', 'FeatureUnion')),
+                                          DagNodeDetails('Feature Union', ['array'],
+                                                         OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                                       RangeComparison(0, 800))),
+                                          OptionalCodeInfo(CodeReference(16, 14, 17, 78),
+                                                           "FeatureUnion([('pca', PCA(n_components=2, "
+                                                           "random_state=42)),\n                            "
+                                                           "('svd', TruncatedSVD(n_iter=1, random_state=42))])"),
+                                          Comparison(FunctionType))
+    expected_dag.add_edge(expected_transformer_pca, expected_transformer_concat, arg_index=0)
+    expected_dag.add_edge(expected_transformer_svd, expected_transformer_concat, arg_index=1)
+    expected_transform_test_pca = DagNode(9,
+                                          BasicCodeLocation("<string-source>", 16),
+                                          OperatorContext(OperatorType.TRANSFORMER,
+                                                          FunctionInfo('sklearn.decomposition._pca',
+                                                                       'PCA')),
+                                          DagNodeDetails('PCA: transform', ['array'],
+                                                         OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                       RangeComparison(0, 800))),
+                                          OptionalCodeInfo(CodeReference(16, 36, 16, 72),
+                                                           'PCA(n_components=2, random_state=42)'),
+                                          Comparison(FunctionType))
+    expected_dag.add_edge(expected_transformer_pca, expected_transform_test_pca, arg_index=0)
+    expected_dag.add_edge(expected_concat, expected_transform_test_pca, arg_index=1)
+    expected_transform_test_svd = DagNode(10,
+                                          BasicCodeLocation("<string-source>", 17),
+                                          OperatorContext(OperatorType.TRANSFORMER,
+                                                          FunctionInfo('sklearn.decomposition._truncated_svd',
+                                                                       'TruncatedSVD')),
+                                          DagNodeDetails('Truncated SVD: transform', ['array'],
+                                                         OptimizerInfo(RangeComparison(0, 200), (4, 2),
+                                                                       RangeComparison(0, 800))),
+                                          OptionalCodeInfo(CodeReference(17, 36, 17, 75),
+                                                           'TruncatedSVD(n_iter=1, random_state=42)'),
+                                          Comparison(FunctionType))
+    expected_dag.add_edge(expected_transformer_svd, expected_transform_test_svd, arg_index=0)
+    expected_dag.add_edge(expected_concat, expected_transform_test_svd, arg_index=1)
+    expected_transform_test_concat = DagNode(11,
+                                             BasicCodeLocation("<string-source>", 16),
+                                             OperatorContext(OperatorType.CONCATENATION,
+                                                             FunctionInfo('sklearn.pipeline', 'FeatureUnion')),
+                                             DagNodeDetails('Feature Union', ['array'],
+                                                            OptimizerInfo(RangeComparison(0, 200), (4, 4),
+                                                                          RangeComparison(0, 800))),
+                                             OptionalCodeInfo(CodeReference(16, 14, 17, 78),
+                                                              "FeatureUnion([('pca', PCA(n_components=2, "
+                                                              "random_state=42)),\n                            "
+                                                              "('svd', TruncatedSVD(n_iter=1, random_state=42))])"),
+                                             Comparison(FunctionType))
+    expected_dag.add_edge(expected_transform_test_pca, expected_transform_test_concat, arg_index=0)
+    expected_dag.add_edge(expected_transform_test_svd, expected_transform_test_concat, arg_index=1)
+    compare(list(inspector_result.original_dag)[6], expected_transform_test_concat)
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    transformer1_node_fit = list(inspector_result.original_dag.nodes)[1]
+    transformer2_node_fit = list(inspector_result.original_dag.nodes)[2]
+    concat_node_fit = list(inspector_result.original_dag.nodes)[3]
+    num_array = numpy.array([[0., 2., 2., 2.], [0., 0., 1., 2.], [4., 4., 3., 2.], [2., 4., 3., 200.]])
+    transformed_data1 = transformer1_node_fit.processing_func(num_array)
+    transformed_data2 = transformer2_node_fit.processing_func(num_array)
+    concatenated_data = concat_node_fit.processing_func(transformed_data1, transformed_data2)
+    expected = numpy.array([[-4.95079323e+01, -9.59880042e-01,  2.07047289e+00,  2.28904433e+00],
+                            [-4.95331939e+01, -2.51111219e+00,  2.01455480e+00,  4.68660159e-01],
+                            [-4.94691849e+01,  3.47199196e+00,  2.16722945e+00,  6.31931174e+00],
+                            [ 1.48510311e+02, -9.99733102e-04,  2.00072463e+02, -9.68596279e-02]])
+    assert numpy.allclose(concatenated_data, expected)
+
+    transformer1_node_transform = list(inspector_result.original_dag.nodes)[4]
+    transformer2_node_transform = list(inspector_result.original_dag.nodes)[5]
+    concat_node_transform = list(inspector_result.original_dag.nodes)[6]
+    num_array_transform = numpy.array([[5., 2., 2., 2.], [0., 0., 0., 0.], [4., 4., 3., 5.], [2., 4., 3., 2.]])
+    transformed_data1_transform = transformer1_node_transform.processing_func(transformed_data1, num_array_transform)
+    transformed_data2_transform = transformer2_node_transform.processing_func(transformed_data2, num_array_transform)
+    concatenated_data_transform = concat_node_transform.processing_func(transformed_data1_transform,
+                                                                        transformed_data2_transform)
+    expected = numpy.array([[-49.49107512,   2.64091978,   2.12152098,   5.05139838],
+                            [-51.53810725,  -2.80082658,   0.,           0.        ],
+                            [-46.4693934,    3.44119391,   5.16610297,   6.23883856],
+                            [-49.47592776,   2.03167203,   2.14681021,   5.21437012]])
+    assert numpy.allclose(concatenated_data_transform, expected)

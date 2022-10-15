@@ -5,7 +5,7 @@ Tests whether the optimization works
 # TODO: Clean up these tests
 import os
 
-from experiments.simple_projection_push_up import execute_projection_push_up_ideal_case, \
+from experiments.optimizations.simple_projection_push_up import execute_projection_push_up_ideal_case, \
     execute_projection_push_up_average_case, execute_projection_push_up_worst_case
 
 
@@ -42,8 +42,6 @@ def test_projection_push_up_ideal_case(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_projection_push_up_average_case(tmpdir):
@@ -79,8 +77,6 @@ def test_projection_push_up_average_case(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))
 
 
 def test_projection_push_up_worst_case(tmpdir):
@@ -116,5 +112,3 @@ def test_projection_push_up_worst_case(tmpdir):
 
     analysis_result_without_any_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "without-any-opt-orig"))
     analysis_result_without_any_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "without-any-opt-what-if"))
-    analysis_result_without_any_opt.save_optimised_what_if_dags_to_path(
-        os.path.join(str(tmpdir), "without-any-opt-what-if-optimised"))

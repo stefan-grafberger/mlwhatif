@@ -13,7 +13,6 @@ import sklearn
 import tensorflow
 from fairlearn.metrics import MetricFrame
 from scipy.sparse import csr_matrix
-from tensorflow.python.keras.callbacks import History  # pylint: disable=no-name-in-module
 from tensorflow.python.keras.wrappers.scikit_learn import BaseWrapper  # pylint: disable=no-name-in-module
 
 from mlwhatif.instrumentation._dag_node import OptimizerInfo
@@ -39,11 +38,13 @@ def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_
 
 
 def get_df_memory(result_or_inplace_obj, estimator_transformer_state: any or None = None,
-                  keras_batch_size: int or None = None):
+                  keras_batch_size: int or None = None, memory_calc_too_expensive=True):
     """Get the size in bytes of a df-like object"""
     # Just using sys.getsize of is not sufficient. See this section of its documentation:
     #  Only the memory consumption directly attributed to the object is accounted for,
     #  not the memory consumption of objects it refers to.
+    if memory_calc_too_expensive is True:
+        return 0  # FIXME: Do this properly with flag in the main API etc and not use 0 here
     if isinstance(result_or_inplace_obj, pandas.DataFrame):
         # For pandas, sizeof seems to work as expected
         size = sys.getsizeof(result_or_inplace_obj)
@@ -105,6 +106,7 @@ def get_model_memory_usage_in_bytes(model, batch_size):
 
 def get_df_shape(result_or_inplace_obj):
     """Get the shape of a df-like object"""
+    # pylint: disable=too-many-branches
     if isinstance(result_or_inplace_obj, pandas.DataFrame):
         shape = result_or_inplace_obj.shape
     elif isinstance(result_or_inplace_obj, numpy.ndarray):
@@ -112,30 +114,32 @@ def get_df_shape(result_or_inplace_obj):
             shape = result_or_inplace_obj.shape
         elif result_or_inplace_obj.ndim == 1:
             shape = len(result_or_inplace_obj), 1
+        elif 3 <= result_or_inplace_obj.ndim <= 4:
+            shape = result_or_inplace_obj.shape  # Image pipeline
         else:
-            raise Exception("Currently only numpy arrays with 1 and 2 dims are supported!")
+            raise Exception("Currently only numpy arrays with 1-4 dims are supported!")
     elif isinstance(result_or_inplace_obj, pandas.Series):
         shape = len(result_or_inplace_obj), 1
     elif isinstance(result_or_inplace_obj, pandas.core.groupby.generic.DataFrameGroupBy):
         shape = None  # Not needed because we only consider combined groupby/agg nodes
     elif isinstance(result_or_inplace_obj, list):
         # A few operations like train_test_split return a list
-        assert len(result_or_inplace_obj) == 2
-        shape_a = get_df_shape(result_or_inplace_obj[0])
-        shape_b = get_df_shape(result_or_inplace_obj[1])
-        assert shape_a[1] == shape_b[1]
-        shape = shape_a[0] + shape_b[0], shape_a[1]
+        if len(result_or_inplace_obj) > 1 and isinstance(result_or_inplace_obj[0], str):
+            shape = (len(result_or_inplace_obj), 1)
+        else:
+            assert len(result_or_inplace_obj) == 2
+            shape_a = get_df_shape(result_or_inplace_obj[0])
+            shape_b = get_df_shape(result_or_inplace_obj[1])
+            assert shape_a[1] == shape_b[1]
+            shape = shape_a[0] + shape_b[0], shape_a[1]
     elif isinstance(result_or_inplace_obj, csr_matrix):
         # Here we use the csr_matrix column count as width instead of treating it as 1 column only as we do logically.
         #  This is because we might need it for optimisation purposes to choose whether dense or sparse matrices are
         #  better. We might want to potentially change this in the future.
         shape = result_or_inplace_obj.shape
-    elif isinstance(result_or_inplace_obj, (sklearn.base.BaseEstimator, History)):
-        # Estimator fit only, not fit_transform
-        shape = None
     elif isinstance(result_or_inplace_obj, (float, MetricFrame)):
         # E.g., a score metric output from estimator.score
         shape = (1, 1)
     else:
-        raise Exception(f"Result type {type(result_or_inplace_obj).__name__} not supported yet!")
+        shape = None
     return shape

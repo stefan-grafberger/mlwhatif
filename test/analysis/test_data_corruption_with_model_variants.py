@@ -201,7 +201,7 @@ def test_data_corruption_model_variants_mini_example_only_train_test_split_witho
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (13, 5)
 
-    visualize_dags(analysis_result, tmpdir)
+    visualize_dags(analysis_result, tmpdir, skip_combined_dag=True)
 
 
 def test_data_corruption_model_variants_mini_example_manual_split(tmpdir):

@@ -6,7 +6,9 @@ mlwhatif
 [![Build Status](https://github.com/stefan-grafberger/mlwhatif/actions/workflows/build.yml/badge.svg)](https://github.com/stefan-grafberger/mlwhatif/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/stefan-grafberger/mlwhatif/branch/main/graph/badge.svg?token=KTMNPBV1ZZ)](https://codecov.io/gh/stefan-grafberger/mlwhatif)
 
-Data-Centric What-If Analysis for Native Machine Learning Pipelines 
+Data-Centric What-If Analysis for Native Machine Learning Pipelines.
+
+This project uses the [mlinspect](https://github.com/stefan-grafberger/mlinspect) project as a foundation, mainly for its plan extraction from native ML pipelines.
 
 ## Run mlwhatif locally
 
