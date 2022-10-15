@@ -64,6 +64,8 @@ class AnalysisResults:
         """
         Save the generated What-If DAGs to a file
         """
+        # FIXME: save_what_if_dags_to_path has a bug when patches/the original pipeline are rewritten.
+        #  To fix this, we need to instead output the same plans and patches used when optimisation is disabled.
         what_if_patches = [patches for patches, _ in self.what_if_dags]
         for dag_index, what_if_patches in enumerate(what_if_patches):
             original_copy = self.original_dag.copy()
@@ -108,6 +110,7 @@ class EstimationResults:
         """
         Save the generated What-If DAGs to a file
         """
+        # FIXME: These functions should just redirect to the AnalysisResults one
         what_if_dags = [dag for patches, dag in self.what_if_dags]
         for dag_index, what_if_dag in enumerate(what_if_dags):
             if prefix_analysis_dags is not None:

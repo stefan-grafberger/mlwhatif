@@ -288,7 +288,9 @@ def run_scenario_and_visualize_dags(dataset, scenario, tmpdir):
             .add_what_if_analysis(analysis) \
             .execute()
     analysis_result_no_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "with-opt-orig"))
-    analysis_result_no_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "with-opt-what-if"))
+    # FIXME: save_what_if_dags_to_path has a bug when patches/the original pipeline are rewritten.
+    #  To fix this, we need to instead output the same plans and patches used when optimisation is disabled.
+    # analysis_result_no_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "with-opt-what-if"))
     analysis_result_no_opt.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir), "with-opt-what-if-optimised"))
     analysis_output = analysis_result_no_opt.analysis_to_result_reports[analysis]
     return analysis_output
