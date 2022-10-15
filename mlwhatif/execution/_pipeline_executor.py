@@ -3,6 +3,7 @@ Instrument and executes the pipeline
 """
 # TODO: At some point, this should be split into two files, one for mere orchestration, one for instrumentation
 import ast
+import copy
 import logging
 import sys
 import time
@@ -82,9 +83,8 @@ class PipelineExecutor:
         """
         Instrument and execute the pipeline and evaluate all checks
         """
+        # pylint: disable=too-many-arguments,too-many-locals
         self.analysis_results.pipeline_executor = self
-        # TODO: Add option to reuse results
-        # pylint: disable=too-many-arguments, too-many-locals
         if reset_state:
             # reset_state=False should only be used internally for performance experiments etc!
             # It does not ensure the same inspections are still used as args etc.
@@ -163,11 +163,13 @@ class PipelineExecutor:
             logger.info(f'Start plan generation for analysis {type(analysis).__name__}...')
             plan_generation_start = time.time()
             for patches in analysis.generate_plans_to_try(self.analysis_results.original_dag):
-                self.analysis_results.what_if_dags.append((patches, networkx.DiGraph()))
+                self.analysis_results.what_if_dags.append((copy.deepcopy(patches), networkx.DiGraph()))
             plan_generation_duration = time.time() - plan_generation_start
             logger.info(f'---RUNTIME: Plan generation took {plan_generation_duration * 1000} ms')
             self.analysis_results.runtime_info.what_if_plan_generation = plan_generation_duration * 1000
 
+        original_patches_for_visualizing_optimization = [copy.deepcopy(patches) for patches, _
+                                                         in self.analysis_results.what_if_dags]
         # TODO: Add try catch statements so we can see intermediate DAGs even if something goes wrong for debugging
         MultiQueryOptimizer(self, self.force_optimization_rules) \
             .create_optimized_plan(self.analysis_results, self.skip_optimizer)
@@ -183,6 +185,13 @@ class PipelineExecutor:
             execution_duration = time.time() - execution_start
             logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
             self.analysis_results.runtime_info.what_if_execution = execution_duration * 1000
+
+            patch_modified_patch_and_locally_optimised_dag = \
+                zip(original_patches_for_visualizing_optimization, self.analysis_results.what_if_dags)
+            new_analysis_what_if_dags = []
+            for patch, (maybe_modified_patch, dag) in patch_modified_patch_and_locally_optimised_dag:
+                new_analysis_what_if_dags.append((patch, dag))
+            self.analysis_results.what_if_dags = new_analysis_what_if_dags
 
             analysis_estimator_runtimes = [optimizer_info.runtime
                                            for node, optimizer_info in self.operators_to_runtime_during_analysis
