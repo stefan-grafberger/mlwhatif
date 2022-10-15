@@ -19,7 +19,7 @@ from sklearn.preprocessing import OneHotEncoder, FunctionTransformer, RobustScal
 from sklearn.preprocessing import label_binarize
 
 from experiments.manual_analysis.cleaner_copy_from_non_pip_cleanml import MVCleaner, OutlierCleaner, DuplicatesCleaner
-from mlwhatif.utils import get_project_root
+from mlmq.utils import get_project_root
 
 data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "../end_to_end/datasets")
 

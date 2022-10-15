@@ -15,13 +15,13 @@ from jenga.corruptions.image import GaussianNoiseCorruption, GlassBlurCorruption
 
 from example_pipelines.healthcare import custom_monkeypatching
 from experiments.manual_analysis.run_reviews_data_corruption_and_cleaning_manually import main_function
-from mlwhatif import PipelineAnalyzer
+from mlmq import PipelineAnalyzer
 # Make sure this code is not executed during imports
-from mlwhatif.analysis._data_cleaning import DataCleaning, ErrorType
-from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
-from mlwhatif.analysis._operator_impact import OperatorImpact
-from mlwhatif.analysis._permutation_feature_importance import PermutationFeatureImportance
-from mlwhatif.utils import get_project_root
+from mlmq.analysis._data_cleaning import DataCleaning, ErrorType
+from mlmq.analysis._data_corruption import DataCorruption, CorruptionType
+from mlmq.analysis._operator_impact import OperatorImpact
+from mlmq.analysis._permutation_feature_importance import PermutationFeatureImportance
+from mlmq.utils import get_project_root
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     # Warm-up run to ignore effect of imports
-    synthetic_cmd_args = ['mlwhatif']
+    synthetic_cmd_args = ['mlmq']
     cmd_args = sys.argv[2:].copy()
     synthetic_cmd_args.extend(cmd_args)
 

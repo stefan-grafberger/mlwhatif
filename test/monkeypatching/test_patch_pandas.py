@@ -11,9 +11,9 @@ import numpy
 import pandas
 from testfixtures import compare, StringComparison, Comparison, RangeComparison
 
-from mlwhatif import OperatorContext, FunctionInfo, OperatorType
-from mlwhatif.execution import _pipeline_executor
-from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
+from mlmq import OperatorContext, FunctionInfo, OperatorType
+from mlmq.execution import _pipeline_executor
+from mlmq.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
 
 
@@ -24,7 +24,7 @@ def test_read_csv():
     test_code = cleandoc("""
         import os
         import pandas as pd
-        from mlwhatif.utils import get_project_root
+        from mlmq.utils import get_project_root
         
         train_file = os.path.join(str(get_project_root()), "example_pipelines", "adult_complex", "adult_train.csv")
         raw_data = pd.read_csv(train_file, na_values='?', index_col=0)

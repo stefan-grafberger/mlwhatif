@@ -3,9 +3,9 @@ Tests whether the visualisation of the resulting DAG works
 """
 import os
 
-from mlwhatif.utils import get_project_root
-from mlwhatif.visualisation import save_fig_to_path, get_dag_as_pretty_string
-from mlwhatif.testing._testing_helper_utils import get_expected_dag_adult_easy
+from mlmq.utils import get_project_root
+from mlmq.visualisation import save_fig_to_path, get_dag_as_pretty_string
+from mlmq.testing._testing_helper_utils import get_expected_dag_adult_easy
 
 
 def test_save_fig_to_path():

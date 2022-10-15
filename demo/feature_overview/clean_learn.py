@@ -10,12 +10,12 @@ from typing import Iterable, Dict, Callable
 import networkx
 import pandas
 
-from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type, get_columns_used_as_feature
-from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
-from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
-from mlwhatif.execution._patches import DataFiltering, PipelinePatch, DataProjection
-from mlwhatif.execution._pipeline_executor import singleton
+from mlmq import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
+from mlmq.analysis._analysis_utils import find_nodes_by_type, get_columns_used_as_feature
+from mlmq.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
+from mlmq.analysis._what_if_analysis import WhatIfAnalysis
+from mlmq.execution._patches import DataFiltering, PipelinePatch, DataProjection
+from mlmq.execution._pipeline_executor import singleton
 
 
 class ErrorType(Enum):

@@ -13,7 +13,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, FunctionTransformer, RobustScaler
 from sklearn.preprocessing import label_binarize
 
-from mlwhatif.utils import get_project_root
+from mlmq.utils import get_project_root
 
 data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "../end_to_end/datasets")
 

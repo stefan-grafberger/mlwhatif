@@ -7,7 +7,7 @@ from pygments.lexers import PythonLexer
 from pygments.formatters import HtmlFormatter
 import IPython
 
-from mlwhatif.utils import get_project_root
+from mlmq.utils import get_project_root
 
 EXAMPLE_ORIGINAL_PLAN_PATH = os.path.join(str(get_project_root()), "demo", "feature_overview",
                                           "example-orig")

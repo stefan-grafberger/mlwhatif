@@ -13,9 +13,9 @@ from sklearn.preprocessing import label_binarize
 from testfixtures import compare, Comparison, RangeComparison
 from xgboost import XGBClassifier
 
-from mlwhatif import OperatorType, OperatorContext, FunctionInfo
-from mlwhatif.execution import _pipeline_executor
-from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
+from mlmq import OperatorType, OperatorContext, FunctionInfo
+from mlmq.execution import _pipeline_executor
+from mlmq.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
 
 

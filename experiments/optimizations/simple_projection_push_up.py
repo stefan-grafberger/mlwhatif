@@ -7,10 +7,10 @@ import os
 from inspect import cleandoc
 
 from experiments.optimizations._benchmark_utils import get_test_df, WhatIfWrapper
-from mlwhatif import PipelineAnalyzer
-from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
-from mlwhatif.execution._pipeline_executor import singleton
-from mlwhatif.optimization._simple_projection_push_up import SimpleProjectionPushUp
+from mlmq import PipelineAnalyzer
+from mlmq.analysis._data_corruption import DataCorruption, CorruptionType
+from mlmq.execution._pipeline_executor import singleton
+from mlmq.optimization._simple_projection_push_up import SimpleProjectionPushUp
 
 
 def run_projection_push_up_benchmark(scenario, variant_count, data_size, csv_dir):

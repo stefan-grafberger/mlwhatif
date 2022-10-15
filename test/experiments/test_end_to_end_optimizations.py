@@ -8,9 +8,9 @@ from unittest.mock import patch
 
 from example_pipelines.healthcare import custom_monkeypatching
 from experiments.end_to_end.benchmarks_end_to_end import get_analysis_for_scenario_and_dataset
-from mlwhatif import PipelineAnalyzer
-from mlwhatif.testing._testing_helper_utils import run_scenario_and_visualize_dags
-from mlwhatif.utils import get_project_root
+from mlmq import PipelineAnalyzer
+from mlmq.testing._testing_helper_utils import run_scenario_and_visualize_dags
+from mlmq.utils import get_project_root
 
 
 def test_data_corruption_reviews(tmpdir):
@@ -182,7 +182,7 @@ def test_data_corruption_sneakers(tmpdir):
 
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     analysis = get_analysis_for_scenario_and_dataset(scenario, dataset)
-    with patch.object(sys, 'argv', ["mlwhatif", dataset, "fast_loading", "image", "image"]):
+    with patch.object(sys, 'argv', ["mlmq", dataset, "fast_loading", "image", "image"]):
         analysis_result_no_opt = PipelineAnalyzer \
             .on_pipeline_from_py_file(pipeline_run_file) \
             .add_custom_monkey_patching_modules([custom_monkeypatching])\
@@ -204,7 +204,7 @@ def test_data_cleaning_sneakers(tmpdir):
 
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     analysis = get_analysis_for_scenario_and_dataset(scenario, dataset)
-    with patch.object(sys, 'argv', ["mlwhatif", dataset, "fast_loading", "image", "image"]):
+    with patch.object(sys, 'argv', ["mlmq", dataset, "fast_loading", "image", "image"]):
         analysis_result_no_opt = PipelineAnalyzer \
             .on_pipeline_from_py_file(pipeline_run_file) \
             .add_custom_monkey_patching_modules([custom_monkeypatching])\

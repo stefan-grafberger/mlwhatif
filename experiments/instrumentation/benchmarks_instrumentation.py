@@ -14,9 +14,9 @@ import pandas
 
 from example_pipelines.healthcare import custom_monkeypatching
 from experiments.end_to_end import run_pipeline
-from mlwhatif import PipelineAnalyzer
+from mlmq import PipelineAnalyzer
 # Make sure this code is not executed during imports
-from mlwhatif.utils import get_project_root
+from mlmq.utils import get_project_root
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end",
                                      "../end_to_end/run_pipeline.py")
     # Warm-up run to ignore effect of imports
-    synthetic_cmd_args = ['mlwhatif']
+    synthetic_cmd_args = ['mlmq']
     cmd_args = sys.argv[1:].copy()
     synthetic_cmd_args.extend(cmd_args)
 

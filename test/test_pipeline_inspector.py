@@ -7,9 +7,9 @@ from testfixtures import compare
 
 from example_pipelines.healthcare import custom_monkeypatching
 from example_pipelines import ADULT_SIMPLE_PY, ADULT_SIMPLE_IPYNB, HEALTHCARE_PY, ADULT_COMPLEX_PY
-from mlwhatif import PipelineAnalyzer, OperatorType
-from mlwhatif.analysis._data_cleaning import DataCleaning, ErrorType
-from mlwhatif.testing._testing_helper_utils import get_expected_dag_adult_easy
+from mlmq import PipelineAnalyzer, OperatorType
+from mlmq.analysis._data_cleaning import DataCleaning, ErrorType
+from mlmq.testing._testing_helper_utils import get_expected_dag_adult_easy
 
 
 def test_inspector_adult_easy_py_pipeline():

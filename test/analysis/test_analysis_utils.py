@@ -3,8 +3,8 @@ Tests whether the analysis utils work
 """
 from inspect import cleandoc
 
-from mlwhatif import PipelineAnalyzer, OperatorType
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type
+from mlmq import PipelineAnalyzer, OperatorType
+from mlmq.analysis._analysis_utils import find_nodes_by_type
 
 
 def test_find_nodes_by_type():

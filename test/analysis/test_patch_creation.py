@@ -6,13 +6,13 @@ from inspect import cleandoc
 
 import pandas
 
-from mlwhatif import PipelineAnalyzer, OperatorType
-from mlwhatif.analysis._analysis_utils import find_nodes_by_type
-from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_node
-from mlwhatif.execution._dag_executor import DagExecutor
+from mlmq import PipelineAnalyzer, OperatorType
+from mlmq.analysis._analysis_utils import find_nodes_by_type
+from mlmq.analysis._patch_creation import get_intermediate_extraction_patch_after_node
+from mlmq.execution._dag_executor import DagExecutor
 
-from mlwhatif.execution._pipeline_executor import singleton
-from mlwhatif.visualisation import save_fig_to_path
+from mlmq.execution._pipeline_executor import singleton
+from mlmq.visualisation import save_fig_to_path
 
 
 def test_add_intermediate_extraction_after_node_intermediate_df(tmpdir):

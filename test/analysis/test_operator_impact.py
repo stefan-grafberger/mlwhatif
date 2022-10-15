@@ -5,9 +5,9 @@ from inspect import cleandoc
 
 from example_pipelines import HEALTHCARE_PY, ADULT_COMPLEX_PY, COMPAS_PY
 from example_pipelines.healthcare import custom_monkeypatching
-from mlwhatif import PipelineAnalyzer
-from mlwhatif.analysis._operator_impact import OperatorImpact
-from mlwhatif.testing._testing_helper_utils import visualize_dags
+from mlmq import PipelineAnalyzer
+from mlmq.analysis._operator_impact import OperatorImpact
+from mlmq.testing._testing_helper_utils import visualize_dags
 
 
 def test_operator_impact_mini_example_with_transformer_processing_multiple_columns(tmpdir):

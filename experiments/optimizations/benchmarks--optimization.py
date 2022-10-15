@@ -15,7 +15,7 @@ from experiments.optimizations.operator_deletion_filter_push_up import run_opera
 from experiments.optimizations.simple_filter_addition_push_up import run_filter_addition_push_up_benchmark
 from experiments.optimizations.simple_projection_push_up import run_projection_push_up_benchmark
 from experiments.optimizations.udf_split_and_reuse import run_udf_split_and_reuse_benchmark
-from mlwhatif import PipelineAnalyzer, AnalysisResults
+from mlmq import PipelineAnalyzer, AnalysisResults
 
 # Make sure this code is not executed during imports
 if __name__ == "__main__":
