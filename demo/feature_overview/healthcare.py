@@ -26,8 +26,8 @@ numpy.seed = seed
 def combine(patients, patient_histories, consent_required):
     if consent_required:
         patients = patients[patients['gave_consent'] == True]
-        with_history = patients.merge(patient_histories, on="ssn")
-        return with_history
+    with_history = patients.merge(patient_histories, on="ssn")
+    return with_history
 
 
 def create_neural_net(input_dim):
