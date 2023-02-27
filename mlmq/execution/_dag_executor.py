@@ -7,9 +7,9 @@ from functools import partial
 
 import networkx
 
-from mlmq.execution._stat_tracking import capture_optimizer_info
-from mlmq.instrumentation._operator_types import OperatorType
-from mlmq.instrumentation._dag_node import DagNode
+from mlwhatif.execution._stat_tracking import capture_optimizer_info
+from mlwhatif.instrumentation._operator_types import OperatorType
+from mlwhatif.instrumentation._dag_node import DagNode
 
 
 @dataclasses.dataclass(frozen=True)

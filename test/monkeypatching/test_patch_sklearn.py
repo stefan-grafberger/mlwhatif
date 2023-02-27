@@ -19,11 +19,11 @@ from sklearn.tree import DecisionTreeClassifier
 from tensorflow.python.keras.wrappers.scikit_learn import KerasClassifier  # pylint: disable=no-name-in-module
 from testfixtures import compare, Comparison, RangeComparison
 
-from mlmq import OperatorType, OperatorContext, FunctionInfo
-from mlmq.execution import _pipeline_executor
-from mlmq.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
+from mlwhatif import OperatorType, OperatorContext, FunctionInfo
+from mlwhatif.execution import _pipeline_executor
+from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
-from mlmq.monkeypatching._patch_sklearn import TrainTestSplitResult
+from mlwhatif.monkeypatching._patch_sklearn import TrainTestSplitResult
 
 
 def test_label_binarize():

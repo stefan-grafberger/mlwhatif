@@ -11,7 +11,7 @@ from sklearn.ensemble import IsolationForest
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 
-from mlmq.monkeypatching._monkey_patching_utils import wrap_in_mlinspect_array_if_necessary
+from mlwhatif.monkeypatching._monkey_patching_utils import wrap_in_mlinspect_array_if_necessary
 
 
 def detect_outlier_standard_deviation(x, n_std=3.0, fitted_detector=None):

@@ -6,8 +6,8 @@ from typing import Dict, List, Tuple
 
 import networkx
 
-from mlmq.execution._patches import PipelinePatch
-from mlmq.visualisation import save_fig_to_path
+from mlwhatif.execution._patches import PipelinePatch
+from mlwhatif.visualisation import save_fig_to_path
 
 
 @dataclasses.dataclass

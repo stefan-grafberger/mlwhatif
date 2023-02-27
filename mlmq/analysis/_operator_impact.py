@@ -12,14 +12,14 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 
-from mlmq import OperatorType, DagNode, OperatorContext, DagNodeDetails
-from mlmq.analysis._analysis_utils import find_nodes_by_type, find_train_or_test_pipeline_part_end, \
+from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type, find_train_or_test_pipeline_part_end, \
     filter_estimator_transformer_edges
-from mlmq.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
-from mlmq.analysis._what_if_analysis import WhatIfAnalysis
-from mlmq.execution._patches import PipelinePatch, OperatorReplacement, OperatorRemoval
-from mlmq.execution._pipeline_executor import singleton
-from mlmq.monkeypatching._monkey_patching_utils import wrap_in_mlinspect_array_if_necessary
+from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
+from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.execution._patches import PipelinePatch, OperatorReplacement, OperatorRemoval
+from mlwhatif.execution._pipeline_executor import singleton
+from mlwhatif.monkeypatching._monkey_patching_utils import wrap_in_mlinspect_array_if_necessary
 
 
 class OperatorImpact(WhatIfAnalysis):

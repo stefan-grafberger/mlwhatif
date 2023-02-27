@@ -5,7 +5,7 @@ import os
 import pandas as pd
 
 from sklearn import compose, preprocessing, tree, pipeline
-from mlmq.utils import get_project_root
+from mlwhatif.utils import get_project_root
 
 print('pipeline start')
 train_file = os.path.join(str(get_project_root()), "example_pipelines", "adult_complex", "adult_train.csv")

@@ -8,15 +8,15 @@ import gorilla
 import xgboost
 from sklearn.metrics import accuracy_score
 
-from mlmq.execution._pipeline_executor import singleton
-from mlmq.execution._stat_tracking import capture_optimizer_info
-from mlmq.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails, OptimizerInfo
-from mlmq.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
-from mlmq.monkeypatching._monkey_patching_utils import add_dag_node, \
+from mlwhatif.execution._pipeline_executor import singleton
+from mlwhatif.execution._stat_tracking import capture_optimizer_info
+from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails, OptimizerInfo
+from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
+from mlwhatif.monkeypatching._monkey_patching_utils import add_dag_node, \
     execute_patched_func_indirect_allowed, execute_patched_func_no_op_id, \
     get_optional_code_info_or_none, get_dag_node_for_id, add_train_data_node, \
     add_train_label_node, add_test_label_node, add_test_data_dag_node, FunctionCallResult
-from mlmq.monkeypatching._patch_sklearn import call_info_singleton
+from mlwhatif.monkeypatching._patch_sklearn import call_info_singleton
 
 
 @gorilla.patches(xgboost.XGBClassifier)

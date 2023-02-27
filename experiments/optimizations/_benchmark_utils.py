@@ -9,9 +9,9 @@ import numpy
 import pandas
 from numpy.random.mtrand import shuffle, randint
 
-from mlmq.analysis._what_if_analysis import WhatIfAnalysis
-from mlmq.execution._patches import PipelinePatch
-from mlmq.execution._pipeline_executor import singleton
+from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.execution._patches import PipelinePatch
+from mlwhatif.execution._pipeline_executor import singleton
 
 
 class WhatIfWrapper(WhatIfAnalysis):

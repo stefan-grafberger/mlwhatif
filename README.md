@@ -1,22 +1,22 @@
-mlmq
+mlwhatif
 ================================
 
-[![mlmq](https://img.shields.io/badge/❓-mlmq-green)](https://github.com/anonymous-52200/mlmq)
-[![GitHub license](https://img.shields.io/badge/License-Apache%202.0-yellowgreen.svg)](https://github.com/anonymous-52200/mlmq/blob/master/LICENSE)
-[![Build Status](https://github.com/anonymous-52200/mlmq/actions/workflows/build.yml/badge.svg)](https://github.com/anonymous-52200/mlmq/actions/workflows/build.yml)
+[![mlwhatif](https://img.shields.io/badge/❓-mlwhatif-green)](https://github.com/stefan-grafberger/mlwhatif)
+[![GitHub license](https://img.shields.io/badge/License-Apache%202.0-yellowgreen.svg)](https://github.com/stefan-grafberger/mlwhatif/blob/master/LICENSE)
+[![Build Status](https://github.com/stefan-grafberger/mlwhatif/actions/workflows/build.yml/badge.svg)](https://github.com/stefan-grafberger/mlwhatif/actions/workflows/build.yml)
 
 Data-Centric What-If Analysis for Native Machine Learning Pipelines.
 
 This project uses the [mlinspect](https://github.com/stefan-grafberger/mlinspect) project as a foundation, mainly for its plan extraction from native ML pipelines.
 
-## Run mlmq locally
+## Run mlwhatif locally
 
 Prerequisite: Python 3.9
 
 1. Clone this repository (optionally, with [Git LFS](https://github.com/git-lfs/git-lfs), to also download the datasets for the scalability experiment)
 2. Set up the environment
 
-	`cd mlmq` <br>
+	`cd mlwhatif` <br>
 	`python -m venv venv` <br>
 	`source venv/bin/activate` <br>
 
@@ -34,7 +34,7 @@ Prerequisite: Python 3.9
     `python setup.py test` <br>
 
 ## Detailed Example
-We prepared a [demo notebook](demo/feature_overview/feature_overview.ipynb) to showcase mlmq and its features.
+We prepared a [demo notebook](demo/feature_overview/feature_overview.ipynb) to showcase mlwhatif and its features.
 
 ## Notes
 * For debugging in PyCharm, set the pytest flag `--no-cov` ([Link](https://stackoverflow.com/questions/34870962/how-to-debug-py-test-in-pycharm-when-coverage-is-enabled))

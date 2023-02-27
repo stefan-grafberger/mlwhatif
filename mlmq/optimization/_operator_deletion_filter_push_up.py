@@ -8,12 +8,12 @@ from typing import List
 import networkx
 from numpy import argmin
 
-from mlmq.instrumentation._dag_node import DagNode
-from mlmq.instrumentation._operator_types import OperatorType
-from mlmq.analysis._analysis_utils import find_dag_location_for_new_filter_on_column, get_sorted_parent_nodes, \
+from mlwhatif.instrumentation._dag_node import DagNode
+from mlwhatif.instrumentation._operator_types import OperatorType
+from mlwhatif.analysis._analysis_utils import find_dag_location_for_new_filter_on_column, get_sorted_parent_nodes, \
     get_sorted_children_nodes, get_columns_used_as_feature
-from mlmq.execution._patches import PipelinePatch, OperatorRemoval
-from mlmq.optimization._query_optimization_rules import QueryOptimizationRule
+from mlwhatif.execution._patches import PipelinePatch, OperatorRemoval
+from mlwhatif.optimization._query_optimization_rules import QueryOptimizationRule
 
 
 class OperatorDeletionFilterPushUp(QueryOptimizationRule):

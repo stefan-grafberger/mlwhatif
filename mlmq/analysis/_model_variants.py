@@ -7,12 +7,12 @@ from typing import Iterable, Dict, Callable
 import networkx
 import pandas
 
-from mlmq import OperatorType, DagNode, DagNodeDetails
-from mlmq.analysis._analysis_utils import find_nodes_by_type
-from mlmq.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
-from mlmq.analysis._what_if_analysis import WhatIfAnalysis
-from mlmq.execution._patches import PipelinePatch, ModelPatch
-from mlmq.execution._pipeline_executor import singleton
+from mlwhatif import OperatorType, DagNode, DagNodeDetails
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type
+from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
+from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.execution._patches import PipelinePatch, ModelPatch
+from mlwhatif.execution._pipeline_executor import singleton
 
 
 class ModelVariants(WhatIfAnalysis):

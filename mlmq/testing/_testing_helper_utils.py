@@ -14,12 +14,12 @@ from testfixtures import Comparison, RangeComparison
 
 from example_pipelines.healthcare import custom_monkeypatching
 from experiments.end_to_end.benchmarks_end_to_end import get_analysis_for_scenario_and_dataset
-from mlmq import OperatorContext, FunctionInfo, OperatorType
-from mlmq._pipeline_analyzer import PipelineAnalyzer
-from mlmq.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
+from mlwhatif import OperatorContext, FunctionInfo, OperatorType
+from mlwhatif._pipeline_analyzer import PipelineAnalyzer
+from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
-from mlmq.utils import get_project_root
-from mlmq.visualisation._visualisation import save_fig_to_path
+from mlwhatif.utils import get_project_root
+from mlwhatif.visualisation._visualisation import save_fig_to_path
 
 
 def get_expected_dag_adult_easy(caller_filename: str, line_offset: int = 0, with_code_references=True):
@@ -212,7 +212,7 @@ def get_pandas_read_csv_and_dropna_code():
     code = cleandoc("""
             import os
             import pandas as pd
-            from mlmq.utils import get_project_root
+            from mlwhatif.utils import get_project_root
 
             train_file = os.path.join(str(get_project_root()), "example_pipelines", "adult_complex", "adult_train.csv")
             raw_data = pd.read_csv(train_file)
@@ -225,7 +225,7 @@ def get_pandas_read_csv_and_dropna_code():
 def run_and_assert_all_op_outputs_inspected(py_file_path, _, dag_png_path, custom_monkey_patching=None):
     """
     Execute the pipeline with a few checks and inspections.
-    Assert that mlmq properly lets inspections inspect all DAG nodes
+    Assert that mlwhatif properly lets inspections inspect all DAG nodes
     """
     if custom_monkey_patching is None:
         custom_monkey_patching = []
@@ -282,7 +282,7 @@ def run_scenario_and_visualize_dags(dataset, scenario, tmpdir, featurization="fe
     """Run a scenario and visualize the DAGs for debugging and save them to same temporary directory"""
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     analysis = get_analysis_for_scenario_and_dataset(scenario, dataset)
-    with patch.object(sys, 'argv', ["mlmq", dataset, "fast_loading", featurization, model]):
+    with patch.object(sys, 'argv', ["mlwhatif", dataset, "fast_loading", featurization, model]):
         analysis_result_no_opt = PipelineAnalyzer \
             .on_pipeline_from_py_file(pipeline_run_file) \
             .add_custom_monkey_patching_modules([custom_monkeypatching]) \

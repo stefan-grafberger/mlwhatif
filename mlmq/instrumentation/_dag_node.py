@@ -4,7 +4,7 @@ The Nodes used in the DAG as nodes for the networkx.DiGraph
 import dataclasses
 from typing import List, Callable, Tuple
 
-from mlmq.instrumentation._operator_types import OperatorContext
+from mlwhatif.instrumentation._operator_types import OperatorContext
 
 
 @dataclasses.dataclass
@@ -40,7 +40,7 @@ class BasicCodeLocation:
 @dataclasses.dataclass
 class OptionalCodeInfo:
     """
-    The additional information collected by mlmq if `set_code_reference_tracking` is enabled
+    The additional information collected by mlwhatif if `set_code_reference_tracking` is enabled
     """
     code_reference: CodeReference
     source_code: str

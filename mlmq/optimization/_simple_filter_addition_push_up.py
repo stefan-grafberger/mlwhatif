@@ -6,9 +6,9 @@ from typing import List
 
 import networkx
 
-from mlmq.analysis._analysis_utils import find_dag_location_for_new_filter_on_column
-from mlmq.execution._patches import PipelinePatch, DataFiltering, AppendNodeAfterOperator
-from mlmq.optimization._query_optimization_rules import QueryOptimizationRule
+from mlwhatif.analysis._analysis_utils import find_dag_location_for_new_filter_on_column
+from mlwhatif.execution._patches import PipelinePatch, DataFiltering, AppendNodeAfterOperator
+from mlwhatif.optimization._query_optimization_rules import QueryOptimizationRule
 
 
 class SimpleFilterAdditionPushUp(QueryOptimizationRule):

@@ -5,9 +5,9 @@ from inspect import cleandoc
 
 from example_pipelines import HEALTHCARE_PY, COMPAS_PY, ADULT_COMPLEX_PY
 from example_pipelines.healthcare import custom_monkeypatching
-from mlmq import PipelineAnalyzer
-from mlmq.testing._data_filter_variants import DataFilterVariants
-from mlmq.testing._testing_helper_utils import visualize_dags
+from mlwhatif import PipelineAnalyzer
+from mlwhatif.testing._data_filter_variants import DataFilterVariants
+from mlwhatif.testing._testing_helper_utils import visualize_dags
 
 
 def test_data_filter_variants_mini_example_with_transformer_processing_multiple_columns(tmpdir):

@@ -13,17 +13,17 @@ from jenga.corruptions.generic import CategoricalShift
 from jenga.corruptions.numerical import Scaling, GaussianNoise
 from jenga.corruptions.text import BrokenCharacters
 
-from mlmq import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
-from mlmq.analysis._analysis_utils import find_nodes_by_type
-from mlmq.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
-from mlmq.analysis._what_if_analysis import WhatIfAnalysis
-from mlmq.execution._patches import DataProjection, PipelinePatch, UdfSplitInfo
-from mlmq.execution._pipeline_executor import singleton
+from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type
+from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
+from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.execution._patches import DataProjection, PipelinePatch, UdfSplitInfo
+from mlwhatif.execution._pipeline_executor import singleton
 
 
 class CorruptionType(Enum):
     """
-    The different corruption functions known to mlmq, but custom corruption functions can also be used
+    The different corruption functions known to mlwhatif, but custom corruption functions can also be used
     """
     CATEGORICAL_SHIFT = "categorical shift"
     MISSING_VALUES = "missing values"

@@ -21,13 +21,13 @@ from experiments.memory.memory_monitor import MemoryMonitor
 logger = logging.getLogger(__name__)
 
 
-from mlmq.utils import get_project_root
+from mlwhatif.utils import get_project_root
 pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "memory", "run_pipeline.py")
 
 
 def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name, variant_count):
-    from mlmq.analysis._data_cleaning import DataCleaning, ErrorType
-    from mlmq.analysis._data_corruption import DataCorruption, CorruptionType
+    from mlwhatif.analysis._data_cleaning import DataCleaning, ErrorType
+    from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
 
     if scenario_name == 'data_corruption' and dataset_name in {'reviews', 'reviews_5x', 'reviews_10x'}:
         corruption_percentages = [(1. / variant_count) * variant_number for variant_number
@@ -69,7 +69,7 @@ def exec_and_get_memory_info(exec_func, exec_strategy, analysis):
 def exec_warmup(exec_strategy, analysis):
     print(f"Warmup!")
     print(f"Patched command line arguments: {sys.argv}")
-    from mlmq import PipelineAnalyzer
+    from mlwhatif import PipelineAnalyzer
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_py_file(pipeline_run_file) \
         .add_custom_monkey_patching_modules([custom_monkeypatching]) \
@@ -81,7 +81,7 @@ def exec_warmup(exec_strategy, analysis):
 def exec_opt(exec_strategy, analysis):
     print(f"Opt!")
     print(f"Patched command line arguments: {sys.argv}")
-    from mlmq import PipelineAnalyzer
+    from mlwhatif import PipelineAnalyzer
     analysis_result_opt = PipelineAnalyzer \
         .on_pipeline_from_py_file(pipeline_run_file) \
         .add_custom_monkey_patching_modules([custom_monkeypatching]) \
@@ -95,7 +95,7 @@ def exec_opt(exec_strategy, analysis):
 def exec_no_opt(exec_strategy, analysis):
     print(f"No Opt!")
     print(f"Patched command line arguments: {sys.argv}")
-    from mlmq import PipelineAnalyzer
+    from mlwhatif import PipelineAnalyzer
     analysis_result_no_opt = PipelineAnalyzer \
         .on_pipeline_from_py_file(pipeline_run_file) \
         .add_custom_monkey_patching_modules([custom_monkeypatching]) \
@@ -126,7 +126,7 @@ if __name__ == "__main__":
     assert len(seeds) == num_repetitions
 
     # Warm-up run to ignore effect of imports
-    synthetic_cmd_args = ['mlmq']
+    synthetic_cmd_args = ['mlwhatif']
     cmd_args = sys.argv[2:6].copy()
     synthetic_cmd_args.extend(cmd_args)
 

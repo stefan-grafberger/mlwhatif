@@ -7,7 +7,7 @@ import networkx
 import numpy
 from networkx.drawing.nx_agraph import to_agraph
 
-from mlmq.instrumentation._dag_node import DagNode
+from mlwhatif.instrumentation._dag_node import DagNode
 
 
 def _save_what_if_dags_as_figs_to_path(prefix_analysis_dags, what_if_dags):

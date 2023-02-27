@@ -3,7 +3,7 @@ Some useful utils for the project
 """
 import os
 
-from mlmq.utils import get_project_root
+from mlwhatif.utils import get_project_root
 
 ADULT_SIMPLE_PY = os.path.join(str(get_project_root()), "example_pipelines", "adult_simple", "adult_simple.py")
 ADULT_SIMPLE_IPYNB = os.path.join(str(get_project_root()), "example_pipelines", "adult_simple", "adult_simple.ipynb")

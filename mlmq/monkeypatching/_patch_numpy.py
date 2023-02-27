@@ -6,10 +6,10 @@ from functools import partial
 import gorilla
 from numpy import random
 
-from mlmq import DagNode, BasicCodeLocation, DagNodeDetails
-from mlmq.execution._stat_tracking import capture_optimizer_info
-from mlmq.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
-from mlmq.monkeypatching._monkey_patching_utils import execute_patched_func, add_dag_node, \
+from mlwhatif import DagNode, BasicCodeLocation, DagNodeDetails
+from mlwhatif.execution._stat_tracking import capture_optimizer_info
+from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
+from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, add_dag_node, \
     get_optional_code_info_or_none, FunctionCallResult
 
 

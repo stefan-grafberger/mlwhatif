@@ -15,7 +15,7 @@ from fairlearn.metrics import MetricFrame
 from scipy.sparse import csr_matrix
 from tensorflow.python.keras.wrappers.scikit_learn import BaseWrapper  # pylint: disable=no-name-in-module
 
-from mlmq.instrumentation._dag_node import OptimizerInfo
+from mlwhatif.instrumentation._dag_node import OptimizerInfo
 
 
 def capture_optimizer_info(instrumented_function_call: partial, obj_for_inplace_ops: any or None = None,

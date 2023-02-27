@@ -24,12 +24,12 @@ from sklearn.pipeline import _fit_transform_one, _transform_one
 from tensorflow.keras.wrappers import scikit_learn as keras_sklearn_external  # pylint: disable=no-name-in-module
 from tensorflow.python.keras.wrappers import scikit_learn as keras_sklearn_internal  # pylint: disable=no-name-in-module
 
-from mlmq.execution._stat_tracking import capture_optimizer_info, get_df_shape, get_df_memory
-from mlmq.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
-from mlmq.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails, CodeReference, OptimizerInfo
-from mlmq.execution._pipeline_executor import singleton
-from mlmq.monkeypatching._mlinspect_ndarray import MlinspectNdarray
-from mlmq.monkeypatching._monkey_patching_utils import execute_patched_func, add_dag_node, \
+from mlwhatif.execution._stat_tracking import capture_optimizer_info, get_df_shape, get_df_memory
+from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
+from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails, CodeReference, OptimizerInfo
+from mlwhatif.execution._pipeline_executor import singleton
+from mlwhatif.monkeypatching._mlinspect_ndarray import MlinspectNdarray
+from mlwhatif.monkeypatching._monkey_patching_utils import execute_patched_func, add_dag_node, \
     execute_patched_func_indirect_allowed, get_input_info, execute_patched_func_no_op_id, \
     get_optional_code_info_or_none, get_dag_node_for_id, add_train_data_node, \
     add_train_label_node, add_test_label_node, add_test_data_dag_node, FunctionCallResult, \

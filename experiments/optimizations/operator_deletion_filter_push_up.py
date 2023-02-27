@@ -7,10 +7,10 @@ import os
 from inspect import cleandoc
 
 from experiments.optimizations._benchmark_utils import get_test_df
-from mlmq import PipelineAnalyzer
-from mlmq.analysis._operator_impact import OperatorImpact
-from mlmq.execution._pipeline_executor import singleton
-from mlmq.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
+from mlwhatif import PipelineAnalyzer
+from mlwhatif.analysis._operator_impact import OperatorImpact
+from mlwhatif.execution._pipeline_executor import singleton
+from mlwhatif.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
 
 
 def run_operator_deletion_filter_push_up_benchmark(scenario, variant_count, data_size, csv_dir):

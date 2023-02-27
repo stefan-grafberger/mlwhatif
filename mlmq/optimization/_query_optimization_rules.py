@@ -7,7 +7,7 @@ from typing import List
 
 import networkx
 
-from mlmq.execution._patches import PipelinePatch
+from mlwhatif.execution._patches import PipelinePatch
 
 
 class QueryOptimizationRule(metaclass=abc.ABCMeta):

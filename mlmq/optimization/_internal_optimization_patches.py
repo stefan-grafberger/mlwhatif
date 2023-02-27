@@ -4,9 +4,9 @@ import logging
 
 import networkx
 
-from mlmq.analysis._analysis_utils import add_new_node_between_nodes
-from mlmq.execution._patches import OperatorPatch, UdfSplitInfo
-from mlmq.instrumentation._dag_node import DagNode
+from mlwhatif.analysis._analysis_utils import add_new_node_between_nodes
+from mlwhatif.execution._patches import OperatorPatch, UdfSplitInfo
+from mlwhatif.instrumentation._dag_node import DagNode
 
 logger = logging.getLogger(__name__)
 

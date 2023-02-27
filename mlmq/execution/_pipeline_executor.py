@@ -16,14 +16,14 @@ import networkx
 from astmonkey.transformers import ParentChildNodeTransformer
 from nbconvert import PythonExporter
 
-from mlmq.instrumentation._call_capture_transformer import CallCaptureTransformer
-from mlmq import monkeypatching
-from mlmq.instrumentation._operator_types import OperatorType
-from mlmq._analysis_results import AnalysisResults, RuntimeInfo, DagExtractionInfo
-from mlmq.analysis._what_if_analysis import WhatIfAnalysis
-from mlmq.execution._dag_executor import DagExecutor
-from mlmq.optimization._multi_query_optimizer import MultiQueryOptimizer
-from mlmq.optimization._query_optimization_rules import QueryOptimizationRule
+from mlwhatif.instrumentation._call_capture_transformer import CallCaptureTransformer
+from mlwhatif import monkeypatching
+from mlwhatif.instrumentation._operator_types import OperatorType
+from mlwhatif._analysis_results import AnalysisResults, RuntimeInfo, DagExtractionInfo
+from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.execution._dag_executor import DagExecutor
+from mlwhatif.optimization._multi_query_optimizer import MultiQueryOptimizer
+from mlwhatif.optimization._query_optimization_rules import QueryOptimizationRule
 
 logging.basicConfig(format='%(asctime)s %(levelname)-5s %(message)s',
                     level=logging.INFO,
@@ -238,7 +238,7 @@ class PipelineExecutor:
 
     def reset(self):
         """
-        Reset all attributes in the singleton object. This can be used when there are multiple repeated calls to mlmq
+        Reset all attributes in the singleton object. This can be used when there are multiple repeated calls to mlwhatif
         """
         self.source_code_path = None
         self.source_code = None
@@ -283,7 +283,7 @@ class PipelineExecutor:
             parsed_ast = ast.fix_missing_locations(parsed_ast)
 
         # from mlinspect2._pipeline_executor import set_code_reference, monkey_patch
-        func_import_node = ast.ImportFrom(module='mlmq.execution._pipeline_executor',
+        func_import_node = ast.ImportFrom(module='mlwhatif.execution._pipeline_executor',
                                           names=[ast.alias(name='set_code_reference_call', asname=None),
                                                  ast.alias(name='set_code_reference_subscript', asname=None),
                                                  ast.alias(name='monkey_patch', asname=None),
@@ -390,7 +390,7 @@ def undo_monkey_patch():
 
 def get_monkey_patching_patch_sources():
     """
-    Get monkey patches provided by mlmq and custom patches provided by the user
+    Get monkey patches provided by mlwhatif and custom patches provided by the user
     """
     patch_sources = [monkeypatching]
     patch_sources.extend(singleton.custom_monkey_patching)

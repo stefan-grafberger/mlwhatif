@@ -7,9 +7,9 @@ import sys
 from unittest.mock import patch
 
 from example_pipelines.healthcare import custom_monkeypatching
-from mlmq import PipelineAnalyzer, OperatorType
-from mlmq.testing._testing_helper_utils import run_scenario_and_visualize_dags
-from mlmq.utils import get_project_root
+from mlwhatif import PipelineAnalyzer, OperatorType
+from mlwhatif.testing._testing_helper_utils import run_scenario_and_visualize_dags
+from mlwhatif.utils import get_project_root
 
 
 def test_data_corruption_reviews(tmpdir):
@@ -376,7 +376,7 @@ def test_walmart_amazon(tmpdir):
 def run_base_pipeline_and_visualize_dag(dataset, featurization, model, tmpdir):
     """Run a base pipeline and visualize the DAGs for debugging and save them to same temporary directory"""
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
-    with patch.object(sys, 'argv', ["mlmq", dataset, "fast_loading", featurization, model]):
+    with patch.object(sys, 'argv', ["mlwhatif", dataset, "fast_loading", featurization, model]):
         analysis_result = PipelineAnalyzer \
             .on_pipeline_from_py_file(pipeline_run_file) \
             .add_custom_monkey_patching_modules([custom_monkeypatching]) \

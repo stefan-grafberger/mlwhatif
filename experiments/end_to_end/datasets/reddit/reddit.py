@@ -12,7 +12,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import FunctionTransformer
 
-from mlmq.utils import get_project_root
+from mlwhatif.utils import get_project_root
 
 data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets")
 

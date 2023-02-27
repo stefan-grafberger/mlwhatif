@@ -8,10 +8,10 @@ from sklearn.tree import DecisionTreeClassifier
 
 from example_pipelines import HEALTHCARE_PY, COMPAS_PY, ADULT_SIMPLE_PY, ADULT_COMPLEX_PY
 from example_pipelines.healthcare import custom_monkeypatching as healthcare_patching
-from mlmq.analysis._patch_creation import get_intermediate_extraction_patch_after_node
-from mlmq.execution._dag_executor import DagExecutor
-from mlmq.execution import _pipeline_executor
-from mlmq.execution._pipeline_executor import singleton
+from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_node
+from mlwhatif.execution._dag_executor import DagExecutor
+from mlwhatif.execution import _pipeline_executor
+from mlwhatif.execution._pipeline_executor import singleton
 
 
 def test_simple_dag_execution():

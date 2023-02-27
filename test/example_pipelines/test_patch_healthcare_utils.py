@@ -10,9 +10,9 @@ import pandas
 from testfixtures import compare, Comparison, RangeComparison
 
 from example_pipelines.healthcare import custom_monkeypatching
-from mlmq import OperatorContext, FunctionInfo, OperatorType
-from mlmq.execution import _pipeline_executor
-from mlmq.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
+from mlwhatif import OperatorContext, FunctionInfo, OperatorType
+from mlwhatif.execution import _pipeline_executor
+from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
 
 

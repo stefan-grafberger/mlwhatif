@@ -33,8 +33,8 @@ from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Dropout, Flatte
 from tensorflow.keras.models import Sequential
 
 from example_pipelines.healthcare.healthcare_utils import MyKerasClassifier, MyW2VTransformer
-from mlmq.utils import get_project_root
-from mlmq.utils._utils import decode_image
+from mlwhatif.utils import get_project_root
+from mlwhatif.utils._utils import decode_image
 
 data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets")
 
@@ -55,13 +55,13 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
                     products = pd.read_csv(os.path.join(data_root, "reviews", "products.csv"), index_col=0)
                     categories = pd.read_csv(os.path.join(data_root, "reviews", "categories.csv"), index_col=0)
                 elif data_loading_name == 'slow_loading':
-                    reviews = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+                    reviews = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
                                           "main/datasets/reviews/reviews.csv.gz", compression='gzip', index_col=0)
-                    ratings = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+                    ratings = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
                                           "main/datasets/reviews/ratings.csv", index_col=0)
-                    products = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+                    products = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
                                            "main/datasets/reviews/products.csv", index_col=0)
-                    categories = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+                    categories = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
                                              "main/datasets/reviews/categories.csv", index_col=0)
                 else:
                     raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
@@ -184,9 +184,9 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
                 os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "healthcare",
                              "histories.csv"), na_values='?')
         elif data_loading_name == 'slow_loading':
-            patients = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+            patients = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
                                    "main/datasets/healthcare/patients.csv", na_values='?')
-            histories = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+            histories = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
                                     "main/datasets/healthcare/histories.csv", na_values='?')
         else:
             raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
@@ -215,7 +215,7 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
                     os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "folktables",
                                  "acs_income_RI_2017_5y.csv"), delimiter=";")
             elif data_loading_name == 'slow_loading':
-                acs_data = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+                acs_data = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
                                        "main/datasets/folktables/acs_income_RI_2017_5y.csv", delimiter=";")
             else:
                 raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
@@ -267,12 +267,12 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
                 os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "cardio",
                              "cardio-add-two.csv"), delimiter=';')
         elif data_loading_name == 'slow_loading':
-            cardio_main = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+            cardio_main = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
                                       "main/datasets/cardio/cardio-main.csv", delimiter=';')
-            cardio_first_additional_table = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/"
+            cardio_first_additional_table = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/"
                                                         "ml-pipeline-datasets/main/datasets/cardio/cardio-add-one.csv",
                                                         delimiter=';')
-            cardio_second_additional_table = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/"
+            cardio_second_additional_table = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/"
                                                          "ml-pipeline-datasets/main/datasets/cardio/cardio-add-two.csv",
                                                          delimiter=';')
         else:
@@ -301,9 +301,9 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
                 os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "sneakers",
                              "product_categories.csv"))
         elif data_loading_name == 'slow_loading':
-            train_data = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+            train_data = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/ml-pipeline-datasets/"
                                      "main/datasets/sneakers/product_images.csv", converters={'image': decode_image})
-            product_categories = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/"
+            product_categories = pd.read_csv("https://raw.githubusercontent.com/stefan-grafberger/"
                                              "ml-pipeline-datasets/main/datasets/sneakers/"
                                              "product_categories.csv")
         else:
@@ -659,5 +659,5 @@ def main_function(*args, **kwargs):
 
 
 # Make sure this code is not executed during imports
-if sys.argv[0] == "mlmq" or __name__ == "__main__":
+if sys.argv[0] == "mlwhatif" or __name__ == "__main__":
     main_function()

@@ -10,13 +10,13 @@ import networkx
 import numpy
 import pandas
 
-from mlmq import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
-from mlmq.analysis._analysis_utils import find_nodes_by_type
-from mlmq.analysis._data_corruption import CorruptionType, CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES
-from mlmq.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
-from mlmq.analysis._what_if_analysis import WhatIfAnalysis
-from mlmq.execution._patches import DataProjection, PipelinePatch, UdfSplitInfo, ModelPatch
-from mlmq.execution._pipeline_executor import singleton
+from mlwhatif import OperatorType, DagNode, OperatorContext, DagNodeDetails, BasicCodeLocation
+from mlwhatif.analysis._analysis_utils import find_nodes_by_type
+from mlwhatif.analysis._data_corruption import CorruptionType, CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES
+from mlwhatif.analysis._patch_creation import get_intermediate_extraction_patch_after_score_nodes
+from mlwhatif.analysis._what_if_analysis import WhatIfAnalysis
+from mlwhatif.execution._patches import DataProjection, PipelinePatch, UdfSplitInfo, ModelPatch
+from mlwhatif.execution._pipeline_executor import singleton
 
 
 class DataCorruptionWithModelVariants(WhatIfAnalysis):

@@ -6,11 +6,11 @@ from typing import List, Callable, Iterable, Dict
 
 import networkx
 
-from mlmq.instrumentation._operator_types import OperatorType
-from mlmq.analysis._analysis_utils import find_dag_location_for_data_patch, add_new_node_after_node, \
+from mlwhatif.instrumentation._operator_types import OperatorType
+from mlwhatif.analysis._analysis_utils import find_dag_location_for_data_patch, add_new_node_after_node, \
     find_nodes_by_type, replace_node, remove_node, get_sorted_parent_nodes, get_sorted_children_nodes, \
     filter_estimator_transformer_edges
-from mlmq.instrumentation._dag_node import DagNode, OptimizerInfo, DagNodeDetails
+from mlwhatif.instrumentation._dag_node import DagNode, OptimizerInfo, DagNodeDetails
 
 logger = logging.getLogger(__name__)
 

@@ -6,8 +6,8 @@ from typing import List
 
 import networkx
 
-from mlmq.instrumentation._operator_types import OperatorType
-from mlmq.instrumentation._dag_node import DagNode
+from mlwhatif.instrumentation._operator_types import OperatorType
+from mlwhatif.instrumentation._dag_node import DagNode
 
 logger = logging.getLogger(__name__)
 

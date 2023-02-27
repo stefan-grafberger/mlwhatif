@@ -7,11 +7,11 @@ from functools import partial
 import gorilla
 from fairlearn import metrics
 
-from mlmq import OperatorType, DagNode, BasicCodeLocation, DagNodeDetails
-from mlmq.execution._stat_tracking import capture_optimizer_info
-from mlmq.instrumentation._operator_types import OperatorContext, FunctionInfo
-from mlmq.execution._pipeline_executor import singleton
-from mlmq.monkeypatching._monkey_patching_utils import add_dag_node, \
+from mlwhatif import OperatorType, DagNode, BasicCodeLocation, DagNodeDetails
+from mlwhatif.execution._stat_tracking import capture_optimizer_info
+from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo
+from mlwhatif.execution._pipeline_executor import singleton
+from mlwhatif.monkeypatching._monkey_patching_utils import add_dag_node, \
     get_optional_code_info_or_none, FunctionCallResult, \
     add_test_label_node, get_input_info, execute_patched_func_no_op_id
 

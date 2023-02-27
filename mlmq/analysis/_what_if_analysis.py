@@ -6,7 +6,7 @@ from typing import Iterable, Dict
 
 import networkx
 
-from mlmq.execution._patches import PipelinePatch
+from mlwhatif.execution._patches import PipelinePatch
 
 
 class WhatIfAnalysis(metaclass=abc.ABCMeta):

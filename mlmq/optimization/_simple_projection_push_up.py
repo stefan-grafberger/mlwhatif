@@ -6,11 +6,11 @@ from typing import List
 
 import networkx
 
-from mlmq.analysis._analysis_utils import find_dag_location_for_first_op_modifying_column
-from mlmq.optimization._internal_optimization_patches import AppendNodeBetweenOperators, \
+from mlwhatif.analysis._analysis_utils import find_dag_location_for_first_op_modifying_column
+from mlwhatif.optimization._internal_optimization_patches import AppendNodeBetweenOperators, \
     OperatorTransformerInsertion
-from mlmq.execution._patches import PipelinePatch, DataProjection, DataTransformer
-from mlmq.optimization._query_optimization_rules import QueryOptimizationRule
+from mlwhatif.execution._patches import PipelinePatch, DataProjection, DataTransformer
+from mlwhatif.optimization._query_optimization_rules import QueryOptimizationRule
 
 
 class SimpleProjectionPushUp(QueryOptimizationRule):

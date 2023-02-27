@@ -10,13 +10,13 @@ import numpy
 from pandas import DataFrame, Series
 from scipy.sparse import csr_matrix
 
-from mlmq.execution._stat_tracking import get_df_shape, get_df_memory
-from mlmq.instrumentation._operator_types import OperatorContext, OperatorType
-from mlmq.execution import _pipeline_executor
-from mlmq.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
+from mlwhatif.execution._stat_tracking import get_df_shape, get_df_memory
+from mlwhatif.instrumentation._operator_types import OperatorContext, OperatorType
+from mlwhatif.execution import _pipeline_executor
+from mlwhatif.instrumentation._dag_node import DagNode, CodeReference, BasicCodeLocation, DagNodeDetails, \
     OptionalCodeInfo, OptimizerInfo
-from mlmq.execution._pipeline_executor import singleton
-from mlmq.monkeypatching._mlinspect_ndarray import MlinspectNdarray, MlinspectList
+from mlwhatif.execution._pipeline_executor import singleton
+from mlwhatif.monkeypatching._mlinspect_ndarray import MlinspectNdarray, MlinspectList
 
 
 @dataclasses.dataclass(frozen=False)
@@ -49,7 +49,7 @@ def execute_patched_func(original_func, execute_inspections_func, *args, **kwarg
     # CPython implementation detail: This function should be used for internal and specialized purposes only.
     #  It is not guaranteed to exist in all implementations of Python.
     #  inspect.getcurrentframe() also only does return `sys._getframe(1) if hasattr(sys, "_getframe") else None`
-    #  We can execute one hasattr check right at the beginning of the mlmq execution
+    #  We can execute one hasattr check right at the beginning of the mlwhatif execution
 
     caller_filename = sys._getframe(2).f_code.co_filename  # pylint: disable=protected-access
 
@@ -85,7 +85,7 @@ def execute_patched_internal_func_with_depth(original_func, execute_inspections_
     # CPython implementation detail: This function should be used for internal and specialized purposes only.
     #  It is not guaranteed to exist in all implementations of Python.
     #  inspect.getcurrentframe() also only does return `sys._getframe(1) if hasattr(sys, "_getframe") else None`
-    #  We can execute one hasattr check right at the beginning of the mlmq execution
+    #  We can execute one hasattr check right at the beginning of the mlwhatif execution
 
     caller_filename = sys._getframe(depth).f_code.co_filename  # pylint: disable=protected-access
 
@@ -149,7 +149,7 @@ def execute_patched_func_indirect_allowed(execute_inspections_func):
     # CPython implementation detail: This function should be used for internal and specialized purposes only.
     #  It is not guaranteed to exist in all implementations of Python.
     #  inspect.getcurrentframe() also only does return `sys._getframe(1) if hasattr(sys, "_getframe") else None`
-    #  We can execute one hasattr check right at the beginning of the mlmq execution
+    #  We can execute one hasattr check right at the beginning of the mlwhatif execution
 
     frame = sys._getframe(2)  # pylint: disable=protected-access
     while frame.f_code.co_filename != singleton.source_code_path:
@@ -194,7 +194,7 @@ def get_input_info(df_object, caller_filename, lineno, function_info, optional_c
         else:
             code_reference = ""
         description = "Warning! Operator {}:{} {} encountered a DataFrame resulting from an operation " \
-                      "without mlmq support!".format(caller_filename, lineno, code_reference)
+                      "without mlwhatif support!".format(caller_filename, lineno, code_reference)
         missing_op_id = singleton.get_next_missing_op_id()
         input_dag_node = DagNode(missing_op_id,
                                  BasicCodeLocation(caller_filename, lineno),

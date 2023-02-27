@@ -4,14 +4,14 @@
 * Extending mlinspect to support more and more API functions and libraries will be an ongoing effort. External contributions are very welcome! 
 * However, mlinspect doesn't just crash when it encounters unknown functions.
 * mlinspect just ignores functions it doesn't recognize. If a function it does recognize encounters the input from a relevant unknown function, it will create a `MISSING_OP` node for a single or multiple unknown function calls. The inspections also get to see this unknown input, from their perspective it's just a new data source.
-* mlmq currently has no fallbacks for unrecognized functions yet
+* mlwhatif currently has no fallbacks for unrecognized functions yet
 * Example:
 
 ```python
 import networkx
 from inspect import cleandoc
 from testfixtures import compare, Comparison
-from mlmq import OperatorType, OperatorContext, FunctionInfo, PipelineAnalyzer, CodeReference, DagNode,
+from mlwhatif import OperatorType, OperatorContext, FunctionInfo, PipelineAnalyzer, CodeReference, DagNode,
 
 BasicCodeLocation, DagNodeDetails,
 OptionalCodeInfo
@@ -20,7 +20,7 @@ test_code = cleandoc("""
         from inspect import cleandoc
         from types import FunctionType
         import pandas
-        from mlmq.testing._testing_helper_utils import black_box_df_op
+        from mlwhatif.testing._testing_helper_utils import black_box_df_op
         
         df = black_box_df_op()
         df = df.dropna()
@@ -33,7 +33,7 @@ expected_missing_op = DagNode(-1,
                               BasicCodeLocation("<string-source>", 5),
                               OperatorContext(OperatorType.MISSING_OP, None),
                               DagNodeDetails('Warning! Operator <string-source>:5 (df.dropna()) encountered a '
-                                             'DataFrame resulting from an operation without mlmq support!',
+                                             'DataFrame resulting from an operation without mlwhatif support!',
                                              ['A']),
                               OptionalCodeInfo(CodeReference(5, 5, 5, 16), 'df.dropna()'))
 expected_select = DagNode(0,

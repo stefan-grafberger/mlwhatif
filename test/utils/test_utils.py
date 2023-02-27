@@ -3,7 +3,7 @@ Tests whether the utils work
 """
 from pathlib import Path
 
-from mlmq.utils._utils import get_project_root
+from mlwhatif.utils._utils import get_project_root
 
 
 def test_get_project_root():

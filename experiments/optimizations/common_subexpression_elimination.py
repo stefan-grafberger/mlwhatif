@@ -10,8 +10,8 @@ from inspect import cleandoc
 from sklearn.dummy import DummyClassifier
 
 from experiments.optimizations._benchmark_utils import get_test_df
-from mlmq import PipelineAnalyzer
-from mlmq.analysis._model_variants import ModelVariants
+from mlwhatif import PipelineAnalyzer
+from mlwhatif.analysis._model_variants import ModelVariants
 
 
 def run_common_subexpression_elimination_benchmark(scenario, variant_count, data_size, csv_dir):

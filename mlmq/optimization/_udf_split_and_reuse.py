@@ -9,12 +9,12 @@ from typing import List
 import networkx
 import pandas
 
-from mlmq.instrumentation._dag_node import DagNode, BasicCodeLocation, OperatorContext, DagNodeDetails
-from mlmq.instrumentation._operator_types import OperatorType
-from mlmq.execution._patches import PipelinePatch
-from mlmq.optimization._internal_optimization_patches import AppendNodeBetweenOperators, \
+from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, OperatorContext, DagNodeDetails
+from mlwhatif.instrumentation._operator_types import OperatorType
+from mlwhatif.execution._patches import PipelinePatch
+from mlwhatif.optimization._internal_optimization_patches import AppendNodeBetweenOperators, \
     UdfSplitAndReuseAppendNodeBetweenOperators
-from mlmq.optimization._query_optimization_rules import QueryOptimizationRule
+from mlwhatif.optimization._query_optimization_rules import QueryOptimizationRule
 
 
 class UdfSplitAndReuse(QueryOptimizationRule):

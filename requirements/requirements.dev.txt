@@ -19,4 +19,4 @@ datasets==2.7.1
 psutil==5.9.4
 sentence-transformers==2.2.2
 textdistance==4.5.0
-csvmatch @ git+https://github.com/anonymous-52200/csvmatch.git@07802101cefec6a52502944a14be02cde5833d1f
+csvmatch @ git+https://github.com/stefan-grafberger/csvmatch.git@07802101cefec6a52502944a14be02cde5833d1f

@@ -15,10 +15,10 @@ from experiments.manual_analysis import run_reviews_data_corruption_and_cleaning
     run_reviews_data_corruption_and_cleaning_manually_loading, \
     run_reviews_data_corruption_and_cleaning_manually_preproc, \
     run_reviews_data_corruption_and_cleaning_manually_robustness_train_reuse
-from mlmq import PipelineAnalyzer
-from mlmq.analysis._data_cleaning import DataCleaning, ErrorType
-from mlmq.analysis._data_corruption import DataCorruption, CorruptionType
-from mlmq.utils import get_project_root
+from mlwhatif import PipelineAnalyzer
+from mlwhatif.analysis._data_cleaning import DataCleaning, ErrorType
+from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
+from mlwhatif.utils import get_project_root
 
 logger = logging.getLogger(__name__)
 
@@ -60,9 +60,9 @@ if __name__ == "__main__":
     assert len(seeds) == num_repetitions
 
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "manual_analysis",
-                                     "run_pipeline_mlmq.py")
+                                     "run_pipeline_mlwhatif.py")
     # Warm-up run to ignore effect of imports
-    synthetic_cmd_args = ['mlmq']
+    synthetic_cmd_args = ['mlwhatif']
     cmd_args = sys.argv[2:].copy()
     synthetic_cmd_args.extend(cmd_args)
 

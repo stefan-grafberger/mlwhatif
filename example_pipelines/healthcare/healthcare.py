@@ -14,7 +14,7 @@ from sklearn.model_selection import GridSearchCV
 
 from example_pipelines.healthcare.healthcare_utils import MyW2VTransformer, MyKerasClassifier, \
     create_model
-from mlmq.utils import get_project_root
+from mlwhatif.utils import get_project_root
 
 # FutureWarning: Sklearn 0.24 made a change that breaks remainder='drop', that change will be fixed
 #  in an upcoming version: https://github.com/scikit-learn/scikit-learn/pull/19263

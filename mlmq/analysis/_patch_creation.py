@@ -4,10 +4,10 @@ Util functions to make writing What-If Analyses easier
 import logging
 from typing import Iterable
 
-from mlmq.execution._patches import AppendNodeAfterOperator
-from mlmq.instrumentation._dag_node import DagNode, DagNodeDetails
-from mlmq.instrumentation._dag_node import OperatorContext
-from mlmq.instrumentation._operator_types import OperatorType
+from mlwhatif.execution._patches import AppendNodeAfterOperator
+from mlwhatif.instrumentation._dag_node import DagNode, DagNodeDetails
+from mlwhatif.instrumentation._dag_node import OperatorContext
+from mlwhatif.instrumentation._operator_types import OperatorType
 
 logger = logging.getLogger(__name__)
 

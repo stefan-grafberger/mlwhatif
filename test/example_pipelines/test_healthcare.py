@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from example_pipelines.healthcare import custom_monkeypatching
 from example_pipelines.healthcare.healthcare_utils import MyKerasClassifier, create_model, MyW2VTransformer
 from example_pipelines import HEALTHCARE_PY, HEALTHCARE_PNG
-from mlmq.testing._testing_helper_utils import run_and_assert_all_op_outputs_inspected
+from mlwhatif.testing._testing_helper_utils import run_and_assert_all_op_outputs_inspected
 
 
 def test_my_word_to_vec_transformer():

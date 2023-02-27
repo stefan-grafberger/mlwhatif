@@ -7,14 +7,14 @@ import gorilla
 from gensim import sklearn_api
 
 from example_pipelines.healthcare import healthcare_utils
-from mlmq.execution._stat_tracking import capture_optimizer_info
-from mlmq.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
-from mlmq.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails
-from mlmq.execution._pipeline_executor import singleton
-from mlmq.monkeypatching._monkey_patching_utils import add_dag_node, \
+from mlwhatif.execution._stat_tracking import capture_optimizer_info
+from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
+from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails
+from mlwhatif.execution._pipeline_executor import singleton
+from mlwhatif.monkeypatching._monkey_patching_utils import add_dag_node, \
     get_input_info, execute_patched_func_no_op_id, get_optional_code_info_or_none, FunctionCallResult, \
     wrap_in_mlinspect_array_if_necessary, get_dag_node_for_id
-from mlmq.monkeypatching._mlinspect_ndarray import MlinspectNdarray
+from mlwhatif.monkeypatching._mlinspect_ndarray import MlinspectNdarray
 
 
 class SklearnMyW2VTransformerPatching:

@@ -7,13 +7,13 @@ from typing import Iterable, List
 
 import networkx
 
-from mlmq._analysis_results import AnalysisResults
-from mlmq.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
-from mlmq.optimization._query_optimization_rules import QueryOptimizationRule
-from mlmq.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
-from mlmq.optimization._simple_projection_push_up import SimpleProjectionPushUp
-from mlmq.optimization._udf_split_and_reuse import UdfSplitAndReuse
-from mlmq.instrumentation._dag_node import DagNode
+from mlwhatif._analysis_results import AnalysisResults
+from mlwhatif.optimization._operator_deletion_filter_push_up import OperatorDeletionFilterPushUp
+from mlwhatif.optimization._query_optimization_rules import QueryOptimizationRule
+from mlwhatif.optimization._simple_filter_addition_push_up import SimpleFilterAdditionPushUp
+from mlwhatif.optimization._simple_projection_push_up import SimpleProjectionPushUp
+from mlwhatif.optimization._udf_split_and_reuse import UdfSplitAndReuse
+from mlwhatif.instrumentation._dag_node import DagNode
 
 logger = logging.getLogger(__name__)
 
