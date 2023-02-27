@@ -2,7 +2,7 @@
 The Model Variants What-If Analysis, which we use as an example to showcase common subexpression elimination
 """
 from functools import partial
-from typing import Iterable, Dict, Callable
+from typing import Iterable, Dict, Callable, List
 
 import networkx
 import pandas
@@ -22,12 +22,16 @@ class DataFilterVariants(WhatIfAnalysis):
     """
 
     def __init__(self, filter_name_column_and_filter_functions: Dict[str, tuple[str, Callable]],
-                 add_dummy_model_patch_variant=False):
+                 add_dummy_model_patch_variant=False, estimated_selectivities: List[float] or None = None):
         # pylint: disable=unsubscriptable-object
         self._filter_name_column_and_filter_functions = list(filter_name_column_and_filter_functions.items())
         self._add_dummy_model_patch_variant = add_dummy_model_patch_variant
         self._score_nodes_and_linenos = []
         self._analysis_id = (*self._filter_name_column_and_filter_functions, add_dummy_model_patch_variant)
+        if estimated_selectivities is None:
+            estimated_selectivities = [None for _ in range(len(filter_name_column_and_filter_functions))]
+        self._filter_name_column_and_filter_functions = list(zip(self._filter_name_column_and_filter_functions,
+                                                                 estimated_selectivities))
 
     @property
     def analysis_id(self):
@@ -59,7 +63,8 @@ class DataFilterVariants(WhatIfAnalysis):
             patches_for_variant.append(model_patch)
             corruption_patch_sets.append(patches_for_variant)
 
-        for filter_description, (column, filter_function) in self._filter_name_column_and_filter_functions:
+        for (filter_description, (column, filter_function)), est_selectivity in \
+                self._filter_name_column_and_filter_functions:
             patches_for_variant = []
 
             test_corruption_result_label = f"data-filter-variant-{filter_description}"
@@ -68,14 +73,14 @@ class DataFilterVariants(WhatIfAnalysis):
                                                                                    self._score_nodes_and_linenos)
             patches_for_variant.extend(extraction_nodes)
 
-            filter_patches = self._get_filter_patches(filter_description, column, filter_function)
+            filter_patches = self._get_filter_patches(filter_description, column, filter_function, est_selectivity)
             patches_for_variant.extend(filter_patches)
 
             corruption_patch_sets.append(patches_for_variant)
 
         return corruption_patch_sets
 
-    def _get_filter_patches(self, filter_description, column, filter_function):
+    def _get_filter_patches(self, filter_description, column, filter_function, est_selectivity):
         filter_patches = []
 
         new_train_cleaning_node = DagNode(singleton.get_next_op_id(),
@@ -86,7 +91,8 @@ class DataFilterVariants(WhatIfAnalysis):
                                           None,
                                           filter_function)
         filter_patch_train = DataFiltering(singleton.get_next_patch_id(), self, True,
-                                           new_train_cleaning_node, True, [column])
+                                           new_train_cleaning_node, True, [column],
+                                           est_selectivity)
         filter_patches.append(filter_patch_train)
 
         new_test_cleaning_node = DagNode(singleton.get_next_op_id(),
@@ -97,7 +103,8 @@ class DataFilterVariants(WhatIfAnalysis):
                                          None,
                                          filter_function)
         filter_patch_test = DataFiltering(singleton.get_next_patch_id(), self, True,
-                                          new_test_cleaning_node, False, [column])
+                                          new_test_cleaning_node, False, [column],
+                                          est_selectivity)
         filter_patches.append(filter_patch_test)
         return filter_patches
 
@@ -130,7 +137,7 @@ class DataFilterVariants(WhatIfAnalysis):
                 test_column_values.append(singleton.labels_to_extracted_plan_results[test_label])
                 result_df_metrics[test_result_column_name] = test_column_values
 
-        for filter_description, (column, _) in self._filter_name_column_and_filter_functions:
+        for (filter_description, (column, _)), _ in self._filter_name_column_and_filter_functions:
             result_df_filter_variants.append(filter_description)
             result_df_columns.append(column)
 

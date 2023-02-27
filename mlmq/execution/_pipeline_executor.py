@@ -65,6 +65,8 @@ class PipelineExecutor:
     force_optimization_rules = None
     estimate_only = False
     operators_to_runtime_during_analysis = []
+    use_dfs_exec_strategy = False
+    disable_monkey_patching = False
 
     def run(self, *,
             notebook_path: str or None = None,
@@ -77,6 +79,7 @@ class PipelineExecutor:
             custom_monkey_patching: List[any] = None,
             skip_optimizer=False,
             force_optimization_rules: List[QueryOptimizationRule] or None = None,
+            use_dfs_exec_strategy: bool = False,
             estimate_only=False
             ) -> AnalysisResults:
         """
@@ -100,6 +103,7 @@ class PipelineExecutor:
         self.skip_optimizer = skip_optimizer
         self.force_optimization_rules = force_optimization_rules
         self.estimate_only = estimate_only
+        self.use_dfs_exec_strategy = use_dfs_exec_strategy
 
         if extraction_info is None:
             logger.info(f'Running instrumented original pipeline...')
@@ -175,10 +179,10 @@ class PipelineExecutor:
             logger.info(f"Executing generated plans")
             execution_start = time.time()
             if self.skip_optimizer is False:
-                DagExecutor(self).execute(self.analysis_results.combined_optimized_dag)
+                DagExecutor(self).execute(self.analysis_results.combined_optimized_dag, self.use_dfs_exec_strategy)
             else:
                 for _, what_if_dag in self.analysis_results.what_if_dags:
-                    DagExecutor(self).execute(what_if_dag)
+                    DagExecutor(self).execute(what_if_dag, self.use_dfs_exec_strategy)
             execution_duration = time.time() - execution_start
             logger.info(f'---RUNTIME: Execution took {execution_duration * 1000} ms')
             self.analysis_results.runtime_info.what_if_execution = execution_duration * 1000
@@ -260,6 +264,8 @@ class PipelineExecutor:
         self.force_optimization_rules = None
         self.estimate_only = False
         self.operators_to_runtime_during_analysis = []
+        self.use_dfs_exec_strategy = False
+        self.disable_monkey_patching = False
 
     @staticmethod
     def instrument_pipeline(parsed_ast, track_code_references):

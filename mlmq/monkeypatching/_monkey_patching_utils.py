@@ -53,7 +53,7 @@ def execute_patched_func(original_func, execute_inspections_func, *args, **kwarg
 
     caller_filename = sys._getframe(2).f_code.co_filename  # pylint: disable=protected-access
 
-    if caller_filename != singleton.source_code_path:
+    if caller_filename != singleton.source_code_path or singleton.disable_monkey_patching is True:
         result = original_func(*args, **kwargs)
     elif singleton.track_code_references:
         call_ast_node = ast.Call(lineno=singleton.lineno_next_call_or_subscript,

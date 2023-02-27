@@ -34,6 +34,7 @@ class PipelineInspectorBuilder:
         self._prefix_optimised_analysis_dag = None
         self._skip_optimizer = False
         self._force_optimization_rules = None
+        self._use_dfs_exec_strategy = False
 
     def add_what_if_analysis(self, analysis: WhatIfAnalysis):
         """
@@ -86,6 +87,14 @@ class PipelineInspectorBuilder:
         self._force_optimization_rules = optimizations
         return self
 
+    def overwrite_exec_strategy(self, use_dfs_exec_strategy: False):
+        """
+        A convenience function for benchmarking
+        """
+        logger.info("The overwrite_exec_strategy function is only intended for benchmarking!")
+        self._use_dfs_exec_strategy = use_dfs_exec_strategy
+        return self
+
     def execute(self) -> AnalysisResults:
         """
         Instrument and execute the pipeline
@@ -99,6 +108,7 @@ class PipelineInspectorBuilder:
                              custom_monkey_patching=self._monkey_patching_modules,
                              skip_optimizer=self._skip_optimizer,
                              force_optimization_rules=self._force_optimization_rules,
+                             use_dfs_exec_strategy=self._use_dfs_exec_strategy,
                              estimate_only=False)
 
     def estimate(self) -> EstimationResults:

@@ -1,15 +1,18 @@
 # pylint: disable-all
 import datetime
+import json
 import os
 import random
 import re
 import string
 import sys
+import time
 
 import fuzzy_pandas
 import numpy as np
 import pandas as pd
 from faker import Faker
+from sentence_transformers import SentenceTransformer
 from sklearn.compose import ColumnTransformer
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.feature_extraction.text import HashingVectorizer, CountVectorizer, TfidfTransformer
@@ -20,7 +23,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransformer, RobustScaler
 from sklearn.preprocessing import label_binarize
+from sklearn.tree import DecisionTreeClassifier
 from tensorflow.python.keras.optimizer_v2.gradient_descent import SGD  # pylint: disable=no-name-in-module
+from textdistance import levenshtein
 from xgboost import XGBClassifier
 
 from tensorflow.python.keras.wrappers.scikit_learn import KerasClassifier
@@ -35,65 +40,126 @@ data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "
 
 
 def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
-    if dataset_name == 'reviews':
+    if dataset_name in {'reviews', 'reviews_1x', 'reviews_5x', 'reviews_10x'}:
         def random_subset(arr):
             size = np.random.randint(low=1, high=len(arr) + 1)
             choice = np.random.choice(arr, size=size, replace=False)
             return [str(item) for item in choice]
 
-        def load_data():
-            if data_loading_name == 'fast_loading':
-                reviews = pd.read_csv(os.path.join(data_root, "reviews", "reviews.csv.gz"), compression='gzip',
-                                      index_col=0)
-                ratings = pd.read_csv(os.path.join(data_root, "reviews", "ratings.csv"), index_col=0)
-                products = pd.read_csv(os.path.join(data_root, "reviews", "products.csv"), index_col=0)
-                categories = pd.read_csv(os.path.join(data_root, "reviews", "categories.csv"), index_col=0)
-            elif data_loading_name == 'slow_loading':
-                reviews = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
-                                      "main/datasets/reviews/reviews.csv.gz", compression='gzip', index_col=0)
-                ratings = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
-                                      "main/datasets/reviews/ratings.csv", index_col=0)
-                products = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
-                                       "main/datasets/reviews/products.csv", index_col=0)
-                categories = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
-                                         "main/datasets/reviews/categories.csv", index_col=0)
-            else:
-                raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
+        if dataset_name in {'reviews', 'reviews_1x'}:
+            def load_data():
+                if data_loading_name == 'fast_loading':
+                    reviews = pd.read_csv(os.path.join(data_root, "reviews", "reviews.csv.gz"), compression='gzip',
+                                          index_col=0)
+                    ratings = pd.read_csv(os.path.join(data_root, "reviews", "ratings.csv"), index_col=0)
+                    products = pd.read_csv(os.path.join(data_root, "reviews", "products.csv"), index_col=0)
+                    categories = pd.read_csv(os.path.join(data_root, "reviews", "categories.csv"), index_col=0)
+                elif data_loading_name == 'slow_loading':
+                    reviews = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+                                          "main/datasets/reviews/reviews.csv.gz", compression='gzip', index_col=0)
+                    ratings = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+                                          "main/datasets/reviews/ratings.csv", index_col=0)
+                    products = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+                                           "main/datasets/reviews/products.csv", index_col=0)
+                    categories = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+                                             "main/datasets/reviews/categories.csv", index_col=0)
+                else:
+                    raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
 
-            return reviews, ratings, products, categories
+                return reviews, ratings, products, categories
+        elif dataset_name == 'reviews_5x':
+            def load_data():
+                if data_loading_name == 'fast_loading':
+                    reviews = pd.read_csv(os.path.join(data_root, "reviews_large", "reviews_500000.csv.gz"),
+                                          compression='gzip', index_col=0)
+                    ratings = pd.read_csv(os.path.join(data_root, "reviews_large", "ratings_500000.csv"), index_col=0)
+                    products = pd.read_csv(os.path.join(data_root, "reviews_large", "products_500000.csv"), index_col=0)
+                    categories = pd.read_csv(os.path.join(data_root, "reviews_large", "categories_500000.csv"),
+                                             index_col=0)
+                else:
+                    raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
 
-        def integrate_data(reviews, ratings, products, categories, fake):
-            start_date = fake.date_between(start_date=datetime.date(year=2011, month=1, day=1),
-                                           end_date=datetime.date(year=2013, month=6, day=1))
+                return reviews, ratings, products, categories
+        elif dataset_name == 'reviews_10x':
+            def load_data():
+                if data_loading_name == 'fast_loading':
+                    reviews = pd.read_csv(os.path.join(data_root, "reviews_large", "reviews_1000000.csv.gz"),
+                                          compression='gzip', index_col=0)
+                    ratings = pd.read_csv(os.path.join(data_root, "reviews_large", "ratings_1000000.csv"), index_col=0)
+                    products = pd.read_csv(os.path.join(data_root, "reviews_large", "products_1000000.csv"),
+                                           index_col=0)
+                    categories = pd.read_csv(os.path.join(data_root, "reviews_large", "categories_1000000.csv"),
+                                             index_col=0)
+                else:
+                    raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
 
-            reviews = reviews[reviews['review_date'] >= start_date.strftime('%Y-%m-%d')]
+                return reviews, ratings, products, categories
 
-            reviews_with_ratings = reviews.merge(ratings, on='review_id')
-            products_with_categories = products.merge(left_on='category_id', right_on='id', right=categories)
+        else:
+            raise ValueError(f"Invalid dataset_name: {dataset_name}!")
 
-            random_categories = random_subset(list(categories.category))
-            products_with_categories = products_with_categories[
-                products_with_categories['category'].isin(random_categories)]
+        if dataset_name == 'reviews':
+            def integrate_data(reviews, ratings, products, categories, fake):
+                start_date = fake.date_between(start_date=datetime.date(year=2011, month=1, day=1),
+                                               end_date=datetime.date(year=2013, month=6, day=1))
 
-            reviews_with_products_and_ratings = reviews_with_ratings.merge(products_with_categories, on='product_id')
+                reviews = reviews[reviews['review_date'] >= start_date.strftime('%Y-%m-%d')]
 
-            return reviews_with_products_and_ratings
+                reviews_with_ratings = reviews.merge(ratings, on='review_id')
+                products_with_categories = products.merge(left_on='category_id', right_on='id', right=categories)
 
-        def compute_feature_and_label_data(reviews_with_products_and_ratings, final_columns, fake):
-            reviews_with_products_and_ratings['is_helpful'] = reviews_with_products_and_ratings['helpful_votes'] > 0
+                random_categories = random_subset(list(categories.category))
+                products_with_categories = products_with_categories[
+                    products_with_categories['category'].isin(random_categories)]
+                reviews_with_products_and_ratings = reviews_with_ratings.merge(products_with_categories, on='product_id')
 
-            projected_reviews = reviews_with_products_and_ratings[final_columns]
+                return reviews_with_products_and_ratings
 
-            split_date = fake.date_between(start_date=datetime.date(year=2013, month=12, day=1),
-                                           end_date=datetime.date(year=2015, month=1, day=1))
+            def compute_feature_and_label_data(reviews_with_products_and_ratings, final_columns, fake):
+                reviews_with_products_and_ratings['is_helpful'] = reviews_with_products_and_ratings['helpful_votes'] > 0
 
-            train_data = projected_reviews[projected_reviews['review_date'] <= split_date.strftime('%Y-%m-%d')]
-            train_labels = label_binarize(train_data['is_helpful'], classes=[True, False]).ravel()
+                projected_reviews = reviews_with_products_and_ratings[final_columns]
 
-            test_data = projected_reviews[projected_reviews['review_date'] > split_date.strftime('%Y-%m-%d')]
-            test_labels = label_binarize(test_data['is_helpful'], classes=[True, False]).ravel()
+                split_date = fake.date_between(start_date=datetime.date(year=2013, month=12, day=1),
+                                               end_date=datetime.date(year=2015, month=1, day=1))
 
-            return train_data, train_labels, test_data, test_labels
+                train_data = projected_reviews[projected_reviews['review_date'] <= split_date.strftime('%Y-%m-%d')]
+                train_labels = label_binarize(train_data['is_helpful'], classes=[True, False]).ravel()
+
+                test_data = projected_reviews[projected_reviews['review_date'] > split_date.strftime('%Y-%m-%d')]
+                test_labels = label_binarize(test_data['is_helpful'], classes=[True, False]).ravel()
+
+                return train_data, train_labels, test_data, test_labels
+        else:
+            def integrate_data(reviews, ratings, products, categories, fake):
+                start_date = fake.date_between(start_date=datetime.date(year=1900, month=1, day=1),
+                                               end_date=datetime.date(year=1905, month=6, day=1))
+
+                reviews = reviews[reviews['review_date'] >= start_date.strftime('%Y-%m-%d')]
+
+                reviews_with_ratings = reviews.merge(ratings, on='review_id')
+                products_with_categories = products.merge(left_on='category_id', right_on='id', right=categories)
+
+                # random_categories = random_subset(list(categories.category))
+                # print(f"random_categories: {random_categories}", file=sys.stderr)
+                # products_with_categories = products_with_categories[
+                #     products_with_categories['category'].isin(random_categories)]
+                reviews_with_products_and_ratings = reviews_with_ratings.merge(products_with_categories,
+                                                                               on='product_id')
+
+                return reviews_with_products_and_ratings
+
+            def compute_feature_and_label_data(reviews_with_products_and_ratings, final_columns, fake):
+                reviews_with_products_and_ratings['is_helpful'] = reviews_with_products_and_ratings['helpful_votes'] > 0
+
+                projected_reviews = reviews_with_products_and_ratings[final_columns]
+
+                train_data, test_data = train_test_split(projected_reviews)
+
+                train_labels = label_binarize(train_data['is_helpful'], classes=[True, False]).ravel()
+                test_labels = label_binarize(test_data['is_helpful'], classes=[True, False]).ravel()
+
+                return train_data, train_labels, test_data, test_labels
 
         numerical_columns = ['total_votes', 'star_rating']
         categorical_columns = ['vine', 'category']
@@ -106,6 +172,7 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
         fake.seed_instance(seed)
         integrated_data = integrate_data(reviews, ratings, products, categories, fake)
         train, train_labels, test, test_labels = compute_feature_and_label_data(integrated_data, final_columns, fake)
+        print(f"len(train), len(test): {len(train), len(test)}", file=sys.stderr)
     elif dataset_name == 'healthcare':
         COUNTIES_OF_INTEREST = ['county2', 'county3']
 
@@ -141,16 +208,40 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
             test = test.dropna(subset=categorical_columns)
         train_labels = train['label']
         test_labels = test['label']
-    elif dataset_name == 'folktables':
-        if data_loading_name == 'fast_loading':
-            acs_data = pd.read_csv(
-                os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "folktables",
-                             "acs_income_RI_2017_5y.csv"), delimiter=";")
-        elif data_loading_name == 'slow_loading':
-            acs_data = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
-                                   "main/datasets/folktables/acs_income_RI_2017_5y.csv", delimiter=";")
+    elif dataset_name in {'folktables', 'folktables_1x', 'folktables_5x', 'folktables_10x'}:
+        if dataset_name == 'folktables':
+            if data_loading_name == 'fast_loading':
+                acs_data = pd.read_csv(
+                    os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "folktables",
+                                 "acs_income_RI_2017_5y.csv"), delimiter=";")
+            elif data_loading_name == 'slow_loading':
+                acs_data = pd.read_csv("https://raw.githubusercontent.com/anonymous-52200/ml-pipeline-datasets/"
+                                       "main/datasets/folktables/acs_income_RI_2017_5y.csv", delimiter=";")
+            else:
+                raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
+        elif dataset_name == 'folktables_1x':
+            if data_loading_name == 'fast_loading':
+                acs_data = pd.read_csv(
+                    os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "folktables_large",
+                                 "acs_income_all_2017_1y_100000.csv"), delimiter=";")
+            else:
+                raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
+        elif dataset_name == 'folktables_5x':
+            if data_loading_name == 'fast_loading':
+                acs_data = pd.read_csv(
+                    os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "folktables_large",
+                                 "acs_income_all_2017_1y_500000.csv"), delimiter=";")
+            else:
+                raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
+        elif dataset_name == 'folktables_10x':
+            if data_loading_name == 'fast_loading':
+                acs_data = pd.read_csv(
+                    os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "folktables_large",
+                                 "acs_income_all_2017_1y_1000000.csv"), delimiter=";")
+            else:
+                raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
         else:
-            raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
+            raise ValueError(f"Invalid dataset_name: {dataset_name}!")
         columns = ['AGEP', 'COW', 'SCHL', 'MAR', 'OCCP', 'POBP', 'RELP', 'WKHP', 'SEX', 'RAC1P', 'PINCP']
         acs_data = acs_data[columns]
 
@@ -163,6 +254,7 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
             test = test.dropna(subset=categorical_columns)
         train_labels = train['PINCP']
         test_labels = test['PINCP']
+        print(f"len(train), len(test): {len(train)}, {len(test)}", file=sys.stderr)
     elif dataset_name == 'cardio':
         if data_loading_name == 'fast_loading':
             cardio_main = pd.read_csv(
@@ -234,6 +326,89 @@ def get_dataset(dataset_name, data_loading_name, seed, featurization_name):
         numerical_columns = ['image']
         categorical_columns = []
         text_columns = []
+    elif dataset_name == 'reddit':
+        if data_loading_name == 'fast_loading':
+            def get_reddit(subreddit, after=None):
+                source_file = os.path.join(data_root, "reddit", "data", f'reddit-{subreddit}.txt')
+                base_url = f'https://www.reddit.com/r/{subreddit}/controversial.json?limit=100&t=year'
+
+                if after is not None:
+                    base_url += f'&after=t3_{after}'
+                    source_file = os.path.join(data_root, "reddit", "data", f'reddit-{subreddit}_{after}.txt')
+
+                print(f'Loading posts from {base_url}')
+                # request = requests.get(base_url, headers = {'User-agent': 'development'})
+                # response = request.json()
+                time.sleep(0.1)
+                with open(source_file, "r") as infile:
+                    return json.load(infile)
+
+            raw_posts = {}
+            for subreddit in ['bullying', 'selfimprovement', 'depression', 'FengShui']:
+                raw_posts[subreddit] = []
+                last_identifier = None
+                for _ in range(0, 10):
+                    raw_response = get_reddit(subreddit, after=last_identifier)
+
+                    for post in raw_response['data']['children']:
+                        raw_posts[subreddit].append(post)
+                        last_identifier = post['data']['id']
+
+            subreddits = ['bullying', 'selfimprovement', 'depression', 'FengShui']
+
+            prepared_sentences = []
+            for subreddit in subreddits:
+                for num, post in enumerate(raw_posts[subreddit]):
+                    identifier = post['data']['id']
+                    text = post['data']['selftext']
+                    sentences = re.split(r' *[\.\?!][\'"\)\]]* *', text)
+                    for index, sentence in enumerate(sentences):
+                        sentence_id = identifier + '_' + str(index)
+                        prepared_sentences.append((sentence_id, sentence, subreddit))
+            labeled_sentences = pd.DataFrame.from_records(prepared_sentences, columns=['id', 'text', 'origin'])
+
+            url_regex = '((http|https)\:\/\/)?[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*'
+            filtered_sentences = labeled_sentences[labeled_sentences['text'].str.len() > 20]
+            filtered_sentences = filtered_sentences[filtered_sentences['text'].str.match(url_regex) != True]
+
+            filtered_sentences['label'] = filtered_sentences['origin'].isin(['bullying', 'depression'])
+
+            train_data, test_data = train_test_split(filtered_sentences, test_size=0.2, random_state=42, shuffle=True)
+            train = train_data[['text']]
+            test = test_data[['text']]
+            train_labels = train_data['label']
+            test_labels = test_data['label']
+            numerical_columns = []
+            categorical_columns = []
+            text_columns = []
+        else:
+            raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
+    elif dataset_name == 'walmart_amazon':
+        if data_loading_name == 'fast_loading':
+            table_a = pd.read_csv(os.path.join(data_root, "walmart_amazon", "data", 'tableA.csv'))
+            table_b = pd.read_csv(os.path.join(data_root, "walmart_amazon", "data", 'tableB.csv'))
+
+            train_pairs = pd.read_csv(os.path.join(data_root, "walmart_amazon", "data", 'train.csv')).sample(frac=0.01)
+            test_pairs = pd.read_csv(os.path.join(data_root, "walmart_amazon", "data", 'test.csv'))
+
+            def join_and_prepare(pairs, table_a, table_b):
+                data = pairs.merge(table_a, left_on='ltable_id', right_on='id')
+                data = data.merge(table_b, left_on='rtable_id', right_on='id', suffixes=['_a', '_b'])
+                data = data.fillna('')
+                data['category_match'] = data['category_a'] == data['category_b']
+                data['brand_match'] = data['brand_a'] == data['brand_b']
+                return data
+
+            train = join_and_prepare(train_pairs, table_a, table_b)
+            test = join_and_prepare(test_pairs, table_a, table_b)
+
+            train_labels = train['label']
+            test_labels = test['label']
+            numerical_columns = []
+            categorical_columns = []
+            text_columns = []
+        else:
+            raise ValueError(f"Invalid data loading speed: {data_loading_name}!")
     else:
         raise ValueError(f"Invalid dataset: {dataset_name}!")
 
@@ -358,6 +533,40 @@ def get_featurization(featurization_name, numerical_columns, categorical_columns
             ('normalisation', FunctionTransformer(normalise_image)),
             ('reshaping', FunctionTransformer(reshape_images))
         ])
+    elif featurization_name == 'reddit':
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+        featurization = FunctionTransformer(lambda row: model.encode(row['text'].values))
+    elif featurization_name == 'walmart_amazon':
+        def bert_distance(df):
+            # There are better, more expensive models: https://www.sbert.net/docs/pretrained_models.html
+            bert = SentenceTransformer('all-MiniLM-L6-v2')
+            column_a, column_b = df.columns
+            encodings_a = bert.encode(df[column_a])
+            encodings_b = bert.encode(df[column_b])
+            distances = np.linalg.norm(encodings_a - encodings_b, axis=1)
+            distances = distances.reshape((len(df), 1))
+            return distances
+
+        def levenshtein_distance(df):
+            column_a, column_b = df.columns
+            df['levenshtein'] = df.apply(lambda row: levenshtein.distance(row[column_a], row[column_b]), axis=1)
+            distances = df['levenshtein'].values
+            distances = distances.reshape((len(df), 1))
+            return distances
+
+        def length_diff(df):
+            column_a, column_b = df.columns
+            df['len'] = df.apply(lambda row: abs(len(row[column_a]) - len(row[column_b])), axis=1)
+            distances = df['len'].values
+            distances = distances.reshape((len(df), 1))
+            return distances
+
+        featurization = ColumnTransformer([
+            ('bert', FunctionTransformer(bert_distance), ['title_a', 'title_b']),
+            ('levenshtein', FunctionTransformer(levenshtein_distance), ['title_a', 'title_b']),
+            ('length', FunctionTransformer(length_diff), ['title_a', 'title_b']),
+            ('categorical', OneHotEncoder(), ['category_match', 'brand_match']),
+        ])
     else:
         raise ValueError(f"Invalid featurization name: {featurization_name}!")
 
@@ -397,20 +606,32 @@ def get_model(model_name):
             model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
             return model
         model = KerasClassifier(create_cnn, epochs=10, verbose=0)
+    elif model_name == 'reddit':
+        def create_model(input_dim=384):
+            clf = Sequential()
+            clf.add(Dense(16, activation='relu', input_dim=input_dim))
+            clf.add(Dense(8, activation='relu'))
+            clf.add(Dense(2, activation='softmax'))
+            clf.compile(loss='categorical_crossentropy', optimizer=SGD(), metrics=["accuracy"])
+            return clf
+
+        model = KerasClassifier(build_fn=create_model, epochs=20, batch_size=64, verbose=1)
+    elif model_name == 'walmart_amazon':
+        model = XGBClassifier(max_depth=12, tree_method='hist', n_jobs=1)
     else:
         raise ValueError(f"Invalid model name: {model_name}!")
 
     return model
 
 
-def main_function():
+def main_function(*args, **kwargs):
     dataset_name = 'reviews'
     if len(sys.argv) > 1:
         dataset_name = sys.argv[1]
-    data_loading_name = 'fast'
+    data_loading_name = 'fast_loading'
     if len(sys.argv) > 2:
         data_loading_name = sys.argv[2]
-    featurization_name = 'fast'
+    featurization_name = 'featurization_0'
     if len(sys.argv) > 3:
         featurization_name = sys.argv[3]
     model_name = 'logistic_regression'
@@ -434,7 +655,7 @@ def main_function():
                          ('model', model)])
     pipeline = pipeline.fit(train, train_labels)
     predictions = pipeline.predict(test)
-    print('    Score: ', accuracy_score(predictions, test_labels))
+    print('    Score: ', accuracy_score(test_labels, predictions))
 
 
 # Make sure this code is not executed during imports

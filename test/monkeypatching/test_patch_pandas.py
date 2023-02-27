@@ -52,6 +52,37 @@ def test_read_csv():
     assert len(extracted_node.processing_func()) == 22792
 
 
+def test_from_records():
+    """
+    Tests whether the monkey patching of ('pandas.io.parsers', 'read_csv') works
+    """
+    test_code = cleandoc("""
+        import os
+        import pandas as pd
+        data = [(3, 'a'), (2, 'b'), (1, 'c'), (0, 'd')]
+        data = pd.DataFrame.from_records(data, columns=['col_1', 'col_2'])
+        assert len(data) == 4
+        """)
+
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    extracted_node: DagNode = list(inspector_result.original_dag.nodes)[0]
+    expected_node = DagNode(0,
+                            BasicCodeLocation("<string-source>", 4),
+                            OperatorContext(OperatorType.DATA_SOURCE,
+                                            FunctionInfo('pandas.core.frame.DataFrame', 'from_records')),
+                            DagNodeDetails(None,
+                                           ['col_1', 'col_2'],
+                                           OptimizerInfo(RangeComparison(0, 100000), (4, 2),
+                                                         RangeComparison(0, 30000000))),
+                            OptionalCodeInfo(CodeReference(4, 7, 4, 66),
+                                             "pd.DataFrame.from_records(data, columns=['col_1', 'col_2'])"),
+                            Comparison(partial))
+    compare(extracted_node, expected_node)
+
+    assert len(extracted_node.processing_func()) == 4
+
+
 def test_frame__init__():
     """
     Tests whether the monkey patching of ('pandas.core.frame', 'DataFrame') works
@@ -118,6 +149,46 @@ def test_frame_dropna():
     pandas_df = pandas.DataFrame([0, 2, None, None, 4, None], columns=['A'])
     filtered_df = extracted_dropna.processing_func(pandas_df)
     assert len(filtered_df) == 3
+
+
+def test_frame_sample():
+    """
+    Tests whether the monkey patching of ('pandas.core.frame', 'sample') works
+    """
+    test_code = cleandoc("""
+        import pandas as pd
+
+        df = pd.DataFrame([0, 2, 4, 5], columns=['A'])
+        assert len(df) == 4
+        df = df.sample(frac=0.5, random_state=42)
+        assert len(df) == 2
+        """)
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 3),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.frame', 'DataFrame')),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 100), (4, 1),
+                                                                             RangeComparison(0, 400))),
+                                   OptionalCodeInfo(CodeReference(3, 5, 3, 46),
+                                                    "pd.DataFrame([0, 2, 4, 5], columns=['A'])"),
+                                   Comparison(partial))
+    expected_select = DagNode(1,
+                              BasicCodeLocation("<string-source>", 5),
+                              OperatorContext(OperatorType.SELECTION, FunctionInfo('pandas.core.frame', 'sample')),
+                              DagNodeDetails('sample', ['A'], OptimizerInfo(RangeComparison(0, 1000), (2, 1),
+                                                                            RangeComparison(0, 400))),
+                              OptionalCodeInfo(CodeReference(5, 5, 5, 41), 'df.sample(frac=0.5, random_state=42)'),
+                              Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_select, arg_index=0)
+    compare(networkx.to_dict_of_dicts(inspector_result.original_dag), networkx.to_dict_of_dicts(expected_dag))
+
+    extracted_dropna = list(inspector_result.original_dag.nodes)[1]
+    pandas_df = pandas.DataFrame([0, 1, None, None, 4, None, 5, 8], columns=['B'])
+    filtered_df = extracted_dropna.processing_func(pandas_df)
+    assert len(filtered_df) == 4
 
 
 def test_frame__getitem__series():
@@ -767,14 +838,14 @@ def test_series_astype():
                                                     "pd.Series([0, 2, 4, None], name='A')"),
                                    Comparison(partial))
     expected_astype = DagNode(1,
-                            BasicCodeLocation("<string-source>", 4),
-                            OperatorContext(OperatorType.SUBSCRIPT,
-                                            FunctionInfo('pandas.core.series', 'astype')),
-                            DagNodeDetails('as type: str', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
-                                                                                RangeComparison(0, 800))),
-                            OptionalCodeInfo(CodeReference(4, 11, 4, 32),
-                                             'pd_series.astype(str)'),
-                            Comparison(FunctionType))
+                              BasicCodeLocation("<string-source>", 4),
+                              OperatorContext(OperatorType.SUBSCRIPT,
+                                              FunctionInfo('pandas.core.series', 'astype')),
+                              DagNodeDetails('as type: str', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                  RangeComparison(0, 800))),
+                              OptionalCodeInfo(CodeReference(4, 11, 4, 32),
+                                               'pd_series.astype(str)'),
+                              Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_astype, arg_index=0)
 
     compare(extracted_dag, expected_dag)
@@ -784,6 +855,53 @@ def test_series_astype():
     extracted_func_result = extracted_node.processing_func(pd_series)
     expected = pandas.Series(['2', '2', '4', '0'], name='A')
     pandas.testing.assert_series_equal(extracted_func_result.reset_index(drop=True), expected.reset_index(drop=True))
+
+
+def test_frame_fillna():
+    """
+    Tests whether the monkey patching of ('pandas.core.frame', 'fillna') works
+    """
+    test_code = cleandoc("""
+        import pandas as pd
+
+        pd_frame = pd.DataFrame({'A': [0, 2, 4, None]})
+        filled = pd_frame.fillna(0.0)
+        expected = pd.DataFrame({'A': [0.0, 2.0, 4.0, 0.0]})
+        pd.testing.assert_frame_equal(filled.reset_index(drop=True), expected.reset_index(drop=True))
+        """)
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    extracted_dag = inspector_result.original_dag
+    extracted_dag.remove_node(list(extracted_dag.nodes)[2])
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 3),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.frame', 'DataFrame')),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(3, 11, 3, 47),
+                                                    "pd.DataFrame({'A': [0, 2, 4, None]})"),
+                                   Comparison(partial))
+    expected_astype = DagNode(1,
+                              BasicCodeLocation("<string-source>", 4),
+                              OperatorContext(OperatorType.PROJECTION_MODIFY,
+                                              FunctionInfo('pandas.core.frame', 'fillna')),
+                              DagNodeDetails('fillna: 0.0', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                 RangeComparison(0, 800))),
+                              OptionalCodeInfo(CodeReference(4, 9, 4, 29),
+                                               'pd_frame.fillna(0.0)'),
+                              Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_astype, arg_index=0)
+
+    compare(extracted_dag, expected_dag)
+
+    extracted_node = list(extracted_dag.nodes)[1]
+    pd_frame = pandas.DataFrame({'b': [2, None, 4, 0]})
+    extracted_func_result = extracted_node.processing_func(pd_frame)
+    expected = pandas.DataFrame({'b': [2., 0., 4., 0.]})
+    pandas.testing.assert_frame_equal(extracted_func_result.reset_index(drop=True), expected.reset_index(drop=True))
 
 
 def test_series_fillna():
@@ -814,14 +932,14 @@ def test_series_fillna():
                                                     "pd.Series([0, 2, 4, None], name='A')"),
                                    Comparison(partial))
     expected_astype = DagNode(1,
-                            BasicCodeLocation("<string-source>", 4),
-                            OperatorContext(OperatorType.PROJECTION_MODIFY,
-                                            FunctionInfo('pandas.core.series', 'fillna')),
-                            DagNodeDetails('fillna: 0.0', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
-                                                                                RangeComparison(0, 800))),
-                            OptionalCodeInfo(CodeReference(4, 11, 4, 32),
-                                             'pd_series.fillna(0.0)'),
-                            Comparison(FunctionType))
+                              BasicCodeLocation("<string-source>", 4),
+                              OperatorContext(OperatorType.PROJECTION_MODIFY,
+                                              FunctionInfo('pandas.core.series', 'fillna')),
+                              DagNodeDetails('fillna: 0.0', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                 RangeComparison(0, 800))),
+                              OptionalCodeInfo(CodeReference(4, 11, 4, 32),
+                                               'pd_series.fillna(0.0)'),
+                              Comparison(FunctionType))
     expected_dag.add_edge(expected_data_source, expected_astype, arg_index=0)
 
     compare(extracted_dag, expected_dag)
@@ -1012,3 +1130,97 @@ def test_series_as_numpy():
     extracted_func_result = extracted_node.processing_func(pd_series1)
     expected = numpy.array([0, 4, 10, 2])
     assert numpy.allclose(extracted_func_result, expected)
+
+
+def test_series_str_len():
+    """
+    Tests whether the monkey patching of ('pandas.core.strings.StringMethods', 'len') works
+    """
+    test_code = cleandoc("""
+        import pandas as pd
+
+        pd_series = pd.Series(['aa', 'b', 'ccc', ''], name='A')
+        lens = pd_series.str.len()
+        expected = pd.Series([2, 1, 3, 0], name='A')
+        pd.testing.assert_series_equal(lens.reset_index(drop=True), expected.reset_index(drop=True))
+        """)
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    extracted_dag = inspector_result.original_dag
+    extracted_dag.remove_node(list(extracted_dag.nodes)[2])
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 3),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.series', 'Series')),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(3, 12, 3, 55),
+                                                    "pd.Series(['aa', 'b', 'ccc', ''], name='A')"),
+                                   Comparison(partial))
+    expected_isin = DagNode(1,
+                            BasicCodeLocation("<string-source>", 4),
+                            OperatorContext(OperatorType.SUBSCRIPT,
+                                            FunctionInfo('pandas.core.strings.StringMethods', 'len')),
+                            DagNodeDetails('str.len', ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                           RangeComparison(0, 800))),
+                            OptionalCodeInfo(CodeReference(4, 7, 4, 26),
+                                             'pd_series.str.len()'),
+                            Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_isin, arg_index=0)
+
+    compare(extracted_dag, expected_dag)
+
+    extracted_node = list(extracted_dag.nodes)[1]
+    pd_series = pandas.Series(['aaaa', '', 'd', 'ee'], name='b')
+    extracted_func_result = extracted_node.processing_func(pd_series)
+    expected = pandas.Series([4, 0, 1, 2], name='b')
+    pandas.testing.assert_series_equal(extracted_func_result.reset_index(drop=True), expected.reset_index(drop=True))
+
+
+def test_series_str_match():
+    """
+    Tests whether the monkey patching of 'pandas.core.strings.StringMethods', 'match' works
+    """
+    test_code = cleandoc("""
+        import pandas as pd
+
+        pd_series = pd.Series(['aa', 'b', 'ccc', ''], name='A')
+        regex = r"^(a|c)*$"
+        lens = pd_series.str.match(regex)
+        expected = pd.Series([True, False, True, True], name='A')
+        pd.testing.assert_series_equal(lens.reset_index(drop=True), expected.reset_index(drop=True))
+        """)
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    extracted_dag = inspector_result.original_dag
+    extracted_dag.remove_node(list(extracted_dag.nodes)[2])
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 3),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.series', 'Series')),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(3, 12, 3, 55),
+                                                    "pd.Series(['aa', 'b', 'ccc', ''], name='A')"),
+                                   Comparison(partial))
+    expected_isin = DagNode(1,
+                            BasicCodeLocation("<string-source>", 5),
+                            OperatorContext(OperatorType.SUBSCRIPT,
+                                            FunctionInfo('pandas.core.strings.StringMethods', 'match')),
+                            DagNodeDetails("match r'^(a|c)*$'", ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                     RangeComparison(0, 800))),
+                            OptionalCodeInfo(CodeReference(5, 7, 5, 33), 'pd_series.str.match(regex)'),
+                            Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_isin, arg_index=0)
+
+    compare(extracted_dag, expected_dag)
+
+    extracted_node = list(extracted_dag.nodes)[1]
+    pd_series = pandas.Series(['aaaa', '', 'dd', 'cccc'], name='b')
+    extracted_func_result = extracted_node.processing_func(pd_series)
+    expected = pandas.Series([True, True, False, True], name='b')
+    pandas.testing.assert_series_equal(extracted_func_result.reset_index(drop=True), expected.reset_index(drop=True))

@@ -1,0 +1,8 @@
+*acs_income_all_2017_1y.csv filter=lfs diff=lfs merge=lfs -text
+experiments/end_to_end/datasets/reviews-large/reviews.csv.gz filter=lfs diff=lfs merge=lfs -text
+experiments/end_to_end/datasets/folktables_large/acs_income_all_2017_1y_500000.csv filter=lfs diff=lfs merge=lfs -text
+experiments/end_to_end/datasets/reviews_large/reviews_1000000.csv.gz filter=lfs diff=lfs merge=lfs -text
+experiments/end_to_end/datasets/reviews_large/reviews_500000.csv.gz filter=lfs diff=lfs merge=lfs -text
+experiments/end_to_end/datasets/folktables_large/acs_income_all_2017_1y_1000000.csv filter=lfs diff=lfs merge=lfs -text
+experiments/end_to_end/datasets/folktables_large/acs_income_all_2017_1y_1000000.csv.gz filter=lfs diff=lfs merge=lfs -text
+experiments/end_to_end/datasets/reviews_large/reviews.csv.gz filter=lfs diff=lfs merge=lfs -text

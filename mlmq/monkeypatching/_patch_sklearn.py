@@ -1731,8 +1731,12 @@ class SklearnFunctionTransformerPatching:
             return transformed_data
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+        # This is to prevent udf monkey patching while a FunctionTransformer is active
+        singleton.disable_monkey_patching = True
         initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
         optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
+        # Enable monkey patching again
+        singleton.disable_monkey_patching = False
         if isinstance(input_info.annotated_dfobject.result_data, pandas.DataFrame):
             columns = list(input_info.annotated_dfobject.result_data.columns)
         else:
@@ -1765,13 +1769,19 @@ class SklearnFunctionTransformerPatching:
                                         self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
 
             def processing_func(fit_data, input_df):
+                input_df_copy = input_df.copy()
                 transformer = fit_data._mlinspect_annotation  # pylint: disable=protected-access
-                transformed_data = transformer.transform(input_df, *args[1:], **kwargs)
+                transformed_data = transformer.transform(input_df_copy, *args[1:], **kwargs)
                 return transformed_data
 
             operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+            # This is to prevent udf monkey patching while a FunctionTransformer is active
+            singleton.disable_monkey_patching = True
             initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
             optimizer_info, result = capture_optimizer_info(initial_func)
+            # Enable monkey patching again
+            singleton.disable_monkey_patching = False
+            # End disable hack
             if isinstance(input_info.annotated_dfobject.result_data, pandas.DataFrame):
                 columns = list(input_info.annotated_dfobject.result_data.columns)
             else:

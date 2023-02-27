@@ -6,7 +6,6 @@ import sys
 
 import numpy as np
 import pandas as pd
-from faker import Faker
 from jenga.corruptions.generic import CategoricalShift
 from jenga.corruptions.numerical import GaussianNoise, Scaling
 from jenga.corruptions.text import BrokenCharacters
@@ -24,12 +23,7 @@ from mlmq.utils import get_project_root
 data_root = os.path.join(str(get_project_root()), "experiments", "end_to_end", "../end_to_end/datasets")
 
 
-def get_dataset(seed, analysis_name, variant_index):
-    def random_subset(arr):
-        size = np.random.randint(low=1, high=len(arr) + 1)
-        choice = np.random.choice(arr, size=size, replace=False)
-        return [str(item) for item in choice]
-
+def get_dataset(analysis_name, variant_index):
     def load_data():
         reviews = pd.read_csv(os.path.join(data_root, "reviews", "reviews.csv.gz"), compression='gzip',
                               index_col=0)
@@ -39,16 +33,15 @@ def get_dataset(seed, analysis_name, variant_index):
 
         return reviews, ratings, products, categories
 
-    def integrate_data(reviews, ratings, products, categories, fake):
-        start_date = fake.date_between(start_date=datetime.date(year=2011, month=1, day=1),
-                                       end_date=datetime.date(year=2013, month=6, day=1))
+    def integrate_data(reviews, ratings, products, categories):
+        start_date = datetime.date(year=2011, month=6, day=22)
 
         reviews = reviews[reviews['review_date'] >= start_date.strftime('%Y-%m-%d')]
 
         reviews_with_ratings = reviews.merge(ratings, on='review_id')
         products_with_categories = products.merge(left_on='category_id', right_on='id', right=categories)
 
-        random_categories = random_subset(list(categories.category))
+        random_categories = ['Digital_Video_Games']
         products_with_categories = products_with_categories[
             products_with_categories['category'].isin(random_categories)]
 
@@ -56,13 +49,12 @@ def get_dataset(seed, analysis_name, variant_index):
 
         return reviews_with_products_and_ratings
 
-    def compute_feature_and_label_data(reviews_with_products_and_ratings, final_columns, fake):
+    def compute_feature_and_label_data(reviews_with_products_and_ratings, final_columns):
         reviews_with_products_and_ratings['is_helpful'] = reviews_with_products_and_ratings['helpful_votes'] > 0
 
         projected_reviews = reviews_with_products_and_ratings[final_columns]
 
-        split_date = fake.date_between(start_date=datetime.date(year=2013, month=12, day=1),
-                                       end_date=datetime.date(year=2015, month=1, day=1))
+        split_date = datetime.date(year=2013, month=12, day=20)
 
         train_data = projected_reviews[projected_reviews['review_date'] <= split_date.strftime('%Y-%m-%d')]
         train_labels = label_binarize(train_data['is_helpful'], classes=[True, False]).ravel()
@@ -80,10 +72,8 @@ def get_dataset(seed, analysis_name, variant_index):
 
     reviews, ratings, products, categories = load_data()
 
-    fake = Faker()
-    fake.seed_instance(seed)
-    integrated_data = integrate_data(reviews, ratings, products, categories, fake)
-    train, train_labels, test, test_labels = compute_feature_and_label_data(integrated_data, final_columns, fake)
+    integrated_data = integrate_data(reviews, ratings, products, categories)
+    train, train_labels, test, test_labels = compute_feature_and_label_data(integrated_data, final_columns)
 
     if analysis_name == "data_corruption":
         test = apply_jenga_for_variant(test, variant_index)
@@ -225,14 +215,14 @@ def main_function():
     seed = 42
     if len(sys.argv) > 2:
         seed = sys.argv[2]
-    np.random.seed(seed)
-    random.seed(seed)
     scores = []
     for variant_index in range(-1, variant_count):
         print(f'Running fast_loading featurization featurization_1 on dataset reviews with model '
               f'logistic_regression with analysis {analysis} for variant {variant_index}')
+        np.random.seed(seed)
+        random.seed(seed)
         train, train_labels, test, test_labels, numerical_columns, categorical_columns, text_columns = \
-            get_dataset(seed, analysis, variant_index)
+            get_dataset(analysis, variant_index)
         featurization = get_featurization(numerical_columns, categorical_columns, text_columns)
         model = get_model()
         pipeline = Pipeline([('featurization', featurization),

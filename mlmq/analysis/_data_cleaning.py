@@ -4,7 +4,7 @@ The Data Cleaning What-If Analysis
 import dataclasses
 from enum import Enum
 from functools import partial
-from typing import Iterable, Dict, Callable
+from typing import Iterable, Dict, Callable, List, Tuple
 
 import networkx
 import pandas
@@ -135,8 +135,11 @@ class DataCleaning(WhatIfAnalysis):
     The Data Cleaning What-If Analysis
     """
 
-    def __init__(self, columns_with_error: Dict[str or None, ErrorType]):
-        self._columns_with_error = list(columns_with_error.items())
+    def __init__(self, columns_with_error: dict[str or None, ErrorType] or List[Tuple[str, ErrorType]]):
+        if isinstance(columns_with_error, dict):
+            self._columns_with_error = list(columns_with_error.items())
+        else:
+            self._columns_with_error = columns_with_error
         self._score_nodes_and_linenos = []
         self._analysis_id = (*self._columns_with_error,)
 
