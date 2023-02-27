@@ -4,6 +4,7 @@ mlwhatif
 [![mlwhatif](https://img.shields.io/badge/❓-mlwhatif-green)](https://github.com/stefan-grafberger/mlwhatif)
 [![GitHub license](https://img.shields.io/badge/License-Apache%202.0-yellowgreen.svg)](https://github.com/stefan-grafberger/mlwhatif/blob/master/LICENSE)
 [![Build Status](https://github.com/stefan-grafberger/mlwhatif/actions/workflows/build.yml/badge.svg)](https://github.com/stefan-grafberger/mlwhatif/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/stefan-grafberger/mlwhatif/branch/main/graph/badge.svg?token=KTMNPBV1ZZ)](https://codecov.io/gh/stefan-grafberger/mlwhatif)
 
 Data-Centric What-If Analysis for Native Machine Learning Pipelines.
 
