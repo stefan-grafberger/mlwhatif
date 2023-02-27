@@ -1731,8 +1731,12 @@ class SklearnFunctionTransformerPatching:
             return transformed_data
 
         operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+        # This is to prevent udf monkey patching while a FunctionTransformer is active
+        singleton.disable_monkey_patching = True
         initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
         optimizer_info, result = capture_optimizer_info(initial_func, estimator_transformer_state=self)
+        # Enable monkey patching again
+        singleton.disable_monkey_patching = False
         if isinstance(input_info.annotated_dfobject.result_data, pandas.DataFrame):
             columns = list(input_info.annotated_dfobject.result_data.columns)
         else:
@@ -1765,13 +1769,19 @@ class SklearnFunctionTransformerPatching:
                                         self.mlinspect_optional_code_reference, self.mlinspect_optional_source_code)
 
             def processing_func(fit_data, input_df):
+                input_df_copy = input_df.copy()
                 transformer = fit_data._mlinspect_annotation  # pylint: disable=protected-access
-                transformed_data = transformer.transform(input_df, *args[1:], **kwargs)
+                transformed_data = transformer.transform(input_df_copy, *args[1:], **kwargs)
                 return transformed_data
 
             operator_context = OperatorContext(OperatorType.TRANSFORMER, function_info)
+            # This is to prevent udf monkey patching while a FunctionTransformer is active
+            singleton.disable_monkey_patching = True
             initial_func = partial(original, self, input_info.annotated_dfobject.result_data, *args[1:], **kwargs)
             optimizer_info, result = capture_optimizer_info(initial_func)
+            # Enable monkey patching again
+            singleton.disable_monkey_patching = False
+            # End disable hack
             if isinstance(input_info.annotated_dfobject.result_data, pandas.DataFrame):
                 columns = list(input_info.annotated_dfobject.result_data.columns)
             else:
@@ -1929,7 +1939,7 @@ class SklearnDecisionTreePatching:
                 return predictions
 
             def processing_func_score(predictions, test_labels):
-                score = accuracy_score(predictions, test_labels)
+                score = accuracy_score(test_labels, predictions)
                 return score
 
             original_predict = gorilla.get_original_attribute(tree.DecisionTreeClassifier, 'predict')
@@ -2151,7 +2161,7 @@ class SklearnSGDClassifierPatching:
                 return predictions
 
             def processing_func_score(predictions, test_labels):
-                score = accuracy_score(predictions, test_labels)
+                score = accuracy_score(test_labels, predictions)
                 return score
 
             original_predict = gorilla.get_original_attribute(linear_model.SGDClassifier, 'predict')
@@ -2369,7 +2379,7 @@ class SklearnLogisticRegressionPatching:
                 return predictions
 
             def processing_func_score(predictions, test_labels):
-                score = accuracy_score(predictions, test_labels)
+                score = accuracy_score(test_labels, predictions)
                 return score
 
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
@@ -2588,7 +2598,7 @@ class SklearnKerasClassifierPatching:
 
             def processing_func_score(predictions, test_labels):
                 one_d_labels = numpy.argmax(test_labels, axis=1)
-                score = accuracy_score(predictions, one_d_labels)
+                score = accuracy_score(one_d_labels, predictions)
                 return score
 
             # Score
@@ -2858,7 +2868,7 @@ class SklearnDummyClassifierPatching:
                 return predictions
 
             def processing_func_score(predictions, test_labels):
-                score = accuracy_score(predictions, test_labels)
+                score = accuracy_score(test_labels, predictions)
                 return score
 
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]
@@ -3085,7 +3095,7 @@ class SklearnSVCPatching:
                 return predictions
 
             def processing_func_score(predictions, test_labels):
-                score = accuracy_score(predictions, test_labels)
+                score = accuracy_score(test_labels, predictions)
                 return score
 
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]

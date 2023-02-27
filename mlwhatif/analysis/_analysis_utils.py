@@ -88,17 +88,43 @@ def filter_estimator_transformer_edges(parent, child):
 
 def find_first_op_modifying_a_column(dag, search_start_node: DagNode, column_names: List[str], train_not_test: bool):
     """Find DagNodes in the DAG by OperatorType"""
+    # pylint: disable=too-many-locals
     if train_not_test is False:
         dag_to_consider = networkx.subgraph_view(dag, filter_edge=filter_estimator_transformer_edges)
     else:
         dag_to_consider = dag
     nodes_to_search = list(networkx.ancestors(dag_to_consider, search_start_node))
+    # TODO: Cleanup
     project_modify_matches = [node for node in nodes_to_search
-                              if node.operator_info.operator == OperatorType.PROJECTION_MODIFY
-                              and node.details.description == f"modifies {column_names}"]
+                              if (node.operator_info.operator == OperatorType.PROJECTION_MODIFY
+                                  and node.details.description == f"modifies {column_names}") or
+                              (node.operator_info.operator == OperatorType.PROJECTION
+                               and node.details.description == f"to {column_names}" and
+                               len([child for child in list(dag.successors(node))
+                                    if child.operator_info.operator in {
+                                        OperatorType.SUBSCRIPT, OperatorType.PROJECTION_MODIFY}
+                                    and (len([grand_child for grand_child in list(dag.successors(child))
+                                         if grand_child.operator_info.operator in {OperatorType.PROJECTION_MODIFY}])
+                                         != 0)])
+                               != 0)]
     # TODO: Using the description string is not very clean
-    if len(project_modify_matches) != 0:
-        sorted_matches = sorted(project_modify_matches, key=lambda dag_node: dag_node.node_id)
+    filtered_project_modify_matches = []
+    for match in project_modify_matches:
+        # Find out if column is only created there, then it is not the first use yet
+        if not match.operator_info.operator == OperatorType.PROJECTION_MODIFY:
+            filtered_project_modify_matches.append(match)
+        else:
+            operator_parent_nodes = get_sorted_parent_nodes(dag, match)
+            project_modify_parent_a = operator_parent_nodes[0]
+            project_modify_parent_b = operator_parent_nodes[-1]
+            # We want to introduce the change before all subscript behavior
+            node_that_would_have_column_if_not_new = networkx.lowest_common_ancestor(dag, project_modify_parent_a,
+                                                                                     project_modify_parent_b)
+            if not set(node_that_would_have_column_if_not_new.details.columns).isdisjoint(column_names):
+                filtered_project_modify_matches.append(match)
+
+    if len(filtered_project_modify_matches) != 0:
+        sorted_matches = sorted(filtered_project_modify_matches, key=lambda dag_node: dag_node.node_id)
         return sorted_matches[0]
     if train_not_test is False:
         transformer_matches = [node for node in nodes_to_search
@@ -142,6 +168,8 @@ def find_dag_location_for_new_filter_on_column(columns, dag, train_not_test) -> 
                             and list(dag.successors(ancestor))[0].operator_info.operator != OperatorType.SUBSCRIPT]
         sorted_ancestor_matches = sorted(ancestor_matches, key=lambda dag_node: dag_node.node_id, reverse=True)
         first_op_requiring_corruption = sorted_ancestor_matches[0]
+    elif first_op_requiring_corruption.operator_info.operator == OperatorType.PROJECTION:
+        first_op_requiring_corruption = list(dag.predecessors(first_op_requiring_corruption))[0]
     return first_op_requiring_corruption
 
 
@@ -245,6 +273,9 @@ def find_where_to_apply_corruption_exactly(dag, first_op_requiring_corruption, o
                                                                              project_modify_parent_b)
         sorted_successors = get_sorted_children_nodes(dag, operator_to_apply_corruption_after)
         first_op_requiring_corruption = sorted_successors[0]
+    elif first_op_requiring_corruption.operator_info.operator == OperatorType.PROJECTION:
+        assert len(operator_parent_nodes) == 1
+        operator_to_apply_corruption_after = operator_parent_nodes[0]
     else:
         raise Exception("Either a column was changed by a transformer or project_modify or we can apply"
                         "the corruption right before the estimator operation!")

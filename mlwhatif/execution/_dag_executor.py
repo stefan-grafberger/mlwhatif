@@ -26,7 +26,7 @@ class DagExecutor:
     def __init__(self, pipeline_executor):
         self.pipeline_executor = pipeline_executor
 
-    def execute(self, dag: networkx.DiGraph):
+    def execute(self, dag: networkx.DiGraph, use_dfs_exec_strategy: bool = False):
         """ Execute a given input DAG """
         # TODO: Currently, this returns the final result from some DagNode without children but in the future,
         #  we want to have a mechanism to store the results from selected DagNodes with a label in some result map
@@ -42,10 +42,13 @@ class DagExecutor:
             result = self.replace_node_with_result(dag, current_node, result_df)
             return result
 
-        self.traverse_graph_and_process_nodes(dag, execute_node)
+        if use_dfs_exec_strategy is False:
+            self.traverse_graph_and_process_nodes_bfs(dag, execute_node)
+        else:
+            self.traverse_graph_and_process_nodes_dfs(dag, execute_node)
 
     @staticmethod
-    def traverse_graph_and_process_nodes(graph: networkx.DiGraph, func):
+    def traverse_graph_and_process_nodes_bfs(graph: networkx.DiGraph, func):
         """
         Traverse the DAG node by node from top to bottom
         """
@@ -53,6 +56,28 @@ class DagExecutor:
         processed_nodes = set()
         while len(current_nodes) != 0:
             node = current_nodes.pop(0)
+            processed_nodes.add(node.node_id)
+            result_node = func(node)
+            if result_node is not None:
+                children = list(graph.successors(result_node))
+                # Nodes can have multiple parents, only want to process them once we processed all parents
+                for child in children:
+                    if child.node_id not in processed_nodes:
+                        predecessors = [predecessor.node_id for predecessor in graph.predecessors(child)]
+                        if processed_nodes.issuperset(predecessors):
+                            current_nodes.append(child)
+
+        return graph
+
+    @staticmethod
+    def traverse_graph_and_process_nodes_dfs(graph: networkx.DiGraph, func):
+        """
+        Traverse the DAG node by node from top to bottom
+        """
+        current_nodes = [node for node in graph.nodes if len(list(graph.predecessors(node))) == 0]
+        processed_nodes = set()
+        while len(current_nodes) != 0:
+            node = current_nodes.pop(-1)
             processed_nodes.add(node.node_id)
             result_node = func(node)
             if result_node is not None:

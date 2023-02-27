@@ -144,7 +144,7 @@ class XGBoostXGBClassifierPatching:
                 return predictions
 
             def processing_func_score(predictions, test_labels):
-                score = accuracy_score(predictions, test_labels)
+                score = accuracy_score(test_labels, predictions)
                 return score
 
             # input_dfs = [data_backend_result.annotated_dfobject, label_backend_result.annotated_dfobject]

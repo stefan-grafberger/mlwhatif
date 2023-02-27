@@ -26,23 +26,23 @@ logger = logging.getLogger(__name__)
 
 
 def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
-    if scenario_name == 'data_corruption' and dataset_name == 'reviews':
+    if scenario_name == 'data_corruption' and dataset_name in {'reviews', 'reviews_1x', 'reviews_5x', 'reviews_10x'}:
         analysis = DataCorruption([('vine', CorruptionType.CATEGORICAL_SHIFT),
                                    ('review_body', CorruptionType.BROKEN_CHARACTERS),
                                    ('category', CorruptionType.CATEGORICAL_SHIFT),
                                    ('total_votes', CorruptionType.SCALING),
                                    ('star_rating', CorruptionType.GAUSSIAN_NOISE)],
                                   corruption_percentages=[0.2, 0.4, 0.6, 0.8, 1.0])
-    elif scenario_name == 'feature_importance' and dataset_name == 'reviews':
+    elif scenario_name == 'feature_importance' and dataset_name in {'reviews', 'reviews_1x', 'reviews_5x', 'reviews_10x'}:
         analysis = PermutationFeatureImportance()
-    elif scenario_name == 'data_cleaning' and dataset_name == 'reviews':
+    elif scenario_name == 'data_cleaning' and dataset_name in {'reviews', 'reviews_1x', 'reviews_5x', 'reviews_10x'}:
         analysis = DataCleaning({'category': ErrorType.CAT_MISSING_VALUES,
                                  'vine': ErrorType.CAT_MISSING_VALUES,
                                  'star_rating': ErrorType.NUM_MISSING_VALUES,
                                  'total_votes': ErrorType.OUTLIERS,
                                  'review_id': ErrorType.DUPLICATES
                                  })
-    elif scenario_name == 'operator_impact' and dataset_name == 'reviews':
+    elif scenario_name == 'operator_impact' and dataset_name in {'reviews', 'reviews_1x', 'reviews_5x', 'reviews_10x'}:
         analysis = OperatorImpact(test_selections=True)
     elif scenario_name == 'data_corruption' and dataset_name == 'healthcare':
         def corruption(pandas_df):
@@ -70,7 +70,7 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                  None: ErrorType.MISLABEL})
     elif scenario_name == 'operator_impact' and dataset_name == 'healthcare':
         analysis = OperatorImpact(test_selections=True)
-    elif scenario_name == 'data_corruption' and dataset_name == 'folktables':
+    elif scenario_name == 'data_corruption' and dataset_name in {'folktables', 'folktables_1x', 'folktables_5x', 'folktables_10x'}:
         analysis = DataCorruption([('AGEP', CorruptionType.SCALING),
                                    ('WKHP', CorruptionType.GAUSSIAN_NOISE),
                                    ('COW', CorruptionType.CATEGORICAL_SHIFT),
@@ -80,9 +80,9 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                    ('POBP', CorruptionType.MISSING_VALUES),
                                    ('RELP', CorruptionType.MISSING_VALUES)],
                                   corruption_percentages=[0.25, 0.5, 0.75, 1.0])
-    elif scenario_name == 'feature_importance' and dataset_name == 'folktables':
+    elif scenario_name == 'feature_importance' and dataset_name in {'folktables', 'folktables_1x', 'folktables_5x', 'folktables_10x'}:
         analysis = PermutationFeatureImportance()
-    elif scenario_name == 'data_cleaning' and dataset_name == 'folktables':
+    elif scenario_name == 'data_cleaning' and dataset_name in {'folktables', 'folktables_1x', 'folktables_5x', 'folktables_10x'}:
         analysis = DataCleaning({'OCCP': ErrorType.CAT_MISSING_VALUES,
                                  'POBP': ErrorType.CAT_MISSING_VALUES,
                                  'RELP': ErrorType.CAT_MISSING_VALUES,
@@ -92,7 +92,7 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                  'MAR': ErrorType.CAT_MISSING_VALUES,
                                  'SCHL': ErrorType.CAT_MISSING_VALUES,
                                  None: ErrorType.MISLABEL})
-    elif scenario_name == 'operator_impact' and dataset_name == 'folktables':
+    elif scenario_name == 'operator_impact' and dataset_name in {'folktables', 'folktables_1x', 'folktables_5x', 'folktables_10x'}:
         analysis = OperatorImpact(test_selections=True)
     elif scenario_name == 'data_corruption' and dataset_name == 'cardio':
         analysis = DataCorruption([('age', CorruptionType.SCALING),
@@ -145,6 +145,28 @@ def get_analysis_for_scenario_and_dataset(scenario_name, dataset_name):
                                   corruption_percentages=[0.25, 0.5, 0.75, 1.0])
     elif scenario_name == 'data_cleaning' and dataset_name == 'sneakers':
         analysis = DataCleaning({None: ErrorType.MISLABEL})
+    elif scenario_name == 'data_corruption' and dataset_name == "reddit":
+        analysis = DataCorruption([('text', CorruptionType.BROKEN_CHARACTERS),
+                                   ('text', CorruptionType.MISSING_VALUES)],
+                                  corruption_percentages=list(numpy.arange(0.1, 1.1, 0.1)))
+    elif scenario_name == 'feature_importance' and dataset_name == "reddit":
+        analysis = PermutationFeatureImportance()
+    elif scenario_name == 'data_cleaning' and dataset_name == "reddit":
+        analysis = DataCleaning({None: ErrorType.MISLABEL})
+    elif scenario_name == 'operator_impact' and dataset_name == "reddit":
+        analysis = OperatorImpact(test_selections=True, test_transformers=False)
+    elif scenario_name == 'data_corruption' and dataset_name == "walmart_amazon":
+        analysis = DataCorruption([('title_a', CorruptionType.BROKEN_CHARACTERS),
+                                   ('title_a', CorruptionType.MISSING_VALUES),
+                                   ('title_b', CorruptionType.BROKEN_CHARACTERS),
+                                   ('title_b', CorruptionType.MISSING_VALUES)],
+                                  corruption_percentages=[0.15, 0.3, 0.45, 0.6, 0.85, 1.0])
+    elif scenario_name == 'feature_importance' and dataset_name == "walmart_amazon":
+        analysis = PermutationFeatureImportance()
+    elif scenario_name == 'data_cleaning' and dataset_name == "walmart_amazon":
+        analysis = DataCleaning({None: ErrorType.MISLABEL})
+    elif scenario_name == 'operator_impact' and dataset_name == "walmart_amazon":
+        analysis = OperatorImpact(test_selections=True, test_transformers=False)
     else:
         raise ValueError(f"Invalid scenario or dataset: {scenario_name} {dataset_name}!")
     return analysis
@@ -161,15 +183,16 @@ if __name__ == "__main__":
     data_loading_name = sys.argv[3]
     featurization_name = sys.argv[4]
     model_name = sys.argv[5]
-
     num_repetitions = 7
-    seeds = [42, 43, 44, 45, 46, 47, 48]
+    if len(sys.argv) == 7:
+        num_repetitions = int(sys.argv[6])
+    seeds = [42, 43, 44, 45, 46, 47, 48][:num_repetitions]
     assert len(seeds) == num_repetitions
 
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     # Warm-up run to ignore effect of imports
     synthetic_cmd_args = ['mlwhatif']
-    cmd_args = sys.argv[2:].copy()
+    cmd_args = sys.argv[2:6].copy()
     synthetic_cmd_args.extend(cmd_args)
 
     analysis = get_analysis_for_scenario_and_dataset(scenario_name, dataset_name)

@@ -66,15 +66,6 @@ class DataCorruption(WhatIfAnalysis):
         # pylint: disable=unsubscriptable-object
         self.also_corrupt_train = also_corrupt_train
         self.column_to_corruption = column_to_corruption
-        column_to_corruption_with_replaced_corruption_types = []
-        for column, corruption_function in self.column_to_corruption:
-            if isinstance(corruption_function, CorruptionType):
-                # noinspection PyTypeChecker
-                column_to_corruption_with_replaced_corruption_types.append(
-                    (column, partial(CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES[corruption_function], column=column)))
-            else:
-                column_to_corruption_with_replaced_corruption_types.append((column, corruption_function))
-        self.column_to_corruption = column_to_corruption_with_replaced_corruption_types
         if corruption_percentages is None:
             self.corruption_percentages = [0.2, 0.5, 0.9]
         else:
@@ -88,6 +79,16 @@ class DataCorruption(WhatIfAnalysis):
 
     def generate_plans_to_try(self, dag: networkx.DiGraph) -> Iterable[Iterable[PipelinePatch]]:
         # pylint: disable=too-many-locals
+        column_to_corruption_with_replaced_corruption_types = []
+        for column, corruption_function in self.column_to_corruption:
+            if isinstance(corruption_function, CorruptionType):
+                # noinspection PyTypeChecker
+                column_to_corruption_with_replaced_corruption_types.append(
+                    (column, partial(CORRUPTION_FUNCS_FOR_CORRUPTION_TYPES[corruption_function], column=column)))
+            else:
+                column_to_corruption_with_replaced_corruption_types.append((column, corruption_function))
+        self.column_to_corruption = column_to_corruption_with_replaced_corruption_types
+
         predict_operators = find_nodes_by_type(dag, OperatorType.PREDICT)
         if len(predict_operators) != 1:
             raise Exception("Currently, DataCorruption only supports pipelines with exactly one predict call which "

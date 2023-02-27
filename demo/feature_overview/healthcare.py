@@ -64,7 +64,7 @@ def execute_pipeline():
         ('learner', MyKerasClassifier(create_neural_net, epochs=5, verbose=0))])
     model = encode_and_learn.fit(train, train['has_complication'])
     pred = model.predict(test)
-    return accuracy_score(pred, test['has_complication'])
+    return accuracy_score(test['has_complication'], pred)
 
 
 score = execute_pipeline()

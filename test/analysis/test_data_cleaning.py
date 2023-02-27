@@ -111,3 +111,38 @@ def test_data_cleaning_adult_complex(tmpdir):
     assert report.shape == (19, 4)
 
     visualize_dags(analysis_result, tmpdir)
+
+
+def test_data_cleaning_list_input(tmpdir):
+    """
+    Tests whether the Data Cleaning analysis works for a very simple pipeline with a DecisionTree score
+    """
+    columns_with_corruptions = [('age', ErrorType.NUM_MISSING_VALUES) for _ in range(4)]
+    data_cleaning = DataCleaning(columns_with_corruptions)
+
+    analysis_result = PipelineAnalyzer \
+        .on_pipeline_from_py_file(ADULT_COMPLEX_PY) \
+        .add_what_if_analysis(data_cleaning) \
+        .execute()
+
+    report = analysis_result.analysis_to_result_reports[data_cleaning]
+    assert report.shape == (17, 4)
+
+    visualize_dags(analysis_result, tmpdir)
+
+
+def test_data_cleaning_list_input_empty(tmpdir):
+    """
+    Tests whether the Data Cleaning analysis works for a very simple pipeline with a DecisionTree score
+    """
+    data_cleaning = DataCleaning([])
+
+    analysis_result = PipelineAnalyzer \
+        .on_pipeline_from_py_file(ADULT_COMPLEX_PY) \
+        .add_what_if_analysis(data_cleaning) \
+        .execute()
+
+    report = analysis_result.analysis_to_result_reports[data_cleaning]
+    assert report.shape == (1, 4)
+
+    visualize_dags(analysis_result, tmpdir)

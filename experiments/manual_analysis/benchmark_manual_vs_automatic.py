@@ -5,22 +5,19 @@ import random
 import sys
 import time
 import warnings
-from functools import partial
 from unittest.mock import patch
 
 import numpy
 import pandas
-from jenga.corruptions.image import GaussianNoiseCorruption, GlassBlurCorruption, DefocusBlurCorruption, FogCorruption, \
-    ContrastCorruption
 
 from example_pipelines.healthcare import custom_monkeypatching
-from experiments.manual_analysis.run_reviews_data_corruption_and_cleaning_manually import main_function
+from experiments.manual_analysis import run_reviews_data_corruption_and_cleaning_manually, \
+    run_reviews_data_corruption_and_cleaning_manually_loading, \
+    run_reviews_data_corruption_and_cleaning_manually_preproc, \
+    run_reviews_data_corruption_and_cleaning_manually_robustness_train_reuse
 from mlwhatif import PipelineAnalyzer
-# Make sure this code is not executed during imports
 from mlwhatif.analysis._data_cleaning import DataCleaning, ErrorType
 from mlwhatif.analysis._data_corruption import DataCorruption, CorruptionType
-from mlwhatif.analysis._operator_impact import OperatorImpact
-from mlwhatif.analysis._permutation_feature_importance import PermutationFeatureImportance
 from mlwhatif.utils import get_project_root
 
 logger = logging.getLogger(__name__)
@@ -62,7 +59,8 @@ if __name__ == "__main__":
     seeds = range(42, 42 + num_repetitions)
     assert len(seeds) == num_repetitions
 
-    pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
+    pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "manual_analysis",
+                                     "run_pipeline_mlwhatif.py")
     # Warm-up run to ignore effect of imports
     synthetic_cmd_args = ['mlwhatif']
     cmd_args = sys.argv[2:].copy()
@@ -91,6 +89,9 @@ if __name__ == "__main__":
     result_df_featurization = []
     result_df_model = []
     result_df_total_exec_manual = []
+    result_df_total_exec_manual_loading = []
+    result_df_total_exec_manual_preproc = []
+    result_df_total_exec_manual_robustness = []
     result_df_total_exec_opt = []
     result_df_total_exec_no_opt = []
     result_df_variant_counts = []
@@ -121,8 +122,26 @@ if __name__ == "__main__":
 
         total_manual_exec_start = time.time()
         with patch.object(sys, 'argv', ["manual", scenario_name, seed]):
-            main_function()
+            run_reviews_data_corruption_and_cleaning_manually.main_function()
         total_manual_exec_duration = (time.time() - total_manual_exec_start) * 1000
+
+        total_manual_loading_exec_start = time.time()
+        with patch.object(sys, 'argv', ["manual_loading", scenario_name, seed]):
+            run_reviews_data_corruption_and_cleaning_manually_loading.main_function()
+        total_manual_loading_exec_duration = (time.time() - total_manual_loading_exec_start) * 1000
+
+        total_manual_preproc_exec_start = time.time()
+        with patch.object(sys, 'argv', ["manual_preproc", scenario_name, seed]):
+            run_reviews_data_corruption_and_cleaning_manually_preproc.main_function()
+        total_manual_preproc_exec_duration = (time.time() - total_manual_preproc_exec_start) * 1000
+
+        if scenario_name == "data_corruption":
+            total_manual_robustness_exec_start = time.time()
+            with patch.object(sys, 'argv', ["manual_robustness", scenario_name, seed]):
+                run_reviews_data_corruption_and_cleaning_manually_robustness_train_reuse.main_function()
+            total_manual_robustness_exec_duration = (time.time() - total_manual_robustness_exec_start) * 1000
+        else:
+            total_manual_robustness_exec_duration = numpy.NaN
 
         total_opt_exec_start = time.time()
         with patch.object(sys, 'argv', synthetic_cmd_args + [seed]):
@@ -151,6 +170,9 @@ if __name__ == "__main__":
         result_df_featurization.append(featurization_name)
         result_df_model.append(model_name)
         result_df_total_exec_manual.append(total_manual_exec_duration)
+        result_df_total_exec_manual_loading.append(total_manual_loading_exec_duration)
+        result_df_total_exec_manual_preproc.append(total_manual_preproc_exec_duration)
+        result_df_total_exec_manual_robustness.append(total_manual_robustness_exec_duration)
         result_df_total_exec_opt.append(total_opt_exec_duration)
         result_df_total_exec_no_opt.append(total_no_opt_exec_duration)
         result_df_variant_counts.append(len(analysis_result_no_opt.what_if_dags))
@@ -194,6 +216,9 @@ if __name__ == "__main__":
                                   'model': result_df_model,
                                   'variant_count': result_df_variant_counts,
                                   'total_exec_duration_manual': result_df_total_exec_manual,
+                                  'result_df_total_exec_manual_loading': result_df_total_exec_manual_loading,
+                                  'result_df_total_exec_manual_preproc': result_df_total_exec_manual_preproc,
+                                  'result_df_total_exec_manual_robustness': result_df_total_exec_manual_robustness,
                                   'total_exec_duration_with_opt': result_df_total_exec_opt,
                                   'total_exec_duration_without_opt': result_df_total_exec_no_opt,
                                   'opt_what_if_optimized_estimated':

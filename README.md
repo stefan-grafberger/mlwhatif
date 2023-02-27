@@ -1,7 +1,7 @@
 mlwhatif
 ================================
 
-[![mlinspect](https://img.shields.io/badge/❓-mlwhatif-green)](https://github.com/stefan-grafberger/mlwhatif)
+[![mlwhatif](https://img.shields.io/badge/❓-mlwhatif-green)](https://github.com/stefan-grafberger/mlwhatif)
 [![GitHub license](https://img.shields.io/badge/License-Apache%202.0-yellowgreen.svg)](https://github.com/stefan-grafberger/mlwhatif/blob/master/LICENSE)
 [![Build Status](https://github.com/stefan-grafberger/mlwhatif/actions/workflows/build.yml/badge.svg)](https://github.com/stefan-grafberger/mlwhatif/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/stefan-grafberger/mlwhatif/branch/main/graph/badge.svg?token=KTMNPBV1ZZ)](https://codecov.io/gh/stefan-grafberger/mlwhatif)
@@ -14,7 +14,7 @@ This project uses the [mlinspect](https://github.com/stefan-grafberger/mlinspect
 
 Prerequisite: Python 3.9
 
-1. Clone this repository
+1. Clone this repository (optionally, with [Git LFS](https://github.com/git-lfs/git-lfs), to also download the datasets for the scalability experiment)
 2. Set up the environment
 
 	`cd mlwhatif` <br>
@@ -28,7 +28,7 @@ Prerequisite: Python 3.9
 	
 4. Install pip dependencies 
 
-    `pip install -e ."[dev]"` <br>
+    `SETUPTOOLS_USE_DISTUTILS=stdlib pip install -e ."[dev]"` <br>
 
 5. To ensure everything works, you can run the tests (without graphviz, the visualisation test will fail)
 

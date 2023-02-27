@@ -229,11 +229,19 @@ class OperatorRemoval(OperatorPatch):
         assert operator_to_remove is not None
         # The filter row count may have changed because of the reordering of operations
         filter_parents = get_sorted_parent_nodes(dag, operator_to_remove)
-        filter_condition_parent = filter_parents[1]
-        operator_filter_was_added_after = filter_parents[0]
-        parent_row_count = operator_filter_was_added_after.details.optimizer_info.shape[0]
-        refreshed_current_node = get_sorted_children_nodes(dag, filter_condition_parent)[0]
-        current_row_count = refreshed_current_node.details.optimizer_info.shape[0]
+        if len(filter_parents) == 2:
+            filter_condition_parent = filter_parents[1]
+            operator_filter_was_added_after = filter_parents[0]
+            parent_row_count = operator_filter_was_added_after.details.optimizer_info.shape[0]
+            refreshed_current_node = get_sorted_children_nodes(dag, filter_condition_parent)[0]
+            current_row_count = refreshed_current_node.details.optimizer_info.shape[0]
+        else:
+            operator_filter_was_added_after = filter_parents[0]
+            parent_row_count = operator_filter_was_added_after.details.optimizer_info.shape[0]
+            # Not sure if this always works correctly, as this situation currently only occurs in one pipeline,
+            #  walmart-amazon
+            refreshed_current_node = get_sorted_children_nodes(dag, operator_filter_was_added_after)[0]
+            current_row_count = refreshed_current_node.details.optimizer_info.shape[0]
         selectivity = current_row_count / parent_row_count
         return selectivity
 
@@ -265,6 +273,7 @@ class DataFiltering(DataPatch):
     filter_operator: DagNode
     train_not_test: bool
     only_reads_column: List[str]
+    est_selectivity: float or None = None
 
     def apply(self, dag: networkx.DiGraph, pipeline_executor):
         location, is_before_slit = find_dag_location_for_data_patch(self.only_reads_column, dag, self.train_not_test)

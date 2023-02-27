@@ -106,5 +106,5 @@ pipeline = Pipeline([('featurization', featurization),
                      ('model', model)])
 pipeline = pipeline.fit(train, train_labels)
 predictions = pipeline.predict(test)
-score = accuracy_score(predictions, test_labels)
+score = accuracy_score(test_labels, predictions)
 print('    Score: ', score)

@@ -12,8 +12,9 @@ import networkx
 from inspect import cleandoc
 from testfixtures import compare, Comparison
 from mlwhatif import OperatorType, OperatorContext, FunctionInfo, PipelineAnalyzer, CodeReference, DagNode,
-    BasicCodeLocation, DagNodeDetails,
-    OptionalCodeInfo
+
+BasicCodeLocation, DagNodeDetails,
+OptionalCodeInfo
 
 test_code = cleandoc("""
         from inspect import cleandoc

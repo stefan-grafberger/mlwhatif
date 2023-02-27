@@ -277,11 +277,12 @@ def visualize_dags(analysis_result, tmpdir, skip_combined_dag=False):
         analysis_result.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir), "what-if-optimised"))
 
 
-def run_scenario_and_visualize_dags(dataset, scenario, tmpdir):
+def run_scenario_and_visualize_dags(dataset, scenario, tmpdir, featurization="featurization_0",
+                                    model="logistic_regression"):
     """Run a scenario and visualize the DAGs for debugging and save them to same temporary directory"""
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     analysis = get_analysis_for_scenario_and_dataset(scenario, dataset)
-    with patch.object(sys, 'argv', ["mlwhatif", dataset, "fast_loading", "featurization_0", "logistic_regression"]):
+    with patch.object(sys, 'argv', ["mlwhatif", dataset, "fast_loading", featurization, model]):
         analysis_result_no_opt = PipelineAnalyzer \
             .on_pipeline_from_py_file(pipeline_run_file) \
             .add_custom_monkey_patching_modules([custom_monkeypatching]) \
