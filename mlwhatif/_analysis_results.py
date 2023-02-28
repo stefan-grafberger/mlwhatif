@@ -53,6 +53,7 @@ class AnalysisResults:
     runtime_info: RuntimeInfo
     dag_extraction_info: DagExtractionInfo
     pipeline_executor: any
+    intermediate_stages: Dict[str, List[networkx.DiGraph]]
 
     def save_original_dag_to_path(self, prefix_original_dag: str):
         """
@@ -66,13 +67,9 @@ class AnalysisResults:
         """
         # FIXME: save_what_if_dags_to_path has a bug when patches/the original pipeline are rewritten.
         #  To fix this, we need to instead output the same plans and patches used when optimisation is disabled.
-        what_if_patches = [patches for patches, _ in self.what_if_dags]
-        for dag_index, what_if_patches in enumerate(what_if_patches):
-            original_copy = self.original_dag.copy()
-            for patch in what_if_patches:
-                patch.apply(original_copy, self.pipeline_executor)
+        for dag_index, what_if_dag in enumerate(self.intermediate_stages["unoptimised_variants"]):
             if prefix_analysis_dags is not None:
-                save_fig_to_path(original_copy, f"{prefix_analysis_dags}-{dag_index}.png")
+                save_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-{dag_index}.png")
 
     def save_optimised_what_if_dags_to_path(self, prefix_optimised_analysis_dag: str):
         """
@@ -121,3 +118,5 @@ class EstimationResults:
         Save the extracted original DAG to a file
         """
         save_fig_to_path(self.combined_optimized_dag, f"{prefix_optimised_analysis_dag}.png")
+
+    # def visualisation_phases_to_dags(self):

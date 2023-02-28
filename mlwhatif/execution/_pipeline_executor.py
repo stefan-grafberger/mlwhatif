@@ -6,7 +6,9 @@ import ast
 import logging
 import sys
 import time
+from collections import defaultdict
 from contextlib import redirect_stdout
+from copy import copy, deepcopy
 from io import StringIO
 from typing import List
 
@@ -59,7 +61,7 @@ class PipelineExecutor:
     labels_to_extracted_plan_results = dict()
     analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
                                        RuntimeInfo(0, 0, 0, 0, None, None, 0, 0, 0, 0, 0, 0, 0),
-                                       DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0), None)
+                                       DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0), None, defaultdict(list))
     monkey_patch_duration = 0
     skip_optimizer = False
     force_optimization_rules = None
@@ -167,6 +169,15 @@ class PipelineExecutor:
             plan_generation_start = time.time()
             for patches in analysis.generate_plans_to_try(self.analysis_results.original_dag):
                 self.analysis_results.what_if_dags.append((patches, networkx.DiGraph()))
+                # This part is only necessary for visualising what happens internally, we should add a flag to only
+                #  enable this when actually needed
+                unoptimised = self.analysis_results.intermediate_stages["unoptimised_variants"]
+                orig_dag_to_patch = deepcopy(self.analysis_results.original_dag)
+                copy_for_patches = copy(self)
+                for patch in copy(patches):
+                    patch.apply(orig_dag_to_patch, copy_for_patches)
+                unoptimised.append(orig_dag_to_patch)
+                self.analysis_results.intermediate_stages["unoptimised_variants"] = unoptimised
             plan_generation_duration = time.time() - plan_generation_start
             logger.info(f'---RUNTIME: Plan generation took {plan_generation_duration * 1000} ms')
             self.analysis_results.runtime_info.what_if_plan_generation = plan_generation_duration * 1000
@@ -254,7 +265,8 @@ class PipelineExecutor:
         self.op_id_to_dag_node = dict()
         self.analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
                                                 RuntimeInfo(0, 0, 0, 0, None, None, 0, 0, 0, 0, 0, 0, 0),
-                                                DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0), self)
+                                                DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0), self,
+                                                defaultdict(list))
         self.analyses = []
         self.original_pipeline_labels_to_extracted_plan_results = dict()
         self.labels_to_extracted_plan_results = dict()
