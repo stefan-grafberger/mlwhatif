@@ -46,6 +46,7 @@ class AnalysisResults:
     """
     The class the PipelineExecutor returns
     """
+    # pylint: disable=too-many-instance-attributes
     analysis_to_result_reports: Dict[any, any]
     original_dag: networkx.DiGraph
     what_if_dags: List[tuple[List[PipelinePatch], networkx.DiGraph]]
