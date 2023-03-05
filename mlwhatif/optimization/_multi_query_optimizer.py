@@ -3,6 +3,7 @@ The place where the Multi-Query optimization happens
 """
 import logging
 import time
+from copy import copy
 from typing import Iterable, List
 
 import networkx
@@ -57,7 +58,7 @@ class MultiQueryOptimizer:
             # Insert stuff here
             patches = [patches for (patches, _) in analysis_results.what_if_dags]
             big_execution_dag, what_if_dags = self._optimize_and_combine_dags_with_optimization(
-                analysis_results.original_dag.copy(), patches)
+                analysis_results, patches)
 
             # TODO: This comparison may be a bit unfair in case of expensive UDFs because the UDF split reuse
             #  DAG rewriting is applied before measuring the runtime of the DAGs without reuse. For now,
@@ -98,12 +99,36 @@ class MultiQueryOptimizer:
             what_if_dags.append(what_if_dag)
         return what_if_dags
 
-    def _optimize_and_combine_dags_with_optimization(self, original_dag, patches):
+    def _optimize_and_combine_dags_with_optimization(self, analysis_results, patches):
+        original_dag = analysis_results.original_dag.copy()
         """Here, the actual optimization happens"""
-        for rule in self.all_optimization_rules:
+
+        for rule_index, rule in enumerate(self.all_optimization_rules):
             original_dag, patches = rule.optimize_dag(original_dag, patches)
+
+            stage_name = f"optimize_dag_{str(type(rule).__name__)}"
+            for patches_for_variant in patches:
+                dags_for_stage = analysis_results.intermediate_stages[stage_name]
+                orig_dag_to_patch = original_dag.copy()
+                copy_for_patches = copy(analysis_results.pipeline_executor)
+                for patch in copy(patches_for_variant):
+                    patch.apply(orig_dag_to_patch, copy_for_patches)
+                dags_for_stage.append(orig_dag_to_patch)
+                analysis_results.intermediate_stages[stage_name] = dags_for_stage
+
         for rule in self.all_optimization_rules:
             patches = rule.optimize_patches(original_dag, patches)
+
+            stage_name = f"optimize_patches_{str(type(rule).__name__)}"
+            for patches_for_variant in patches:
+                dags_for_stage = analysis_results.intermediate_stages[stage_name]
+                orig_dag_to_patch = original_dag.copy()
+                copy_for_patches = copy(analysis_results.pipeline_executor)
+                for patch in copy(patches_for_variant):
+                    patch.apply(orig_dag_to_patch, copy_for_patches)
+                dags_for_stage.append(orig_dag_to_patch)
+                analysis_results.intermediate_stages[stage_name] = dags_for_stage
+
         what_if_dags = []
         for patch_set in patches:
             what_if_dag = original_dag.copy()
