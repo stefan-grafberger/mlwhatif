@@ -54,6 +54,7 @@ class MultiQueryOptimizer:
         if skip_optimizer is False:
             logger.info(f"Performing Multi-Query Optimization")
 
+            # Insert stuff here
             patches = [patches for (patches, _) in analysis_results.what_if_dags]
             big_execution_dag, what_if_dags = self._optimize_and_combine_dags_with_optimization(
                 analysis_results.original_dag.copy(), patches)

@@ -172,7 +172,7 @@ class PipelineExecutor:
                 # This part is only necessary for visualising what happens internally, we should add a flag to only
                 #  enable this when actually needed
                 unoptimised = self.analysis_results.intermediate_stages["unoptimised_variants"]
-                orig_dag_to_patch = deepcopy(self.analysis_results.original_dag)
+                orig_dag_to_patch = self.analysis_results.original_dag.copy()
                 copy_for_patches = copy(self)
                 for patch in copy(patches):
                     patch.apply(orig_dag_to_patch, copy_for_patches)
