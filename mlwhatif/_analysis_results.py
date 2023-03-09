@@ -8,6 +8,8 @@ import networkx
 
 from mlwhatif.execution._patches import PipelinePatch
 from mlwhatif.visualisation import save_fig_to_path
+from mlwhatif.visualisation._visualisation import get_original_simple_dag, get_colored_simple_dags, \
+    get_final_optimized_combined_colored_simple_dag, save_simple_fig_to_path
 
 
 @dataclasses.dataclass
@@ -60,23 +62,50 @@ class AnalysisResults:
         """
         Save the extracted original DAG to a file
         """
-        save_fig_to_path(self.original_dag, f"{prefix_original_dag}.png")
+        save_simple_fig_to_path(get_original_simple_dag(self.original_dag), f"{prefix_original_dag}.png")
 
     def save_what_if_dags_to_path(self, prefix_analysis_dags: str):
         """
         Save the generated What-If DAGs to a file
         """
-        # FIXME: save_what_if_dags_to_path has a bug when patches/the original pipeline are rewritten.
-        #  To fix this, we need to instead output the same plans and patches used when optimisation is disabled.
-        for dag_index, what_if_dag in enumerate(self.intermediate_stages["unoptimised_variants"]):
+        colored_simple_dags = get_colored_simple_dags(self.intermediate_stages["unoptimized_variants"],
+                                                      with_reuse_coloring=False)
+        for dag_index, what_if_dag in enumerate(colored_simple_dags):
             if prefix_analysis_dags is not None:
-                save_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-{dag_index}.png")
+                save_simple_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-{dag_index}.png")
+
+    def save_all_what_if_dag_stages_to_path(self, prefix_analysis_dags: str):
+        """
+        Save the generated What-If DAGs to a file
+        """
+        for stage_name in self.intermediate_stages.keys():
+            if not stage_name == "unoptimized_variants":
+                colored_simple_dags = get_colored_simple_dags(self.intermediate_stages[stage_name],
+                                                              with_reuse_coloring=True)
+                for dag_index, what_if_dag in enumerate(colored_simple_dags):
+                    if prefix_analysis_dags is not None:
+                        save_simple_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-{stage_name}-{dag_index}.png")
+            else:
+                colored_simple_dags = get_colored_simple_dags(self.intermediate_stages[stage_name],
+                                                              with_reuse_coloring=False)
+                for dag_index, what_if_dag in enumerate(colored_simple_dags):
+                    if prefix_analysis_dags is not None:
+                        save_simple_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-{stage_name}-{dag_index}.png")
+                colored_simple_dags = get_colored_simple_dags(self.intermediate_stages[stage_name],
+                                                              with_reuse_coloring=True)
+                for dag_index, what_if_dag in enumerate(colored_simple_dags):
+                    if prefix_analysis_dags is not None:
+                        save_simple_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-CommonSubexpressionElimination0"
+                                                             f"-{dag_index}.png")
 
     def save_optimised_what_if_dags_to_path(self, prefix_optimised_analysis_dag: str):
         """
         Save the extracted original DAG to a file
         """
-        save_fig_to_path(self.combined_optimized_dag, f"{prefix_optimised_analysis_dag}.png")
+        colored_combined_dag = get_final_optimized_combined_colored_simple_dag(
+            self.intermediate_stages["optimize_patches_3_UdfSplitAndReuse"])
+        if prefix_optimised_analysis_dag is not None:
+            save_simple_fig_to_path(colored_combined_dag, f"{prefix_optimised_analysis_dag}-0.png")
 
 
 @dataclasses.dataclass

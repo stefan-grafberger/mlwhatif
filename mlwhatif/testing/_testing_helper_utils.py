@@ -278,7 +278,7 @@ def visualize_dags(analysis_result, tmpdir, skip_combined_dag=False):
 
 
 def run_scenario_and_visualize_dags(dataset, scenario, tmpdir, featurization="featurization_0",
-                                    model="logistic_regression"):
+                                    model="logistic_regression", all_stages=False):
     """Run a scenario and visualize the DAGs for debugging and save them to same temporary directory"""
     pipeline_run_file = os.path.join(str(get_project_root()), "experiments", "end_to_end", "run_pipeline.py")
     analysis = get_analysis_for_scenario_and_dataset(scenario, dataset)
@@ -291,7 +291,10 @@ def run_scenario_and_visualize_dags(dataset, scenario, tmpdir, featurization="fe
     analysis_result_no_opt.save_original_dag_to_path(os.path.join(str(tmpdir), "with-opt-orig"))
     # FIXME: save_what_if_dags_to_path has a bug when patches/the original pipeline are rewritten.
     #  To fix this, we need to instead output the same plans and patches used when optimisation is disabled.
-    analysis_result_no_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "with-opt-what-if"))
+    if all_stages is False:
+        analysis_result_no_opt.save_what_if_dags_to_path(os.path.join(str(tmpdir), "with-opt-what-if"))
+    else:
+        analysis_result_no_opt.save_all_what_if_dag_stages_to_path(os.path.join(str(tmpdir), "with-opt-what-if"))
     analysis_result_no_opt.save_optimised_what_if_dags_to_path(os.path.join(str(tmpdir), "with-opt-what-if-optimised"))
     analysis_output = analysis_result_no_opt.analysis_to_result_reports[analysis]
     return analysis_output

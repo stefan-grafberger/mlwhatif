@@ -171,13 +171,6 @@ class PipelineExecutor:
                 self.analysis_results.what_if_dags.append((patches, networkx.DiGraph()))
                 # This part is only necessary for visualising what happens internally, we should add a flag to only
                 #  enable this when actually needed
-                unoptimised = self.analysis_results.intermediate_stages["unoptimised_variants"]
-                orig_dag_to_patch = self.analysis_results.original_dag.copy()
-                copy_for_patches = copy(self)
-                for patch in copy(patches):
-                    patch.apply(orig_dag_to_patch, copy_for_patches)
-                unoptimised.append(orig_dag_to_patch)
-                self.analysis_results.intermediate_stages["unoptimised_variants"] = unoptimised
             plan_generation_duration = time.time() - plan_generation_start
             logger.info(f'---RUNTIME: Plan generation took {plan_generation_duration * 1000} ms')
             self.analysis_results.runtime_info.what_if_plan_generation = plan_generation_duration * 1000

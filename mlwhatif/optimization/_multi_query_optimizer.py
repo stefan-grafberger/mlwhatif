@@ -104,45 +104,19 @@ class MultiQueryOptimizer:
         """Here, the actual optimization happens"""
         original_dag = analysis_results.original_dag.copy()
 
+        self.save_intermediate_dags(analysis_results, original_dag, patches, "unoptimized_variants")
+
         for rule_index, rule in enumerate(self.all_optimization_rules):
             original_dag, patches = rule.optimize_dag(original_dag, patches)
 
             stage_name = f"optimize_dag_{str(rule_index)}_{str(type(rule).__name__)}"
-            for patches_for_variant in patches:
-                dags_for_stage = analysis_results.intermediate_stages[stage_name]
-                what_if_dag = original_dag.copy()
-                copy_for_patches = copy(analysis_results.pipeline_executor)
-                patch_copies = copy(patches_for_variant)
-                for patch in patch_copies:
-                    patch.apply(what_if_dag, copy_for_patches)
-                all_nodes_needing_recomputation = set()
-                for patch in patch_copies:
-                    all_nodes_needing_recomputation.update(patch.get_nodes_needing_recomputation(original_dag,
-                                                                                                 what_if_dag))
-                self._generate_unique_ids_for_selected_nodes(what_if_dag, all_nodes_needing_recomputation)
-
-                dags_for_stage.append(what_if_dag)
-                analysis_results.intermediate_stages[stage_name] = dags_for_stage
+            self.save_intermediate_dags(analysis_results, original_dag, patches, stage_name)
 
         for rule_index, rule in enumerate(self.all_optimization_rules):
             patches = rule.optimize_patches(original_dag, patches)
 
             stage_name = f"optimize_patches_{str(rule_index)}_{str(type(rule).__name__)}"
-            for patches_for_variant in patches:
-                dags_for_stage = analysis_results.intermediate_stages[stage_name]
-                what_if_dag = original_dag.copy()
-                copy_for_patches = copy(analysis_results.pipeline_executor)
-                patch_copies = copy(patches_for_variant)
-                for patch in patch_copies:
-                    patch.apply(what_if_dag, copy_for_patches)
-                all_nodes_needing_recomputation = set()
-                for patch in patch_copies:
-                    all_nodes_needing_recomputation.update(patch.get_nodes_needing_recomputation(original_dag,
-                                                                                                 what_if_dag))
-                self._generate_unique_ids_for_selected_nodes(what_if_dag, all_nodes_needing_recomputation)
-
-                dags_for_stage.append(what_if_dag)
-                analysis_results.intermediate_stages[stage_name] = dags_for_stage
+            self.save_intermediate_dags(analysis_results, original_dag, patches, stage_name)
 
         what_if_dags = []
         for patch_set in patches:
@@ -160,6 +134,23 @@ class MultiQueryOptimizer:
         else:
             big_execution_dag = networkx.DiGraph()
         return big_execution_dag, what_if_dags
+
+    def save_intermediate_dags(self, analysis_results, original_dag, patches, stage_name):
+        for patches_for_variant in patches:
+            dags_for_stage = analysis_results.intermediate_stages[stage_name]
+            what_if_dag = original_dag.copy()
+            copy_for_patches = copy(analysis_results.pipeline_executor)
+            patch_copies = copy(patches_for_variant)
+            for patch in patch_copies:
+                patch.apply(what_if_dag, copy_for_patches)
+            all_nodes_needing_recomputation = set()
+            for patch in patch_copies:
+                all_nodes_needing_recomputation.update(patch.get_nodes_needing_recomputation(original_dag,
+                                                                                             what_if_dag))
+            self._generate_unique_ids_for_selected_nodes(what_if_dag, all_nodes_needing_recomputation)
+
+            dags_for_stage.append(what_if_dag)
+            analysis_results.intermediate_stages[stage_name] = dags_for_stage
 
     def _make_all_nodes_unique(self, what_if_dags):
         """We need to give all nodes new ids to combine DAGs without reusing results."""

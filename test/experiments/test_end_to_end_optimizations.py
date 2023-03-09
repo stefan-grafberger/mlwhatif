@@ -48,7 +48,7 @@ def test_operator_impact_reviews(tmpdir):
     """
     scenario = "operator_impact"
     dataset = "reviews"
-    analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
+    analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir, all_stages=True)
     assert analysis_output.shape == (4, 5)
 
 
