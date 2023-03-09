@@ -201,5 +201,8 @@ def get_pretty_operator_name(node: DagNode) -> str:
         operator_name = 'y_test'
     elif operator_type == 'EXTRACT_RESULT':
         operator_name = 'Result Extraction'
+    elif operator_type == 'SUBSCRIPT':
+        # TODO: Maybe use a different symbol?
+        operator_name = 'π'
 
     return operator_name
