@@ -110,11 +110,18 @@ class MultiQueryOptimizer:
             stage_name = f"optimize_dag_{str(rule_index)}_{str(type(rule).__name__)}"
             for patches_for_variant in patches:
                 dags_for_stage = analysis_results.intermediate_stages[stage_name]
-                orig_dag_to_patch = original_dag.copy()
+                what_if_dag = original_dag.copy()
                 copy_for_patches = copy(analysis_results.pipeline_executor)
-                for patch in copy(patches_for_variant):
-                    patch.apply(orig_dag_to_patch, copy_for_patches)
-                dags_for_stage.append(orig_dag_to_patch)
+                patch_copies = copy(patches_for_variant)
+                for patch in patch_copies:
+                    patch.apply(what_if_dag, copy_for_patches)
+                all_nodes_needing_recomputation = set()
+                for patch in patch_copies:
+                    all_nodes_needing_recomputation.update(patch.get_nodes_needing_recomputation(original_dag,
+                                                                                                 what_if_dag))
+                self._generate_unique_ids_for_selected_nodes(what_if_dag, all_nodes_needing_recomputation)
+
+                dags_for_stage.append(what_if_dag)
                 analysis_results.intermediate_stages[stage_name] = dags_for_stage
 
         for rule_index, rule in enumerate(self.all_optimization_rules):
@@ -123,11 +130,18 @@ class MultiQueryOptimizer:
             stage_name = f"optimize_patches_{str(rule_index)}_{str(type(rule).__name__)}"
             for patches_for_variant in patches:
                 dags_for_stage = analysis_results.intermediate_stages[stage_name]
-                orig_dag_to_patch = original_dag.copy()
+                what_if_dag = original_dag.copy()
                 copy_for_patches = copy(analysis_results.pipeline_executor)
-                for patch in copy(patches_for_variant):
-                    patch.apply(orig_dag_to_patch, copy_for_patches)
-                dags_for_stage.append(orig_dag_to_patch)
+                patch_copies = copy(patches_for_variant)
+                for patch in patch_copies:
+                    patch.apply(what_if_dag, copy_for_patches)
+                all_nodes_needing_recomputation = set()
+                for patch in patch_copies:
+                    all_nodes_needing_recomputation.update(patch.get_nodes_needing_recomputation(original_dag,
+                                                                                                 what_if_dag))
+                self._generate_unique_ids_for_selected_nodes(what_if_dag, all_nodes_needing_recomputation)
+
+                dags_for_stage.append(what_if_dag)
                 analysis_results.intermediate_stages[stage_name] = dags_for_stage
 
         what_if_dags = []
