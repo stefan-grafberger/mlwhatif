@@ -79,7 +79,7 @@ class AnalysisResults:
         Save the generated What-If DAGs to a file
         """
         for stage_name in self.intermediate_stages.keys():
-            if not stage_name == "unoptimized_variants":
+            if not stage_name == "0-unoptimized_variants":
                 colored_simple_dags = get_colored_simple_dags(self.intermediate_stages[stage_name],
                                                               with_reuse_coloring=True)
                 for dag_index, what_if_dag in enumerate(colored_simple_dags):
@@ -95,15 +95,15 @@ class AnalysisResults:
                                                               with_reuse_coloring=True)
                 for dag_index, what_if_dag in enumerate(colored_simple_dags):
                     if prefix_analysis_dags is not None:
-                        save_simple_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-CommonSubexpressionElimination0"
-                                                             f"-{dag_index}.png")
+                        save_simple_fig_to_path(what_if_dag, f"{prefix_analysis_dags}-0-reuse-"
+                                                             f"CommonSubexpressionElimination-{dag_index}.png")
 
     def save_optimised_what_if_dags_to_path(self, prefix_optimised_analysis_dag: str):
         """
         Save the extracted original DAG to a file
         """
         colored_combined_dag = get_final_optimized_combined_colored_simple_dag(
-            self.intermediate_stages["optimize_patches_3_UdfSplitAndReuse"])
+            self.intermediate_stages["4-optimize_patches_3_UdfSplitAndReuse"])
         if prefix_optimised_analysis_dag is not None:
             save_simple_fig_to_path(colored_combined_dag, f"{prefix_optimised_analysis_dag}-0.png")
 
