@@ -100,13 +100,14 @@ class MultiQueryOptimizer:
         return what_if_dags
 
     def _optimize_and_combine_dags_with_optimization(self, analysis_results, patches):
-        original_dag = analysis_results.original_dag.copy()
+        # pylint: disable=too-many-locals
         """Here, the actual optimization happens"""
+        original_dag = analysis_results.original_dag.copy()
 
         for rule_index, rule in enumerate(self.all_optimization_rules):
             original_dag, patches = rule.optimize_dag(original_dag, patches)
 
-            stage_name = f"optimize_dag_{str(type(rule).__name__)}"
+            stage_name = f"optimize_dag_{str(rule_index)}_{str(type(rule).__name__)}"
             for patches_for_variant in patches:
                 dags_for_stage = analysis_results.intermediate_stages[stage_name]
                 orig_dag_to_patch = original_dag.copy()
@@ -116,10 +117,10 @@ class MultiQueryOptimizer:
                 dags_for_stage.append(orig_dag_to_patch)
                 analysis_results.intermediate_stages[stage_name] = dags_for_stage
 
-        for rule in self.all_optimization_rules:
+        for rule_index, rule in enumerate(self.all_optimization_rules):
             patches = rule.optimize_patches(original_dag, patches)
 
-            stage_name = f"optimize_patches_{str(type(rule).__name__)}"
+            stage_name = f"optimize_patches_{str(rule_index)}_{str(type(rule).__name__)}"
             for patches_for_variant in patches:
                 dags_for_stage = analysis_results.intermediate_stages[stage_name]
                 orig_dag_to_patch = original_dag.copy()
