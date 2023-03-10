@@ -68,6 +68,8 @@ class AnalysisResults:
         """
         Save the generated What-If DAGs to a file
         """
+        if self.pipeline_executor.store_intermediate_dags is False:
+            raise Exception("Please enable intermediate DAG tracking for this!")
         colored_simple_dags = get_colored_simple_dags(self.intermediate_stages["unoptimized_variants"],
                                                       with_reuse_coloring=False)
         for dag_index, what_if_dag in enumerate(colored_simple_dags):
@@ -78,6 +80,8 @@ class AnalysisResults:
         """
         Save the generated What-If DAGs to a file
         """
+        if self.pipeline_executor.store_intermediate_dags is False:
+            raise Exception("Please enable intermediate DAG tracking for this via set_intermediate_dag_storing!")
         for stage_name in self.intermediate_stages.keys():
             if not stage_name == "0-unoptimized_variants":
                 colored_simple_dags = get_colored_simple_dags(self.intermediate_stages[stage_name],
@@ -102,6 +106,8 @@ class AnalysisResults:
         """
         Save the extracted original DAG to a file
         """
+        if self.pipeline_executor.store_intermediate_dags is False:
+            raise Exception("Please enable intermediate DAG tracking for this via set_intermediate_dag_storing!")
         colored_combined_dag = get_final_optimized_combined_colored_simple_dag(
             self.intermediate_stages["4-optimize_patches_3_UdfSplitAndReuse"])
         if prefix_optimised_analysis_dag is not None:

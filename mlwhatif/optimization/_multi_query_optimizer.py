@@ -105,28 +105,31 @@ class MultiQueryOptimizer:
         original_dag = analysis_results.original_dag.copy()
 
         # TODO: Add a flag for this whole intermedidate DAG stuff
-        opt_step_index = 0
+        if self.pipeline_executor.store_intermediate_dags is True:
+            opt_step_index = 0
 
-        self.save_intermediate_dags(analysis_results, original_dag, patches, f"{opt_step_index}-unoptimized_variants")
-        opt_step_index += 1
+            self.save_intermediate_dags(analysis_results, original_dag, patches, f"{opt_step_index}-unoptimized_variants")
+            opt_step_index += 1
 
         for rule_index, rule in enumerate(self.all_optimization_rules):
             original_dag, patches = rule.optimize_dag(original_dag, patches)
 
-            stage_name = f"{opt_step_index}-optimize_dag_{str(rule_index)}_{str(type(rule).__name__)}"
-            # TODO: This is specific to the current optimisations and is for the demo, maybe remove this later
-            if stage_name in {"OperatorDeletionFilterPushUp"}:
-                self.save_intermediate_dags(analysis_results, original_dag, patches, stage_name)
-                opt_step_index += 1
+            if self.pipeline_executor.store_intermediate_dags is True:
+                stage_name = f"{opt_step_index}-optimize_dag_{str(rule_index)}_{str(type(rule).__name__)}"
+                # TODO: This is specific to the current optimisations and is for the demo, maybe remove this later
+                if stage_name in {"OperatorDeletionFilterPushUp"}:
+                    self.save_intermediate_dags(analysis_results, original_dag, patches, stage_name)
+                    opt_step_index += 1
 
         for rule_index, rule in enumerate(self.all_optimization_rules):
             patches = rule.optimize_patches(original_dag, patches)
 
-            stage_name = f"{opt_step_index}-optimize_patches_{str(rule_index)}_{str(type(rule).__name__)}"
-            # TODO: This is specific to the current optimisations and is for the demo, maybe remove this later
-            if stage_name not in {"OperatorDeletionFilterPushUp"}:
-                self.save_intermediate_dags(analysis_results, original_dag, patches, stage_name)
-                opt_step_index += 1
+            if self.pipeline_executor.store_intermediate_dags is True:
+                stage_name = f"{opt_step_index}-optimize_patches_{str(rule_index)}_{str(type(rule).__name__)}"
+                # TODO: This is specific to the current optimisations and is for the demo, maybe remove this later
+                if stage_name not in {"OperatorDeletionFilterPushUp"}:
+                    self.save_intermediate_dags(analysis_results, original_dag, patches, stage_name)
+                    opt_step_index += 1
 
         what_if_dags = []
         for patch_set in patches:

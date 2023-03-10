@@ -68,6 +68,7 @@ class PipelineExecutor:
     operators_to_runtime_during_analysis = []
     use_dfs_exec_strategy = False
     disable_monkey_patching = False
+    store_intermediate_dags = False
 
     def run(self, *,
             notebook_path: str or None = None,
@@ -81,7 +82,8 @@ class PipelineExecutor:
             skip_optimizer=False,
             force_optimization_rules: List[QueryOptimizationRule] or None = None,
             use_dfs_exec_strategy: bool = False,
-            estimate_only=False
+            estimate_only=False,
+            store_intermediate_dags=False
             ) -> AnalysisResults:
         """
         Instrument and execute the pipeline and evaluate all checks
@@ -105,6 +107,7 @@ class PipelineExecutor:
         self.force_optimization_rules = force_optimization_rules
         self.estimate_only = estimate_only
         self.use_dfs_exec_strategy = use_dfs_exec_strategy
+        self.store_intermediate_dags = store_intermediate_dags
 
         if extraction_info is None:
             logger.info(f'Running instrumented original pipeline...')
@@ -270,6 +273,7 @@ class PipelineExecutor:
         self.operators_to_runtime_during_analysis = []
         self.use_dfs_exec_strategy = False
         self.disable_monkey_patching = False
+        self.store_intermediate_dags = False
 
     @staticmethod
     def instrument_pipeline(parsed_ast, track_code_references):
