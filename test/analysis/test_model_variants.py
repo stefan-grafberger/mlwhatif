@@ -1,6 +1,7 @@
 """
 Tests whether the Model Variants analysis works
 """
+# pylint: disable=unused-argument
 from functools import partial
 from inspect import cleandoc
 

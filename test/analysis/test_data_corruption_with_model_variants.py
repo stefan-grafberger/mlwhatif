@@ -1,6 +1,7 @@
 """
 Tests whether the Data Corruption with Model Variants analysis works
 """
+# pylint: disable=unused-argument
 from functools import partial
 from inspect import cleandoc
 

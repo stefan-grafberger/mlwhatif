@@ -1,6 +1,7 @@
 """
 Tests whether the Data Cleaning analysis works
 """
+# pylint: disable=unused-argument
 from inspect import cleandoc
 
 from example_pipelines import HEALTHCARE_PY, ADULT_COMPLEX_PY, COMPAS_PY
