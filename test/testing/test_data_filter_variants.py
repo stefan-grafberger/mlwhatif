@@ -7,7 +7,6 @@ from example_pipelines import HEALTHCARE_PY, COMPAS_PY, ADULT_COMPLEX_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.testing._data_filter_variants import DataFilterVariants
-from mlwhatif.testing._testing_helper_utils import visualize_dags
 
 
 def test_data_filter_variants_mini_example_with_transformer_processing_multiple_columns(tmpdir):
@@ -47,7 +46,7 @@ def test_data_filter_variants_mini_example_with_transformer_processing_multiple_
     report = analysis_result.analysis_to_result_reports[filter_variants]
     assert report.shape == (3, 3)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_filter_variants_healthcare(tmpdir):
@@ -69,7 +68,7 @@ def test_data_filter_variants_healthcare(tmpdir):
     report = analysis_result.analysis_to_result_reports[filter_variants]
     assert report.shape == (4, 5)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_filter_variants_compas(tmpdir):
@@ -88,7 +87,7 @@ def test_data_filter_variants_compas(tmpdir):
     report = analysis_result.analysis_to_result_reports[filter_variants]
     assert report.shape == (3, 3)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_filter_variants_adult_complex():

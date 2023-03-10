@@ -11,7 +11,6 @@ from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._data_corruption import CorruptionType
 from mlwhatif.analysis._data_corruption_with_model_variants import DataCorruptionWithModelVariants
-from mlwhatif.testing._testing_helper_utils import visualize_dags
 
 
 def test_data_corruption_model_variants_mini_example_with_transformer_processing_multiple_columns(tmpdir):
@@ -56,7 +55,7 @@ def test_data_corruption_model_variants_mini_example_with_transformer_processing
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (13, 5)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_corruption_model_variants_mini_example_with_projection_modify(tmpdir):
@@ -108,7 +107,7 @@ def test_data_corruption_model_variants_mini_example_with_projection_modify(tmpd
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (9, 5)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_corruption_model_variants_mini_example_only_train_test_split(tmpdir):
@@ -154,7 +153,7 @@ def test_data_corruption_model_variants_mini_example_only_train_test_split(tmpdi
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (13, 5)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_corruption_model_variants_mini_example_only_train_test_split_without_optimizer(tmpdir):
@@ -201,7 +200,7 @@ def test_data_corruption_model_variants_mini_example_only_train_test_split_witho
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (13, 5)
 
-    visualize_dags(analysis_result, tmpdir, skip_combined_dag=True)
+    # visualize_dags(analysis_result, tmpdir, skip_combined_dag=True)
 
 
 def test_data_corruption_model_variants_mini_example_manual_split(tmpdir):
@@ -248,7 +247,7 @@ def test_data_corruption_model_variants_mini_example_manual_split(tmpdir):
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (13, 5)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_corruption_model_variants_healthcare(tmpdir):
@@ -275,7 +274,7 @@ def test_data_corruption_model_variants_healthcare(tmpdir):
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (9, 9)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_corruption_model_variants_compas(tmpdir):
@@ -299,7 +298,7 @@ def test_data_corruption_model_variants_compas(tmpdir):
     report = analysis_result.analysis_to_result_reports[data_corruption]
     assert report.shape == (13, 4)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_corruption_model_variants_adult_complex():

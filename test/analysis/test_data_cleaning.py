@@ -41,6 +41,7 @@ def test_data_cleaning_mini_example_with_transformer_processing_multiple_columns
     analysis_result = PipelineAnalyzer \
         .on_pipeline_from_string(test_code) \
         .add_what_if_analysis(data_cleaning) \
+        .set_intermediate_dag_storing(True) \
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
@@ -69,7 +70,7 @@ def test_data_cleaning_healthcare(tmpdir):
     report = analysis_result.analysis_to_result_reports[data_cleaning]
     assert report.shape == (20, 6)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_cleaning_compas(tmpdir):
@@ -89,7 +90,7 @@ def test_data_cleaning_compas(tmpdir):
     report = analysis_result.analysis_to_result_reports[data_cleaning]
     assert report.shape == (15, 4)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_cleaning_adult_complex(tmpdir):
@@ -110,7 +111,7 @@ def test_data_cleaning_adult_complex(tmpdir):
     report = analysis_result.analysis_to_result_reports[data_cleaning]
     assert report.shape == (19, 4)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_cleaning_list_input(tmpdir):
@@ -128,7 +129,7 @@ def test_data_cleaning_list_input(tmpdir):
     report = analysis_result.analysis_to_result_reports[data_cleaning]
     assert report.shape == (17, 4)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_data_cleaning_list_input_empty(tmpdir):
@@ -145,4 +146,4 @@ def test_data_cleaning_list_input_empty(tmpdir):
     report = analysis_result.analysis_to_result_reports[data_cleaning]
     assert report.shape == (1, 4)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)

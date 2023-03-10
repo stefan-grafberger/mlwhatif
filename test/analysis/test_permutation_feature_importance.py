@@ -7,7 +7,6 @@ from example_pipelines import HEALTHCARE_PY, COMPAS_PY, ADULT_COMPLEX_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._permutation_feature_importance import PermutationFeatureImportance
-from mlwhatif.testing._testing_helper_utils import visualize_dags
 
 
 def test_permutation_feature_importance_mini_example_with_transformer_processing_multiple_columns(tmpdir):
@@ -44,7 +43,7 @@ def test_permutation_feature_importance_mini_example_with_transformer_processing
     report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance()]
     assert report.shape == (3, 2)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_permutation_feature_importance_mini_example_with_projection_modify(tmpdir):
@@ -84,7 +83,7 @@ def test_permutation_feature_importance_mini_example_with_projection_modify(tmpd
     report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance()]
     assert report.shape == (3, 2)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_permutation_feature_importance_mini_example_only_train_test_split(tmpdir):
@@ -122,7 +121,7 @@ def test_permutation_feature_importance_mini_example_only_train_test_split(tmpdi
     report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance()]
     assert report.shape == (3, 2)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_permutation_feature_importance_mini_example_only_train_test_split_with_restricts(tmpdir):
@@ -161,7 +160,7 @@ def test_permutation_feature_importance_mini_example_only_train_test_split_with_
     report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance(['A'])]
     assert report.shape == (2, 2)
 
-    visualize_dags(analysis_result, tmpdir, skip_combined_dag=True)
+    # visualize_dags(analysis_result, tmpdir, skip_combined_dag=True)
 
 
 def test_permutation_feature_importance_mini_example_manual_split(tmpdir):
@@ -200,7 +199,7 @@ def test_permutation_feature_importance_mini_example_manual_split(tmpdir):
     report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance()]
     assert report.shape == (3, 2)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_permutation_feature_importance_healthcare(tmpdir):
@@ -218,7 +217,7 @@ def test_permutation_feature_importance_healthcare(tmpdir):
     report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance()]
     assert report.shape == (7, 4)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_permutation_feature_importance_compas(tmpdir):
@@ -234,7 +233,7 @@ def test_permutation_feature_importance_compas(tmpdir):
     report = analysis_result.analysis_to_result_reports[PermutationFeatureImportance()]
     assert report.shape == (3, 2)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_permutation_feature_importance_adult_complex():

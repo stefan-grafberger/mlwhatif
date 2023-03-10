@@ -11,7 +11,6 @@ from example_pipelines import HEALTHCARE_PY, COMPAS_PY, ADULT_COMPLEX_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._model_variants import ModelVariants
-from mlwhatif.testing._testing_helper_utils import visualize_dags
 
 
 def test_model_variants_mini_example_with_transformer_processing_multiple_columns(tmpdir):
@@ -52,7 +51,7 @@ def test_model_variants_mini_example_with_transformer_processing_multiple_column
     report = analysis_result.analysis_to_result_reports[model_variants]
     assert report.shape == (3, 2)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_model_variants_mini_example_with_projection_modify(tmpdir):
@@ -96,7 +95,7 @@ def test_model_variants_mini_example_with_projection_modify(tmpdir):
     report = analysis_result.analysis_to_result_reports[model_variants]
     assert report.shape == (3, 2)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_model_variants_mini_example_only_train_test_split(tmpdir):
@@ -138,7 +137,7 @@ def test_model_variants_mini_example_only_train_test_split(tmpdir):
     report = analysis_result.analysis_to_result_reports[model_variants]
     assert report.shape == (3, 2)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_model_variants_mini_example_only_train_test_split_without_optimizer(tmpdir):
@@ -181,7 +180,7 @@ def test_model_variants_mini_example_only_train_test_split_without_optimizer(tmp
     report = analysis_result.analysis_to_result_reports[model_variants]
     assert report.shape == (3, 2)
 
-    visualize_dags(analysis_result, tmpdir, skip_combined_dag=True)
+    # visualize_dags(analysis_result, tmpdir, skip_combined_dag=True)
 
 
 def test_model_variants_mini_example_manual_split(tmpdir):
@@ -224,7 +223,7 @@ def test_model_variants_mini_example_manual_split(tmpdir):
     report = analysis_result.analysis_to_result_reports[model_variants]
     assert report.shape == (3, 2)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_model_variants_healthcare(tmpdir):
@@ -246,7 +245,7 @@ def test_model_variants_healthcare(tmpdir):
     report = analysis_result.analysis_to_result_reports[model_variants]
     assert report.shape == (3, 4)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_model_variants_compas(tmpdir):
@@ -266,7 +265,7 @@ def test_model_variants_compas(tmpdir):
     report = analysis_result.analysis_to_result_reports[model_variants]
     assert report.shape == (3, 2)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_model_variants_adult_complex():

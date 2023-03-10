@@ -7,7 +7,6 @@ from example_pipelines import HEALTHCARE_PY, ADULT_COMPLEX_PY, COMPAS_PY
 from example_pipelines.healthcare import custom_monkeypatching
 from mlwhatif import PipelineAnalyzer
 from mlwhatif.analysis._operator_impact import OperatorImpact
-from mlwhatif.testing._testing_helper_utils import visualize_dags
 
 
 def test_operator_impact_mini_example_with_transformer_processing_multiple_columns(tmpdir):
@@ -45,7 +44,7 @@ def test_operator_impact_mini_example_with_transformer_processing_multiple_colum
     report = analysis_result.analysis_to_result_reports[OperatorImpact(True, True)]
     assert report.shape == (2, 5)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_operator_impact_healthcare(tmpdir):
@@ -62,7 +61,7 @@ def test_operator_impact_healthcare(tmpdir):
     report = analysis_result.analysis_to_result_reports[OperatorImpact(True, True)]
     assert report.shape == (4, 7)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_operator_impact_compas(tmpdir):
@@ -78,7 +77,7 @@ def test_operator_impact_compas(tmpdir):
     report = analysis_result.analysis_to_result_reports[OperatorImpact(True, True)]
     assert report.shape == (8, 5)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_operator_impact_restrict_to_linenos(tmpdir):
@@ -94,7 +93,7 @@ def test_operator_impact_restrict_to_linenos(tmpdir):
     report = analysis_result.analysis_to_result_reports[OperatorImpact(True, True)]
     assert report.shape == (3, 5)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_operator_impact_test_transformers(tmpdir):
@@ -110,7 +109,7 @@ def test_operator_impact_test_transformers(tmpdir):
     report = analysis_result.analysis_to_result_reports[OperatorImpact(True, False)]
     assert report.shape == (4, 5)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_operator_impact_test_selections(tmpdir):
@@ -126,7 +125,7 @@ def test_operator_impact_test_selections(tmpdir):
     report = analysis_result.analysis_to_result_reports[OperatorImpact(False, True)]
     assert report.shape == (5, 5)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
 
 
 def test_operator_impact_adult_complex(tmpdir):
@@ -141,4 +140,4 @@ def test_operator_impact_adult_complex(tmpdir):
     report = analysis_result.analysis_to_result_reports[OperatorImpact(True, True)]
     assert report.shape == (3, 5)
 
-    visualize_dags(analysis_result, tmpdir)
+    # visualize_dags(analysis_result, tmpdir)
