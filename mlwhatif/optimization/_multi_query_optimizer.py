@@ -146,6 +146,7 @@ class MultiQueryOptimizer:
         return big_execution_dag, what_if_dags
 
     def save_intermediate_dags(self, analysis_results, original_dag, patches, stage_name):
+        """ This function generates the intermediate DAGs after individual optimisation steps """
         for patches_for_variant in patches:
             dags_for_stage = analysis_results.intermediate_stages[stage_name]
             what_if_dag = original_dag.copy()

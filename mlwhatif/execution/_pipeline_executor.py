@@ -8,7 +8,6 @@ import sys
 import time
 from collections import defaultdict
 from contextlib import redirect_stdout
-from copy import copy
 from io import StringIO
 from typing import List
 
