@@ -22,6 +22,7 @@ def test_inspector_adult_easy_py_pipeline():
     extracted_dag = inspector_result.original_dag
     expected_dag = get_expected_dag_adult_easy(ADULT_SIMPLE_PY)
     compare(networkx.to_dict_of_dicts(extracted_dag), networkx.to_dict_of_dicts(expected_dag))
+    assert inspector_result.captured_orig_pipeline_stdout == "pipeline start\npipeline finished\n"
 
 
 def test_inspector_adult_easy_py_pipeline_without_inspections():

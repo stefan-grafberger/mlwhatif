@@ -60,7 +60,8 @@ class PipelineExecutor:
     labels_to_extracted_plan_results = dict()
     analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
                                        RuntimeInfo(0, 0, 0, 0, None, None, 0, 0, 0, 0, 0, 0, 0),
-                                       DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0), None, defaultdict(list))
+                                       DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0, ""), None,
+                                       defaultdict(list), "")
     monkey_patch_duration = 0
     skip_optimizer = False
     force_optimization_rules = None
@@ -118,7 +119,7 @@ class PipelineExecutor:
                 self.run_instrumented_pipeline(notebook_path, python_code, python_path)
             # TODO: Do we ever need the captured output from the original pipeline version?
             #  Maybe this gets relevant once we add the DAG as input to mlwhat in case there are multiple executions
-            # captured_output = stdout_output.getvalue()
+            self.analysis_results.captured_orig_pipeline_stdout = stdout_output.getvalue()
             orig_instrumented_exec_duration = (time.time() - orig_instrumented_exec_start -
                                                singleton.monkey_patch_duration)
             self.analysis_results.runtime_info.original_pipeline_without_importing_and_monkeypatching = \
@@ -158,7 +159,8 @@ class PipelineExecutor:
 
         self.analysis_results.dag_extraction_info = DagExtractionInfo(
             self.analysis_results.original_dag.copy(), self.original_pipeline_labels_to_extracted_plan_results.copy(),
-            self.next_op_id, self.next_patch_id, self.next_missing_op_id)
+            self.next_op_id, self.next_patch_id, self.next_missing_op_id,
+            self.analysis_results.captured_orig_pipeline_stdout)
         logger.info(f'Done!')
         return self.analysis_results
 
@@ -260,8 +262,8 @@ class PipelineExecutor:
         self.op_id_to_dag_node = dict()
         self.analysis_results = AnalysisResults(dict(), networkx.DiGraph(), [], networkx.DiGraph(),
                                                 RuntimeInfo(0, 0, 0, 0, None, None, 0, 0, 0, 0, 0, 0, 0),
-                                                DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0), self,
-                                                defaultdict(list))
+                                                DagExtractionInfo(networkx.DiGraph(), dict(), 0, 0, 0, ""), self,
+                                                defaultdict(list), "")
         self.analyses = []
         self.original_pipeline_labels_to_extracted_plan_results = dict()
         self.labels_to_extracted_plan_results = dict()

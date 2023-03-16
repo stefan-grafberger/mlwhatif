@@ -41,6 +41,7 @@ class DagExtractionInfo:
     next_op_id: int
     next_patch_id: int
     next_missing_op_id: int
+    captured_orig_pipeline_stdout: str
 
 
 @dataclasses.dataclass
@@ -57,6 +58,7 @@ class AnalysisResults:
     dag_extraction_info: DagExtractionInfo
     pipeline_executor: any
     intermediate_stages: Dict[str, List[networkx.DiGraph]]
+    captured_orig_pipeline_stdout: str
 
     def save_original_dag_to_path(self, prefix_original_dag: str):
         """
@@ -125,6 +127,7 @@ class EstimationResults:
     runtime_info: RuntimeInfo
     dag_extraction_info: DagExtractionInfo
     pipeline_executor: any
+    captured_orig_pipeline_stdout: str
 
     def print_estimate(self):
         """
@@ -154,5 +157,3 @@ class EstimationResults:
         Save the extracted original DAG to a file
         """
         save_fig_to_path(self.combined_optimized_dag, f"{prefix_optimised_analysis_dag}.png")
-
-    # def visualisation_phases_to_dags(self):
