@@ -117,7 +117,7 @@ class MultiQueryOptimizer:
             if self.pipeline_executor.store_intermediate_dags is True:
                 stage_name = f"{opt_step_index}-optimize_dag_{str(rule_index)}_{str(type(rule).__name__)}"
                 # TODO: This is specific to the current optimisations and is for the demo, maybe remove this later
-                if stage_name in {"OperatorDeletionFilterPushUp"}:
+                if str(type(rule).__name__) in {"OperatorDeletionFilterPushUp"}:
                     self.save_intermediate_dags(analysis_results, original_dag, patches, stage_name)
                     opt_step_index += 1
 
@@ -127,7 +127,7 @@ class MultiQueryOptimizer:
             if self.pipeline_executor.store_intermediate_dags is True:
                 stage_name = f"{opt_step_index}-optimize_patches_{str(rule_index)}_{str(type(rule).__name__)}"
                 # TODO: This is specific to the current optimisations and is for the demo, maybe remove this later
-                if stage_name not in {"OperatorDeletionFilterPushUp"}:
+                if str(type(rule).__name__) not in {"OperatorDeletionFilterPushUp"}:
                     self.save_intermediate_dags(analysis_results, original_dag, patches, stage_name)
                     opt_step_index += 1
 
