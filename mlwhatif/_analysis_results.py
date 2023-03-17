@@ -59,6 +59,7 @@ class AnalysisResults:
     pipeline_executor: any
     intermediate_stages: Dict[str, List[networkx.DiGraph]]
     captured_orig_pipeline_stdout: str
+    what_if_patches: List[List[PipelinePatch]]
 
     def save_original_dag_to_path(self, prefix_original_dag: str):
         """
