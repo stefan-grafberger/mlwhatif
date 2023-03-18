@@ -209,7 +209,7 @@ class MislabelCleaner:
 
     # removed cache=True because of https://github.com/numba/numba/issues/4908 need a workaround soon
     @staticmethod
-    @njit(fastmath=True, parallel=True)
+    @njit(fastmath=True, parallel=False)
     def _compute_shapley_values(X_train, y_train, X_test, y_test, K=1):
         # pylint: disable=invalid-name,too-many-locals
         """Compute approximate shapley values as presented in the DataScope paper. Here, we only do it for the
