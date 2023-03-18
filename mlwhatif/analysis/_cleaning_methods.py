@@ -222,7 +222,7 @@ class MislabelCleaner:
         M = len(X_test)
         result = numpy.zeros(N, dtype=numpy.float32)
 
-        for j in prange(M):  # pylint: disable=not-an-iterable
+        for j in range(M):  # pylint: disable=not-an-iterable
             score = numpy.zeros(N, dtype=numpy.float32)
             dist = numpy.zeros(N, dtype=numpy.float32)
             div_range = numpy.arange(1.0, N)
