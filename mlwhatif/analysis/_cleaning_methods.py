@@ -115,6 +115,7 @@ class MissingValueCleaner:
     """
     Missing value ErrorType
     """
+
     @staticmethod
     def drop_missing(input_df, column):
         """Drop rows with missing values in that column"""
@@ -163,6 +164,7 @@ class DuplicateCleaner:
     """
     Missing value ErrorType
     """
+
     # pylint: disable=too-few-public-methods
 
     @staticmethod
@@ -177,9 +179,13 @@ class MislabelCleaner:
     """
 
     @staticmethod
-    def fit_cleanlab(train_data, train_labels, make_classifier_func):
+    def fit_cleanlab(train_data, train_labels, make_classifier_func, parallelism):
         """See https://github.com/cleanlab/cleanlab"""
-        estimator = cleanlab.classification.CleanLearning(make_classifier_func())
+        if parallelism is True:
+            estimator = cleanlab.classification.CleanLearning(make_classifier_func())
+        else:
+            estimator = cleanlab.classification.CleanLearning(make_classifier_func(),
+                                                              find_label_issues_kwargs={'n_jobs': 1})
         if isinstance(train_labels, pandas.Series):
             train_labels = train_labels.to_numpy()
         elif isinstance(train_labels, numpy.ndarray) and train_labels.ndim > 1:
@@ -192,7 +198,7 @@ class MislabelCleaner:
         return estimator
 
     @staticmethod
-    def fit_shapley_cleaning(train_data, train_labels, make_classifier_func):
+    def fit_shapley_cleaning(train_data, train_labels, make_classifier_func, parallelism):
         """See https://arxiv.org/abs/2204.11131"""
         estimator = make_classifier_func()
         if isinstance(train_labels, pandas.Series):
@@ -200,7 +206,12 @@ class MislabelCleaner:
         k = 10
         if k > (len(train_labels) * 0.2):
             train_data, test_data, train_labels, test_label = train_test_split(train_data, train_labels, test_size=k)
-            shapley_values = MislabelCleaner._compute_shapley_values(train_data, train_labels, test_data, test_label, k)
+            if parallelism is True:
+                shapley_values = MislabelCleaner._compute_shapley_values_parallel(train_data, train_labels,
+                                                                                  test_data, test_label, k)
+            else:
+                shapley_values = MislabelCleaner._compute_shapley_values_non_parallel(train_data, train_labels,
+                                                                                      test_data, test_label, k)
             greater_zero = shapley_values >= 0.0
             train_data = train_data[greater_zero]
             train_labels = train_labels[greater_zero]
@@ -210,7 +221,7 @@ class MislabelCleaner:
     # removed cache=True because of https://github.com/numba/numba/issues/4908 need a workaround soon
     @staticmethod
     @njit(fastmath=True, parallel=False)
-    def _compute_shapley_values(X_train, y_train, X_test, y_test, K=1):
+    def _compute_shapley_values_non_parallel(X_train, y_train, X_test, y_test, K=1):
         # pylint: disable=invalid-name,too-many-locals
         """Compute approximate shapley values as presented in the DataScope paper. Here, we only do it for the
         estimator input data though and not for the input data of the surrounding pipeline.
@@ -223,6 +234,41 @@ class MislabelCleaner:
         result = numpy.zeros(N, dtype=numpy.float32)
 
         for j in range(M):  # pylint: disable=not-an-iterable
+            score = numpy.zeros(N, dtype=numpy.float32)
+            dist = numpy.zeros(N, dtype=numpy.float32)
+            div_range = numpy.arange(1.0, N)
+            div_min = numpy.minimum(div_range, K)
+            for i in range(N):
+                dist[i] = numpy.sqrt(numpy.sum(numpy.square(X_train[i] - X_test[j])))
+            indices = numpy.argsort(dist)
+            y_sorted = y_train[indices]
+            eq_check = (y_sorted == y_test[j]) * 1.0
+            diff = - 1 / K * (eq_check[1:] - eq_check[:-1])
+            diff /= div_range
+            diff *= div_min
+            score[indices[:-1]] = diff
+            score[indices[-1]] = eq_check[-1] / N
+            score[indices] += numpy.sum(score[indices]) - numpy.cumsum(score[indices])
+            result += score / M
+
+        return result
+
+    # removed cache=True because of https://github.com/numba/numba/issues/4908 need a workaround soon
+    @staticmethod
+    @njit(fastmath=True, parallel=True)
+    def _compute_shapley_values_parallel(X_train, y_train, X_test, y_test, K=1):
+        # pylint: disable=invalid-name,too-many-locals
+        """Compute approximate shapley values as presented in the DataScope paper. Here, we only do it for the
+        estimator input data though and not for the input data of the surrounding pipeline.
+        """
+        # TODO: Without a clean test set, this is not guaranteed to help. We could also use the actual test set
+        #  but that might be problematic from a data leakage perspective.
+        #  We can think about this some more in the future.
+        N = len(X_train)
+        M = len(X_test)
+        result = numpy.zeros(N, dtype=numpy.float32)
+
+        for j in prange(M):  # pylint: disable=not-an-iterable
             score = numpy.zeros(N, dtype=numpy.float32)
             dist = numpy.zeros(N, dtype=numpy.float32)
             div_range = numpy.arange(1.0, N)

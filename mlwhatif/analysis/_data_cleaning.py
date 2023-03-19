@@ -123,7 +123,7 @@ CLEANING_METHODS_FOR_ERROR_TYPE = {
         CleaningMethod("delete", PatchType.DATA_FILTER_PATCH, filter_func=DuplicateCleaner.drop_duplicates)
     ],
     ErrorType.MISLABEL: [
-        # CleaningMethod("cleanlab", PatchType.ESTIMATOR_PATCH, fit_or_fit_transform_func=MislabelCleaner.fit_cleanlab),
+        CleaningMethod("cleanlab", PatchType.ESTIMATOR_PATCH, fit_or_fit_transform_func=MislabelCleaner.fit_cleanlab),
         CleaningMethod("shapley", PatchType.ESTIMATOR_PATCH,
                        fit_or_fit_transform_func=MislabelCleaner.fit_shapley_cleaning)
     ]
@@ -135,13 +135,15 @@ class DataCleaning(WhatIfAnalysis):
     The Data Cleaning What-If Analysis
     """
 
-    def __init__(self, columns_with_error: dict[str or None, ErrorType] or List[Tuple[str, ErrorType]]):
+    def __init__(self, columns_with_error: dict[str or None, ErrorType] or List[Tuple[str, ErrorType]],
+                 parallelism=True):
         if isinstance(columns_with_error, dict):
             self._columns_with_error = list(columns_with_error.items())
         else:
             self._columns_with_error = columns_with_error
         self._score_nodes_and_linenos = []
         self._analysis_id = (*self._columns_with_error,)
+        self._parallelism = parallelism
 
     @property
     def analysis_id(self):
@@ -225,7 +227,8 @@ class DataCleaning(WhatIfAnalysis):
                             "Currently, DataCorruption only supports pipelines with exactly one estimator!")
                     estimator_node = estimator_nodes[0]
                     new_processing_func = partial(cleaning_method.fit_or_fit_transform_func,
-                                                  make_classifier_func=estimator_node.make_classifier_func)
+                                                  make_classifier_func=estimator_node.make_classifier_func,
+                                                  parallelism=self._parallelism)
                     new_description = f"{cleaning_method.method_name} patched {estimator_node.details.description}"
                     old_optimizer_info = estimator_node.details.optimizer_info
                     if cleaning_method.method_name == "cleanlab":
