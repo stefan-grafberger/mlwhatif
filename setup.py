@@ -17,7 +17,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="mlwhatif",
-    version="0.0.1.dev0",
+    version="0.0.1.dev1",
     description="Data-Centric What-If Analysis for Native Machine Learning Pipelines",
     author='Stefan Grafberger',
     author_email='stefangrafberger@gmail.com',
