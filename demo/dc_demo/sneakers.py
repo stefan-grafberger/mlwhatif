@@ -22,7 +22,7 @@ product_categories = pd.read_csv(
                  "product_categories.csv"))
 log_file = pd.read_csv(os.path.join(str(get_project_root()), "demo", "dc_demo",
                                     "log_file.txt"), header=None, names=['log_message'])
-log_file['image_id'] = log_file['log_message'].str.extract(r"(img_\d+)")
+log_file['image_id'] = log_file['log_message'].str.extract(r"(img_\d+)", expand=False)
 
 filtered_by_logged_img_id = train_data.merge(log_file, on='image_id')
 with_categories = filtered_by_logged_img_id.merge(product_categories, on='category_id')

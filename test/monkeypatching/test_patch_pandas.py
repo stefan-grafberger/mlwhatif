@@ -1224,3 +1224,51 @@ def test_series_str_match():
     extracted_func_result = extracted_node.processing_func(pd_series)
     expected = pandas.Series([True, True, False, True], name='b')
     pandas.testing.assert_series_equal(extracted_func_result.reset_index(drop=True), expected.reset_index(drop=True))
+
+
+def test_series_str_extract():
+    """
+    Tests whether the monkey patching of 'pandas.core.strings.StringMethods', 'extract' works
+    """
+    test_code = cleandoc("""
+        import pandas as pd
+
+        pd_series = pd.Series(['aa', 'b', 'ccc', ''], name='A')
+        regex = r"^(a*)$"
+        lens = pd_series.str.extract(regex, expand=False)
+        print(lens)
+        expected = pd.Series(["aa", None, None, ""], name='A')
+        pd.testing.assert_series_equal(lens.reset_index(drop=True), expected.reset_index(drop=True))
+        """)
+    inspector_result = _pipeline_executor.singleton.run(python_code=test_code, track_code_references=True)
+
+    extracted_dag = inspector_result.original_dag
+    extracted_dag.remove_node(list(extracted_dag.nodes)[2])
+
+    expected_dag = networkx.DiGraph()
+    expected_data_source = DagNode(0,
+                                   BasicCodeLocation("<string-source>", 3),
+                                   OperatorContext(OperatorType.DATA_SOURCE,
+                                                   FunctionInfo('pandas.core.series', 'Series')),
+                                   DagNodeDetails(None, ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                             RangeComparison(0, 800))),
+                                   OptionalCodeInfo(CodeReference(3, 12, 3, 55),
+                                                    "pd.Series(['aa', 'b', 'ccc', ''], name='A')"),
+                                   Comparison(partial))
+    expected_isin = DagNode(1,
+                            BasicCodeLocation("<string-source>", 5),
+                            OperatorContext(OperatorType.SUBSCRIPT,
+                                            FunctionInfo('pandas.core.strings.StringMethods', 'extract')),
+                            DagNodeDetails("extract r'^(a*)$'", ['A'], OptimizerInfo(RangeComparison(0, 200), (4, 1),
+                                                                                     RangeComparison(0, 800))),
+                            OptionalCodeInfo(CodeReference(5, 7, 5, 49), 'pd_series.str.extract(regex, expand=False)'),
+                            Comparison(FunctionType))
+    expected_dag.add_edge(expected_data_source, expected_isin, arg_index=0)
+
+    compare(extracted_dag, expected_dag)
+
+    extracted_node = list(extracted_dag.nodes)[1]
+    pd_series = pandas.Series(['aaaa', '', 'dd', 'cccc'], name='b')
+    extracted_func_result = extracted_node.processing_func(pd_series)
+    expected = pandas.Series(['aaaa', '', None, None], name='b')
+    pandas.testing.assert_series_equal(extracted_func_result.reset_index(drop=True), expected.reset_index(drop=True))

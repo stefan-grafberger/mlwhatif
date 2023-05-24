@@ -1024,3 +1024,36 @@ class StringMethodsPatching:
             return new_result
 
         return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
+
+    @gorilla.name('extract')
+    @gorilla.settings(allow_hit=True)
+    def patched_match(self, *args, **kwargs):
+        """ Patch for ('pandas.core.strings.StringMethods', 'extract') """
+        # pylint: disable=too-many-locals
+        original = gorilla.get_original_attribute(pandas.core.strings.StringMethods, 'extract')
+
+        def execute_inspections(op_id, caller_filename, lineno, optional_code_reference, optional_source_code):
+            """ Execute inspections, add DAG node """
+            function_info = FunctionInfo('pandas.core.strings.StringMethods', 'extract')
+            input_info = get_input_info(self._data,  # pylint: disable=no-member
+                                        caller_filename, lineno, function_info, optional_code_reference,
+                                        optional_source_code)
+            operator_context = OperatorContext(OperatorType.SUBSCRIPT, function_info)
+            description = f"extract r'{args[0]}'"
+            columns = [self._data.name]  # pylint: disable=no-member
+            processing_func = lambda df: original(df.str, *args, **kwargs)
+            initial_func = partial(original, self, *args, **kwargs)
+            optimizer_info, result = capture_optimizer_info(initial_func)
+            dag_node = DagNode(op_id,
+                               BasicCodeLocation(caller_filename, lineno),
+                               operator_context,
+                               DagNodeDetails(description, columns, optimizer_info),
+                               get_optional_code_info_or_none(optional_code_reference, optional_source_code),
+                               processing_func)
+            function_call_result = FunctionCallResult(result)
+            add_dag_node(dag_node, [input_info.dag_node], function_call_result)
+            new_result = function_call_result.function_result
+
+            return new_result
+
+        return execute_patched_func(original, execute_inspections, self, *args, **kwargs)
