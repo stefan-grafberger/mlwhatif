@@ -38,7 +38,7 @@ random.shuffle(img_ids)
 # Open the log file for writing
 with open(os.path.join(str(get_project_root()), "demo", "dc_demo",
                  "log_file.txt"), 'w') as file:
-    for id in img_ids:
+    for id in img_ids[:5713]:
         # Generate a fake log message with the chosen ID
         log_message = f'{id}: {faker.sentence()}'
 
