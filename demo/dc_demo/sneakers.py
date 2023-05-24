@@ -15,13 +15,17 @@ from mlwhatif.utils import get_project_root
 from mlwhatif.utils._utils import decode_image
 
 train_data = pd.read_csv(
-    os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "sneakers",
+    os.path.join(str(get_project_root()), "demo", "dc_demo",
                  "product_images.csv"), converters={'image': decode_image})
 product_categories = pd.read_csv(
-    os.path.join(str(get_project_root()), "experiments", "end_to_end", "datasets", "sneakers",
+    os.path.join(str(get_project_root()), "demo", "dc_demo",
                  "product_categories.csv"))
+log_file = pd.read_csv(os.path.join(str(get_project_root()), "demo", "dc_demo",
+                                    "log_file.txt"), header=None, names=['log_message'])
+log_file['image_id'] = log_file['log_message'].str.extract(r"(img_\d+)")
 
-with_categories = train_data.merge(product_categories, on='category_id')
+filtered_by_logged_img_id = train_data.merge(log_file, on='image_id')
+with_categories = filtered_by_logged_img_id.merge(product_categories, on='category_id')
 
 categories_to_distinguish = ['Sneaker', 'Ankle boot']
 
@@ -41,9 +45,11 @@ test_labels = label_binarize(test_with_labels['category_name'], classes=categori
 def normalise_image(images):
     return images / 255.0
 
+
 def reshape_images(images):
     return np.concatenate(images['image'].values) \
         .reshape(images.shape[0], 28, 28, 1)
+
 
 featurization = Pipeline([
     ('normalisation', FunctionTransformer(normalise_image)),
