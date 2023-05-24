@@ -270,7 +270,7 @@ def test_data_cleaning_sneakers(tmpdir):
     scenario = "data_cleaning"
     dataset = "sneakers"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir, "image", "image")
-    assert analysis_output.shape == (3, 4)
+    assert analysis_output.shape == (4, 4)
 
 
 def test_data_corruption_reddit(tmpdir):

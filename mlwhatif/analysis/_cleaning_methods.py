@@ -179,7 +179,7 @@ class MislabelCleaner:
     """
 
     @staticmethod
-    def fit_cleanlab(train_data, train_labels, make_classifier_func, parallelism):
+    def fit_cleanlab(train_data, train_labels, make_classifier_func, parallelism, correct_not_drop):
         """See https://github.com/cleanlab/cleanlab"""
         if parallelism is True:
             estimator = cleanlab.classification.CleanLearning(make_classifier_func())
@@ -194,11 +194,18 @@ class MislabelCleaner:
                                 "Cleanlab documentation: 'labels must be integers in 0, 1, …, K-1, where K is "
                                 "the total number of classes'.")
             train_labels = train_labels.squeeze()
+        label_issues = estimator.find_label_issues(train_data, train_labels)
+        estimator = make_classifier_func()
+        if correct_not_drop:
+            train_labels = label_issues["predicted_label"]
+        else:
+            train_data = train_data[~label_issues["is_label_issue"]]
+            train_labels = train_labels[~label_issues["is_label_issue"]]
         estimator.fit(train_data, train_labels)
         return estimator
 
     @staticmethod
-    def fit_shapley_cleaning(train_data, train_labels, make_classifier_func, parallelism):
+    def fit_shapley_cleaning(train_data, train_labels, make_classifier_func, parallelism, correct_not_drop):
         """See https://arxiv.org/abs/2204.11131"""
         estimator = make_classifier_func()
         if isinstance(train_labels, pandas.Series):

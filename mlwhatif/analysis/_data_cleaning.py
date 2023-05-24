@@ -123,9 +123,12 @@ CLEANING_METHODS_FOR_ERROR_TYPE = {
         CleaningMethod("delete", PatchType.DATA_FILTER_PATCH, filter_func=DuplicateCleaner.drop_duplicates)
     ],
     ErrorType.MISLABEL: [
-        CleaningMethod("cleanlab", PatchType.ESTIMATOR_PATCH, fit_or_fit_transform_func=MislabelCleaner.fit_cleanlab),
-        CleaningMethod("shapley", PatchType.ESTIMATOR_PATCH,
-                       fit_or_fit_transform_func=MislabelCleaner.fit_shapley_cleaning)
+        CleaningMethod("cleanlab_delete", PatchType.ESTIMATOR_PATCH, fit_or_fit_transform_func=partial(MislabelCleaner.fit_cleanlab,
+                       correct_not_drop=False)),
+        CleaningMethod("cleanlab_update", PatchType.ESTIMATOR_PATCH, fit_or_fit_transform_func=partial(MislabelCleaner.fit_cleanlab,
+                       correct_not_drop=True)),
+        CleaningMethod("shapley_delete", PatchType.ESTIMATOR_PATCH,
+                       fit_or_fit_transform_func=partial(MislabelCleaner.fit_shapley_cleaning, correct_not_drop=True))
     ]
 }
 
