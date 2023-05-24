@@ -79,7 +79,7 @@ def test_data_cleaning_healthcare(tmpdir):
     scenario = "data_cleaning"
     dataset = "healthcare"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
-    assert analysis_output.shape == (26, 4)
+    assert analysis_output.shape == (28, 4)
 
 
 def test_operator_impact_healthcare(tmpdir):
@@ -119,7 +119,7 @@ def test_data_cleaning_folktables(tmpdir):
     scenario = "data_cleaning"
     dataset = "folktables"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
-    assert analysis_output.shape == (34, 4)
+    assert analysis_output.shape == (36, 4)
 
 
 def test_operator_impact_folktables(tmpdir):
@@ -160,7 +160,7 @@ def test_operator_impact_folktables(tmpdir):
 #     scenario = "data_cleaning"
 #     dataset = "folktables_5x"
 #     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
-#     assert analysis_output.shape == (34, 4)
+#     assert analysis_output.shape == (36, 4)
 #
 #
 # def test_operator_impact_folktables_large(tmpdir):
@@ -240,7 +240,7 @@ def test_data_cleaning_cardio(tmpdir):
     scenario = "data_cleaning"
     dataset = "cardio"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir)
-    assert analysis_output.shape == (43, 4)
+    assert analysis_output.shape == (45, 4)
 
 
 def test_operator_impact_cardio(tmpdir):
@@ -270,7 +270,7 @@ def test_data_cleaning_sneakers(tmpdir):
     scenario = "data_cleaning"
     dataset = "sneakers"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir, "image", "image")
-    assert analysis_output.shape == (4, 4)
+    assert analysis_output.shape == (5, 4)
 
 
 def test_data_corruption_reddit(tmpdir):
@@ -300,7 +300,7 @@ def test_data_cleaning_reddit(tmpdir):
     scenario = "data_cleaning"
     dataset = "reddit"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir, "reddit", "reddit")
-    assert analysis_output.shape == (3, 4)
+    assert analysis_output.shape == (5, 4)
 
 
 def test_operator_impact_reddit(tmpdir):
@@ -340,7 +340,7 @@ def test_data_cleaning_walmart_amazon(tmpdir):
     scenario = "data_cleaning"
     dataset = "walmart_amazon"
     analysis_output = run_scenario_and_visualize_dags(dataset, scenario, tmpdir, "walmart_amazon", "walmart_amazon")
-    assert analysis_output.shape == (3, 4)
+    assert analysis_output.shape == (5, 4)
 
 
 def test_operator_impact_walmart_amazon(tmpdir):

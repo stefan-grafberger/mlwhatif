@@ -128,7 +128,9 @@ CLEANING_METHODS_FOR_ERROR_TYPE = {
         CleaningMethod("cleanlab_update", PatchType.ESTIMATOR_PATCH, fit_or_fit_transform_func=partial(MislabelCleaner.fit_cleanlab,
                        correct_not_drop=True)),
         CleaningMethod("shapley_delete", PatchType.ESTIMATOR_PATCH,
-                       fit_or_fit_transform_func=partial(MislabelCleaner.fit_shapley_cleaning, correct_not_drop=True))
+                       fit_or_fit_transform_func=partial(MislabelCleaner.fit_shapley_cleaning, correct_not_drop=True)),
+        CleaningMethod("shapley_update", PatchType.ESTIMATOR_PATCH,
+                       fit_or_fit_transform_func=partial(MislabelCleaner.fit_shapley_cleaning, correct_not_drop=False))
     ]
 }
 

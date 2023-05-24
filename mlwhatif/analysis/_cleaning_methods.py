@@ -197,7 +197,8 @@ class MislabelCleaner:
         label_issues = estimator.find_label_issues(train_data, train_labels)
         estimator = make_classifier_func()
         if correct_not_drop:
-            train_labels = label_issues["predicted_label"]
+            if not len(numpy.unique(label_issues["predicted_label"])) == 1:
+                train_labels = label_issues["predicted_label"]
         else:
             train_data = train_data[~label_issues["is_label_issue"]]
             train_labels = train_labels[~label_issues["is_label_issue"]]
@@ -220,8 +221,11 @@ class MislabelCleaner:
                 shapley_values = MislabelCleaner._compute_shapley_values_non_parallel(train_data, train_labels,
                                                                                       test_data, test_label, k)
             greater_zero = shapley_values >= 0.0
-            train_data = train_data[greater_zero]
-            train_labels = train_labels[greater_zero]
+            if correct_not_drop:
+                train_data = train_data[greater_zero]
+                train_labels = train_labels[greater_zero]
+            else:
+                train_labels.iloc[greater_zero] = ~train_labels.iloc[greater_zero]
         estimator.fit(train_data, train_labels)
         return estimator
 

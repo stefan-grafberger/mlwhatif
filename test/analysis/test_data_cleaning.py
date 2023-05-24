@@ -109,7 +109,7 @@ def test_data_cleaning_healthcare(tmpdir):
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
-    assert report.shape == (20, 6)
+    assert report.shape == (22, 6)
 
     # visualize_dags(analysis_result, tmpdir)
 
@@ -129,7 +129,7 @@ def test_data_cleaning_compas(tmpdir):
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
-    assert report.shape == (15, 4)
+    assert report.shape == (17, 4)
 
     # visualize_dags(analysis_result, tmpdir)
 
@@ -150,7 +150,7 @@ def test_data_cleaning_adult_complex(tmpdir):
         .execute()
 
     report = analysis_result.analysis_to_result_reports[data_cleaning]
-    assert report.shape == (19, 4)
+    assert report.shape == (21, 4)
 
     # visualize_dags(analysis_result, tmpdir)
 
