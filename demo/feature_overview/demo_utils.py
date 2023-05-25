@@ -40,7 +40,7 @@ def display_demo_source_code(demo_py_path):
     with open(demo_py_path) as pipline_file:
         code = pipline_file.read()
 
-    formatter = HtmlFormatter()
+    formatter = HtmlFormatter(style='colorful')
     return IPython.display.HTML('<style type="text/css">{}</style>{}'.format(
         formatter.get_style_defs('.highlight'),
         highlight(code, PythonLexer(), formatter)))
