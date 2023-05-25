@@ -15,6 +15,20 @@ EXAMPLE_OPTIMIZED_PLAN_PATH = os.path.join(str(get_project_root()), "demo", "fea
                                            "example-optimised")
 
 
+def display_abstract_figure():
+    PAPER_IMG = os.path.join(str(get_project_root()), "demo", "dc_demo",
+                             "abstract-overview.png")
+
+    return Image(filename=f"{PAPER_IMG}")
+
+
+def display_anon_overview_figure():
+    PAPER_IMG = os.path.join(str(get_project_root()), "demo", "dc_demo",
+                             "anon-paper-overview-crop.png")
+
+    return Image(filename=f"{PAPER_IMG}")
+
+
 def display_paper_figure():
     PAPER_IMG = os.path.join(str(get_project_root()), "demo", "feature_overview",
                              "paper_example_image.png")
