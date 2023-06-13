@@ -5,7 +5,6 @@ pytest-runner==5.2
 pytest-cov==2.10.1
 pytest-pycharm==0.7.0
 pytest-mock==3.3.1
-gensim @ git+https://github.com/stefan-grafberger/gensim.git@edd5f69cce1bbd96485867be6cf5c3cee01d2d9b
 tensorflow==2.5.0
 keras==2.4.3
 jupyter==1.0.0
