@@ -4,9 +4,9 @@ Monkey patching for healthcare_utils
 from functools import partial
 
 import gorilla
-from gensim import sklearn_api
 
 from example_pipelines.healthcare import healthcare_utils
+from example_pipelines.healthcare import _gensim_wrapper
 from mlwhatif.execution._stat_tracking import capture_optimizer_info
 from mlwhatif.instrumentation._operator_types import OperatorContext, FunctionInfo, OperatorType
 from mlwhatif.instrumentation._dag_node import DagNode, BasicCodeLocation, DagNodeDetails
@@ -22,7 +22,7 @@ class SklearnMyW2VTransformerPatching:
 
     # pylint: disable=too-few-public-methods
 
-    @gorilla.patch(sklearn_api.W2VTransformer, name='__init__', settings=gorilla.Settings(allow_hit=True))
+    @gorilla.patch(_gensim_wrapper.W2VTransformer, name='__init__', settings=gorilla.Settings(allow_hit=True))
     def patched__init__(self, *, size=100, alpha=0.025, window=5, min_count=5, max_vocab_size=None, sample=1e-3, seed=1,
                         workers=3, min_alpha=0.0001, sg=0, hs=0, negative=5, cbow_mean=1, hashfxn=hash, iter=5,
                         null_word=0, trim_rule=None, sorted_vocab=1, batch_words=10000,
@@ -32,7 +32,7 @@ class SklearnMyW2VTransformerPatching:
         """ Patch for ('example_pipelines.healthcare.healthcare_utils', 'MyW2VTransformer') """
         # pylint: disable=no-method-argument, attribute-defined-outside-init, too-many-locals, redefined-builtin,
         # pylint: disable=invalid-name
-        original = gorilla.get_original_attribute(sklearn_api.W2VTransformer, '__init__')
+        original = gorilla.get_original_attribute(_gensim_wrapper.W2VTransformer, '__init__')
 
         self.mlinspect_caller_filename = mlinspect_caller_filename
         self.mlinspect_lineno = mlinspect_lineno

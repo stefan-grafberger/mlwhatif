@@ -34,12 +34,41 @@ Prerequisite: Python 3.9
 
     `python setup.py test` <br>
 
+## How to use mlwhatif
+mlwhatif makes it easy to analyze your pipeline and automatically run what-if analyses.
+```python
+from mlwhatif import PipelineAnalyzer
+from mlwhatif.analysis import DataCleaning, ErrorType
+
+IPYNB_PATH = ...
+cleanlearn = DataCleaning({'category': ErrorType.CAT_MISSING_VALUES,
+                           'vine': ErrorType.CAT_MISSING_VALUES,
+                           'star_rating': ErrorType.NUM_MISSING_VALUES,
+                           'total_votes': ErrorType.OUTLIERS,
+                           'review_id': ErrorType.DUPLICATES,
+                           None: ErrorType.MISLABEL
+                         })
+
+analysis_result = PipelineAnalyzer \
+    .on_pipeline_from_ipynb_file(IPYNB_PATH)\
+    .add_what_if_analysis(cleanlearn) \
+    .execute()
+
+cleanlearn_report = analysis_result.analysis_to_result_reports[cleanlearn]
+```
+
 ## Detailed Example
 We prepared a [demo notebook](demo/feature_overview/feature_overview.ipynb) to showcase mlwhatif and its features.
 
 ## Notes
 * For debugging in PyCharm, set the pytest flag `--no-cov` ([Link](https://stackoverflow.com/questions/34870962/how-to-debug-py-test-in-pycharm-when-coverage-is-enabled))
 * If you want to see log output in PyCharm, you can also set the pytest flags `--log-cli-level=10 -s`. The `-s` is needed because otherwise pytest breaks the stdout capturing.
+
+## Publications
+* Stefan Grafberger, Shubha Guha, Paul Groth, Sebastian Schelter (2023). mlwhatif: What If You Could Stop Re-Implementing Your Machine Learning Pipeline Analyses Over and Over? VLDB (demo).
+* [Stefan Grafberger, Paul Groth, Sebastian Schelter (2023). Automating and Optimizing Data-Centric What-If Analyses
+on Native Machine Learning Pipelines. ACM SIGMOD.](https://stefan-grafberger.com/mlwhatif.pdf)
+* [Stefan Grafberger, Paul Groth, Sebastian Schelter (2022). Towards Data-Centric What-If Analysis for Native Machine Learning Pipelines. Data Management for End-to-End Machine Learning workshop at ACM SIGMOD.](https://stefan-grafberger.com/mlwhatif-deem.pdf)
 
 ## License
 This library is licensed under the Apache 2.0 License.
