@@ -1,3 +1,4 @@
+# pylint: disable-all
 # Author: Chinmaya Pancholi <chinmayapancholi13@gmail.com>
 # Copyright (C) 2017 Radim Rehurek <radimrehurek@seznam.cz>
 # Licensed under the GNU LGPL v2.1 - http://www.gnu.org/licenses/lgpl.html
